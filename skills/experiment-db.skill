@@ -1,0 +1,111 @@
+name: experiment-db
+version: 1.0.0
+description: SQLite database for tracking nanopore experiments with fast SQL queries
+
+# Invocation triggers
+triggers:
+  - experiment database
+  - experiments db
+  - sqlite experiments
+  - query experiments
+  - build experiment database
+  - end reason database
+
+# Skill metadata
+metadata:
+  author: Single Molecule Sequencing Lab
+  repository: https://github.com/Single-Molecule-Sequencing/ont-ecosystem
+  category: data-management
+  tags:
+    - nanopore
+    - database
+    - sqlite
+    - experiments
+    - end-reason
+
+# Instructions for Claude Code
+instructions: |
+  The experiment-db skill creates and queries a SQLite database of nanopore sequencing
+  experiments. It complements the YAML-based ont-experiments-v2 registry by providing
+  fast SQL-based queries for statistics and end reason distributions.
+
+  ## When to use this skill
+
+  Use this skill when the user wants to:
+  - Build a database of all experiments in a directory
+  - Query experiment statistics using SQL
+  - Get end reason distributions across experiments
+  - Search for experiments by sample name or protocol
+
+  ## Commands
+
+  ### Build Database
+  ```bash
+  python3 /path/to/experiment_db.py build --data_dir /data1 --db_path /data1/experiments.db
+  ```
+
+  Options:
+  - `--data_dir`: Root directory to scan for experiments (required)
+  - `--db_path`: Path to create SQLite database (required)
+  - `--rebuild`: Force rebuild, dropping existing tables
+  - `-o, --output_report`: Save text report to file
+
+  ### Query Database
+  ```bash
+  # Show summary
+  python3 /path/to/experiment_db.py query --db_path experiments.db --summary
+
+  # Show end reason distribution
+  python3 /path/to/experiment_db.py query --db_path experiments.db --end_reasons
+
+  # Search for experiment
+  python3 /path/to/experiment_db.py query --db_path experiments.db --experiment "sample_name"
+
+  # Custom SQL
+  python3 /path/to/experiment_db.py query --db_path experiments.db --sql "SELECT * FROM experiments"
+  ```
+
+  ## Database Schema
+
+  The database contains three tables:
+
+  ### experiments
+  - id, experiment_path, instrument, flow_cell_id, sample_id
+  - protocol_group_id, protocol, started, acquisition_stopped
+  - pod5_files, fastq_files, bam_files
+
+  ### read_statistics
+  - experiment_id, total_reads, passed_reads, failed_reads
+  - total_bases, mean_read_length, n50, mean_qscore
+
+  ### end_reason_distribution
+  - experiment_id, end_reason, count, percentage
+
+  ## Example Usage
+
+  When asked to "build an experiment database from /data1":
+
+  ```bash
+  python3 skills/experiment-db/scripts/experiment_db.py build \
+    --data_dir /data1 \
+    --db_path /data1/nanopore_experiments.db
+  ```
+
+  When asked to "show end reason statistics":
+
+  ```bash
+  python3 skills/experiment-db/scripts/experiment_db.py query \
+    --db_path /data1/nanopore_experiments.db \
+    --end_reasons
+  ```
+
+# File locations
+files:
+  script: skills/experiment-db/scripts/experiment_db.py
+  bin: bin/experiment_db.py
+
+# Dependencies
+dependencies:
+  python: ">=3.7"
+  optional:
+    - pandas  # For faster parsing of large files

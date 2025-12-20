@@ -1,0 +1,33 @@
+# Quick QC Pipeline
+# Run: ont_experiments.py pipeline run qc-fast exp-abc123
+
+name: qc-fast
+description: Quick quality check for new sequencing runs
+version: "1.0"
+
+steps:
+  - name: end_reasons
+    analysis: end_reasons
+    required: true
+    outputs: [json, plot]
+    
+  - name: basecalling
+    analysis: basecalling
+    depends_on: [end_reasons]
+    parameters:
+      model: fast
+    outputs: [bam, json]
+    
+  - name: basic_stats
+    analysis: monitoring
+    depends_on: [basecalling]
+    outputs: [json]
+
+aggregation:
+  metrics:
+    - source: end_reasons
+      fields: [quality_status, signal_positive_pct]
+    - source: basecalling
+      fields: [mean_qscore, total_reads, pass_rate]
+    - source: basic_stats
+      fields: [n50, mean_length]

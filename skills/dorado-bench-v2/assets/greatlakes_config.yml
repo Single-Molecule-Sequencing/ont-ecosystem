@@ -1,0 +1,131 @@
+# Great Lakes Configuration for Dorado Basecalling
+# University of Michigan Advanced Research Computing
+
+cluster: GreatLakes
+cluster_type: hpc_greatlakes
+
+# SLURM Configuration
+slurm:
+  partition: gpu_mig40
+  account: bleu99  # Update with your account
+  job_name_prefix: dorado_bench
+  max_walltime: "14-00:00:00"
+  max_gpus: variable
+  max_memory: 256G
+  max_cpus: 36
+
+# GPU Resources
+gpu:
+  type: NVIDIA A100 MIG
+  vram_per_gpu: 40GB
+  compute_capability: 8.0
+  recommended_devices: "cuda:all"
+  gres: "gpu:nvidia_a100_80gb_pcie_3g.40gb:1"
+  
+# File System Paths
+paths:
+  dorado_executable: ./dorado-1.1.1-linux-x64/bin/dorado
+  models_directory: ./Models
+  input_base: ./Input
+  output_base: ./Output
+  scratch_base: /scratch/bleu99/$USER
+  workspace: .
+
+# Input POD5 Samples
+samples: []
+
+# Model Configuration
+models:
+  versions:
+    - v5.2.0
+    - v5.0.0
+    - v4.3.0
+  
+  tiers:
+    - fast
+    - hac
+    - sup
+  
+  modified_bases: []
+
+# Trimming Configuration
+trimming:
+  enabled: true
+  modes:
+    - trim
+    - no-trim
+
+# Basecalling Options
+basecalling:
+  batch_sizes:
+    fast: 2048
+    hac: 1024
+    sup: 512
+  
+  chunk_size: 10000
+  kit_name: ""
+  barcode_kit: ""
+  output_format: bam
+  min_qscore: 0
+  additional_args: ""
+
+# SLURM Resource Allocation by Model Tier
+resources:
+  fast:
+    cpus: 8
+    memory: 32G
+    time: 24:00:00
+    batch_size: 2048
+  
+  hac:
+    cpus: 16
+    memory: 64G
+    time: 72:00:00
+    batch_size: 1024
+  
+  sup:
+    cpus: 16
+    memory: 64G
+    time: 144:00:00
+    batch_size: 512
+
+# Email Notifications
+notifications:
+  enabled: true
+  email: ""
+  mail_type: "BEGIN,END,FAIL"
+
+# Performance Benchmarking
+benchmarking:
+  enabled: true
+  generate_statistics: true
+  compare_versions: true
+  compare_tiers: true
+  compare_trim_modes: true
+  
+  output_directory: Results/
+  metrics_file: performance_metrics.csv
+  comparison_report: comparison_report.html
+
+# Job Submission Strategy
+submission:
+  method: sequential
+  max_parallel_jobs: 8
+  submit_delay_seconds: 5
+  retry_on_failure: true
+  max_retries: 3
+
+# Logging and Monitoring
+logging:
+  log_directory: Logs/
+  verbose: false
+  monitor_interval_seconds: 30
+  generate_summary: true
+
+# Advanced Options
+advanced:
+  gpu_compute_mode: exclusive_thread
+  use_nvlink: false
+  cpu_affinity: enabled
+  memory_efficient_mode: false
+  profile_performance: true

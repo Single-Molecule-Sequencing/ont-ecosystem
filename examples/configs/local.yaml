@@ -1,0 +1,23 @@
+# Local Development Configuration
+# Copy to ~/.ont-ecosystem/config/hpc.yaml
+
+hpc:
+  system: local
+  scheduler: none
+  
+  defaults:
+    threads: 8
+    memory_gb: 32
+    
+  reference_paths:
+    - ~/references
+    - /data/references
+    
+  model_paths:
+    - ~/.dorado/models
+    - /opt/dorado/models
+
+  tools:
+    dorado: dorado
+    minimap2: minimap2
+    samtools: samtools

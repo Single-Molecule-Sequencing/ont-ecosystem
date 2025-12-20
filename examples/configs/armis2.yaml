@@ -1,0 +1,30 @@
+# ARMIS2 HPC Configuration
+# Copy to ~/.ont-ecosystem/config/hpc.yaml
+
+hpc:
+  system: armis2
+  scheduler: slurm
+  
+  partitions:
+    gpu: [gpu_p100, gpu_v100, gpu_a100]
+    cpu: [standard, largemem]
+  
+  defaults:
+    account: bleu1
+    time: "72:00:00"
+    mem: 64G
+    
+  gpu_defaults:
+    partition: gpu_v100
+    gres: "gpu:1"
+    cpus_per_task: 8
+    
+  reference_paths:
+    - /nfs/dataden/umms-bleu-secure/references
+    
+  model_paths:
+    - /nfs/dataden/umms-bleu-secure/programs/dorado_models
+
+  modules:
+    - python/3.10
+    - cuda/11.8

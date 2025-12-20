@@ -1,0 +1,69 @@
+# Pharmacogenomics Clinical Pipeline
+# Run: ont_experiments.py pipeline run pharmaco-clinical exp-abc123
+
+name: pharmaco-clinical
+description: Clinical pharmacogenomics workflow with CYP2D6 and PharmCAT
+version: "1.0"
+
+steps:
+  - name: end_reasons
+    analysis: end_reasons
+    required: true
+    pass_criteria:
+      signal_positive_pct: ">=75"
+    outputs: [json, plot]
+    
+  - name: basecalling
+    analysis: basecalling
+    depends_on: [end_reasons]
+    parameters:
+      model: sup
+      modifications: 5mCG_5hmCG
+    outputs: [bam, json]
+    
+  - name: alignment
+    analysis: alignment
+    depends_on: [basecalling]
+    parameters:
+      reference: GRCh38
+      preset: map-ont
+    outputs: [bam, stats]
+    
+  - name: variants
+    analysis: variant_calling
+    depends_on: [alignment]
+    parameters:
+      caller: clair3
+      model: r1041_e82_400bps_sup_v500
+    outputs: [vcf, json]
+    
+  - name: cyp2d6
+    analysis: cyp2d6_calling
+    depends_on: [variants]
+    parameters:
+      caller: cyrius
+      reference: GRCh38
+    outputs: [json, tsv]
+    
+  - name: pharmcat
+    analysis: pharmcat
+    depends_on: [variants, cyp2d6]
+    parameters:
+      reporter: true
+      sources: [CPIC, DPWG, FDA]
+    outputs: [json, html]
+
+aggregation:
+  metrics:
+    - source: end_reasons
+      fields: [quality_status, signal_positive_pct]
+    - source: basecalling  
+      fields: [mean_qscore, median_qscore, n50, total_reads]
+    - source: alignment
+      fields: [mapped_pct, mean_coverage, target_coverage]
+    - source: variants
+      fields: [total_variants, pass_variants, ti_tv_ratio]
+    - source: cyp2d6
+      fields: [diplotype, phenotype, activity_score]
+    - source: pharmcat
+      fields: [drug_count, actionable_count]

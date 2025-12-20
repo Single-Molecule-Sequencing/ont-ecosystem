@@ -1,0 +1,90 @@
+#!/bin/bash
+#SBATCH --job-name={{JOB_NAME}}
+#SBATCH --account={{ACCOUNT}}
+#SBATCH --partition={{PARTITION}}
+#SBATCH --gres={{GRES}}
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task={{CPUS}}
+#SBATCH --mem={{MEMORY}}
+#SBATCH --time={{TIME}}
+#SBATCH --output=Logs/%x_%j.out
+#SBATCH --error=Logs/%x_%j.err
+{{MAIL_DIRECTIVES}}
+
+# Dorado Basecalling Job - Single Execution
+# Generated: {{TIMESTAMP}}
+# Cluster: {{CLUSTER}}
+
+set -euo pipefail
+
+# Job Information
+echo "======================================"
+echo "SLURM Job Information"
+echo "======================================"
+echo "Job ID: $SLURM_JOB_ID"
+echo "Job Name: $SLURM_JOB_NAME"
+echo "Node: $SLURM_NODELIST"
+echo "Start Time: $(date)"
+echo "Working Directory: $(pwd)"
+echo ""
+
+# GPU Information
+if command -v nvidia-smi &> /dev/null; then
+    echo "GPU Information:"
+    nvidia-smi
+    echo ""
+fi
+
+# Load modules (if needed)
+{{MODULES}}
+
+# Create directories
+mkdir -p {{OUTPUT_DIR}}
+mkdir -p Logs
+
+# Create log file
+LOG_FILE="Logs/dorado_${SLURM_JOB_ID}.log"
+
+# Function to log messages
+log_message() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "${LOG_FILE}"
+}
+
+# Start basecalling
+log_message "Starting dorado basecalling"
+log_message "Input: {{INPUT_DIR}}"
+log_message "Output: {{OUTPUT_DIR}}"
+log_message "Model: {{MODEL}}"
+
+# Execute dorado
+{{DORADO_COMMAND}} 2>&1 | tee -a "${LOG_FILE}"
+
+# Check exit status
+if [ ${PIPESTATUS[0]} -eq 0 ]; then
+    log_message "✅ Basecalling completed successfully"
+    
+    # Generate statistics
+    OUTPUT_FILE={{OUTPUT_FILE}}
+    if [[ "$OUTPUT_FILE" == *.bam ]] && command -v samtools &> /dev/null; then
+        log_message "Generating BAM statistics..."
+        samtools index "$OUTPUT_FILE"
+        samtools flagstat "$OUTPUT_FILE" > "${OUTPUT_FILE%.bam}_flagstat.txt"
+        samtools stats "$OUTPUT_FILE" > "${OUTPUT_FILE%.bam}_stats.txt"
+        log_message "Statistics generated"
+    fi
+else
+    log_message "❌ Basecalling failed with exit code ${PIPESTATUS[0]}"
+    exit 1
+fi
+
+# Job Summary
+echo ""
+echo "======================================"
+echo "Job Summary"
+echo "======================================"
+echo "End Time: $(date)"
+echo "Total Runtime: $SECONDS seconds"
+echo "Exit Status: $?"
+echo "Log File: ${LOG_FILE}"
+echo "Output: {{OUTPUT_FILE}}"

@@ -1,0 +1,65 @@
+# Full Research Pipeline with Methylation
+# Run: ont_experiments.py pipeline run research-full exp-abc123
+
+name: research-full
+description: Complete research workflow with methylation and SV calling
+version: "1.0"
+
+steps:
+  - name: end_reasons
+    analysis: end_reasons
+    required: true
+    outputs: [json, plot]
+    
+  - name: basecalling
+    analysis: basecalling
+    depends_on: [end_reasons]
+    parameters:
+      model: sup
+      modifications: 5mCG_5hmCG
+    outputs: [bam, json]
+    
+  - name: alignment
+    analysis: alignment
+    depends_on: [basecalling]
+    parameters:
+      reference: GRCh38
+      preset: map-ont
+    outputs: [bam, stats, coverage]
+    
+  - name: variants
+    analysis: variant_calling
+    depends_on: [alignment]
+    parameters:
+      caller: clair3
+    outputs: [vcf, json]
+    
+  - name: sv_calling
+    analysis: sv_calling
+    depends_on: [alignment]
+    parameters:
+      caller: sniffles2
+      min_support: 3
+    outputs: [vcf, json]
+    
+  - name: methylation
+    analysis: methylation
+    depends_on: [alignment]
+    parameters:
+      method: modkit
+    outputs: [bedmethyl, bigwig]
+
+aggregation:
+  metrics:
+    - source: end_reasons
+      fields: [quality_status, signal_positive_pct]
+    - source: basecalling
+      fields: [mean_qscore, n50, total_reads]
+    - source: alignment
+      fields: [mapped_pct, mean_coverage]
+    - source: variants
+      fields: [total_variants, pass_variants]
+    - source: sv_calling
+      fields: [total_svs, insertions, deletions]
+    - source: methylation
+      fields: [mean_methylation, cpg_coverage]

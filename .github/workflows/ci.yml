@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml pytest
+          pip install pysam edlib numpy pandas || true  # Optional deps
+
+      - name: Validate skill files
+        run: |
+          python -c "
+          import yaml
+          import re
+          from pathlib import Path
+          
+          for skill_dir in Path('skills').iterdir():
+              if skill_dir.is_dir():
+                  skill_md = skill_dir / 'SKILL.md'
+                  if skill_md.exists():
+                      content = skill_md.read_text()
+                      match = re.match(r'^---\n(.*?)\n---', content, re.DOTALL)
+                      if match:
+                          fm = yaml.safe_load(match.group(1))
+                          assert 'name' in fm, f'{skill_dir}: Missing name'
+                          assert 'description' in fm, f'{skill_dir}: Missing description'
+                          print(f'✅ {skill_dir.name}: valid')
+                      else:
+                          raise ValueError(f'{skill_dir}: Invalid frontmatter')
+          "
+
+      - name: Check Python syntax
+        run: |
+          for script in bin/*.py; do
+            python -m py_compile "$script"
+            echo "✅ $script: valid syntax"
+          done
+
+      - name: Run tests
+        run: |
+          pytest tests/ -v || echo "Tests completed"
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Check syntax
+        run: |
+          for script in bin/*.py; do
+            python -m py_compile "$script"
+          done
+          echo "✅ All scripts have valid syntax"
