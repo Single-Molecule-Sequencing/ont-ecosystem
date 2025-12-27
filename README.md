@@ -203,19 +203,88 @@ pip install flask
 # minimap2, samtools, dorado
 ```
 
-## Claude Skills
+## Claude Integration
 
-Upload `.skill` files to Claude Projects for AI-assisted analysis:
+### Quick Setup for Claude Projects
 
+1. **Upload configuration file**:
+   ```
+   CLAUDE.md                    # Comprehensive Claude guide
+   ```
+
+2. **Upload required skills**:
+   ```
+   skills/ont-experiments-v2.skill    # Core (always required)
+   skills/end-reason.skill            # QC analysis
+   skills/ont-align.skill             # Alignment
+   skills/ont-pipeline.skill          # Pipelines
+   ```
+
+3. **Upload your experiment registry** (optional):
+   ```
+   registry/experiments.yaml
+   ```
+
+4. **Start using Claude** with natural language:
+   ```
+   "Analyze the end reasons for my latest SMAseq experiment"
+   "Compare N50 across all my PromethION runs"
+   "Run the pharmacogenomics pipeline on exp-abc123"
+   ```
+
+### Available Skills
+
+| Skill | File | Purpose |
+|-------|------|---------|
+| **Core** | `ont-experiments-v2.skill` | Registry, orchestration, provenance |
+| **QC** | `end-reason.skill` | End reason analysis, quality status |
+| **Alignment** | `ont-align.skill` | Mapping, edit distance calculation |
+| **Pipeline** | `ont-pipeline.skill` | Multi-step workflow orchestration |
+| **Basecalling** | `dorado-bench-v2.skill` | GPU basecalling with HPC support |
+| **Monitoring** | `ont-monitor.skill` | Real-time run monitoring |
+| **Database** | `experiment-db.skill` | SQLite queries and export |
+
+### Skill Sets by Use Case
+
+```bash
+# Minimal (experiment management only)
+skills/ont-experiments-v2.skill
+
+# QC Workflow
+skills/ont-experiments-v2.skill
+skills/end-reason.skill
+skills/ont-monitor.skill
+
+# SMAseq Analysis
+skills/ont-experiments-v2.skill
+skills/end-reason.skill
+# + bin/ont_smaseq_readlen.py
+
+# Clinical/Pharmacogenomics
+skills/ont-experiments-v2.skill
+skills/end-reason.skill
+skills/ont-pipeline.skill
+skills/dorado-bench-v2.skill
+skills/ont-align.skill
 ```
-skills/
-├── ont-experiments-v2.skill
-├── ont-align.skill
-├── ont-pipeline.skill
-├── end-reason.skill
-├── dorado-bench-v2.skill
-└── ont-monitor.skill
-```
+
+### Updating Claude
+
+When new versions are released:
+
+1. Pull latest changes: `git pull origin main`
+2. Re-upload updated `.skill` files to Claude Projects
+3. Re-upload `CLAUDE.md` for updated instructions
+4. Verify in conversation: "What version of ont-experiments is loaded?"
+
+See **[CLAUDE.md](CLAUDE.md)** for complete setup and usage guide.
+
+### Skill Development
+
+To create new skills, see:
+- **[docs/SKILL_TEMPLATE.md](docs/SKILL_TEMPLATE.md)** - Skill template and structure
+- **[docs/SKILL_DEVELOPMENT.md](docs/SKILL_DEVELOPMENT.md)** - Development guide
+- **[skills/MANIFEST.yaml](skills/MANIFEST.yaml)** - Skill registry
 
 ## Complete CYP2D6 Workflow
 

@@ -1,0 +1,320 @@
+# ONT Ecosystem Skills Manifest
+# This file provides a central registry of all available skills,
+# their versions, dependencies, and integration points.
+
+version: "1.0.0"
+updated: "2025-12-27"
+
+# =============================================================================
+# Core Skills (Required)
+# =============================================================================
+
+core:
+  ont-experiments-v2:
+    version: "2.2.0"
+    description: "Core experiment registry and orchestration"
+    category: orchestration
+    required: true
+    bin: ont_experiments.py
+    skill_file: ont-experiments-v2.skill
+    provides:
+      - experiment_registry
+      - pattern_b_orchestration
+      - provenance_tracking
+    commands:
+      - discover
+      - list
+      - show
+      - search
+      - run
+    dependencies:
+      python: ">=3.7"
+      required: []
+      optional:
+        - pyyaml
+
+# =============================================================================
+# Analysis Skills
+# =============================================================================
+
+analysis:
+  end-reason:
+    version: "1.0.0"
+    description: "QC analysis of read end reasons"
+    category: qc
+    bin: end_reason.py
+    skill_file: end-reason.skill
+    provides:
+      - end_reason_analysis
+      - quality_status
+      - adaptive_sampling_metrics
+    integrates_with:
+      - ont-experiments-v2
+      - ont-pipeline
+    dependencies:
+      python: ">=3.7"
+      required: []
+      optional:
+        - pod5
+        - h5py
+        - matplotlib
+        - pandas
+
+  ont-align:
+    version: "1.0.0"
+    description: "Alignment with edit distance calculation"
+    category: alignment
+    bin: ont_align.py
+    skill_file: ont-align.skill
+    provides:
+      - bam_alignment
+      - edit_distance
+      - identity_metrics
+    integrates_with:
+      - ont-experiments-v2
+      - ont-pipeline
+    dependencies:
+      python: ">=3.7"
+      required:
+        - pysam
+      optional:
+        - edlib
+        - matplotlib
+
+  ont-smaseq-readlen:
+    version: "1.0.0"
+    description: "Fine-grained read length distributions for SMAseq"
+    category: analysis
+    bin: ont_smaseq_readlen.py
+    skill_file: null  # Not yet packaged
+    provides:
+      - read_length_distribution
+      - fragment_analysis
+      - peak_detection
+      - hq_filtering
+    integrates_with:
+      - ont-experiments-v2
+    dependencies:
+      python: ">=3.7"
+      required:
+        - numpy
+        - matplotlib
+      optional:
+        - scipy
+        - pyyaml
+        - pod5
+
+  ont-monitor:
+    version: "1.0.0"
+    description: "Real-time sequencing run monitoring"
+    category: monitoring
+    bin: ont_monitor.py
+    skill_file: ont-monitor.skill
+    provides:
+      - live_monitoring
+      - throughput_tracking
+      - alert_thresholds
+      - time_series_plots
+    integrates_with:
+      - ont-experiments-v2
+    dependencies:
+      python: ">=3.7"
+      required: []
+      optional:
+        - matplotlib
+        - pandas
+
+# =============================================================================
+# Pipeline Skills
+# =============================================================================
+
+pipeline:
+  ont-pipeline:
+    version: "1.0.0"
+    description: "Multi-step workflow orchestration"
+    category: workflow
+    bin: ont_pipeline.py
+    skill_file: ont-pipeline.skill
+    provides:
+      - yaml_workflows
+      - step_orchestration
+      - pipeline_templates
+    integrates_with:
+      - ont-experiments-v2
+      - end-reason
+      - ont-align
+      - dorado-bench-v2
+    pipelines:
+      - qc-fast.yaml
+      - pharmaco-clinical.yaml
+      - research-full.yaml
+    dependencies:
+      python: ">=3.7"
+      required:
+        - pyyaml
+      optional: []
+
+  dorado-bench-v2:
+    version: "2.0.0"
+    description: "GPU basecalling with HPC support"
+    category: basecalling
+    bin: dorado_basecall.py
+    skill_file: dorado-bench-v2.skill
+    provides:
+      - gpu_basecalling
+      - slurm_integration
+      - model_benchmarking
+    integrates_with:
+      - ont-experiments-v2
+      - ont-pipeline
+    hpc_configs:
+      - greatlakes
+      - armis2
+    dependencies:
+      python: ">=3.7"
+      required: []
+      optional:
+        - pyyaml
+      system:
+        - dorado (ONT basecaller)
+        - CUDA toolkit
+
+# =============================================================================
+# Data Management Skills
+# =============================================================================
+
+data_management:
+  experiment-db:
+    version: "2.0.0"
+    description: "SQLite database for experiment queries"
+    category: database
+    bin: experiment_db.py
+    skill_file: experiment-db.skill
+    provides:
+      - sqlite_storage
+      - sql_queries
+      - csv_export
+      - registry_sync
+    integrates_with:
+      - ont-experiments-v2
+    dependencies:
+      python: ">=3.7"
+      required: []  # sqlite3 is stdlib
+      optional:
+        - pandas
+
+# =============================================================================
+# Skill Categories
+# =============================================================================
+
+categories:
+  orchestration:
+    description: "Core workflow and experiment management"
+    skills: [ont-experiments-v2]
+
+  qc:
+    description: "Quality control and assessment"
+    skills: [end-reason]
+
+  analysis:
+    description: "Data analysis and statistics"
+    skills: [ont-smaseq-readlen, ont-align]
+
+  monitoring:
+    description: "Real-time run monitoring"
+    skills: [ont-monitor]
+
+  workflow:
+    description: "Pipeline orchestration"
+    skills: [ont-pipeline]
+
+  basecalling:
+    description: "Basecalling and signal processing"
+    skills: [dorado-bench-v2]
+
+  database:
+    description: "Data storage and queries"
+    skills: [experiment-db]
+
+# =============================================================================
+# Recommended Skill Sets
+# =============================================================================
+
+skill_sets:
+  minimal:
+    description: "Minimum for experiment management"
+    skills:
+      - ont-experiments-v2
+
+  qc:
+    description: "Quality control workflow"
+    skills:
+      - ont-experiments-v2
+      - end-reason
+      - ont-monitor
+
+  smaseq:
+    description: "SMAseq analysis workflow"
+    skills:
+      - ont-experiments-v2
+      - end-reason
+      - ont-smaseq-readlen
+
+  clinical:
+    description: "Clinical/pharmacogenomics workflow"
+    skills:
+      - ont-experiments-v2
+      - end-reason
+      - ont-pipeline
+      - dorado-bench-v2
+      - ont-align
+
+  full:
+    description: "Complete research workflow"
+    skills:
+      - ont-experiments-v2
+      - end-reason
+      - ont-align
+      - ont-pipeline
+      - ont-monitor
+      - dorado-bench-v2
+      - experiment-db
+      - ont-smaseq-readlen
+
+# =============================================================================
+# Integration Matrix
+# =============================================================================
+
+integration_matrix:
+  # Which skills can call which other skills
+  ont-experiments-v2:
+    can_call: [end-reason, ont-align, ont-monitor, dorado-bench-v2]
+    called_by: []
+
+  end-reason:
+    can_call: []
+    called_by: [ont-experiments-v2, ont-pipeline]
+
+  ont-align:
+    can_call: []
+    called_by: [ont-experiments-v2, ont-pipeline]
+
+  ont-pipeline:
+    can_call: [end-reason, ont-align, dorado-bench-v2, ont-monitor]
+    called_by: [ont-experiments-v2]
+
+  dorado-bench-v2:
+    can_call: []
+    called_by: [ont-experiments-v2, ont-pipeline]
+
+  ont-monitor:
+    can_call: []
+    called_by: [ont-experiments-v2, ont-pipeline]
+
+  experiment-db:
+    can_call: []
+    called_by: []  # Standalone tool
+
+  ont-smaseq-readlen:
+    can_call: []
+    called_by: [ont-experiments-v2]  # Future integration
