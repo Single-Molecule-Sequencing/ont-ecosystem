@@ -285,18 +285,33 @@ class PublicDataExtractor:
         return files
 
     def extract_metadata_from_path(self, path: str) -> Dict:
-        """Extract metadata from file path patterns."""
+        """Extract comprehensive metadata from file path patterns."""
         metadata = {}
 
-        # Extract flowcell ID (pattern: P[A-Z]{2}\d{5} or F[A-Z]{2}\d{5})
-        flowcell_match = re.search(r'([PF][A-Z]{2}\d{5})', path)
-        if flowcell_match:
-            metadata["flowcell_id"] = flowcell_match.group(1)
+        # Extract flowcell ID (various patterns)
+        flowcell_patterns = [
+            r'([PF][A-Z]{2}\d{5})',  # PAW12345, FAL12345
+            r'([A-Z]{3}\d{5})',       # ABC12345
+        ]
+        for pattern in flowcell_patterns:
+            match = re.search(pattern, path)
+            if match:
+                metadata["flowcell_id"] = match.group(1)
+                break
 
-        # Extract sample name (e.g., HG001, HG002, NA12878)
-        sample_match = re.search(r'(HG\d{3,5}|NA\d{5}|GM\d{5})', path, re.IGNORECASE)
-        if sample_match:
-            metadata["sample"] = sample_match.group(1).upper()
+        # Extract sample name (GIAB samples, cell lines, etc.)
+        sample_patterns = [
+            (r'(HG\d{3,5})', lambda m: m.upper()),  # GIAB: HG001, HG002, etc.
+            (r'(NA\d{5})', lambda m: m.upper()),     # Coriell: NA12878, etc.
+            (r'(GM\d{5})', lambda m: m.upper()),     # Cell lines
+            (r'(COLO829)', lambda m: m.upper()),     # Cancer cell line
+            (r'(K562)', lambda m: m.upper()),        # Cell line
+        ]
+        for pattern, transform in sample_patterns:
+            match = re.search(pattern, path, re.IGNORECASE)
+            if match:
+                metadata["sample"] = transform(match.group(1))
+                break
 
         # Extract run ID (8 hex chars)
         run_match = re.search(r'_([a-f0-9]{8})(?:[_/\.]|$)', path)
@@ -308,15 +323,181 @@ class PublicDataExtractor:
         if barcode_match:
             metadata["barcode"] = barcode_match.group(1).lower()
 
-        # Detect model quality
-        if '/sup/' in path or '_sup' in path:
+        # Detect basecall model quality
+        path_lower = path.lower()
+        if '/sup/' in path_lower or '.sup' in path_lower or '_sup' in path_lower:
             metadata["basecall_model"] = "sup"
-        elif '/hac/' in path or '_hac' in path:
+        elif '/hac/' in path_lower or '.hac' in path_lower or '_hac' in path_lower:
             metadata["basecall_model"] = "hac"
-        elif '/fast/' in path or '_fast' in path:
+        elif '/fast/' in path_lower or '.fast' in path_lower or '_fast' in path_lower:
             metadata["basecall_model"] = "fast"
 
+        # Detect chemistry/flowcell type
+        chemistry_patterns = [
+            (r'r10\.?4\.?1', 'R10.4.1'),
+            (r'r10\.?4', 'R10.4'),
+            (r'r9\.?4\.?1', 'R9.4.1'),
+            (r'r9\.?4', 'R9.4'),
+            (r'e8\.?2', 'E8.2'),
+        ]
+        for pattern, chemistry in chemistry_patterns:
+            if re.search(pattern, path_lower):
+                metadata["chemistry"] = chemistry
+                break
+
+        # Detect reference genome
+        reference_patterns = [
+            (r'(grch38|hg38)', 'GRCh38'),
+            (r'(grch37|hg19)', 'GRCh37'),
+            (r'(chm13|t2t)', 'CHM13-T2T'),
+        ]
+        for pattern, ref in reference_patterns:
+            if re.search(pattern, path_lower):
+                metadata["reference"] = ref
+                break
+
+        # Detect modification calling
+        mod_patterns = [
+            (r'5mCG', '5mCG'),
+            (r'5hmCG', '5hmCG'),
+            (r'6mA', '6mA'),
+            (r'4mC', '4mC'),
+            (r'modbase', 'modified_bases'),
+        ]
+        mods_found = []
+        for pattern, mod in mod_patterns:
+            if re.search(pattern, path, re.IGNORECASE):
+                mods_found.append(mod)
+        if mods_found:
+            metadata["modifications"] = mods_found
+
+        # Extract replicate number
+        rep_match = re.search(r'rep(\d+)', path, re.IGNORECASE)
+        if rep_match:
+            metadata["replicate"] = int(rep_match.group(1))
+
+        # Detect sequencing kit
+        kit_patterns = [
+            (r'sqk-lsk114', 'SQK-LSK114'),
+            (r'sqk-lsk110', 'SQK-LSK110'),
+            (r'sqk-lsk109', 'SQK-LSK109'),
+            (r'sqk-nbD114', 'SQK-NBD114'),
+            (r'sqk-rbk114', 'SQK-RBK114'),
+            (r'sqk-16s114', 'SQK-16S114'),
+        ]
+        for pattern, kit in kit_patterns:
+            if re.search(pattern, path_lower):
+                metadata["kit"] = kit
+                break
+
+        # Detect device type from flowcell prefix
+        if metadata.get("flowcell_id"):
+            fc = metadata["flowcell_id"]
+            if fc.startswith("PA"):
+                metadata["device_type"] = "PromethION"
+            elif fc.startswith("FA") or fc.startswith("FB"):
+                metadata["device_type"] = "Flongle"
+            elif fc.startswith("MN"):
+                metadata["device_type"] = "MinION"
+
+        # Extract date patterns (YYYY.MM or YYYYMM)
+        date_match = re.search(r'(\d{4})[\._]?(\d{2})(?:[\._](\d{2}))?', path)
+        if date_match:
+            year, month = date_match.group(1), date_match.group(2)
+            if 2020 <= int(year) <= 2030 and 1 <= int(month) <= 12:
+                metadata["dataset_date"] = f"{year}-{month}"
+
+        # Detect adaptive sampling
+        if 'adaptive' in path_lower or 'readfish' in path_lower or 'enrich' in path_lower:
+            metadata["adaptive_sampling"] = True
+
+        # Detect duplex calling
+        if 'duplex' in path_lower:
+            metadata["duplex"] = True
+
         return metadata
+
+    def extract_metadata_from_bam_header(self, bam_url: str) -> Dict:
+        """Extract metadata from BAM header via streaming."""
+        metadata = {}
+        https_url = bam_url.replace(self.S3_BUCKET + "/", self.HTTPS_BASE + "/")
+
+        try:
+            cmd = f"samtools view -H {https_url} 2>/dev/null | head -100"
+            result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=30)
+            if result.returncode != 0:
+                return metadata
+
+            header_lines = result.stdout.strip().split('\n')
+
+            for line in header_lines:
+                if line.startswith('@RG'):
+                    # Read Group - contains sample, library, platform info
+                    rg_parts = line.split('\t')
+                    for part in rg_parts[1:]:
+                        if part.startswith('SM:'):
+                            metadata["sample_from_header"] = part[3:]
+                        elif part.startswith('LB:'):
+                            metadata["library"] = part[3:]
+                        elif part.startswith('PL:'):
+                            metadata["platform"] = part[3:]
+                        elif part.startswith('DS:'):
+                            # Description often contains model info
+                            desc = part[3:]
+                            metadata["description"] = desc
+                            # Parse basecaller version from description
+                            if 'dorado' in desc.lower():
+                                metadata["basecaller"] = "dorado"
+                                ver_match = re.search(r'dorado[/_\s]?([\d\.]+)', desc, re.IGNORECASE)
+                                if ver_match:
+                                    metadata["basecaller_version"] = ver_match.group(1)
+                            elif 'guppy' in desc.lower():
+                                metadata["basecaller"] = "guppy"
+                                ver_match = re.search(r'guppy[/_\s]?([\d\.]+)', desc, re.IGNORECASE)
+                                if ver_match:
+                                    metadata["basecaller_version"] = ver_match.group(1)
+
+                elif line.startswith('@PG'):
+                    # Program info
+                    pg_parts = line.split('\t')
+                    for part in pg_parts[1:]:
+                        if part.startswith('PN:'):
+                            program = part[3:]
+                            if program not in metadata.get("programs", []):
+                                metadata.setdefault("programs", []).append(program)
+                        elif part.startswith('VN:'):
+                            metadata["program_version"] = part[3:]
+                        elif part.startswith('CL:'):
+                            # Command line - often contains useful info
+                            cmdline = part[3:]
+                            # Extract model path
+                            model_match = re.search(r'(dna_r\d+\.\d+\.\d+_[^/\s]+)', cmdline)
+                            if model_match:
+                                metadata["model"] = model_match.group(1)
+
+                elif line.startswith('@SQ'):
+                    # Reference sequences - extract reference genome info
+                    if "reference_contigs" not in metadata:
+                        metadata["reference_contigs"] = 0
+                    metadata["reference_contigs"] += 1
+
+                    sq_parts = line.split('\t')
+                    for part in sq_parts[1:]:
+                        if part.startswith('SN:') and "sample_contig" not in metadata:
+                            contig = part[3:]
+                            # Detect reference from contig names
+                            if contig.startswith('chr') or contig in ['1', '2', 'X', 'Y', 'MT']:
+                                if 'CHM13' in line or 'T2T' in line:
+                                    metadata["reference_detected"] = "CHM13-T2T"
+                                else:
+                                    metadata["reference_detected"] = "GRCh38"
+                            metadata["sample_contig"] = contig
+
+            return metadata
+
+        except Exception as e:
+            print(f"  Warning: Could not parse BAM header: {e}")
+            return metadata
 
     def stream_bam_stats(self, bam_url: str, max_reads: int = MAX_SAMPLE_READS) -> Optional[Dict]:
         """Stream reads from BAM and compute statistics."""
@@ -399,7 +580,7 @@ class PublicDataExtractor:
 
 
 def generate_html_browser(registry: ExperimentRegistry, output_path: Path):
-    """Generate interactive HTML browser for registry."""
+    """Generate comprehensive interactive HTML browser for registry with full metadata."""
     experiments = registry.get_experiments()
 
     # Group by source
@@ -411,6 +592,27 @@ def generate_html_browser(registry: ExperimentRegistry, output_path: Path):
     # Calculate statistics
     total_reads = sum(e.get("total_reads", 0) for e in experiments)
     total_bases = sum(e.get("total_bases", 0) for e in experiments)
+    analyzed_count = sum(1 for e in experiments if e.get("analyses"))
+    with_artifacts = sum(1 for e in experiments if e.get("artifacts"))
+
+    # Collect unique metadata values for filters
+    all_samples = set()
+    all_datasets = set()
+    all_devices = set()
+    all_chemistry = set()
+    all_basecallers = set()
+    for exp in experiments:
+        meta = exp.get("metadata", {})
+        if meta.get("sample"):
+            all_samples.add(meta["sample"])
+        if meta.get("dataset"):
+            all_datasets.add(meta["dataset"])
+        if meta.get("device_type"):
+            all_devices.add(meta["device_type"])
+        if meta.get("chemistry"):
+            all_chemistry.add(meta["chemistry"])
+        if meta.get("basecall_model"):
+            all_basecallers.add(meta["basecall_model"])
 
     html = f'''<!DOCTYPE html>
 <html lang="en">
@@ -433,28 +635,43 @@ def generate_html_browser(registry: ExperimentRegistry, output_path: Path):
             border-radius: 12px;
             margin-bottom: 20px;
         }}
-        .header h1 {{ margin: 0 0 10px 0; }}
+        .header h1 {{ margin: 0 0 10px 0; font-size: 2em; }}
+        .header-subtitle {{ opacity: 0.9; }}
         .stats {{
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
             margin-bottom: 20px;
         }}
         .stat-card {{
             background: white;
-            padding: 20px;
+            padding: 18px;
             border-radius: 10px;
             text-align: center;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }}
         .stat-card .value {{
-            font-size: 2em;
+            font-size: 1.8em;
             font-weight: bold;
             color: #1a5f7a;
         }}
         .stat-card .label {{
             color: #666;
-            font-size: 0.9em;
+            font-size: 0.85em;
+            margin-top: 4px;
+        }}
+        .filters {{
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }}
+        .filter-select {{
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            min-width: 140px;
         }}
         .search-box {{
             width: 100%;
@@ -462,16 +679,37 @@ def generate_html_browser(registry: ExperimentRegistry, output_path: Path):
             font-size: 16px;
             border: 2px solid #ddd;
             border-radius: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }}
-        .search-box:focus {{
+        .search-box:focus, .filter-select:focus {{
             border-color: #1a5f7a;
             outline: none;
         }}
+        .view-toggle {{
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+        }}
+        .view-btn {{
+            padding: 8px 16px;
+            border: 2px solid #1a5f7a;
+            background: white;
+            color: #1a5f7a;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }}
+        .view-btn.active {{
+            background: #1a5f7a;
+            color: white;
+        }}
         .experiment-grid {{
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
             gap: 15px;
+        }}
+        .experiment-grid.list-view {{
+            grid-template-columns: 1fr;
         }}
         .experiment-card {{
             background: white;
@@ -485,22 +723,44 @@ def generate_html_browser(registry: ExperimentRegistry, output_path: Path):
             box-shadow: 0 5px 20px rgba(0,0,0,0.15);
         }}
         .experiment-card h3 {{
-            margin: 0 0 10px 0;
+            margin: 0 0 8px 0;
             color: #333;
-            font-size: 1.1em;
+            font-size: 1.05em;
             word-break: break-all;
         }}
         .experiment-card .id {{
             font-family: monospace;
-            color: #666;
-            font-size: 0.85em;
+            color: #888;
+            font-size: 0.8em;
         }}
-        .experiment-card .metrics {{
+        .badge-row {{
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }}
+        .badge {{
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.72em;
+        }}
+        .badge-local {{ background: #e8f5e9; color: #2e7d32; }}
+        .badge-public {{ background: #e3f2fd; color: #1565c0; }}
+        .badge-analyzed {{ background: #fff3e0; color: #ef6c00; }}
+        .badge-sample {{ background: #fce4ec; color: #c2185b; }}
+        .badge-device {{ background: #f3e5f5; color: #7b1fa2; }}
+        .badge-chemistry {{ background: #e0f2f1; color: #00695c; }}
+        .badge-model {{ background: #e8eaf6; color: #3f51b5; }}
+        .badge-mods {{ background: #ffe0b2; color: #e65100; }}
+        .badge-adaptive {{ background: #b2ebf2; color: #006064; }}
+        .badge-duplex {{ background: #dcedc8; color: #33691e; }}
+        .metrics {{
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 8px;
-            margin-top: 15px;
-            padding-top: 15px;
+            margin-top: 12px;
+            padding-top: 12px;
             border-top: 1px solid #eee;
         }}
         .metric {{
@@ -509,59 +769,98 @@ def generate_html_browser(registry: ExperimentRegistry, output_path: Path):
         .metric .value {{
             font-weight: bold;
             color: #1a5f7a;
+            font-size: 0.95em;
         }}
         .metric .label {{
-            font-size: 0.75em;
+            font-size: 0.7em;
             color: #888;
         }}
-        .badge {{
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-size: 0.75em;
-            margin-right: 5px;
-        }}
-        .badge-local {{ background: #e8f5e9; color: #2e7d32; }}
-        .badge-public {{ background: #e3f2fd; color: #1565c0; }}
-        .badge-analyzed {{ background: #fff3e0; color: #ef6c00; }}
         .quality-high {{ color: #27ae60; }}
         .quality-medium {{ color: #f39c12; }}
         .quality-low {{ color: #e74c3c; }}
-        .section {{
-            margin-bottom: 30px;
-        }}
-        .section h2 {{
-            color: #333;
-            border-bottom: 2px solid #1a5f7a;
-            padding-bottom: 10px;
-        }}
-        .artifacts {{
-            margin-top: 10px;
+        .metadata-section {{
+            margin-top: 12px;
             padding: 10px;
             background: #f8f9fa;
-            border-radius: 5px;
-            font-size: 0.85em;
+            border-radius: 6px;
+            font-size: 0.82em;
         }}
-        .artifact-link {{
+        .metadata-section .meta-title {{
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 6px;
+        }}
+        .meta-grid {{
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 4px 12px;
+        }}
+        .meta-item {{
+            display: flex;
+            justify-content: space-between;
+        }}
+        .meta-key {{ color: #888; }}
+        .meta-value {{ color: #333; font-weight: 500; }}
+        .artifacts {{
+            margin-top: 10px;
+            padding: 8px;
+            background: #e3f2fd;
+            border-radius: 5px;
+            font-size: 0.82em;
+        }}
+        .expand-btn {{
+            background: none;
+            border: none;
             color: #1a5f7a;
-            text-decoration: none;
+            cursor: pointer;
+            font-size: 0.85em;
+            padding: 4px 0;
+        }}
+        .hidden {{ display: none; }}
+        .summary-table {{
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }}
+        .summary-table th, .summary-table td {{
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }}
+        .summary-table th {{
+            background: #1a5f7a;
+            color: white;
+        }}
+        .summary-table tr:hover {{
+            background: #f5f5f5;
         }}
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>ONT Experiment Registry</h1>
-        <p>Interactive browser for {len(experiments)} experiments</p>
-        <p>Last updated: {registry.data.get("updated", "Unknown")}</p>
+        <h1>ONT Experiment Registry Browser</h1>
+        <p class="header-subtitle">{len(experiments)} experiments | Last updated: {registry.data.get("updated", "Unknown")[:19]}</p>
     </div>
 
     <div class="stats">
         <div class="stat-card">
             <div class="value">{len(experiments)}</div>
-            <div class="label">Experiments</div>
+            <div class="label">Total Experiments</div>
         </div>
         <div class="stat-card">
-            <div class="value">{total_reads:,}</div>
+            <div class="value">{analyzed_count}</div>
+            <div class="label">Analyzed</div>
+        </div>
+        <div class="stat-card">
+            <div class="value">{with_artifacts}</div>
+            <div class="label">With Artifacts</div>
+        </div>
+        <div class="stat-card">
+            <div class="value">{total_reads/1e6:.1f}M</div>
             <div class="label">Total Reads</div>
         </div>
         <div class="stat-card">
@@ -569,45 +868,128 @@ def generate_html_browser(registry: ExperimentRegistry, output_path: Path):
             <div class="label">Total Bases</div>
         </div>
         <div class="stat-card">
-            <div class="value">{len(by_source)}</div>
-            <div class="label">Sources</div>
+            <div class="value">{len(all_samples)}</div>
+            <div class="label">Unique Samples</div>
         </div>
     </div>
 
-    <input type="text" class="search-box" id="search" placeholder="Search experiments by name, ID, or metadata..." oninput="filterExperiments()">
+    <input type="text" class="search-box" id="search" placeholder="Search by name, sample, dataset, device, chemistry..." oninput="filterExperiments()">
+
+    <div class="filters">
+        <select class="filter-select" id="sourceFilter" onchange="filterExperiments()">
+            <option value="">All Sources</option>
+            <option value="local">Local</option>
+            <option value="ont-open-data">ONT Open Data</option>
+        </select>
+        <select class="filter-select" id="sampleFilter" onchange="filterExperiments()">
+            <option value="">All Samples</option>
+            {' '.join(f'<option value="{s}">{s}</option>' for s in sorted(all_samples))}
+        </select>
+        <select class="filter-select" id="deviceFilter" onchange="filterExperiments()">
+            <option value="">All Devices</option>
+            {' '.join(f'<option value="{d}">{d}</option>' for d in sorted(all_devices))}
+        </select>
+        <select class="filter-select" id="chemistryFilter" onchange="filterExperiments()">
+            <option value="">All Chemistry</option>
+            {' '.join(f'<option value="{c}">{c}</option>' for c in sorted(all_chemistry))}
+        </select>
+        <select class="filter-select" id="modelFilter" onchange="filterExperiments()">
+            <option value="">All Models</option>
+            {' '.join(f'<option value="{m}">{m.upper()}</option>' for m in sorted(all_basecallers))}
+        </select>
+        <select class="filter-select" id="statusFilter" onchange="filterExperiments()">
+            <option value="">All Status</option>
+            <option value="analyzed">Analyzed</option>
+            <option value="with-artifacts">With Artifacts</option>
+        </select>
+    </div>
+
+    <div class="view-toggle">
+        <button class="view-btn active" onclick="setView('grid')">Grid View</button>
+        <button class="view-btn" onclick="setView('list')">List View</button>
+        <button class="view-btn" onclick="setView('table')">Table View</button>
+    </div>
 
     <div class="experiment-grid" id="experiments">
 '''
 
-    for exp in experiments[:100]:  # Limit to 100 for performance
+    for exp in experiments:
         name = exp.get("name", "Unknown")
         exp_id = exp.get("id", "Unknown")
         source = exp.get("source", "local")
-        total_reads = exp.get("total_reads", 0)
-        total_bases = exp.get("total_bases", 0)
-        mean_q = exp.get("mean_quality", 0)
+        exp_reads = exp.get("total_reads", 0)
+        exp_bases = exp.get("total_bases", 0)
+        mean_q = exp.get("mean_quality", 0) or 0
         n50 = exp.get("n50", 0)
         analyses = exp.get("analyses", [])
         artifacts = exp.get("artifacts", [])
+        metadata = exp.get("metadata", {})
 
         q_class = "quality-high" if mean_q >= 20 else "quality-medium" if mean_q >= 10 else "quality-low"
         source_badge = "badge-public" if source == "ont-open-data" else "badge-local"
 
+        # Build data attributes for filtering
+        data_attrs = {
+            "source": source,
+            "sample": metadata.get("sample", ""),
+            "device": metadata.get("device_type", ""),
+            "chemistry": metadata.get("chemistry", ""),
+            "model": metadata.get("basecall_model", ""),
+            "analyzed": "yes" if analyses else "no",
+            "artifacts": "yes" if artifacts else "no",
+        }
+        data_str = " ".join(f'data-{k}="{v}"' for k, v in data_attrs.items())
+
+        # Build badges
+        badges = [f'<span class="badge {source_badge}">{source}</span>']
+        if analyses:
+            badges.append('<span class="badge badge-analyzed">analyzed</span>')
+        if metadata.get("sample"):
+            badges.append(f'<span class="badge badge-sample">{metadata["sample"]}</span>')
+        if metadata.get("device_type"):
+            badges.append(f'<span class="badge badge-device">{metadata["device_type"]}</span>')
+        if metadata.get("chemistry"):
+            badges.append(f'<span class="badge badge-chemistry">{metadata["chemistry"]}</span>')
+        if metadata.get("basecall_model"):
+            badges.append(f'<span class="badge badge-model">{metadata["basecall_model"].upper()}</span>')
+        if metadata.get("modifications"):
+            mods = ", ".join(metadata["modifications"][:2])
+            badges.append(f'<span class="badge badge-mods">{mods}</span>')
+        if metadata.get("adaptive_sampling"):
+            badges.append('<span class="badge badge-adaptive">adaptive</span>')
+        if metadata.get("duplex"):
+            badges.append('<span class="badge badge-duplex">duplex</span>')
+
+        # Build metadata display
+        meta_items = []
+        for key in ["dataset", "flowcell_id", "reference", "basecaller", "basecaller_version",
+                    "kit", "library", "replicate", "dataset_date"]:
+            if metadata.get(key):
+                display_key = key.replace("_", " ").title()
+                meta_items.append(f'<div class="meta-item"><span class="meta-key">{display_key}:</span><span class="meta-value">{metadata[key]}</span></div>')
+
+        # Analysis results
+        analysis_info = ""
+        if analyses:
+            latest = analyses[-1]
+            results = latest.get("results", {})
+            if results.get("mapping_rate") is not None:
+                analysis_info = f'<div class="meta-item"><span class="meta-key">Mapping Rate:</span><span class="meta-value">{results["mapping_rate"]:.1f}%</span></div>'
+
         html += f'''
-        <div class="experiment-card" data-search="{name.lower()} {exp_id.lower()} {json.dumps(exp).lower()}">
-            <h3>{name[:50]}{'...' if len(name) > 50 else ''}</h3>
+        <div class="experiment-card" {data_str} data-search="{name.lower()} {exp_id.lower()} {json.dumps(metadata).lower()}">
+            <h3>{name[:60]}{'...' if len(name) > 60 else ''}</h3>
             <div class="id">{exp_id}</div>
-            <div style="margin-top: 10px;">
-                <span class="badge {source_badge}">{source}</span>
-                {'<span class="badge badge-analyzed">analyzed</span>' if analyses else ''}
+            <div class="badge-row">
+                {''.join(badges)}
             </div>
             <div class="metrics">
                 <div class="metric">
-                    <div class="value">{total_reads:,}</div>
+                    <div class="value">{exp_reads:,}</div>
                     <div class="label">Reads</div>
                 </div>
                 <div class="metric">
-                    <div class="value">{total_bases/1e9:.1f} Gb</div>
+                    <div class="value">{exp_bases/1e9:.2f} Gb</div>
                     <div class="label">Bases</div>
                 </div>
                 <div class="metric">
@@ -619,21 +1001,117 @@ def generate_html_browser(registry: ExperimentRegistry, output_path: Path):
                     <div class="label">N50</div>
                 </div>
             </div>
-            {'<div class="artifacts">' + f'{len(artifacts)} artifacts' + '</div>' if artifacts else ''}
+            {f'<div class="metadata-section"><div class="meta-title">Metadata</div><div class="meta-grid">{"".join(meta_items)}{analysis_info}</div></div>' if meta_items else ''}
+            {f'<div class="artifacts">{len(artifacts)} artifact(s): {", ".join(a.get("type", "unknown") for a in artifacts[:3])}</div>' if artifacts else ''}
         </div>
 '''
 
+    # Add table view (hidden by default)
     html += '''
     </div>
+
+    <table class="summary-table hidden" id="tableView">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Source</th>
+                <th>Sample</th>
+                <th>Device</th>
+                <th>Reads</th>
+                <th>Bases</th>
+                <th>Q-Score</th>
+                <th>N50</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+'''
+
+    for exp in experiments:
+        name = exp.get("name", "Unknown")[:40]
+        source = exp.get("source", "local")
+        metadata = exp.get("metadata", {})
+        sample = metadata.get("sample", "-")
+        device = metadata.get("device_type", "-")
+        reads = exp.get("total_reads", 0)
+        bases = exp.get("total_bases", 0)
+        mean_q = exp.get("mean_quality", 0) or 0
+        n50 = exp.get("n50", 0)
+        status = "Analyzed" if exp.get("analyses") else "Registered"
+
+        html += f'''
+            <tr>
+                <td>{name}</td>
+                <td>{source}</td>
+                <td>{sample}</td>
+                <td>{device}</td>
+                <td>{reads:,}</td>
+                <td>{bases/1e9:.2f} Gb</td>
+                <td>{mean_q:.1f}</td>
+                <td>{n50:,}</td>
+                <td>{status}</td>
+            </tr>
+'''
+
+    html += '''
+        </tbody>
+    </table>
 
     <script>
         function filterExperiments() {
             const query = document.getElementById('search').value.toLowerCase();
+            const sourceFilter = document.getElementById('sourceFilter').value;
+            const sampleFilter = document.getElementById('sampleFilter').value;
+            const deviceFilter = document.getElementById('deviceFilter').value;
+            const chemistryFilter = document.getElementById('chemistryFilter').value;
+            const modelFilter = document.getElementById('modelFilter').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+
             const cards = document.querySelectorAll('.experiment-card');
             cards.forEach(card => {
                 const searchText = card.getAttribute('data-search');
-                card.style.display = searchText.includes(query) ? 'block' : 'none';
+                const source = card.getAttribute('data-source');
+                const sample = card.getAttribute('data-sample');
+                const device = card.getAttribute('data-device');
+                const chemistry = card.getAttribute('data-chemistry');
+                const model = card.getAttribute('data-model');
+                const analyzed = card.getAttribute('data-analyzed');
+                const hasArtifacts = card.getAttribute('data-artifacts');
+
+                let show = true;
+                if (query && !searchText.includes(query)) show = false;
+                if (sourceFilter && source !== sourceFilter) show = false;
+                if (sampleFilter && sample !== sampleFilter) show = false;
+                if (deviceFilter && device !== deviceFilter) show = false;
+                if (chemistryFilter && chemistry !== chemistryFilter) show = false;
+                if (modelFilter && model !== modelFilter) show = false;
+                if (statusFilter === 'analyzed' && analyzed !== 'yes') show = false;
+                if (statusFilter === 'with-artifacts' && hasArtifacts !== 'yes') show = false;
+
+                card.style.display = show ? 'block' : 'none';
             });
+        }
+
+        function setView(view) {
+            const buttons = document.querySelectorAll('.view-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            const grid = document.getElementById('experiments');
+            const table = document.getElementById('tableView');
+
+            if (view === 'table') {
+                grid.classList.add('hidden');
+                table.classList.remove('hidden');
+            } else {
+                grid.classList.remove('hidden');
+                table.classList.add('hidden');
+                if (view === 'list') {
+                    grid.classList.add('list-view');
+                } else {
+                    grid.classList.remove('list-view');
+                }
+            }
         }
     </script>
 </body>
@@ -697,7 +1175,7 @@ def cmd_check(args, registry: ExperimentRegistry):
 
 
 def cmd_add_public(args, registry: ExperimentRegistry):
-    """Add public experiment to registry with metadata extraction."""
+    """Add public experiment to registry with comprehensive metadata extraction."""
     dataset = args.dataset
     experiment = args.experiment
 
@@ -719,12 +1197,25 @@ def cmd_add_public(args, registry: ExperimentRegistry):
     print("  Discovering files...")
     files = extractor.discover_experiment_files(dataset, experiment)
 
-    # Extract metadata from paths
+    # Extract metadata from all file paths
     metadata = {"dataset": dataset, "source_key": source_key}
     for file_type, file_list in files.items():
         for f in file_list:
             path_meta = extractor.extract_metadata_from_path(f["path"])
-            metadata.update(path_meta)
+            # Merge without overwriting existing values
+            for k, v in path_meta.items():
+                if k not in metadata:
+                    metadata[k] = v
+
+    # Extract metadata from BAM header if available
+    if files["bam_files"]:
+        bam_file = files["bam_files"][0]
+        bam_url = f"{extractor.S3_BUCKET}/{bam_file['path']}"
+        print("  Extracting BAM header metadata...")
+        header_meta = extractor.extract_metadata_from_bam_header(bam_url)
+        for k, v in header_meta.items():
+            if k not in metadata:
+                metadata[k] = v
 
     # Stream BAM for statistics
     stats = None
@@ -734,11 +1225,19 @@ def cmd_add_public(args, registry: ExperimentRegistry):
         print(f"  Streaming stats from BAM ({bam_file['size']/1e6:.1f} MB)...")
         stats = extractor.stream_bam_stats(bam_url)
 
+    # Calculate total file sizes
+    total_size = 0
+    for file_type, file_list in files.items():
+        for f in file_list:
+            total_size += f.get("size", 0)
+    metadata["total_file_size_bytes"] = total_size
+    metadata["total_file_size_gb"] = round(total_size / 1e9, 2)
+
     # Build experiment record
     exp_record = {
         "name": experiment,
         "source": "ont-open-data",
-        "status": "registered",
+        "status": "analyzed" if stats else "registered",
         "metadata": metadata,
         "files": {k: len(v) for k, v in files.items()},
     }
@@ -755,13 +1254,17 @@ def cmd_add_public(args, registry: ExperimentRegistry):
         }]
 
     if exists:
-        # Update existing
+        # Update existing - merge analyses if they exist
+        if existing.get("analyses") and exp_record.get("analyses"):
+            exp_record["analyses"] = existing["analyses"] + exp_record["analyses"]
         registry.update_experiment(existing["id"], exp_record)
         print(f"  Updated: {existing['id']}")
+        print(f"  Metadata fields: {len(metadata)}")
     else:
         # Add new
         exp_id = registry.add_experiment(exp_record)
         print(f"  Registered: {exp_id}")
+        print(f"  Metadata fields: {len(metadata)}")
 
     return 0
 

@@ -1,14 +1,14 @@
 ---
 name: registry-browser
-version: 1.0.0
-description: Interactive registry browser and metadata management for ONT experiments. Visualize, search, and update experiment metadata with analysis results and artifact tracking.
+version: 1.1.0
+description: Interactive registry browser with comprehensive metadata extraction for ONT experiments. Visualize, search, filter, and manage experiment metadata with BAM header parsing, artifact tracking, and multi-view HTML browser.
 author: Single Molecule Sequencing Lab
 user_invocable: true
 ---
 
 # Registry Browser
 
-Interactive browser and metadata manager for the ONT experiment registry.
+Interactive browser and metadata manager for the ONT experiment registry with comprehensive metadata extraction.
 
 ## Commands
 
@@ -29,7 +29,7 @@ python ~/repos/ont-ecosystem/skills/registry-browser/scripts/registry_browser.py
 python ~/repos/ont-ecosystem/skills/registry-browser/scripts/registry_browser.py check "<id_or_name>"
 ```
 
-### Add public experiment
+### Add public experiment with full metadata extraction
 ```bash
 python ~/repos/ont-ecosystem/skills/registry-browser/scripts/registry_browser.py add-public <dataset> <experiment> --analyze
 ```
@@ -55,8 +55,17 @@ python ~/repos/ont-ecosystem/skills/registry-browser/scripts/registry_browser.py
 
 ## Features
 
-- **Visual Browser**: Interactive HTML interface with search
-- **Metadata Enrichment**: Extract and track comprehensive metadata
+- **Visual Browser**: Interactive HTML with grid/list/table views
+- **Advanced Filtering**: Filter by source, sample, device, chemistry, model
+- **Comprehensive Metadata**: Extract from file paths and BAM headers
+  - Sample ID (HG001, NA12878, etc.)
+  - Device type (PromethION, MinION, Flongle)
+  - Chemistry (R10.4.1, R9.4.1)
+  - Basecaller and version
+  - Reference genome
+  - Modifications (5mCG, 5hmCG)
+  - Kit, library, replicate info
+- **BAM Header Parsing**: Extract @RG, @PG, @SQ metadata
 - **Artifact Tracking**: Track plots, summaries, and result files
 - **Duplicate Detection**: Check before adding experiments
 - **Public Data Integration**: Register ONT Open Data experiments

@@ -1,7 +1,7 @@
 ---
 name: registry-browser
-version: 1.0.0
-description: Interactive registry browser and metadata management for ONT experiments. Visualize, search, and update experiment metadata with analysis results and artifact tracking.
+version: 1.1.0
+description: Interactive registry browser with comprehensive metadata extraction for ONT experiments. Visualize, search, filter, and manage experiment metadata with BAM header parsing, artifact tracking, and multi-view HTML browser.
 author: Single Molecule Sequencing Lab
 slash_command: registry-browser
 user_invocable: true
@@ -11,6 +11,8 @@ tags:
   - visualization
   - metadata
   - browser
+  - bam-header
+  - filtering
 dependencies:
   - pyyaml
   - jinja2 (optional, for HTML reports)
@@ -18,12 +20,21 @@ dependencies:
 
 # Registry Browser Skill
 
-Interactive browser and metadata manager for the ONT experiment registry. Provides visualization, search, metadata enrichment, and artifact tracking.
+Interactive browser and metadata manager for the ONT experiment registry with comprehensive metadata extraction from file paths and BAM headers.
 
 ## Features
 
-- **Visual Registry Browser**: Interactive HTML interface to explore experiments
-- **Metadata Enrichment**: Extract and store comprehensive metadata from experiments
+- **Visual Registry Browser**: Interactive HTML interface with grid/list/table views
+- **Advanced Filtering**: Filter by source, sample, device, chemistry, basecall model
+- **Comprehensive Metadata Extraction**:
+  - Sample ID (HG001, NA12878, COLO829, etc.)
+  - Device type (PromethION, MinION, Flongle)
+  - Chemistry (R10.4.1, R9.4.1, E8.2)
+  - Basecaller and version (dorado, guppy)
+  - Reference genome (GRCh38, CHM13-T2T)
+  - Modifications (5mCG, 5hmCG, 6mA)
+  - Kit, library, replicate info
+- **BAM Header Parsing**: Extract @RG, @PG, @SQ metadata
 - **Artifact Tracking**: Track analysis outputs, plots, and result files
 - **Search & Filter**: Full-text search across all experiment metadata
 - **Public Data Integration**: Register public ONT experiments with full metadata
