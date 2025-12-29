@@ -41,7 +41,8 @@ SKILL_VERSIONS = {
     "ont-monitor": "1.0.0",
     "experiment-db": "2.0.0",
     "manuscript": "1.0.0",  # Figure/table generation
-    "ont-public-data": "1.0.0"  # Stream & analyze public ONT datasets
+    "ont-public-data": "1.0.0",  # Stream & analyze public ONT datasets
+    "registry-browser": "1.0.0"  # Interactive registry browser & metadata management
 }
 
 # Logging configuration - import on demand to avoid circular imports
