@@ -115,6 +115,15 @@ COMMANDS = {
                 "ont_backup.py restore backup.tar.gz",
             ]
         },
+        "ont_doctor.py": {
+            "description": "Diagnose issues and suggest fixes",
+            "examples": [
+                "ont_doctor.py",
+                "ont_doctor.py --fix",
+                "ont_doctor.py --quick",
+                "ont_doctor.py --json",
+            ]
+        },
         "ont_context.py": {
             "description": "Unified experiment context and equation execution",
             "examples": [

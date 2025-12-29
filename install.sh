@@ -47,7 +47,7 @@ if [ -f "bin/ont_experiments.py" ]; then
 elif [ "$FORCE_CURL" = true ]; then
     echo "📥 Downloading from GitHub (public repo mode)..."
     echo "   Note: This requires the repository to be public."
-    for script in ont_experiments.py ont_align.py ont_pipeline.py end_reason.py ont_monitor.py dorado_basecall.py calculate_resources.py ont_endreason_qc.py experiment_db.py ont_config.py ont_context.py ont_manuscript.py ont_stats.py ont_check.py ont_help.py ont_update.py ont_backup.py; do
+    for script in ont_experiments.py ont_align.py ont_pipeline.py end_reason.py ont_monitor.py dorado_basecall.py calculate_resources.py ont_endreason_qc.py experiment_db.py ont_config.py ont_context.py ont_manuscript.py ont_stats.py ont_check.py ont_help.py ont_update.py ont_backup.py ont_doctor.py; do
         curl -sSL "$REPO_URL/raw/main/bin/$script" -o "$INSTALL_DIR/bin/$script" 2>/dev/null || true
     done
 else

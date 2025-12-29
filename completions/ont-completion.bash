@@ -153,7 +153,7 @@ _ont_help() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    commands="ont_experiments ont_pipeline ont_manuscript end_reason ont_align dorado_basecall ont_monitor ont_stats ont_check ont_update ont_backup ont_context experiment_db calculate_resources make_sbatch_from_cmdtxt"
+    commands="ont_experiments ont_pipeline ont_manuscript end_reason ont_align dorado_basecall ont_monitor ont_stats ont_check ont_update ont_backup ont_doctor ont_context experiment_db calculate_resources make_sbatch_from_cmdtxt"
 
     case "${prev}" in
         ont_help.py|ont-help)
@@ -219,6 +219,20 @@ _ont_backup() {
 }
 complete -F _ont_backup ont_backup.py
 complete -F _ont_backup ont-backup
+
+# ont_doctor.py completion
+_ont_doctor() {
+    local cur
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+
+    if [[ ${cur} == -* ]]; then
+        COMPREPLY=( $(compgen -W "--help --fix --quick --verbose --json" -- ${cur}) )
+        return 0
+    fi
+}
+complete -F _ont_doctor ont_doctor.py
+complete -F _ont_doctor ont-doctor
 
 # make completion for ont-ecosystem targets
 _ont_make() {

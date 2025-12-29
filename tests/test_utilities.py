@@ -620,3 +620,147 @@ def test_backup_metadata():
     assert 'created_at' in metadata
     assert 'hostname' in metadata
     assert 'user' in metadata
+
+
+# =============================================================================
+# ont_doctor.py Tests
+# =============================================================================
+
+def test_doctor_imports():
+    """Test that ont_doctor.py can be imported"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_doctor",
+        bin_dir / "ont_doctor.py"
+    )
+    ont_doctor = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_doctor)
+
+    assert hasattr(ont_doctor, 'Doctor')
+    assert hasattr(ont_doctor, 'DiagnosticResult')
+    assert hasattr(ont_doctor, 'print_results')
+
+
+def test_doctor_diagnostic_result():
+    """Test DiagnosticResult dataclass"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_doctor",
+        bin_dir / "ont_doctor.py"
+    )
+    ont_doctor = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_doctor)
+
+    result = ont_doctor.DiagnosticResult(
+        name="Test Check",
+        status="ok",
+        message="Everything is fine",
+        fix_available=False
+    )
+    assert result.name == "Test Check"
+    assert result.status == "ok"
+    assert result.fix_available is False
+
+
+def test_doctor_python_version_check():
+    """Test Python version diagnostic"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_doctor",
+        bin_dir / "ont_doctor.py"
+    )
+    ont_doctor = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_doctor)
+
+    doctor = ont_doctor.Doctor()
+    doctor.check_python_version()
+
+    assert len(doctor.results) == 1
+    result = doctor.results[0]
+    assert result.name == "Python Version"
+    assert result.status in ["ok", "warning", "error"]
+
+
+def test_doctor_required_packages_check():
+    """Test required packages diagnostic"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_doctor",
+        bin_dir / "ont_doctor.py"
+    )
+    ont_doctor = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_doctor)
+
+    doctor = ont_doctor.Doctor()
+    doctor.check_required_packages()
+
+    assert len(doctor.results) == 1
+    result = doctor.results[0]
+    assert result.name == "Required Packages"
+    assert result.status in ["ok", "error"]
+
+
+def test_doctor_skills_check():
+    """Test skills diagnostic"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_doctor",
+        bin_dir / "ont_doctor.py"
+    )
+    ont_doctor = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_doctor)
+
+    doctor = ont_doctor.Doctor()
+    doctor.check_skills()
+
+    assert len(doctor.results) == 1
+    result = doctor.results[0]
+    assert result.name == "Skills"
+    assert result.status in ["ok", "warning", "error"]
+
+
+def test_doctor_run_all_quick():
+    """Test running all diagnostics in quick mode"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_doctor",
+        bin_dir / "ont_doctor.py"
+    )
+    ont_doctor = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_doctor)
+
+    doctor = ont_doctor.Doctor()
+    results = doctor.run_all(quick=True)
+
+    # Quick mode should run core checks only
+    assert len(results) >= 3  # Python version, installation, required packages
+    for result in results:
+        assert result.status in ["ok", "warning", "error"]
+
+
+def test_doctor_run_all_full():
+    """Test running all diagnostics in full mode"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_doctor",
+        bin_dir / "ont_doctor.py"
+    )
+    ont_doctor = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_doctor)
+
+    doctor = ont_doctor.Doctor()
+    results = doctor.run_all(quick=False)
+
+    # Full mode should run more checks
+    assert len(results) >= 6
+    check_names = [r.name for r in results]
+    assert "Python Version" in check_names
+    assert "Required Packages" in check_names
+    assert "Skills" in check_names
