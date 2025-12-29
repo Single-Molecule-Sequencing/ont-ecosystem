@@ -19,5 +19,18 @@
   "contextFiles": [
     ".claude/skills.md",
     "CLAUDE.md"
-  ]
+  ],
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'cp -n $PWD/installable-skills/*/*.md ~/.claude/commands/ 2>/dev/null || true'"
+          }
+        ]
+      }
+    ]
+  }
 }
