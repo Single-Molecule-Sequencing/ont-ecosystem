@@ -12,7 +12,7 @@ Skills are automatically installed to `~/.claude/commands/`. Invoke with `/<skil
 
 | Command | Purpose |
 |---------|---------|
-| `/comprehensive-analysis` | 9 publication figures, KDE, data sampling with runtime estimation |
+| `/comprehensive-analysis` | Publication figures, KDE, data sampling with runtime estimation |
 | `/end-reason` | End reason QC for adaptive sampling |
 | `/ont-experiments-v2` | Experiment registry with provenance tracking |
 | `/ont-align` | Alignment, reference management, edit distance |
@@ -21,6 +21,7 @@ Skills are automatically installed to `~/.claude/commands/`. Invoke with `/<skil
 | `/dorado-bench-v2` | Dorado basecalling on UM HPC |
 | `/experiment-db` | SQLite database for experiments |
 | `/manuscript` | Publication figures and tables |
+| `/skill-maker` | Create and manage Claude skills |
 
 ### Quick Examples
 
@@ -66,6 +67,12 @@ ont_init.py project my-proj      # Create new project from template
 ont_help.py                      # List all commands with examples
 ont_changelog.py                 # Generate changelog from git history
 ont_changelog.py stats           # Show commit statistics
+
+# Experiment management
+ont_experiments.py init --git              # Initialize registry with git tracking
+ont_experiments.py discover /path --register  # Find and register experiments
+ont_experiments.py run end_reasons exp-001 --json qc.json  # Run with provenance
+ont_experiments.py history exp-001         # View experiment event history
 ```
 
 ## Architecture
@@ -124,7 +131,7 @@ Usage: `from lib import load_json, ProgressBar, ValidationError, Config, paralle
 
 ### Figure/Table Generation
 
-11 generators in `skills/manuscript/generators/`:
+15 generators in `skills/manuscript/generators/`:
 - **Figures (10)**: fig_end_reason_kde, fig_end_reason_pie, fig_quality_dist, fig_read_length, fig_yield_timeline, fig_n50_barplot, fig_metrics_heatmap, fig_coverage, fig_alignment_stats, fig_comparison
 - **Tables (5)**: tbl_qc_summary, tbl_basecalling, tbl_alignment, tbl_comparison, tbl_experiment_summary
 
