@@ -123,6 +123,48 @@ JOIN read_statistics rs ON e.id = rs.experiment_id
 GROUP BY protocol;
 ```
 
+## Great Lakes Discovery & Sync
+
+Discover experiments on Great Lakes HPC turbo drive and sync to GitHub.
+
+### Full Workflow
+
+```bash
+# Generate and submit discovery SLURM job
+python3 sync_greatlakes.py
+
+# Or step by step:
+# 1. Generate discovery job (runs on Great Lakes via SLURM)
+python3 sync_greatlakes.py --generate-only
+ssh greatlakes "sbatch /nfs/turbo/umms-atheylab/discovery_job.sbatch"
+
+# 2. After job completes, compare and review changes
+python3 greatlakes_discovery.py compare \
+  --manifest /nfs/turbo/umms-atheylab/experiment_manifest.json
+
+# 3. Sync approved changes to GitHub
+python3 greatlakes_discovery.py sync \
+  --manifest /nfs/turbo/umms-atheylab/experiment_manifest.json \
+  --approved --github
+```
+
+### Configuration
+
+Turbo drive paths (in `greatlakes_discovery.py`):
+- Base: `/nfs/turbo/umms-atheylab`
+- Scan dirs: `sequencing_data`, `miamon`, `backup_from_desktop`
+- Manifest: `/nfs/turbo/umms-atheylab/experiment_manifest.json`
+- Database: `/nfs/turbo/umms-atheylab/experiments.db`
+
+### GitHub Registry
+
+Discovered experiments are exported to `registry/experiments_snapshot.json` for version control. The workflow:
+1. SLURM job scans turbo drive for `final_summary*.txt` files
+2. Exports manifest with metadata (sample_id, flow_cell, file counts)
+3. Compares against current database
+4. User reviews and approves proposed changes
+5. Snapshot exported to GitHub repo
+
 ## Dependencies
 
 - Python >= 3.7
