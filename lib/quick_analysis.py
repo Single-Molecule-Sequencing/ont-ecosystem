@@ -55,10 +55,15 @@ class QuickSummary:
     device_id: Optional[str] = None
     protocol: Optional[str] = None
     kit: Optional[str] = None
-    started: Optional[str] = None
-    ended: Optional[str] = None
+    started: Optional[str] = None  # Raw ISO timestamp
+    ended: Optional[str] = None    # Raw ISO timestamp
 
-    # Metrics (from sampled sequencing_summary)
+    # Parsed time info for display
+    start_date: Optional[str] = None      # e.g., "2025-11-24"
+    start_time: Optional[str] = None      # e.g., "20:37"
+    duration_hours: Optional[float] = None  # e.g., 72.5
+
+    # Metrics (actual totals, not sampled)
     total_reads: Optional[int] = None
     passed_reads: Optional[int] = None
     failed_reads: Optional[int] = None
@@ -126,6 +131,93 @@ def parse_final_summary(filepath: Path) -> Dict[str, str]:
     except Exception:
         pass
     return data
+
+
+def parse_timestamp(ts: Optional[str]) -> Optional[Tuple[str, str]]:
+    """Parse ISO timestamp into date and time strings.
+
+    Args:
+        ts: ISO format timestamp (e.g., "2025-11-24T20:37:26.111070-05:00")
+
+    Returns:
+        Tuple of (date_str, time_str) or None if parsing fails
+    """
+    if not ts:
+        return None
+    try:
+        # Handle ISO format with timezone
+        # Remove microseconds and timezone for simpler parsing
+        ts_clean = ts.split('.')[0]  # Remove microseconds
+        if 'T' in ts_clean:
+            date_part, time_part = ts_clean.split('T')
+            return date_part, time_part[:5]  # Just HH:MM
+        return None
+    except Exception:
+        return None
+
+
+def calculate_duration_hours(start: Optional[str], end: Optional[str]) -> Optional[float]:
+    """Calculate duration in hours between two ISO timestamps.
+
+    Args:
+        start: Start ISO timestamp
+        end: End ISO timestamp
+
+    Returns:
+        Duration in hours, or None if calculation fails
+    """
+    if not start or not end:
+        return None
+    try:
+        from datetime import datetime
+
+        # Parse ISO format (handle various formats)
+        def parse_iso(ts):
+            ts_clean = ts.split('.')[0]  # Remove microseconds
+            # Remove timezone offset for parsing
+            if '+' in ts_clean:
+                ts_clean = ts_clean.split('+')[0]
+            elif ts_clean.count('-') > 2:
+                # Has negative timezone like -05:00
+                parts = ts_clean.rsplit('-', 1)
+                if ':' in parts[-1]:
+                    ts_clean = parts[0]
+            return datetime.fromisoformat(ts_clean)
+
+        start_dt = parse_iso(start)
+        end_dt = parse_iso(end)
+
+        duration = end_dt - start_dt
+        return duration.total_seconds() / 3600
+    except Exception:
+        return None
+
+
+def count_sequencing_summary_reads(filepath: Path) -> Optional[int]:
+    """Count total reads in sequencing_summary.txt (fast line count).
+
+    Args:
+        filepath: Path to sequencing_summary.txt
+
+    Returns:
+        Total read count (excluding header), or None on error
+    """
+    try:
+        # Fast line count using buffer reading
+        count = 0
+        with open(filepath, 'rb') as f:
+            # Skip header
+            f.readline()
+            # Count remaining lines
+            buf_size = 1024 * 1024  # 1MB buffer
+            while True:
+                buf = f.read(buf_size)
+                if not buf:
+                    break
+                count += buf.count(b'\n')
+        return count
+    except Exception:
+        return None
 
 
 def sample_sequencing_summary(
@@ -994,6 +1086,14 @@ def quick_summary(
         summary.started = meta.get('started') or meta.get('protocol_start_time')
         summary.ended = meta.get('processing_stopped') or meta.get('acquisition_stopped')
 
+        # Parse timestamps for display
+        ts_parsed = parse_timestamp(summary.started)
+        if ts_parsed:
+            summary.start_date, summary.start_time = ts_parsed
+
+        # Calculate run duration
+        summary.duration_hours = calculate_duration_hours(summary.started, summary.ended)
+
     # Sample data for metrics using fallback chain:
     # 1. sequencing_summary.txt (fastest, most complete)
     # 2. fastq/fastq.gz files (good Q-scores and lengths)
@@ -1009,18 +1109,16 @@ def quick_summary(
         stats = sample_sequencing_summary(files['sequencing_summary'], max_rows=MAX_SAMPLE_READS)
         if stats:
             stats_source = 'sequencing_summary'
-            # Estimate total reads based on file size vs sampled rows
-            try:
-                file_size = files['sequencing_summary'].stat().st_size
-                bytes_per_row = file_size / max(stats['sampled_reads'], 1)
-                estimated_reads = int(file_size / bytes_per_row) if bytes_per_row > 0 else stats['sampled_reads']
-
-                scale = estimated_reads / max(stats['sampled_reads'], 1)
-                summary.total_reads = estimated_reads
+            # Get ACTUAL total reads by counting lines (fast)
+            actual_reads = count_sequencing_summary_reads(files['sequencing_summary'])
+            if actual_reads:
+                summary.total_reads = actual_reads
+                # Scale pass/fail/bases based on sample ratio
+                scale = actual_reads / max(stats['sampled_reads'], 1)
                 summary.passed_reads = int(stats['passed_reads'] * scale)
                 summary.failed_reads = int(stats['failed_reads'] * scale)
                 summary.total_bases = int(stats['total_bases'] * scale)
-            except Exception:
+            else:
                 summary.total_reads = stats['sampled_reads']
                 summary.passed_reads = stats['passed_reads']
                 summary.failed_reads = stats['failed_reads']
