@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://ont-ecosystem.sms-lab.org/schemas/experiment.json",
   "title": "Experiment Metadata",
-  "description": "Schema for ONT experiment entries in the registry",
+  "description": "Schema for ONT experiment entries based on MinKNOW output specifications (https://nanoporetech.github.io/ont-output-specifications/)",
   "type": "object",
   "properties": {
     "id": {
@@ -13,48 +13,401 @@
     "name": {
       "type": "string",
       "description": "Human-readable experiment name",
-      "minLength": 3,
-      "maxLength": 100
+      "minLength": 1,
+      "maxLength": 200
     },
     "location": {
       "type": "string",
       "description": "Path to experiment data directory"
     },
-    "platform": {
+    "source": {
       "type": "string",
-      "description": "ONT sequencing platform or consumable ID"
-    },
-    "flowcell_type": {
-      "type": "string",
-      "description": "Flowcell type (e.g., FLO-PRO114M)"
-    },
-    "kit": {
-      "type": "string",
-      "description": "Library prep kit (e.g., SQK-LSK114)"
-    },
-    "sample_id": {
-      "type": "string",
-      "description": "Sample identifier"
-    },
-    "reference": {
-      "type": "string",
-      "description": "Path to reference genome"
+      "enum": ["local", "s3", "github", "hpc"],
+      "description": "Data source type",
+      "default": "local"
     },
     "status": {
       "type": "string",
-      "enum": ["pending", "running", "completed", "failed", "archived", "registered", "active"],
-      "description": "Experiment status"
+      "enum": ["discovered", "registered", "active", "archived", "failed", "pending", "running", "completed"],
+      "description": "Experiment status",
+      "default": "discovered"
     },
-    "created": {
+
+    "run_id": {
+      "type": "string",
+      "description": "Acquisition run UUID (acquisition_run_id from MinKNOW)",
+      "pattern": "^[a-f0-9]{8}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{12}$|^[a-f0-9]{32,40}$"
+    },
+    "protocol_run_id": {
+      "type": "string",
+      "description": "Protocol run UUID from MinKNOW"
+    },
+    "sample_id": {
+      "type": "string",
+      "description": "User-specified sample identifier",
+      "pattern": "^[a-zA-Z0-9_.\\-]+$"
+    },
+    "experiment_id": {
+      "type": "string",
+      "description": "Protocol group ID / experiment name"
+    },
+
+    "platform": {
+      "type": "string",
+      "description": "ONT platform type (MinION, GridION, PromethION, P2Solo)",
+      "enum": ["MinION", "MinION Mk1B", "MinION Mk1C", "MinION Mk1D", "GridION", "PromethION", "PromethION 24", "PromethION 48", "P2Solo", "P2i", "Flongle", "unknown"]
+    },
+    "device_id": {
+      "type": "string",
+      "description": "Device serial number (e.g., MN12345, PCT0009)"
+    },
+    "device_type": {
+      "type": "string",
+      "description": "Device model identifier (e.g., minion_mk1d, promethion)"
+    },
+    "position_id": {
+      "type": "string",
+      "description": "Position identifier for multi-position devices (e.g., 1-A5-D5)"
+    },
+    "host_product_serial_number": {
+      "type": "string",
+      "description": "Host computer serial number"
+    },
+
+    "flowcell_id": {
+      "type": "string",
+      "description": "Flow cell identifier (e.g., FAK54854, PAD15520)",
+      "pattern": "^[A-Z]{2,3}[A-Z0-9]+$"
+    },
+    "flowcell_type": {
+      "type": "string",
+      "description": "Flow cell product code (e.g., FLO-MIN114, FLO-PRO114M)",
+      "pattern": "^FLO-[A-Z0-9]+$"
+    },
+    "pore_type": {
+      "type": "string",
+      "description": "Pore chemistry version (e.g., R10.4.1, R9.4.1)"
+    },
+
+    "kit": {
+      "type": "string",
+      "description": "Primary sequencing kit (e.g., SQK-LSK114, SQK-RBK114.96)",
+      "pattern": "^[A-Z]{2,4}-[A-Z0-9.]+$"
+    },
+    "expansion_kit": {
+      "type": "string",
+      "description": "Expansion kit if used (e.g., EXP-NBD114)",
+      "pattern": "^[A-Z]{2,4}-[A-Z0-9]+$"
+    },
+    "chemistry": {
+      "type": "string",
+      "description": "Chemistry version derived from kit/flowcell combination"
+    },
+    "protocol_name": {
+      "type": "string",
+      "description": "Name of the sequencing protocol"
+    },
+
+    "total_reads": {
+      "type": "integer",
+      "description": "Total number of reads",
+      "minimum": 0
+    },
+    "pass_reads": {
+      "type": "integer",
+      "description": "Number of reads passing quality filter",
+      "minimum": 0
+    },
+    "fail_reads": {
+      "type": "integer",
+      "description": "Number of reads failing quality filter",
+      "minimum": 0
+    },
+    "skip_reads": {
+      "type": "integer",
+      "description": "Number of skipped reads (adaptive sampling)",
+      "minimum": 0
+    },
+    "total_bases": {
+      "type": "integer",
+      "description": "Total bases sequenced",
+      "minimum": 0
+    },
+    "pass_bases": {
+      "type": "integer",
+      "description": "Bases from pass reads",
+      "minimum": 0
+    },
+    "fail_bases": {
+      "type": "integer",
+      "description": "Bases from fail reads",
+      "minimum": 0
+    },
+
+    "n50": {
+      "type": "number",
+      "description": "N50 read length in bases",
+      "minimum": 0
+    },
+    "mean_length": {
+      "type": "number",
+      "description": "Mean read length in bases",
+      "minimum": 0
+    },
+    "median_length": {
+      "type": "number",
+      "description": "Median read length in bases",
+      "minimum": 0
+    },
+    "max_length": {
+      "type": "integer",
+      "description": "Maximum read length in bases",
+      "minimum": 0
+    },
+    "min_length": {
+      "type": "integer",
+      "description": "Minimum read length in bases",
+      "minimum": 0
+    },
+
+    "mean_quality": {
+      "type": "number",
+      "description": "Mean Q-score (calculated in probability space per CLAUDE.md)",
+      "minimum": 0,
+      "maximum": 60
+    },
+    "median_quality": {
+      "type": "number",
+      "description": "Median Q-score",
+      "minimum": 0,
+      "maximum": 60
+    },
+    "pass_threshold": {
+      "type": "number",
+      "description": "Q-score threshold for pass/fail classification",
+      "default": 9,
+      "minimum": 0,
+      "maximum": 60
+    },
+
+    "run_started": {
       "type": "string",
       "format": "date-time",
-      "description": "Creation timestamp (ISO 8601)"
+      "description": "Acquisition start timestamp (ISO 8601)"
     },
-    "updated": {
+    "run_ended": {
       "type": "string",
       "format": "date-time",
-      "description": "Last update timestamp (ISO 8601)"
+      "description": "Acquisition stop timestamp (ISO 8601)"
     },
+    "processing_stopped": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Processing completion timestamp (ISO 8601)"
+    },
+    "run_duration_hours": {
+      "type": "number",
+      "description": "Total run duration in hours",
+      "minimum": 0
+    },
+    "discovered": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Registry discovery timestamp (ISO 8601)"
+    },
+    "last_accessed": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last registry access timestamp (ISO 8601)"
+    },
+
+    "data_format": {
+      "type": "string",
+      "enum": ["pod5", "fast5", "bam", "fastq"],
+      "description": "Primary data format"
+    },
+    "file_count": {
+      "type": "integer",
+      "description": "Total number of data files",
+      "minimum": 0,
+      "default": 0
+    },
+    "total_size_gb": {
+      "type": "number",
+      "description": "Total data size in gigabytes",
+      "minimum": 0,
+      "default": 0
+    },
+    "pod5_files": {
+      "type": "integer",
+      "description": "Number of POD5 files",
+      "minimum": 0,
+      "default": 0
+    },
+    "pod5_pass_files": {
+      "type": "integer",
+      "description": "Number of POD5 files in pass directory",
+      "minimum": 0,
+      "default": 0
+    },
+    "pod5_fail_files": {
+      "type": "integer",
+      "description": "Number of POD5 files in fail directory",
+      "minimum": 0,
+      "default": 0
+    },
+    "pod5_skip_files": {
+      "type": "integer",
+      "description": "Number of POD5 files in skip directory",
+      "minimum": 0,
+      "default": 0
+    },
+    "fast5_files": {
+      "type": "integer",
+      "description": "Number of Fast5 files",
+      "minimum": 0,
+      "default": 0
+    },
+    "fastq_pass_files": {
+      "type": "integer",
+      "description": "Number of FASTQ files in pass directory",
+      "minimum": 0,
+      "default": 0
+    },
+    "fastq_fail_files": {
+      "type": "integer",
+      "description": "Number of FASTQ files in fail directory",
+      "minimum": 0,
+      "default": 0
+    },
+    "bam_pass_files": {
+      "type": "integer",
+      "description": "Number of BAM files in pass directory",
+      "minimum": 0,
+      "default": 0
+    },
+    "bam_fail_files": {
+      "type": "integer",
+      "description": "Number of BAM files in fail directory",
+      "minimum": 0,
+      "default": 0
+    },
+
+    "is_barcoded": {
+      "type": "boolean",
+      "description": "Whether barcoding/demultiplexing was performed",
+      "default": false
+    },
+    "barcode_kit": {
+      "type": "string",
+      "description": "Barcoding kit used"
+    },
+    "barcode_count": {
+      "type": "integer",
+      "description": "Number of unique barcodes detected",
+      "minimum": 0
+    },
+    "barcodes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(barcode[0-9]{2}|unclassified)$"
+      },
+      "description": "List of detected barcodes"
+    },
+
+    "adaptive_sampling_enabled": {
+      "type": "boolean",
+      "description": "Whether adaptive sampling was enabled",
+      "default": false
+    },
+    "adaptive_sampling_state": {
+      "type": "string",
+      "description": "Adaptive sampling configuration state"
+    },
+    "target_regions": {
+      "type": "string",
+      "description": "Path to target BED file for adaptive sampling"
+    },
+
+    "basecall_model": {
+      "type": "string",
+      "description": "Full basecalling model identifier"
+    },
+    "basecall_model_version": {
+      "type": "string",
+      "description": "Basecalling model version string"
+    },
+    "model_tier": {
+      "type": "string",
+      "enum": ["fast", "hac", "sup"],
+      "description": "Basecalling model tier"
+    },
+    "basecalling_enabled": {
+      "type": "boolean",
+      "description": "Whether live basecalling was enabled",
+      "default": true
+    },
+
+    "minknow_version": {
+      "type": "string",
+      "description": "MinKNOW software version"
+    },
+    "dorado_version": {
+      "type": "string",
+      "description": "Dorado basecaller version"
+    },
+    "guppy_version": {
+      "type": "string",
+      "description": "Guppy basecaller version (legacy)"
+    },
+    "bream_version": {
+      "type": "string",
+      "description": "Bream software version"
+    },
+    "configuration_version": {
+      "type": "string",
+      "description": "Protocol configuration version"
+    },
+
+    "is_aligned": {
+      "type": "boolean",
+      "description": "Whether alignment was performed",
+      "default": false
+    },
+    "reference_genome": {
+      "type": "string",
+      "description": "Reference genome name"
+    },
+    "reference_path": {
+      "type": "string",
+      "description": "Path to reference genome file"
+    },
+
+    "has_duplex": {
+      "type": "boolean",
+      "description": "Whether duplex reads are present",
+      "default": false
+    },
+    "duplex_read_count": {
+      "type": "integer",
+      "description": "Number of duplex reads",
+      "minimum": 0
+    },
+
+    "has_methylation": {
+      "type": "boolean",
+      "description": "Whether methylation calling was performed",
+      "default": false
+    },
+    "methylation_models": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Methylation models used (e.g., 5mCG_5hmCG)"
+    },
+
     "tags": {
       "type": "array",
       "items": {
@@ -66,20 +419,22 @@
       "type": "string",
       "description": "Free-form notes"
     },
+
     "pipeline_stages": {
       "type": "array",
       "items": {
         "type": "string",
         "enum": ["h", "g", "u", "d", "l", "sigma", "r", "C", "A"]
       },
-      "description": "Active pipeline stages for this experiment"
+      "description": "Active pipeline stages for this experiment (SMS Haplotype Textbook notation)"
     },
+
     "events": {
       "type": "array",
       "items": {
         "$ref": "#/$defs/event"
       },
-      "description": "Timeline of experiment events"
+      "description": "Timeline of experiment events (event sourcing)"
     }
   },
   "required": ["id", "name", "location"],
@@ -93,7 +448,7 @@
         },
         "type": {
           "type": "string",
-          "enum": ["created", "discovered", "registered", "analysis", "note", "status_change", "error", "tag_added", "tag_removed"]
+          "enum": ["created", "discovered", "registered", "analysis", "note", "status_change", "error", "tag_added", "tag_removed", "metadata_updated", "archived"]
         },
         "description": {
           "type": "string"
@@ -101,8 +456,76 @@
         "tool": {
           "type": "string"
         },
+        "analysis": {
+          "type": "string",
+          "description": "Analysis skill name if type is 'analysis'"
+        },
+        "command": {
+          "type": "string",
+          "description": "Full command executed"
+        },
+        "parameters": {
+          "type": "object",
+          "description": "Analysis parameters"
+        },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {"type": "string"},
+              "checksum": {"type": "string"}
+            }
+          },
+          "description": "Output files with checksums"
+        },
         "results": {
-          "type": "object"
+          "type": "object",
+          "description": "Analysis results (skill-specific)"
+        },
+        "duration_seconds": {
+          "type": "number",
+          "description": "Execution time in seconds"
+        },
+        "exit_code": {
+          "type": "integer",
+          "description": "Process exit code"
+        },
+        "error_message": {
+          "type": "string",
+          "description": "Error message if failed"
+        },
+        "agent": {
+          "type": "string",
+          "enum": ["claude-web", "claude-code", "manual", "cron", "script", "system"],
+          "description": "Agent type"
+        },
+        "agent_version": {
+          "type": "string",
+          "description": "Agent version identifier"
+        },
+        "machine": {
+          "type": "string",
+          "description": "Hostname of execution machine"
+        },
+        "user": {
+          "type": "string",
+          "description": "Username of executing user"
+        },
+        "hpc": {
+          "type": "object",
+          "properties": {
+            "job_id": {"type": "string"},
+            "partition": {"type": "string"},
+            "nodes": {"type": "string"},
+            "gpus": {"type": "string"},
+            "cluster": {"type": "string"}
+          },
+          "description": "HPC/SLURM job metadata"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Additional notes about the event"
         }
       },
       "required": ["timestamp", "type"]

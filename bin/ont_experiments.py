@@ -532,48 +532,153 @@ class TaskList:
 
 @dataclass
 class ExperimentMetadata:
-    """Core metadata for a nanopore experiment"""
+    """Core metadata for a nanopore experiment.
+
+    Schema based on ONT MinKNOW output specifications:
+    https://nanoporetech.github.io/ont-output-specifications/
+
+    Field groups:
+    - Run Identification: UUIDs and identifiers for the sequencing run
+    - Device/Platform: Hardware information (instrument, position)
+    - Flow Cell: Flow cell product and identifier
+    - Protocol/Kit: Library prep and sequencing configuration
+    - Data Statistics: Read counts, bases, length metrics
+    - Quality Metrics: Q-scores and pass/fail thresholds
+    - Timing: Run timestamps and duration
+    - File Information: Data formats and storage
+    - Barcoding: Demultiplexing information
+    - Adaptive Sampling: Selective sequencing configuration
+    - Basecalling: Model and software information
+    - Software Versions: MinKNOW, Dorado, Guppy versions
+    - Alignment: Reference genome alignment (if performed)
+    """
+    # === Required Fields ===
     id: str
     name: str
     location: str
-    source: str = "local"
-    status: str = "discovered"
-    
-    # Run information
-    run_id: Optional[str] = None
-    sample_id: Optional[str] = None
-    experiment_id: Optional[str] = None
-    
-    # Platform info
-    platform: Optional[str] = None
-    flowcell_type: Optional[str] = None
-    flowcell_id: Optional[str] = None
-    kit: Optional[str] = None
-    chemistry: Optional[str] = None
-    basecall_model: Optional[str] = None
-    
-    # Data stats
-    total_reads: Optional[int] = None
-    total_bases: Optional[int] = None
-    n50: Optional[float] = None
-    mean_quality: Optional[float] = None
-    
-    # File info
-    data_format: Optional[str] = None
-    file_count: int = 0
-    total_size_gb: float = 0.0
-    
-    # Timestamps
-    run_started: Optional[str] = None
-    run_ended: Optional[str] = None
+    source: str = "local"  # local, s3, github, hpc
+    status: str = "discovered"  # discovered, registered, active, archived, failed
+
+    # === Run Identification (MinKNOW final_summary) ===
+    # Primary identifiers from MinKNOW
+    run_id: Optional[str] = None  # acquisition_run_id - UUID for this acquisition
+    protocol_run_id: Optional[str] = None  # UUID for the protocol run
+    sample_id: Optional[str] = None  # User-specified sample identifier
+    experiment_id: Optional[str] = None  # protocol_group_id - experiment group name
+
+    # === Device/Platform Information ===
+    # Hardware identification
+    platform: Optional[str] = None  # Device type: MinION, GridION, PromethION, P2Solo
+    device_id: Optional[str] = None  # Device serial number (e.g., MN12345, PCT0009)
+    device_type: Optional[str] = None  # Device model (e.g., minion_mk1d, promethion)
+    position_id: Optional[str] = None  # Position identifier (e.g., 1-A5-D5 for PromethION)
+    host_product_serial_number: Optional[str] = None  # Host computer serial
+
+    # === Flow Cell Information ===
+    flowcell_id: Optional[str] = None  # Flow cell identifier (e.g., FAK54854, PAD15520)
+    flowcell_type: Optional[str] = None  # flow_cell_product_code (e.g., FLO-MIN114, FLO-PRO114M)
+    pore_type: Optional[str] = None  # Pore chemistry (e.g., R10.4.1, R9.4.1)
+
+    # === Protocol/Kit Information ===
+    kit: Optional[str] = None  # Primary sequencing kit (e.g., SQK-LSK114, SQK-RBK114.96)
+    expansion_kit: Optional[str] = None  # Expansion kit if used (e.g., EXP-NBD114)
+    chemistry: Optional[str] = None  # Chemistry version derived from kit/flowcell
+    protocol_name: Optional[str] = None  # Name of the sequencing protocol
+
+    # === Data Statistics (aggregated from sequencing_summary) ===
+    # Read counts
+    total_reads: Optional[int] = None  # Total number of reads
+    pass_reads: Optional[int] = None  # Reads passing filtering
+    fail_reads: Optional[int] = None  # Reads failing filtering
+    skip_reads: Optional[int] = None  # Skipped reads (adaptive sampling)
+
+    # Base counts
+    total_bases: Optional[int] = None  # Total bases sequenced
+    pass_bases: Optional[int] = None  # Bases from pass reads
+    fail_bases: Optional[int] = None  # Bases from fail reads
+
+    # Length metrics
+    n50: Optional[float] = None  # N50 read length
+    mean_length: Optional[float] = None  # Mean read length
+    median_length: Optional[float] = None  # Median read length
+    max_length: Optional[int] = None  # Maximum read length
+    min_length: Optional[int] = None  # Minimum read length
+
+    # === Quality Metrics ===
+    # Q-score metrics (use lib.mean_qscore for averaging!)
+    mean_quality: Optional[float] = None  # Mean Q-score (probability-space average)
+    median_quality: Optional[float] = None  # Median Q-score
+    pass_threshold: Optional[float] = None  # Q-score threshold for pass/fail (default 9)
+
+    # === Timing Information ===
+    # Run timestamps (ISO 8601 format)
+    run_started: Optional[str] = None  # acquisition_started - when data collection began
+    run_ended: Optional[str] = None  # acquisition_stopped - when data collection ended
+    processing_stopped: Optional[str] = None  # When all processing completed
+    run_duration_hours: Optional[float] = None  # Total run duration
+
+    # Registry timestamps
     discovered: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     last_accessed: Optional[str] = None
-    
-    # Organization
+
+    # === File Information ===
+    data_format: Optional[str] = None  # Primary format: pod5, fast5, bam, fastq
+    file_count: int = 0  # Total data files
+    total_size_gb: float = 0.0  # Total data size
+
+    # File counts by category
+    pod5_files: int = 0
+    pod5_pass_files: int = 0
+    pod5_fail_files: int = 0
+    pod5_skip_files: int = 0
+    fast5_files: int = 0
+    fastq_pass_files: int = 0
+    fastq_fail_files: int = 0
+    bam_pass_files: int = 0
+    bam_fail_files: int = 0
+
+    # === Barcoding Information ===
+    is_barcoded: bool = False  # Whether barcoding was performed
+    barcode_kit: Optional[str] = None  # Barcoding kit used
+    barcode_count: Optional[int] = None  # Number of unique barcodes detected
+    barcodes: List[str] = field(default_factory=list)  # List of detected barcodes
+
+    # === Adaptive Sampling Information ===
+    adaptive_sampling_enabled: bool = False  # Whether adaptive sampling was used
+    adaptive_sampling_state: Optional[str] = None  # AS configuration state
+    target_regions: Optional[str] = None  # Path to target BED file
+
+    # === Basecalling Information ===
+    basecall_model: Optional[str] = None  # Full model identifier
+    basecall_model_version: Optional[str] = None  # Model version string
+    model_tier: Optional[str] = None  # fast, hac, sup
+    basecalling_enabled: bool = True  # Whether live basecalling was enabled
+
+    # === Software Versions ===
+    minknow_version: Optional[str] = None  # MinKNOW software version
+    dorado_version: Optional[str] = None  # Dorado basecaller version
+    guppy_version: Optional[str] = None  # Guppy basecaller version (legacy)
+    bream_version: Optional[str] = None  # Bream version
+    configuration_version: Optional[str] = None  # Protocol configuration version
+
+    # === Alignment Information (if performed) ===
+    is_aligned: bool = False  # Whether alignment was performed
+    reference_genome: Optional[str] = None  # Reference genome name
+    reference_path: Optional[str] = None  # Path to reference file
+
+    # === Duplex Information ===
+    has_duplex: bool = False  # Whether duplex reads are present
+    duplex_read_count: Optional[int] = None  # Number of duplex reads
+
+    # === Methylation Information ===
+    has_methylation: bool = False  # Whether methylation calling was performed
+    methylation_models: List[str] = field(default_factory=list)  # Methylation models used
+
+    # === Organization ===
     tags: List[str] = field(default_factory=list)
     notes: str = ""
-    
-    # Event log (append-only)
+
+    # === Event Log (append-only, event sourcing) ===
     events: List[Event] = field(default_factory=list)
     
     def add_event(self, event: Event):
@@ -1121,7 +1226,7 @@ def generate_experiment_id(path: Path, run_id: Optional[str] = None) -> str:
 
 
 def extract_pod5_metadata(pod5_file: Path) -> Dict[str, Any]:
-    """Extract metadata from POD5 file.
+    """Extract comprehensive metadata from POD5 file.
 
     POD5 RunInfo attributes:
         - acquisition_id: UUID for the acquisition
@@ -1135,6 +1240,9 @@ def extract_pod5_metadata(pod5_file: Path) -> Dict[str, Any]:
         - system_type: operating system (e.g., 'ubuntu 22.04')
         - context_tags: dict with basecall_model, experiment_type, etc.
         - tracking_id: dict with device_id, run_id, protocol details
+
+    Based on MinKNOW output specifications:
+    https://nanoporetech.github.io/ont-output-specifications/
     """
     if not HAS_POD5:
         return {}
@@ -1144,41 +1252,102 @@ def extract_pod5_metadata(pod5_file: Path) -> Dict[str, Any]:
         with pod5.Reader(pod5_file) as reader:
             for read in reader.reads():
                 run_info = read.run_info
+
+                # === Run Identification ===
                 metadata['run_id'] = run_info.acquisition_id
                 metadata['sample_id'] = run_info.sample_id
                 metadata['experiment_id'] = run_info.experiment_name
+
+                # === Flow Cell Information ===
                 metadata['flowcell_id'] = run_info.flow_cell_id
                 metadata['flowcell_type'] = run_info.flow_cell_product_code
+
+                # Derive pore_type from flowcell_type
+                if run_info.flow_cell_product_code:
+                    fc = run_info.flow_cell_product_code
+                    if '114' in fc or 'R10' in fc:
+                        metadata['pore_type'] = 'R10.4.1'
+                    elif '106' in fc or 'R9' in fc:
+                        metadata['pore_type'] = 'R9.4.1'
+
+                # === Protocol/Kit Information ===
                 metadata['kit'] = run_info.sequencing_kit
 
-                # Extract device ID from tracking_id (device_id is the MinION/PromethION serial)
-                # system_name is the hostname, system_type is the OS
+                # === Device/Platform Information ===
+                # Extract from tracking_id which contains device details
                 if hasattr(run_info, 'tracking_id') and run_info.tracking_id:
                     tracking = dict(run_info.tracking_id)
-                    metadata['platform'] = tracking.get('device_id', run_info.system_name)
-                else:
+                    metadata['device_id'] = tracking.get('device_id')
+                    metadata['device_type'] = tracking.get('device_type')
+                    metadata['protocol_run_id'] = tracking.get('protocol_run_id')
+                    metadata['host_product_serial_number'] = tracking.get('host_product_serial_number')
+
+                    # Software versions from tracking
+                    metadata['minknow_version'] = tracking.get('version')
+                    metadata['guppy_version'] = tracking.get('guppy_version')
+
+                    # Derive platform from device_id
+                    device_id = tracking.get('device_id', '')
+                    if device_id:
+                        if device_id.startswith('MN') or device_id.startswith('MD'):
+                            metadata['platform'] = 'MinION'
+                        elif device_id.startswith('GXB'):
+                            metadata['platform'] = 'GridION'
+                        elif device_id.startswith('PCT') or device_id.startswith('PC'):
+                            metadata['platform'] = 'PromethION'
+                        elif device_id.startswith('P2'):
+                            metadata['platform'] = 'P2Solo'
+
+                if not metadata.get('platform'):
                     metadata['platform'] = run_info.system_name
 
-                # Extract basecall model from context tags
+                # === Context Tags (basecalling, experiment settings) ===
                 if hasattr(run_info, 'context_tags') and run_info.context_tags:
-                    for tag in run_info.context_tags:
-                        if 'basecall_model' in tag[0].lower():
-                            metadata['basecall_model'] = tag[1]
+                    context = dict(run_info.context_tags)
+
+                    # Basecalling model
+                    for key in ['basecall_model_version_id', 'basecall_model', 'selected_speed']:
+                        if key in context:
+                            metadata['basecall_model'] = context[key]
                             break
 
-                # Extract start time
+                    # Model tier (fast/hac/sup)
+                    model = metadata.get('basecall_model', '')
+                    if model:
+                        model_lower = model.lower()
+                        if 'fast' in model_lower:
+                            metadata['model_tier'] = 'fast'
+                        elif 'hac' in model_lower:
+                            metadata['model_tier'] = 'hac'
+                        elif 'sup' in model_lower:
+                            metadata['model_tier'] = 'sup'
+
+                    # Adaptive sampling
+                    if context.get('selected_as_enabled') == 'on':
+                        metadata['adaptive_sampling_enabled'] = True
+                        metadata['adaptive_sampling_state'] = context.get('selected_as_state')
+
+                    # Barcoding
+                    if context.get('barcoding_enabled') == 'on':
+                        metadata['is_barcoded'] = True
+
+                    # Expansion kit
+                    if 'experiment_type' in context:
+                        metadata['protocol_name'] = context['experiment_type']
+
+                # === Timing ===
                 if run_info.acquisition_start_time:
                     metadata['run_started'] = run_info.acquisition_start_time.isoformat()
 
                 break  # Only need first read
-    except Exception as e:
+    except Exception:
         pass
 
     return metadata
 
 
 def extract_fast5_metadata(fast5_file: Path) -> Dict[str, Any]:
-    """Extract metadata from Fast5 file.
+    """Extract comprehensive metadata from Fast5 file.
 
     Fast5 tracking_id attributes:
         - run_id: unique run identifier
@@ -1190,6 +1359,12 @@ def extract_fast5_metadata(fast5_file: Path) -> Dict[str, Any]:
         - exp_start_time: experiment start time
         - protocol_group_id: experiment name
         - sequencing_kit: kit identifier
+        - version: MinKNOW version
+        - guppy_version: Guppy basecaller version
+        - protocol_run_id: protocol run UUID
+
+    Based on MinKNOW output specifications:
+    https://nanoporetech.github.io/ont-output-specifications/
     """
     if not HAS_H5PY:
         return {}
@@ -1229,31 +1404,182 @@ def extract_fast5_metadata(fast5_file: Path) -> Dict[str, Any]:
 
             if tracking:
                 attrs = tracking.attrs
+
+                # === Run Identification ===
                 metadata['run_id'] = decode_attr(attrs.get('run_id'))
                 metadata['sample_id'] = decode_attr(attrs.get('sample_id'))
+                metadata['experiment_id'] = decode_attr(attrs.get('protocol_group_id'))
+                metadata['protocol_run_id'] = decode_attr(attrs.get('protocol_run_id'))
+
+                # === Flow Cell Information ===
                 metadata['flowcell_id'] = decode_attr(attrs.get('flow_cell_id'))
                 metadata['flowcell_type'] = decode_attr(attrs.get('flow_cell_product_code'))
-                metadata['experiment_id'] = decode_attr(attrs.get('protocol_group_id'))
-                # Use device_id (serial) if available, otherwise device_type
+
+                # Derive pore_type from flowcell_type
+                fc = metadata.get('flowcell_type', '')
+                if fc:
+                    if '114' in fc or 'R10' in fc:
+                        metadata['pore_type'] = 'R10.4.1'
+                    elif '106' in fc or 'R9' in fc:
+                        metadata['pore_type'] = 'R9.4.1'
+
+                # === Device/Platform Information ===
                 device_id = decode_attr(attrs.get('device_id'))
                 device_type = decode_attr(attrs.get('device_type'))
-                metadata['platform'] = device_id or device_type
+                metadata['device_id'] = device_id
+                metadata['device_type'] = device_type
+                metadata['host_product_serial_number'] = decode_attr(attrs.get('host_product_serial_number'))
+
+                # Derive platform from device_id
+                if device_id:
+                    if device_id.startswith('MN') or device_id.startswith('MD'):
+                        metadata['platform'] = 'MinION'
+                    elif device_id.startswith('GXB'):
+                        metadata['platform'] = 'GridION'
+                    elif device_id.startswith('PCT') or device_id.startswith('PC'):
+                        metadata['platform'] = 'PromethION'
+                    elif device_id.startswith('P2'):
+                        metadata['platform'] = 'P2Solo'
+                    else:
+                        metadata['platform'] = device_id
+                elif device_type:
+                    # Map device_type to platform
+                    dtype_lower = device_type.lower()
+                    if 'minion' in dtype_lower:
+                        metadata['platform'] = 'MinION'
+                    elif 'gridion' in dtype_lower:
+                        metadata['platform'] = 'GridION'
+                    elif 'promethion' in dtype_lower:
+                        metadata['platform'] = 'PromethION'
+                    else:
+                        metadata['platform'] = device_type
+
+                # === Timing ===
                 metadata['run_started'] = decode_attr(attrs.get('exp_start_time'))
+
+                # === Software Versions ===
+                metadata['minknow_version'] = decode_attr(attrs.get('version'))
+                metadata['guppy_version'] = decode_attr(attrs.get('guppy_version'))
 
             if context:
                 attrs = context.attrs
+
+                # === Protocol/Kit Information ===
                 metadata['kit'] = decode_attr(attrs.get('sequencing_kit'))
-                metadata['basecall_model'] = decode_attr(attrs.get('basecall_model_version_id'))
-    except Exception as e:
+                metadata['expansion_kit'] = decode_attr(attrs.get('expansion_kit'))
+                metadata['protocol_name'] = decode_attr(attrs.get('experiment_type'))
+
+                # === Basecalling Information ===
+                basecall_model = decode_attr(attrs.get('basecall_model_version_id'))
+                if not basecall_model:
+                    basecall_model = decode_attr(attrs.get('basecall_model'))
+                metadata['basecall_model'] = basecall_model
+
+                # Model tier (fast/hac/sup)
+                if basecall_model:
+                    model_lower = basecall_model.lower()
+                    if 'fast' in model_lower:
+                        metadata['model_tier'] = 'fast'
+                    elif 'hac' in model_lower:
+                        metadata['model_tier'] = 'hac'
+                    elif 'sup' in model_lower:
+                        metadata['model_tier'] = 'sup'
+
+                # === Barcoding ===
+                barcoding = decode_attr(attrs.get('barcoding_enabled'))
+                if barcoding and barcoding.lower() in ('on', 'true', '1'):
+                    metadata['is_barcoded'] = True
+
+                # === Adaptive Sampling ===
+                as_enabled = decode_attr(attrs.get('selected_as_enabled'))
+                if as_enabled and as_enabled.lower() in ('on', 'true', '1'):
+                    metadata['adaptive_sampling_enabled'] = True
+                    metadata['adaptive_sampling_state'] = decode_attr(attrs.get('selected_as_state'))
+
+    except Exception:
         pass
 
     return metadata
 
 
 def parse_final_summary(filepath: Path) -> Dict[str, Any]:
-    """Parse final_summary.txt for run information"""
+    """Parse final_summary.txt for comprehensive run information.
+
+    Based on MinKNOW output specification:
+    https://nanoporetech.github.io/ont-output-specifications/
+
+    Example final_summary.txt fields:
+        instrument=PCT0009
+        position=1-A5-D5
+        flow_cell_id=PAD15520
+        flow_cell_product_code=FLO-PRO114M
+        sample_id=sample_name
+        protocol_group_id=experiment_name
+        experiment_name=experiment_name
+        protocol=hash_value
+        protocol_run_id=uuid
+        acquisition_run_id=uuid
+        started=2024-01-15T10:30:00Z
+        acquisition_stopped=2024-01-15T22:30:00Z
+        processing_stopped=2024-01-15T22:35:00Z
+        basecalling_enabled=1
+        sequencing_summary_file=path
+        fast5_files_in_final_dest=count
+        pod5_files_in_final_dest=count
+    """
     metadata = {}
-    
+
+    # Mapping from final_summary keys to our metadata fields
+    field_mapping = {
+        # Run Identification
+        'acquisition_run_id': 'run_id',
+        'protocol_run_id': 'protocol_run_id',
+        'sample_id': 'sample_id',
+        'protocol_group_id': 'experiment_id',
+        'experiment_name': 'experiment_id',  # Alias
+
+        # Device/Platform
+        'instrument': 'device_id',
+        'position': 'position_id',
+        'device_id': 'device_id',
+        'device_type': 'device_type',
+        'host_product_serial_number': 'host_product_serial_number',
+
+        # Flow Cell
+        'flow_cell_id': 'flowcell_id',
+        'flow_cell_product_code': 'flowcell_type',
+
+        # Protocol/Kit
+        'sequencing_kit': 'kit',
+        'expansion_kit': 'expansion_kit',
+        'protocol': 'protocol_name',
+
+        # Timestamps
+        'started': 'run_started',
+        'acquisition_stopped': 'run_ended',
+        'processing_stopped': 'processing_stopped',
+
+        # Software Versions
+        'minknow_version': 'minknow_version',
+        'guppy_version': 'guppy_version',
+        'bream_version': 'bream_version',
+        'configuration_version': 'configuration_version',
+
+        # Basecalling
+        'basecall_model_version_id': 'basecall_model',
+    }
+
+    # Boolean fields
+    bool_fields = {'basecalling_enabled', 'adaptive_sampling_enabled'}
+
+    # Integer fields for file counts
+    int_fields = {
+        'fast5_files_in_final_dest', 'fast5_files_in_fallback',
+        'pod5_files_in_final_dest', 'pod5_files_in_fallback',
+        'fastq_files_in_final_dest', 'fastq_files_in_fallback',
+        'bam_files_in_final_dest', 'bam_files_in_fallback',
+    }
+
     try:
         with open(filepath, 'r') as f:
             for line in f:
@@ -1262,28 +1588,215 @@ def parse_final_summary(filepath: Path) -> Dict[str, Any]:
                     key, value = line.split('=', 1)
                     key = key.strip()
                     value = value.strip()
-                    
-                    if key == 'acquisition_run_id':
-                        metadata['run_id'] = value
-                    elif key == 'sample_id':
-                        metadata['sample_id'] = value
-                    elif key == 'experiment_name':
-                        metadata['experiment_id'] = value
-                    elif key == 'flow_cell_id':
-                        metadata['flowcell_id'] = value
-                    elif key == 'flow_cell_product_code':
-                        metadata['flowcell_type'] = value
-                    elif key == 'protocol_run_id':
-                        metadata['kit'] = value
-                    elif key == 'instrument':
-                        metadata['platform'] = value
-                    elif key == 'started':
-                        metadata['run_started'] = value
-                    elif key == 'acquisition_stopped':
-                        metadata['run_ended'] = value
+
+                    # Map to our field names
+                    if key in field_mapping:
+                        target_key = field_mapping[key]
+                        # Don't overwrite if already set (experiment_name is alias)
+                        if target_key not in metadata or not metadata[target_key]:
+                            metadata[target_key] = value
+
+                    # Handle boolean fields
+                    elif key in bool_fields:
+                        metadata[key] = value == '1' or value.lower() == 'true'
+
+                    # Handle integer file counts
+                    elif key in int_fields:
+                        try:
+                            metadata[key] = int(value)
+                        except ValueError:
+                            pass
+
+        # Derive platform from device_id if not set
+        if 'device_id' in metadata and 'platform' not in metadata:
+            device_id = metadata['device_id']
+            if device_id.startswith('MN') or device_id.startswith('MD'):
+                metadata['platform'] = 'MinION'
+            elif device_id.startswith('GXB'):
+                metadata['platform'] = 'GridION'
+            elif device_id.startswith('PCT') or device_id.startswith('PC'):
+                metadata['platform'] = 'PromethION'
+            elif device_id.startswith('P2'):
+                metadata['platform'] = 'P2Solo'
+
+        # Derive pore_type from flowcell_type
+        if 'flowcell_type' in metadata:
+            fc = metadata['flowcell_type']
+            if '114' in fc or 'R10' in fc:
+                metadata['pore_type'] = 'R10.4.1'
+            elif '106' in fc or 'R9' in fc:
+                metadata['pore_type'] = 'R9.4.1'
+
+        # Calculate run duration if timestamps available
+        if 'run_started' in metadata and 'run_ended' in metadata:
+            try:
+                from datetime import datetime
+                start = datetime.fromisoformat(metadata['run_started'].replace('Z', '+00:00'))
+                end = datetime.fromisoformat(metadata['run_ended'].replace('Z', '+00:00'))
+                duration_hours = (end - start).total_seconds() / 3600
+                metadata['run_duration_hours'] = round(duration_hours, 2)
+            except Exception:
+                pass
+
     except Exception:
         pass
-    
+
+    return metadata
+
+
+def parse_sequencing_summary(filepath: Path, sample_size: int = 10000) -> Dict[str, Any]:
+    """Parse sequencing_summary.txt for read statistics.
+
+    Based on MinKNOW output specification:
+    https://nanoporetech.github.io/ont-output-specifications/latest/protocol_formats/sequencing_summary/
+
+    For performance, samples up to sample_size reads for statistics.
+    Set sample_size=0 for all reads (slower for large files).
+
+    Returns aggregated statistics including:
+    - Read counts (total, pass, fail)
+    - Base counts
+    - Length metrics (mean, median, N50, min, max)
+    - Quality metrics (mean Q-score using probability space)
+    - Barcoding information
+    - Duplex information
+    """
+    import csv
+    import random
+
+    metadata = {}
+
+    try:
+        with open(filepath, 'r') as f:
+            reader = csv.DictReader(f, delimiter='\t')
+            rows = list(reader)
+
+        if not rows:
+            return metadata
+
+        # Sample for large files
+        if sample_size > 0 and len(rows) > sample_size:
+            sampled_rows = random.sample(rows, sample_size)
+            scale_factor = len(rows) / sample_size
+        else:
+            sampled_rows = rows
+            scale_factor = 1.0
+
+        # Collect statistics
+        pass_reads = 0
+        fail_reads = 0
+        lengths = []
+        qscores = []
+        pass_bases = 0
+        fail_bases = 0
+        barcodes_seen = set()
+        has_duplex = False
+        duplex_count = 0
+
+        for row in sampled_rows:
+            # Read pass/fail status
+            passes = row.get('passes_filtering', '').lower()
+            is_pass = passes in ('true', '1', 'yes')
+
+            # Get sequence length
+            length = 0
+            if 'sequence_length_template' in row:
+                try:
+                    length = int(row['sequence_length_template'])
+                except (ValueError, TypeError):
+                    pass
+
+            # Get Q-score
+            qscore = None
+            if 'mean_qscore_template' in row:
+                try:
+                    qscore = float(row['mean_qscore_template'])
+                except (ValueError, TypeError):
+                    pass
+
+            # Track pass/fail
+            if is_pass:
+                pass_reads += 1
+                pass_bases += length
+            else:
+                fail_reads += 1
+                fail_bases += length
+
+            if length > 0:
+                lengths.append(length)
+            if qscore is not None:
+                qscores.append(qscore)
+
+            # Track barcodes
+            barcode = row.get('barcode_arrangement', '-')
+            if barcode and barcode != '-':
+                barcodes_seen.add(barcode)
+
+            # Track duplex
+            if row.get('duplex_parent_template') or row.get('duplex_parent_complement'):
+                has_duplex = True
+                duplex_count += 1
+
+        # Calculate statistics
+        total_reads = pass_reads + fail_reads
+
+        if lengths:
+            lengths_sorted = sorted(lengths, reverse=True)
+            metadata['total_reads'] = int(total_reads * scale_factor)
+            metadata['pass_reads'] = int(pass_reads * scale_factor)
+            metadata['fail_reads'] = int(fail_reads * scale_factor)
+            metadata['total_bases'] = int(sum(lengths) * scale_factor)
+            metadata['pass_bases'] = int(pass_bases * scale_factor)
+            metadata['fail_bases'] = int(fail_bases * scale_factor)
+            metadata['mean_length'] = round(sum(lengths) / len(lengths), 1)
+            metadata['median_length'] = float(lengths_sorted[len(lengths_sorted) // 2])
+            metadata['max_length'] = max(lengths)
+            metadata['min_length'] = min(lengths)
+
+            # Calculate N50
+            total_bp = sum(lengths)
+            cumsum = 0
+            for length in lengths_sorted:
+                cumsum += length
+                if cumsum >= total_bp / 2:
+                    metadata['n50'] = float(length)
+                    break
+
+        if qscores:
+            # Use probability-space averaging for Q-scores (per CLAUDE.md)
+            try:
+                from lib import mean_qscore
+                metadata['mean_quality'] = round(mean_qscore(qscores), 2)
+            except ImportError:
+                # Fallback: probability-space average
+                import math
+                probs = [10 ** (-q / 10) for q in qscores]
+                avg_prob = sum(probs) / len(probs)
+                metadata['mean_quality'] = round(-10 * math.log10(avg_prob), 2)
+
+            metadata['median_quality'] = round(sorted(qscores)[len(qscores) // 2], 2)
+
+        # Barcoding
+        if barcodes_seen:
+            metadata['is_barcoded'] = True
+            metadata['barcodes'] = sorted(list(barcodes_seen))
+            metadata['barcode_count'] = len(barcodes_seen)
+
+        # Duplex
+        if has_duplex:
+            metadata['has_duplex'] = True
+            metadata['duplex_read_count'] = int(duplex_count * scale_factor)
+
+        # Get barcode kit from first row with barcode
+        for row in sampled_rows:
+            barcode_kit = row.get('barcode_kit', '-')
+            if barcode_kit and barcode_kit != '-':
+                metadata['barcode_kit'] = barcode_kit
+                break
+
+    except Exception:
+        pass
+
     return metadata
 
 
@@ -1506,11 +2019,58 @@ def discover_experiment(path: Path) -> Optional[ExperimentMetadata]:
         # Has direct data files - treat as simple experiment
         run_dir = path
 
-    # Collect all data files from the run directory
-    pod5_files = list(run_dir.rglob('*.pod5'))
-    fast5_files = list(run_dir.rglob('*.fast5'))
-    bam_files = list(run_dir.rglob('*.bam'))
-    fastq_files = list(run_dir.rglob('*.fastq')) + list(run_dir.rglob('*.fastq.gz'))
+    # === Collect data files with directory categorization ===
+    # Count files in specific MinKNOW directories
+    file_counts = {
+        'pod5_files': 0,
+        'pod5_pass_files': 0,
+        'pod5_fail_files': 0,
+        'pod5_skip_files': 0,
+        'fast5_files': 0,
+        'fastq_pass_files': 0,
+        'fastq_fail_files': 0,
+        'bam_pass_files': 0,
+        'bam_fail_files': 0,
+    }
+
+    # Collect files by category
+    pod5_files = []
+    fast5_files = []
+    bam_files = []
+    fastq_files = []
+
+    for f in run_dir.rglob('*.pod5'):
+        pod5_files.append(f)
+        parent = f.parent.name
+        if parent == 'pod5_pass':
+            file_counts['pod5_pass_files'] += 1
+        elif parent == 'pod5_fail':
+            file_counts['pod5_fail_files'] += 1
+        elif parent == 'pod5_skip':
+            file_counts['pod5_skip_files'] += 1
+        else:
+            file_counts['pod5_files'] += 1
+
+    for f in run_dir.rglob('*.fast5'):
+        fast5_files.append(f)
+        file_counts['fast5_files'] += 1
+
+    for f in run_dir.rglob('*.bam'):
+        bam_files.append(f)
+        parent = f.parent.name
+        if parent == 'bam_pass':
+            file_counts['bam_pass_files'] += 1
+        elif parent == 'bam_fail':
+            file_counts['bam_fail_files'] += 1
+
+    for pattern in ['*.fastq', '*.fastq.gz', '*.fq', '*.fq.gz']:
+        for f in run_dir.rglob(pattern):
+            fastq_files.append(f)
+            parent = f.parent.name
+            if parent == 'fastq_pass':
+                file_counts['fastq_pass_files'] += 1
+            elif parent == 'fastq_fail':
+                file_counts['fastq_fail_files'] += 1
 
     if not pod5_files and not fast5_files and not bam_files:
         return None
@@ -1530,10 +2090,10 @@ def discover_experiment(path: Path) -> Optional[ExperimentMetadata]:
     total_size = sum(f.stat().st_size for f in data_files)
     total_size_gb = total_size / (1024**3)
 
-    # Extract metadata from various sources
+    # === Extract metadata from various sources ===
     metadata = {}
 
-    # Find and parse final_summary file (in run_dir or its subdirectories)
+    # 1. Parse final_summary file (highest priority for run-level metadata)
     final_summary = None
     for pattern in ['final_summary*.txt', '*/final_summary*.txt', '*/*/final_summary*.txt']:
         summaries = list(run_dir.glob(pattern))
@@ -1543,45 +2103,156 @@ def discover_experiment(path: Path) -> Optional[ExperimentMetadata]:
 
     if final_summary:
         metadata.update(parse_final_summary(final_summary))
-    
-    # Try POD5 metadata
+
+    # 2. Parse sequencing_summary for read statistics
+    seq_summary = None
+    for pattern in ['sequencing_summary*.txt', '*/sequencing_summary*.txt']:
+        summaries = list(run_dir.glob(pattern))
+        if summaries:
+            seq_summary = summaries[0]
+            break
+
+    if seq_summary:
+        seq_stats = parse_sequencing_summary(seq_summary)
+        for k, v in seq_stats.items():
+            if k not in metadata or not metadata[k]:
+                metadata[k] = v
+
+    # 3. Extract POD5 metadata
     if pod5_files and HAS_POD5:
         pod5_meta = extract_pod5_metadata(pod5_files[0])
         for k, v in pod5_meta.items():
             if k not in metadata or not metadata[k]:
                 metadata[k] = v
-    
-    # Try Fast5 metadata
+
+    # 4. Extract Fast5 metadata
     if fast5_files and HAS_H5PY:
         fast5_meta = extract_fast5_metadata(fast5_files[0])
         for k, v in fast5_meta.items():
             if k not in metadata or not metadata[k]:
                 metadata[k] = v
-    
+
+    # 5. Check for adaptive sampling directory
+    as_dir = run_dir / 'adaptive_sampling'
+    if as_dir.exists():
+        metadata['adaptive_sampling_enabled'] = True
+
+    # 6. Check for alignment (bam_pass/fail indicates aligned output)
+    if bam_files and (file_counts['bam_pass_files'] > 0 or file_counts['bam_fail_files'] > 0):
+        metadata['is_aligned'] = True
+
     # Generate ID
     run_id = metadata.get('run_id')
     exp_id = generate_experiment_id(path, run_id)
-    
-    # Create experiment
+
+    # === Create experiment with comprehensive metadata ===
     exp = ExperimentMetadata(
+        # Required fields
         id=exp_id,
         name=metadata.get('experiment_id') or path.name,
         location=str(path),
         source='local',
         status='discovered',
+
+        # Run Identification
         run_id=metadata.get('run_id'),
+        protocol_run_id=metadata.get('protocol_run_id'),
         sample_id=metadata.get('sample_id'),
         experiment_id=metadata.get('experiment_id'),
+
+        # Device/Platform
         platform=metadata.get('platform'),
-        flowcell_type=metadata.get('flowcell_type'),
+        device_id=metadata.get('device_id'),
+        device_type=metadata.get('device_type'),
+        position_id=metadata.get('position_id'),
+        host_product_serial_number=metadata.get('host_product_serial_number'),
+
+        # Flow Cell
         flowcell_id=metadata.get('flowcell_id'),
+        flowcell_type=metadata.get('flowcell_type'),
+        pore_type=metadata.get('pore_type'),
+
+        # Protocol/Kit
         kit=metadata.get('kit'),
-        basecall_model=metadata.get('basecall_model'),
+        expansion_kit=metadata.get('expansion_kit'),
+        chemistry=metadata.get('chemistry'),
+        protocol_name=metadata.get('protocol_name'),
+
+        # Data Statistics
+        total_reads=metadata.get('total_reads'),
+        pass_reads=metadata.get('pass_reads'),
+        fail_reads=metadata.get('fail_reads'),
+        skip_reads=metadata.get('skip_reads'),
+        total_bases=metadata.get('total_bases'),
+        pass_bases=metadata.get('pass_bases'),
+        fail_bases=metadata.get('fail_bases'),
+        n50=metadata.get('n50'),
+        mean_length=metadata.get('mean_length'),
+        median_length=metadata.get('median_length'),
+        max_length=metadata.get('max_length'),
+        min_length=metadata.get('min_length'),
+
+        # Quality Metrics
+        mean_quality=metadata.get('mean_quality'),
+        median_quality=metadata.get('median_quality'),
+        pass_threshold=metadata.get('pass_threshold'),
+
+        # Timing
         run_started=metadata.get('run_started'),
         run_ended=metadata.get('run_ended'),
+        processing_stopped=metadata.get('processing_stopped'),
+        run_duration_hours=metadata.get('run_duration_hours'),
+
+        # File Information
         data_format=data_format,
         file_count=len(data_files),
         total_size_gb=round(total_size_gb, 2),
+        pod5_files=file_counts['pod5_files'],
+        pod5_pass_files=file_counts['pod5_pass_files'],
+        pod5_fail_files=file_counts['pod5_fail_files'],
+        pod5_skip_files=file_counts['pod5_skip_files'],
+        fast5_files=file_counts['fast5_files'],
+        fastq_pass_files=file_counts['fastq_pass_files'],
+        fastq_fail_files=file_counts['fastq_fail_files'],
+        bam_pass_files=file_counts['bam_pass_files'],
+        bam_fail_files=file_counts['bam_fail_files'],
+
+        # Barcoding
+        is_barcoded=metadata.get('is_barcoded', False),
+        barcode_kit=metadata.get('barcode_kit'),
+        barcode_count=metadata.get('barcode_count'),
+        barcodes=metadata.get('barcodes', []),
+
+        # Adaptive Sampling
+        adaptive_sampling_enabled=metadata.get('adaptive_sampling_enabled', False),
+        adaptive_sampling_state=metadata.get('adaptive_sampling_state'),
+        target_regions=metadata.get('target_regions'),
+
+        # Basecalling
+        basecall_model=metadata.get('basecall_model'),
+        basecall_model_version=metadata.get('basecall_model_version'),
+        model_tier=metadata.get('model_tier'),
+        basecalling_enabled=metadata.get('basecalling_enabled', True),
+
+        # Software Versions
+        minknow_version=metadata.get('minknow_version'),
+        dorado_version=metadata.get('dorado_version'),
+        guppy_version=metadata.get('guppy_version'),
+        bream_version=metadata.get('bream_version'),
+        configuration_version=metadata.get('configuration_version'),
+
+        # Alignment
+        is_aligned=metadata.get('is_aligned', False),
+        reference_genome=metadata.get('reference_genome'),
+        reference_path=metadata.get('reference_path'),
+
+        # Duplex
+        has_duplex=metadata.get('has_duplex', False),
+        duplex_read_count=metadata.get('duplex_read_count'),
+
+        # Methylation
+        has_methylation=metadata.get('has_methylation', False),
+        methylation_models=metadata.get('methylation_models', []),
     )
     
     # Add discovery event
