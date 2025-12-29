@@ -1052,3 +1052,121 @@ def test_get_dependency_versions():
     deps = ont_version.get_dependency_versions()
     assert isinstance(deps, dict)
     assert "pyyaml" in deps
+
+
+# =============================================================================
+# ont_init.py Tests
+# =============================================================================
+
+def test_init_imports():
+    """Test that ont_init.py can be imported"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_init",
+        bin_dir / "ont_init.py"
+    )
+    ont_init = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_init)
+
+    assert hasattr(ont_init, 'TEMPLATES')
+    assert hasattr(ont_init, 'FILE_TEMPLATES')
+    assert hasattr(ont_init, 'create_project')
+    assert hasattr(ont_init, 'create_experiment')
+
+
+def test_init_templates():
+    """Test that templates are defined"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_init",
+        bin_dir / "ont_init.py"
+    )
+    ont_init = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_init)
+
+    # Check required templates
+    assert "minimal" in ont_init.TEMPLATES
+    assert "standard" in ont_init.TEMPLATES
+    assert "full" in ont_init.TEMPLATES
+    assert "experiment" in ont_init.TEMPLATES
+
+    # Check template structure
+    for name, tmpl in ont_init.TEMPLATES.items():
+        assert "description" in tmpl
+        assert "directories" in tmpl
+        assert "files" in tmpl
+
+
+def test_init_create_project(tmp_path):
+    """Test create_project function"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_init",
+        bin_dir / "ont_init.py"
+    )
+    ont_init = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_init)
+
+    # Create minimal project
+    project_path = ont_init.create_project(
+        name="test-project",
+        path=tmp_path,
+        template="minimal",
+        initialize_git=False
+    )
+
+    assert project_path.exists()
+    assert (project_path / "data" / "raw").exists()
+    assert (project_path / "results").exists()
+    assert (project_path / "README.md").exists()
+    assert (project_path / "config.yaml").exists()
+
+
+def test_init_create_experiment(tmp_path):
+    """Test create_experiment function"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_init",
+        bin_dir / "ont_init.py"
+    )
+    ont_init = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_init)
+
+    # Create experiment
+    exp_path = ont_init.create_experiment(
+        exp_id="EXP-001",
+        path=tmp_path,
+        metadata={"flowcell": "FLO-MIN114", "sample": "test-sample"}
+    )
+
+    assert exp_path.exists()
+    assert (exp_path / "raw").exists()
+    assert (exp_path / "processed").exists()
+    assert (exp_path / "README.md").exists()
+    assert (exp_path / "metadata.yaml").exists()
+
+
+def test_init_generate_config():
+    """Test generate_config function"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_init",
+        bin_dir / "ont_init.py"
+    )
+    ont_init = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_init)
+
+    # Generate config
+    content = ont_init.generate_config(
+        config_type="standard",
+        project_name="test-project"
+    )
+
+    assert "project:" in content
+    assert "test-project" in content
+    assert "paths:" in content

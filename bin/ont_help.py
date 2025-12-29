@@ -151,6 +151,16 @@ COMMANDS = {
                 "ont_version.py bump patch",
             ]
         },
+        "ont_init.py": {
+            "description": "Project initialization wizard",
+            "examples": [
+                "ont_init.py project my-project",
+                "ont_init.py project my-project --full",
+                "ont_init.py experiment EXP-001",
+                "ont_init.py config --type full",
+                "ont_init.py templates",
+            ]
+        },
         "ont_context.py": {
             "description": "Unified experiment context and equation execution",
             "examples": [

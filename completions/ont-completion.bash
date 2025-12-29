@@ -323,4 +323,53 @@ _ont_make() {
 }
 complete -F _ont_make make
 
+# ont_init.py completion
+_ont_init() {
+    local cur prev commands templates
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    commands="project experiment config templates"
+    templates="minimal standard full"
+
+    case "${prev}" in
+        ont_init.py|ont-init)
+            COMPREPLY=( $(compgen -W "${commands}" -- ${cur}) )
+            return 0
+            ;;
+        project)
+            if [[ ${cur} == -* ]]; then
+                COMPREPLY=( $(compgen -W "--path --template --full --description --author --no-git --force --help" -- ${cur}) )
+            fi
+            return 0
+            ;;
+        --template|-t)
+            COMPREPLY=( $(compgen -W "${templates}" -- ${cur}) )
+            return 0
+            ;;
+        experiment)
+            if [[ ${cur} == -* ]]; then
+                COMPREPLY=( $(compgen -W "--path --flowcell --sample --description --force --help" -- ${cur}) )
+            fi
+            return 0
+            ;;
+        config)
+            COMPREPLY=( $(compgen -W "--type --name --output" -- ${cur}) )
+            return 0
+            ;;
+        --type)
+            COMPREPLY=( $(compgen -W "${templates}" -- ${cur}) )
+            return 0
+            ;;
+    esac
+
+    if [[ ${cur} == -* ]]; then
+        COMPREPLY=( $(compgen -W "--help --version" -- ${cur}) )
+        return 0
+    fi
+}
+complete -F _ont_init ont_init.py
+complete -F _ont_init ont-init
+
 echo "ONT Ecosystem shell completion loaded"
