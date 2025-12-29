@@ -1170,3 +1170,212 @@ def test_lib_exports_parallel():
     assert hasattr(lib, 'TaskQueue')
     assert hasattr(lib, 'chunked')
     assert hasattr(lib, 'with_retry')
+
+
+# =============================================================================
+# lib/qscore.py Tests
+# =============================================================================
+
+def test_qscore_imports():
+    """Test that qscore.py can be imported"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "qscore",
+        lib_dir / "qscore.py"
+    )
+    qscore = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(qscore)
+
+    assert hasattr(qscore, 'qscore_to_probability')
+    assert hasattr(qscore, 'probability_to_qscore')
+    assert hasattr(qscore, 'mean_qscore')
+    assert hasattr(qscore, 'weighted_mean_qscore')
+
+
+def test_qscore_to_probability():
+    """Test Q-score to probability conversion"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "qscore",
+        lib_dir / "qscore.py"
+    )
+    qscore = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(qscore)
+
+    # Q10 = 10% error probability
+    assert abs(qscore.qscore_to_probability(10) - 0.1) < 1e-10
+
+    # Q20 = 1% error probability
+    assert abs(qscore.qscore_to_probability(20) - 0.01) < 1e-10
+
+    # Q30 = 0.1% error probability
+    assert abs(qscore.qscore_to_probability(30) - 0.001) < 1e-10
+
+    # Q0 = 100% error probability
+    assert abs(qscore.qscore_to_probability(0) - 1.0) < 1e-10
+
+
+def test_probability_to_qscore():
+    """Test probability to Q-score conversion"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "qscore",
+        lib_dir / "qscore.py"
+    )
+    qscore = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(qscore)
+
+    # 10% error = Q10
+    assert abs(qscore.probability_to_qscore(0.1) - 10) < 1e-10
+
+    # 1% error = Q20
+    assert abs(qscore.probability_to_qscore(0.01) - 20) < 1e-10
+
+    # 0.1% error = Q30
+    assert abs(qscore.probability_to_qscore(0.001) - 30) < 1e-10
+
+    # Zero probability should return max_q (default 60)
+    assert qscore.probability_to_qscore(0) == 60.0
+
+    # Custom max_q
+    assert qscore.probability_to_qscore(0, max_q=50) == 50.0
+
+
+def test_mean_qscore_basic():
+    """Test basic mean Q-score calculation"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "qscore",
+        lib_dir / "qscore.py"
+    )
+    qscore = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(qscore)
+
+    # Empty list returns 0
+    assert qscore.mean_qscore([]) == 0.0
+
+    # Single value returns itself
+    assert qscore.mean_qscore([20]) == 20.0
+
+    # Identical values return that value
+    assert abs(qscore.mean_qscore([20, 20, 20]) - 20.0) < 1e-10
+
+
+def test_mean_qscore_probability_space():
+    """Test that mean Q-score is computed in probability space, not linear space"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "qscore",
+        lib_dir / "qscore.py"
+    )
+    qscore = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(qscore)
+
+    # Q10 (10% error) + Q30 (0.1% error)
+    # Linear average would be Q20
+    # Probability average: (0.1 + 0.001)/2 = 0.0505 -> Q12.97
+    result = qscore.mean_qscore([10, 30])
+
+    # Should NOT be 20 (linear average)
+    assert abs(result - 20) > 5
+
+    # Should be closer to Q10 (weighted toward higher error)
+    assert result < 15
+    assert result > 10
+
+    # Verify the math: mean prob = (0.1 + 0.001)/2 = 0.0505
+    # Q = -10 * log10(0.0505) ≈ 12.97
+    assert abs(result - 12.97) < 0.1
+
+
+def test_mean_qscore_asymmetry():
+    """Test that mean Q-score is asymmetric (weighted toward lower Q / higher error)"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "qscore",
+        lib_dir / "qscore.py"
+    )
+    qscore = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(qscore)
+
+    # Adding a low-quality read should pull the average down significantly
+    high_quality = [30, 30, 30, 30]
+    with_low_quality = [30, 30, 30, 30, 10]
+
+    mean_high = qscore.mean_qscore(high_quality)
+    mean_with_low = qscore.mean_qscore(with_low_quality)
+
+    # The single Q10 read should pull the average down significantly
+    assert mean_with_low < mean_high - 5
+
+    # Should still be closer to Q10 than to Q30
+    assert mean_with_low < 20
+
+
+def test_weighted_mean_qscore():
+    """Test weighted mean Q-score calculation"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "qscore",
+        lib_dir / "qscore.py"
+    )
+    qscore = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(qscore)
+
+    # Equal weights should give same result as mean_qscore
+    result_weighted = qscore.weighted_mean_qscore([10, 20, 30], [1, 1, 1])
+    result_mean = qscore.mean_qscore([10, 20, 30])
+    assert abs(result_weighted - result_mean) < 1e-10
+
+    # Heavy weight on Q30 should pull average up
+    result_heavy_30 = qscore.weighted_mean_qscore([10, 30], [1, 100])
+    assert result_heavy_30 > 25
+
+    # Heavy weight on Q10 should pull average down
+    result_heavy_10 = qscore.weighted_mean_qscore([10, 30], [100, 1])
+    assert result_heavy_10 < 12
+
+
+def test_weighted_mean_qscore_validation():
+    """Test weighted mean Q-score input validation"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "qscore",
+        lib_dir / "qscore.py"
+    )
+    qscore = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(qscore)
+
+    # Empty lists return 0
+    assert qscore.weighted_mean_qscore([], []) == 0.0
+
+    # Mismatched lengths should raise
+    try:
+        qscore.weighted_mean_qscore([10, 20], [1])
+        assert False, "Should have raised ValueError"
+    except ValueError:
+        pass
+
+
+def test_lib_exports_qscore():
+    """Test that lib exports qscore utilities"""
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    sys.path.insert(0, str(lib_dir.parent))
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("lib", lib_dir / "__init__.py")
+    lib = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(lib)
+
+    assert hasattr(lib, 'mean_qscore')
+    assert hasattr(lib, 'weighted_mean_qscore')
+    assert hasattr(lib, 'qscore_to_probability')
+    assert hasattr(lib, 'probability_to_qscore')
