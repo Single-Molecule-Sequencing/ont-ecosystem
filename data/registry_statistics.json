@@ -1,54 +1,54 @@
 {
-  "generated_at": "2025-12-29T11:08:53.719216",
+  "generated_at": "2025-12-29T11:13:42.864649",
   "total_experiments": 165,
   "invalid_experiments": 1,
   "completeness": {
-    "good": 163,
-    "poor": 2
+    "good": 165
   },
   "by_source": {
     "ont-open-data": 20,
     "local": 145
   },
   "by_chemistry": {
-    "R10.4.1": 155,
-    "R10.4": 8,
-    "Unknown": 2
+    "R10.4.1": 157,
+    "R10.4": 8
   },
   "by_basecaller": {
-    "Unknown": 17,
+    "Unknown": 15,
     "guppy": 14,
-    "dorado": 134
+    "dorado": 136
   },
   "by_model": {
-    "hac": 146,
+    "hac": 148,
     "sup": 12,
-    "fast": 5,
-    "Unknown": 2
+    "fast": 5
   },
   "by_flowcell_type": {
     "PromethION": 119,
-    "MinION": 39,
-    "Unknown": 7
+    "MinION": 40,
+    "Unknown": 6
   },
   "by_sample_category": {
-    "Unknown": 22,
+    "Plasmid": 80,
+    "Human": 16,
+    "Research": 39,
     "Microbial": 5,
     "Cancer": 2,
-    "Research": 31,
     "CRISPR": 3,
     "Pharmacogenomics": 13,
     "Multiplex": 4,
-    "Plasmid": 70,
-    "Lab Run": 2,
-    "Human": 13
+    "Lab Run": 3
   },
   "by_experiment_type": {
-    "Unknown": 65,
+    "Plasmid Sequencing": 80,
+    "WGS": 7,
+    "Spatial Transcriptomics": 1,
+    "Methylation Validation": 6,
     "Metagenomic": 5,
+    "Unknown": 43,
     "Pharmacogenomics": 12,
-    "Plasmid Sequencing": 70,
-    "WGS": 4,
-    "Sequencing": 9
+    "Sequencing": 9,
+    "Basecalling Output": 1,
+    "Test Data": 1
   }
 }
