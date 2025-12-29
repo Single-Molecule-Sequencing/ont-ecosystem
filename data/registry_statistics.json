@@ -1,51 +1,52 @@
 {
-  "generated_at": "2025-12-29T10:48:40.545164",
-  "total_experiments": 166,
+  "generated_at": "2025-12-29T11:08:53.719216",
+  "total_experiments": 165,
+  "invalid_experiments": 1,
   "completeness": {
-    "good": 149,
-    "warning": 16,
-    "poor": 1
+    "good": 163,
+    "poor": 2
   },
   "by_source": {
-    "ont-open-data": 21,
+    "ont-open-data": 20,
     "local": 145
   },
   "by_chemistry": {
-    "R10.4.1": 154,
-    "Unknown": 4,
-    "R10.4": 8
+    "R10.4.1": 155,
+    "R10.4": 8,
+    "Unknown": 2
   },
   "by_basecaller": {
-    "Unknown": 19,
+    "Unknown": 17,
     "guppy": 14,
-    "dorado": 133
+    "dorado": 134
   },
   "by_model": {
     "hac": 146,
-    "sup": 11,
+    "sup": 12,
     "fast": 5,
-    "Unknown": 4
+    "Unknown": 2
   },
   "by_flowcell_type": {
-    "PromethION": 118,
+    "PromethION": 119,
     "MinION": 39,
-    "Unknown": 9
+    "Unknown": 7
   },
   "by_sample_category": {
-    "Unknown": 28,
+    "Unknown": 22,
     "Microbial": 5,
     "Cancer": 2,
     "Research": 31,
     "CRISPR": 3,
-    "Lab Run": 9,
+    "Pharmacogenomics": 13,
     "Multiplex": 4,
-    "Pharmacogenomics": 1,
     "Plasmid": 70,
+    "Lab Run": 2,
     "Human": 13
   },
   "by_experiment_type": {
-    "Unknown": 78,
+    "Unknown": 65,
     "Metagenomic": 5,
+    "Pharmacogenomics": 12,
     "Plasmid Sequencing": 70,
     "WGS": 4,
     "Sequencing": 9
