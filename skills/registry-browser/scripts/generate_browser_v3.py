@@ -165,8 +165,10 @@ def generate_html(experiments: list, audit_log: dict) -> str:
             "source": source,
             "status": exp.get("status", "registered"),
             "sample": metadata.get("sample", ""),
+            "sampleCategory": metadata.get("sample_category", ""),
             "dataset": metadata.get("dataset", ""),
             "device": metadata.get("device_type", exp.get("platform", "")),
+            "flowcellType": metadata.get("flowcell_type", ""),  # PromethION, MinION, or Flongle
             "chemistry": metadata.get("chemistry", ""),
             "model": metadata.get("basecall_model", ""),
             "flowcell": metadata.get("flowcell_id", exp.get("flowcell_id", "")),
@@ -602,6 +604,12 @@ def generate_html(experiments: list, audit_log: dict) -> str:
             <select class="filter-select" id="sampleFilter">
                 <option value="">All Samples</option>
             </select>
+            <select class="filter-select" id="chemistryFilter">
+                <option value="">All Chemistry</option>
+            </select>
+            <select class="filter-select" id="flowcellTypeFilter">
+                <option value="">All Flow Cells</option>
+            </select>
             <div class="view-btns">
                 <button class="view-btn active" data-view="grid">Grid</button>
                 <button class="view-btn" data-view="list">List</button>
@@ -630,8 +638,12 @@ const experiments = {json.dumps(experiments_json, indent=2)};
 // Populate filters
 const devices = [...new Set(experiments.map(e => e.device).filter(Boolean))];
 const samples = [...new Set(experiments.map(e => e.sample).filter(Boolean))];
+const chemistries = [...new Set(experiments.map(e => e.chemistry).filter(Boolean))];
+const flowcellTypes = [...new Set(experiments.map(e => e.flowcellType).filter(Boolean))];
 document.getElementById('deviceFilter').innerHTML += devices.sort().map(d => `<option value="${{d}}">${{d}}</option>`).join('');
 document.getElementById('sampleFilter').innerHTML += samples.sort().map(s => `<option value="${{s}}">${{s}}</option>`).join('');
+document.getElementById('chemistryFilter').innerHTML += chemistries.sort().map(c => `<option value="${{c}}">${{c}}</option>`).join('');
+document.getElementById('flowcellTypeFilter').innerHTML += flowcellTypes.sort().map(f => `<option value="${{f}}">${{f}}</option>`).join('');
 
 function renderExperiments() {{
     const grid = document.getElementById('experimentGrid');
@@ -640,16 +652,20 @@ function renderExperiments() {{
     const completenessFilter = document.getElementById('completenessFilter').value;
     const deviceFilter = document.getElementById('deviceFilter').value;
     const sampleFilter = document.getElementById('sampleFilter').value;
+    const chemistryFilter = document.getElementById('chemistryFilter').value;
+    const flowcellTypeFilter = document.getElementById('flowcellTypeFilter').value;
 
     const filtered = experiments.filter(exp => {{
         if (query) {{
-            const searchText = [exp.name, exp.id, exp.sample, exp.dataset, exp.flowcell, exp.device].join(' ').toLowerCase();
+            const searchText = [exp.name, exp.id, exp.sample, exp.dataset, exp.flowcell, exp.device, exp.chemistry].join(' ').toLowerCase();
             if (!searchText.includes(query)) return false;
         }}
         if (sourceFilter && exp.source !== sourceFilter) return false;
         if (completenessFilter && exp.completeness.status !== completenessFilter) return false;
         if (deviceFilter && exp.device !== deviceFilter) return false;
         if (sampleFilter && exp.sample !== sampleFilter) return false;
+        if (chemistryFilter && exp.chemistry !== chemistryFilter) return false;
+        if (flowcellTypeFilter && exp.flowcellType !== flowcellTypeFilter) return false;
         return true;
     }});
 
@@ -865,6 +881,47 @@ function showDetail(expId) {{
         </div>
     </div>`;
 
+    // Add artifacts section if present
+    if (exp.artifacts && exp.artifacts.length > 0) {{
+        html += `
+        <div class="modal-section">
+            <h3>Artifacts (${{exp.artifacts.length}})</h3>
+            <div style="max-height: 200px; overflow-y: auto; background: #f8f9fa; padding: 10px; border-radius: 8px; font-family: monospace; font-size: 0.85em;">
+                ${{exp.artifacts.map(a => `<div style="margin-bottom: 5px;">[${{a.type}}] ${{a.path ? a.path.split('/').slice(-2).join('/') : 'count: ' + a.count}}</div>`).join('')}}
+            </div>
+        </div>`;
+    }}
+
+    // Add re-analysis commands section
+    const missingFields = exp.completeness.missing || [];
+    if (missingFields.length > 0) {{
+        html += `
+        <div class="modal-section">
+            <h3>Re-Analysis Commands</h3>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <div class="detail-label">Scrutinize Command</div>
+                    <div class="detail-value" style="font-family:monospace;font-size:0.8em;word-break:break-all">
+                        /registry-scrutinize fix ${{exp.id}}
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Explore Command</div>
+                    <div class="detail-value" style="font-family:monospace;font-size:0.8em;word-break:break-all">
+                        /registry-explorer explore ${{exp.id}} --apply
+                    </div>
+                </div>
+                ${{exp.source === 'ont-open-data' ? `
+                <div class="detail-item">
+                    <div class="detail-label">Re-analyze from S3</div>
+                    <div class="detail-value" style="font-family:monospace;font-size:0.8em;word-break:break-all">
+                        /registry-scrutinize reanalyze ${{exp.id}}
+                    </div>
+                </div>` : ''}}
+            </div>
+        </div>`;
+    }}
+
     document.getElementById('modalBody').innerHTML = html;
     document.getElementById('modalOverlay').classList.add('active');
 }}
@@ -898,6 +955,8 @@ document.getElementById('sourceFilter').addEventListener('change', renderExperim
 document.getElementById('completenessFilter').addEventListener('change', renderExperiments);
 document.getElementById('deviceFilter').addEventListener('change', renderExperiments);
 document.getElementById('sampleFilter').addEventListener('change', renderExperiments);
+document.getElementById('chemistryFilter').addEventListener('change', renderExperiments);
+document.getElementById('flowcellTypeFilter').addEventListener('change', renderExperiments);
 document.getElementById('modalOverlay').addEventListener('click', function(e) {{ if (e.target === this) closeModal(); }});
 
 renderExperiments();
