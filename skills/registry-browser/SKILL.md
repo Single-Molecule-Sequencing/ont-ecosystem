@@ -1,7 +1,7 @@
 ---
 name: registry-browser
-version: 2.0.0
-description: Interactive registry browser with rigorous metadata schema for ONT experiments. Features clear read count provenance (sampled/estimated/counted), direct S3/HTTPS URLs, comprehensive metadata extraction, and detail modal views.
+version: 3.0.0
+description: Interactive registry browser with validation, re-analysis, and completeness tracking for ONT experiments. Features 42basepairs.com integration, audit logging, metadata validation, and publication-ready data access.
 author: Single Molecule Sequencing Lab
 slash_command: registry-browser
 user_invocable: true
@@ -11,6 +11,8 @@ tags:
   - visualization
   - metadata
   - browser
+  - validation
+  - audit
   - bam-header
   - filtering
   - provenance
@@ -19,29 +21,38 @@ dependencies:
   - jinja2 (optional, for HTML reports)
 ---
 
-# Registry Browser Skill v2.0
+# Registry Browser Skill v3.0
 
-Interactive browser and metadata manager for the ONT experiment registry with rigorous metadata schema, clear provenance tracking, and direct data access URLs.
+Comprehensive registry management with validation, re-analysis capabilities, and completeness tracking. Integrates with 42basepairs.com for visual S3 browsing.
 
-## Key Features in v2.0
+## Key Features in v3.0
 
-### Read Count Provenance
-Clear distinction between different read count types:
-- **Sampled**: Exact count of reads processed during streaming analysis (NOT total)
-- **Estimated**: Total reads extrapolated from file size and sample statistics
-- **Counted**: Actual total from full file enumeration (if available)
+### Data Completeness Tracking
+Visual indicators showing metadata completeness:
+- **Good (80%+)**: Green indicator - most metadata present
+- **Partial (50-79%)**: Yellow indicator - some metadata missing
+- **Incomplete (<50%)**: Red indicator - significant gaps
 
-### Data Access URLs
-Direct links for public ONT Open Data experiments:
-- **HTTPS**: Browser-accessible streaming URL
-- **S3**: AWS CLI access URI
-- **Landing Page**: EPI2ME Labs documentation
+### Validation & Audit
+- `registry_validator.py`: Validate and fix registry entries
+- `registry_reanalyze.py`: Re-analyze experiments from source data
+- Audit log at `~/.ont-registry/audit_log.yaml`
+- Automated metadata extraction from names/paths
 
-### Enhanced Visualization
-- Grid/List/Table views with filtering
-- Individual experiment detail modal
-- Color-coded provenance indicators
-- Searchable and filterable
+### 42basepairs.com Integration
+Direct links to visual S3 browser for public experiments:
+- Browse experiment files interactively
+- Preview BAM/POD5 contents
+- Download individual files
+
+### Enhanced Metadata Extraction
+Automatic extraction of:
+- Sample IDs (HG001-HG007, COLO829, etc.)
+- Device types (PromethION, MinION, Mk1D, Flongle)
+- Chemistry (R10.4.1, R9.4.1, E8.2)
+- Basecall models (sup, hac, fast)
+- Modifications (5mCG, 5hmCG, 6mA)
+- Run dates from experiment names
 
 ## Features
 
@@ -65,65 +76,64 @@ Direct links for public ONT Open Data experiments:
 ## Quick Start
 
 ```bash
-# Launch interactive browser
-/registry-browser view
+# Launch interactive browser v3
+python registry-browser/scripts/generate_browser_v3.py
 
-# Search experiments
-/registry-browser search "GIAB HG002"
+# Audit registry for issues
+python registry-browser/scripts/registry_validator.py audit
 
-# Add public experiment with metadata
-/registry-browser add-public giab_2025.01 HG001_PAW79146
+# Fix all registry issues
+python registry-browser/scripts/registry_validator.py fix
 
-# Update experiment with analysis results
-/registry-browser update exp-abc123 --analysis qc --results results.json
+# Update metadata for all experiments
+python registry-browser/scripts/registry_reanalyze.py --update-metadata
 
-# Export registry to HTML
-/registry-browser export --format html --output registry.html
+# Re-analyze a single experiment
+python registry-browser/scripts/registry_reanalyze.py exp-abc123
 ```
 
 ## Commands
 
-### view
-Launch interactive HTML browser for the registry.
+### Validation Commands
 
 ```bash
-/registry-browser view [--output browser.html]
+# Audit - Show registry issues and suggestions
+registry_validator.py audit [--json output.json] [-v]
+
+# Fix - Automatically fix common issues
+registry_validator.py fix [--dry-run] [-v]
+
+# Validate - Check single experiment
+registry_validator.py validate <exp_id>
 ```
 
-### search
-Search experiments by name, ID, metadata, or tags.
+### Re-analysis Commands
 
 ```bash
-/registry-browser search <query> [--field name|id|all]
+# Update metadata from names/paths
+registry_reanalyze.py --update-metadata [--dry-run]
+
+# Re-analyze single experiment (streams data)
+registry_reanalyze.py <exp_id> [--no-stats]
+
+# Re-analyze all public experiments
+registry_reanalyze.py --public-all [--no-stats]
 ```
 
-### add-public
-Add a public ONT experiment to the registry with full metadata extraction.
+### Browser Commands
 
 ```bash
-/registry-browser add-public <dataset> <experiment> [--analyze]
-```
+# Generate v3 browser with completeness tracking
+generate_browser_v3.py
 
-### update
-Update experiment with analysis results and artifact locations.
+# Legacy v2 browser
+registry_browser.py view [--output browser.html]
 
-```bash
-/registry-browser update <id> --analysis <type> --results <file>
-/registry-browser update <id> --artifact <path> --type <plot|summary|report>
-```
+# Search experiments
+registry_browser.py search <query>
 
-### check
-Check if an experiment exists and show its metadata status.
-
-```bash
-/registry-browser check <id|name>
-```
-
-### export
-Export registry to various formats.
-
-```bash
-/registry-browser export --format html|json|csv --output <file>
+# Check experiment
+registry_browser.py check <id|name>
 ```
 
 ## Metadata Schema v2.0
