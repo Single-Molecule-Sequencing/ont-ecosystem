@@ -2,27 +2,129 @@
 
 This directory contains installable skill files for Claude Code, Claude Desktop, and Claude Web.
 
-## Quick Install (All Skills)
+## Installation by Platform
 
+### Claude Code (CLI) - Automatic
+
+Skills load automatically from `.claude/commands/` when working in the ont-ecosystem project.
+
+**Manual installation to user directory:**
 ```bash
 ./install-all.sh
 ```
 
-This installs all 9 skills to `~/.claude/commands/` and checks for required dependencies.
+This copies slash command files to `~/.claude/commands/`.
+
+### Claude Desktop / Claude Web - ZIP Files
+
+1. Download ZIP files from `installable-skills/zip/`
+2. In Claude Desktop/Web: **Settings > Features > Custom Skills**
+3. Upload each `.zip` file
+4. Restart Claude
+
+**Generate fresh ZIP files:**
+```bash
+./create-zips.sh
+```
+
+### Claude API - Programmatic
+
+Upload skills via the Skills API:
+```python
+import anthropic
+
+client = anthropic.Anthropic()
+
+with open("installable-skills/zip/end-reason.zip", "rb") as f:
+    skill = client.beta.skills.create(
+        name="end-reason",
+        zip_file=f,
+        betas=["skills-2025-10-02"]
+    )
+```
 
 ## Available Skills
 
-| Skill | Purpose |
-|-------|---------|
-| `/comprehensive-analysis` | 9 publication figures, KDE, sampling, runtime estimation |
-| `/dorado-bench-v2` | Dorado basecalling on UM HPC (ARMIS2/Great Lakes) |
-| `/end-reason` | End reason QC for adaptive sampling |
-| `/experiment-db` | SQLite database for experiment tracking |
-| `/manuscript` | Publication-quality figures and tables |
-| `/ont-align` | Alignment, reference management, edit distance |
-| `/ont-experiments-v2` | Experiment registry with provenance tracking |
-| `/ont-monitor` | Real-time sequencing run monitoring |
-| `/ont-pipeline` | Multi-step workflow orchestration |
+| Skill | Purpose | ZIP Size |
+|-------|---------|----------|
+| `comprehensive-analysis` | 9 publication figures, KDE, sampling, runtime estimation | 22KB |
+| `dorado-bench-v2` | Dorado basecalling on UM HPC (ARMIS2/Great Lakes) | 13KB |
+| `end-reason` | End reason QC for adaptive sampling | 7KB |
+| `experiment-db` | SQLite database for experiment tracking | 14KB |
+| `manuscript` | Publication-quality figures and tables | 2KB |
+| `ont-align` | Alignment, reference management, edit distance | 11KB |
+| `ont-experiments-v2` | Experiment registry with provenance tracking | 32KB |
+| `ont-monitor` | Real-time sequencing run monitoring | 14KB |
+| `ont-pipeline` | Multi-step workflow orchestration | 13KB |
+
+## Directory Structure
+
+```
+installable-skills/
+├── README.md                          # This file
+├── install-all.sh                     # Install slash commands (~/.claude/commands/)
+├── create-zips.sh                     # Generate ZIP files for Desktop/Web
+├── zip/                               # ZIP files for Claude Desktop/Web
+│   ├── comprehensive-analysis.zip
+│   ├── dorado-bench-v2.zip
+│   ├── end-reason.zip
+│   ├── experiment-db.zip
+│   ├── manuscript.zip
+│   ├── ont-align.zip
+│   ├── ont-experiments-v2.zip
+│   ├── ont-monitor.zip
+│   └── ont-pipeline.zip
+└── */                                 # Slash command files (*.md)
+    └── *.md                           # For Claude Code ~/.claude/commands/
+```
+
+## File Formats
+
+### Slash Commands (`*.md`)
+Simple markdown files with YAML frontmatter for Claude Code slash commands:
+```yaml
+---
+description: What this command does. Use when...
+---
+
+# /command-name
+
+Instructions for Claude...
+```
+
+### Agent Skills (`SKILL.md` in ZIP)
+Full skills with YAML frontmatter for Claude Desktop/Web/API:
+```yaml
+---
+name: skill-name
+description: What this skill does. Use when...
+---
+
+# Skill Name
+
+## Instructions
+[Detailed guidance for Claude]
+
+## Examples
+[Usage examples]
+```
+
+## Platform Differences
+
+| Feature | Claude Code | Claude Desktop/Web | Claude API |
+|---------|-------------|-------------------|------------|
+| Format | Directory or `.md` | ZIP file | ZIP file |
+| Location | `.claude/commands/` | Settings upload | API upload |
+| Sharing | Project-local | Per-user | Organization-wide |
+| Tool restrictions | `allowed-tools` supported | No restrictions | Depends on API |
+| Network access | Full | Varies | No network |
+
+## Dependencies
+
+Most skills require Python packages. Install all:
+```bash
+pip install numpy pandas matplotlib scipy pod5 pysam edlib pyyaml jinja2
+```
 
 ## Skill Details
 
@@ -37,7 +139,6 @@ Complete ONT experiment analysis with 9 publication-quality figures, KDE distrib
 Oxford Nanopore basecalling with Dorado on UM HPC clusters with GPU optimization.
 ```bash
 ont_experiments.py run basecalling exp-abc123 --model sup --output calls.bam
-python3 dorado_basecall.py /path/to/pod5 --model sup --cluster armis2 --slurm job.sbatch
 ```
 
 ### /end-reason
@@ -89,55 +190,19 @@ ont_pipeline.py run pharmaco-clinical exp-001
 ont_pipeline.py report exp-001 --format html
 ```
 
-## Directory Structure
-
-```
-installable-skills/
-├── README.md                          # This file
-├── install-all.sh                     # Install all skills
-├── comprehensive-analysis/
-│   └── comprehensive-analysis.md      # Skill command file
-├── dorado-bench-v2/
-│   └── dorado-bench-v2.md
-├── end-reason/
-│   └── end-reason.md
-├── experiment-db/
-│   └── experiment-db.md
-├── manuscript/
-│   └── manuscript.md
-├── ont-align/
-│   └── ont-align.md
-├── ont-experiments-v2/
-│   └── ont-experiments-v2.md
-├── ont-monitor/
-│   └── ont-monitor.md
-└── ont-pipeline/
-    └── ont-pipeline.md
-```
-
-## Dependencies
-
-Install all dependencies:
-
-```bash
-pip install numpy pandas matplotlib scipy pod5 pysam edlib pyyaml jinja2
-```
-
-## For Claude Desktop/Web
-
-Skills are automatically available when:
-1. The skill command files are in `~/.claude/commands/`
-2. Claude has access to the ont-ecosystem repository
-
-## For Claude Code (CLI)
-
-Skills are automatically loaded from the repository's `.claude/skills/` directory when working in the ont-ecosystem project.
-
 ## Updating Skills
 
-To update skills, pull the latest changes and re-run the installer:
+To update skills after pulling new changes:
 
 ```bash
+# Pull latest
 git pull origin main
+
+# Regenerate ZIP files
+./installable-skills/create-zips.sh
+
+# Reinstall slash commands
 ./installable-skills/install-all.sh
 ```
+
+For Claude Desktop/Web, re-upload the updated ZIP files.
