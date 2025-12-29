@@ -1,0 +1,240 @@
+"""Tests for utility scripts: ont_stats.py and ont_check.py"""
+
+import sys
+from pathlib import Path
+
+# Add bin to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent / 'bin'))
+
+
+# =============================================================================
+# ont_stats.py Tests
+# =============================================================================
+
+def test_stats_imports():
+    """Test that ont_stats.py can be imported"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_stats",
+        bin_dir / "ont_stats.py"
+    )
+    ont_stats = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_stats)
+
+    assert hasattr(ont_stats, 'get_experiment_stats')
+    assert hasattr(ont_stats, 'get_equation_stats')
+    assert hasattr(ont_stats, 'get_generator_stats')
+    assert hasattr(ont_stats, 'get_skill_stats')
+    assert hasattr(ont_stats, 'get_test_stats')
+
+
+def test_stats_experiment_stats():
+    """Test get_experiment_stats returns valid data"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_stats",
+        bin_dir / "ont_stats.py"
+    )
+    ont_stats = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_stats)
+
+    stats = ont_stats.get_experiment_stats()
+    if stats is not None:  # Registry may not exist in all environments
+        assert 'total_experiments' in stats
+        assert 'total_reads' in stats
+        assert 'total_bases' in stats
+
+
+def test_stats_skill_stats():
+    """Test get_skill_stats returns valid data"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_stats",
+        bin_dir / "ont_stats.py"
+    )
+    ont_stats = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_stats)
+
+    stats = ont_stats.get_skill_stats()
+    assert stats is not None
+    assert 'total_skills' in stats
+    assert 'skill_names' in stats
+    assert stats['total_skills'] >= 7
+
+
+def test_stats_generator_stats():
+    """Test get_generator_stats returns valid data"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_stats",
+        bin_dir / "ont_stats.py"
+    )
+    ont_stats = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_stats)
+
+    stats = ont_stats.get_generator_stats()
+    assert stats is not None
+    assert 'total_generators' in stats
+    assert 'figure_generators' in stats
+    assert 'table_generators' in stats
+    assert stats['total_generators'] >= 5
+
+
+def test_stats_format_number():
+    """Test number formatting function"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_stats",
+        bin_dir / "ont_stats.py"
+    )
+    ont_stats = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_stats)
+
+    assert ont_stats.format_number(500) == "500"
+    assert ont_stats.format_number(1500) == "1.5K"
+    assert ont_stats.format_number(1500000) == "1.5M"
+    assert ont_stats.format_number(1500000000) == "1.5G"
+    assert ont_stats.format_number(1500000000000) == "1.5T"
+
+
+# =============================================================================
+# ont_check.py Tests
+# =============================================================================
+
+def test_check_imports():
+    """Test that ont_check.py can be imported"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_check",
+        bin_dir / "ont_check.py"
+    )
+    ont_check = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_check)
+
+    assert hasattr(ont_check, 'check_python_version')
+    assert hasattr(ont_check, 'check_required_modules')
+    assert hasattr(ont_check, 'check_optional_modules')
+    assert hasattr(ont_check, 'check_external_tools')
+    assert hasattr(ont_check, 'check_directories')
+    assert hasattr(ont_check, 'check_skills')
+    assert hasattr(ont_check, 'run_health_check')
+
+
+def test_check_python_version():
+    """Test Python version check"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_check",
+        bin_dir / "ont_check.py"
+    )
+    ont_check = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_check)
+
+    status, msg = ont_check.check_python_version()
+    # Should pass since we're running on Python 3.9+
+    assert status in [ont_check.PASS, ont_check.WARN]
+    assert 'Python' in msg
+
+
+def test_check_required_modules():
+    """Test required modules check"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_check",
+        bin_dir / "ont_check.py"
+    )
+    ont_check = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_check)
+
+    results = ont_check.check_required_modules()
+    assert len(results) >= 2  # pyyaml and jsonschema
+
+    # Each result should be a tuple of (status, name, message)
+    for status, name, msg in results:
+        assert status in [ont_check.PASS, ont_check.FAIL]
+        assert isinstance(name, str)
+        assert isinstance(msg, str)
+
+
+def test_check_optional_modules():
+    """Test optional modules check"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_check",
+        bin_dir / "ont_check.py"
+    )
+    ont_check = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_check)
+
+    results = ont_check.check_optional_modules()
+    assert len(results) >= 5  # numpy, pandas, matplotlib, pysam, etc.
+
+    # Optional modules return PASS or INFO
+    for status, name, msg in results:
+        assert status in [ont_check.PASS, ont_check.INFO]
+
+
+def test_check_skills():
+    """Test skills check"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_check",
+        bin_dir / "ont_check.py"
+    )
+    ont_check = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_check)
+
+    status, msg = ont_check.check_skills()
+    assert status == ont_check.PASS
+    assert 'skills installed' in msg
+
+
+def test_check_generators():
+    """Test generators check"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_check",
+        bin_dir / "ont_check.py"
+    )
+    ont_check = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_check)
+
+    status, msg = ont_check.check_generators()
+    assert status == ont_check.PASS
+    assert 'generators available' in msg
+
+
+def test_run_health_check():
+    """Test full health check run"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_check",
+        bin_dir / "ont_check.py"
+    )
+    ont_check = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_check)
+
+    results = ont_check.run_health_check()
+
+    assert 'status' in results
+    assert 'checks' in results
+    assert results['status'] in ['healthy', 'degraded', 'unhealthy']
+    assert len(results['checks']) > 0
+
+    # Verify check structure
+    for check in results['checks']:
+        assert 'category' in check
+        assert 'status' in check
+        assert 'message' in check

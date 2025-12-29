@@ -115,6 +115,12 @@ jobs:
                   print(f'⚠️  {f}: Not found')
           "
 
+      - name: Run health check
+        run: python bin/ont_check.py
+
+      - name: Run ecosystem stats
+        run: python bin/ont_stats.py --brief
+
       - name: Run tests
         run: pytest tests/ -v --tb=short
 

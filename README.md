@@ -182,7 +182,7 @@ ont-ecosystem/                    # Consolidated Monorepo v3.0
 │
 ├── dashboards/                   # React JSX components
 ├── examples/                     # Pipelines + HPC configs
-├── tests/                        # 30 pytest tests
+├── tests/                        # 77 pytest tests
 └── docs/                         # Architecture docs
 ```
 
@@ -205,6 +205,18 @@ git clone https://github.com/Single-Molecule-Sequencing/ont-ecosystem.git
 cd ont-ecosystem
 ./install.sh --hpc
 source ~/.ont-ecosystem/env.sh
+```
+
+### Verify Installation
+
+```bash
+# Check system health
+ont_check.py                      # Full health check
+ont_check.py --json               # JSON output for automation
+
+# View ecosystem statistics
+ont_stats.py                      # Full statistics
+ont_stats.py --brief              # One-line summary
 ```
 
 ### Dependencies
