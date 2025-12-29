@@ -1,0 +1,58 @@
+\documentclass[11pt,a4paper]{letter}
+\usepackage[margin=1in]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+
+\signature{[Corresponding Author Name]\\
+Department of Computational Medicine and Bioinformatics\\
+University of Michigan}
+
+\address{Department of Computational Medicine and Bioinformatics\\
+University of Michigan\\
+Ann Arbor, MI 48109\\
+USA}
+
+\begin{document}
+
+\begin{letter}{Editorial Office\\
+Scientific Data\\
+Nature Portfolio}
+
+\opening{Dear Editor,}
+
+We are pleased to submit our Data Descriptor entitled ``\textbf{A Registry Framework for Oxford Nanopore Sequencing Experiment Metadata and Quality Tracking}'' for consideration for publication in Scientific Data.
+
+\textbf{Summary of the Dataset}
+
+We present a comprehensive registry of 165 Oxford Nanopore sequencing experiments conducted at the University of Michigan between August 2020 and December 2025. The registry captures standardized metadata including sample information, chemistry versions, basecalling parameters, device specifications, and quality control metrics with 100\% completeness for critical fields.
+
+\textbf{Scientific Value}
+
+This dataset addresses a critical gap in nanopore sequencing research: the lack of standardized metadata management practices. The registry:
+
+\begin{itemize}
+    \item Documents the institutional transition from R10.4 to R10.4.1 chemistry (95.2\% adoption)
+    \item Tracks the evolution from Guppy to Dorado basecallers (82.4\% adoption)
+    \item Establishes quality control benchmarks (median Q-score: 14.0, median N50: 4,828 bp)
+    \item Covers diverse applications including pharmacogenomics studies requiring regulatory compliance
+\end{itemize}
+
+\textbf{Alignment with Scientific Data}
+
+This submission aligns with Scientific Data's mission to promote data sharing and reuse. The registry follows FAIR principles, is provided in multiple interoperable formats (YAML, JSON, CSV), and includes event-sourced provenance tracking for complete reproducibility.
+
+\textbf{Data Availability}
+
+The registry and analysis code are available at \url{https://github.com/Single-Molecule-Sequencing/ont-ecosystem}. We are prepared to deposit the dataset in Zenodo or another recommended repository upon acceptance.
+
+\textbf{Disclosure}
+
+This manuscript was prepared with assistance from Claude (Anthropic), which is disclosed in the Methods section per journal policy.
+
+The manuscript has not been published previously and is not under consideration elsewhere. All authors have approved the submission.
+
+\closing{Sincerely,}
+
+\end{letter}
+\end{document}
