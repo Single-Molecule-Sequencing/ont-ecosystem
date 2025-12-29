@@ -873,3 +873,142 @@ def test_lib_exports_io():
     assert hasattr(lib, 'save_json')
     assert hasattr(lib, 'atomic_write')
     assert hasattr(lib, 'checksum')
+
+
+# =============================================================================
+# lib/config.py Tests
+# =============================================================================
+
+def test_config_imports():
+    """Test that config.py can be imported"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "config",
+        lib_dir / "config.py"
+    )
+    config = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(config)
+
+    assert hasattr(config, 'Config')
+    assert hasattr(config, 'get_config')
+    assert hasattr(config, 'load_config')
+    assert hasattr(config, 'save_config')
+    assert hasattr(config, 'get_project_config')
+
+
+def test_config_class():
+    """Test Config class functionality"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "config",
+        lib_dir / "config.py"
+    )
+    config_mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(config_mod)
+
+    # Create config with values
+    cfg = config_mod.Config(config={"basecalling": {"model": "hac"}})
+
+    # Test get with dot notation
+    assert cfg.get("basecalling.model") == "hac"
+
+    # Test default value
+    assert cfg.get("nonexistent.key", "default") == "default"
+
+    # Test set
+    cfg.set("analysis.threads", 8)
+    assert cfg.get("analysis.threads") == 8
+
+
+def test_config_defaults():
+    """Test that DEFAULT_CONFIG is valid"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "config",
+        lib_dir / "config.py"
+    )
+    config_mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(config_mod)
+
+    defaults = config_mod.DEFAULT_CONFIG
+    assert "version" in defaults
+    assert "basecalling" in defaults
+    assert "alignment" in defaults
+    assert "github" in defaults
+
+
+def test_config_to_dict():
+    """Test Config.to_dict()"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "config",
+        lib_dir / "config.py"
+    )
+    config_mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(config_mod)
+
+    cfg = config_mod.Config(config={"custom": "value"})
+    d = cfg.to_dict()
+
+    assert isinstance(d, dict)
+    assert "basecalling" in d  # From defaults
+    assert "custom" in d       # From config
+
+
+def test_config_environment_detection():
+    """Test environment detection functions"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "config",
+        lib_dir / "config.py"
+    )
+    config_mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(config_mod)
+
+    # Test detect_environment
+    env = config_mod.detect_environment()
+    assert "platform" in env
+    assert "python_version" in env
+    assert "hpc" in env
+    assert isinstance(env["hpc"], bool)
+
+
+def test_config_path_functions():
+    """Test configuration path functions"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "config",
+        lib_dir / "config.py"
+    )
+    config_mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(config_mod)
+
+    # Test path functions return Path objects
+    user_dir = config_mod.get_user_config_dir()
+    assert isinstance(user_dir, Path)
+
+    user_path = config_mod.get_user_config_path()
+    assert isinstance(user_path, Path)
+    assert user_path.name == "config.yaml"
+
+
+def test_lib_exports_config():
+    """Test that lib exports config utilities"""
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    sys.path.insert(0, str(lib_dir.parent))
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("lib", lib_dir / "__init__.py")
+    lib = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(lib)
+
+    assert hasattr(lib, 'get_config')
+    assert hasattr(lib, 'load_config')
+    assert hasattr(lib, 'save_config')
+    assert hasattr(lib, 'Config')

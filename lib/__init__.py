@@ -186,3 +186,34 @@ def checksum(path, **kwargs):
     """Calculate file checksum. Lazy import to avoid startup overhead."""
     from .io import checksum as _checksum
     return _checksum(path, **kwargs)
+
+
+# Configuration utilities - import on demand
+def get_config():
+    """Get global configuration. Lazy import to avoid startup overhead."""
+    from .config import get_config as _get_config
+    return _get_config()
+
+
+def load_config(path=None):
+    """Load configuration from file. Lazy import to avoid startup overhead."""
+    from .config import load_config as _load_config
+    return _load_config(path)
+
+
+def save_config(config, path=None):
+    """Save configuration to file. Lazy import to avoid startup overhead."""
+    from .config import save_config as _save_config
+    return _save_config(config, path)
+
+
+def get_project_config(project_path=None):
+    """Get project-specific configuration. Lazy import to avoid startup overhead."""
+    from .config import get_project_config as _get_project_config
+    return _get_project_config(project_path)
+
+
+def Config(config=None, defaults=None):
+    """Configuration manager. Lazy import to avoid startup overhead."""
+    from .config import Config as _Config
+    return _Config(config, defaults)

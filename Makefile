@@ -1,9 +1,10 @@
 # ONT Ecosystem Makefile
 # Version 3.0.0
 
-.PHONY: install install-dev test test-quick test-coverage lint validate clean package dashboard help
+.PHONY: install install-dev test test-quick test-coverage test-lib lint validate clean package dashboard help
 .PHONY: validate-skills validate-registry validate-equations pre-commit pre-commit-install
 .PHONY: list-figures list-tables list-pipes version stats check docs
+.PHONY: doctor report hooks init-project
 
 PYTHON := python3
 PIP := pip3
@@ -17,8 +18,9 @@ help:
 	@echo "  install-dev     Install with development dependencies"
 	@echo ""
 	@echo "Testing:"
-	@echo "  test            Run all tests (86 tests)"
+	@echo "  test            Run all tests (162 tests)"
 	@echo "  test-quick      Run core tests only"
+	@echo "  test-lib        Run library module tests"
 	@echo "  test-coverage   Run tests with coverage report"
 	@echo "  lint            Check Python syntax"
 	@echo ""
@@ -31,8 +33,15 @@ help:
 	@echo "Utilities:"
 	@echo "  stats           Show ecosystem statistics"
 	@echo "  check           Run health check"
+	@echo "  doctor          Diagnose issues and suggest fixes"
+	@echo "  report          Generate project report"
 	@echo "  version         Show version information"
 	@echo "  docs            List documentation files"
+	@echo ""
+	@echo "Development:"
+	@echo "  hooks           Install git hooks"
+	@echo "  init-project    Create new project from template"
+	@echo "  pre-commit      Run pre-commit hooks"
 	@echo ""
 	@echo "Manuscript:"
 	@echo "  list-figures    List available figure generators"
@@ -40,7 +49,6 @@ help:
 	@echo "  list-pipes      List available pipelines"
 	@echo ""
 	@echo "Other:"
-	@echo "  pre-commit      Run pre-commit hooks"
 	@echo "  package         Create skill packages"
 	@echo "  dashboard       Start web dashboard"
 	@echo "  clean           Remove build artifacts"
@@ -185,8 +193,46 @@ docs:
 	@echo "  docs/QUICKSTART.md     - Quick start guide"
 	@echo "  docs/SKILLS.md         - Skills documentation"
 	@echo "  docs/GITHUB-SETUP.md   - GitHub setup guide"
+	@echo "  docs/DEVELOPMENT.md    - Development guide"
+	@echo "  docs/API_REFERENCE.md  - Library API reference"
 	@echo ""
 	@echo "  CLAUDE.md              - Claude Code guidance"
 	@echo "  AUTHORITATIVE_SOURCES.md - Source code locations"
 	@echo ""
 	@ls -la docs/*.md 2>/dev/null | awk '{print "  " $$NF " (" $$5 " bytes)"}' || true
+
+# Library tests
+test-lib:
+	$(PYTHON) -m pytest tests/test_lib.py -v
+
+# Diagnostics
+doctor:
+	@$(PYTHON) bin/ont_doctor.py
+
+doctor-fix:
+	@$(PYTHON) bin/ont_doctor.py --fix
+
+# Report generation
+report:
+	@$(PYTHON) bin/ont_report.py
+
+report-md:
+	@$(PYTHON) bin/ont_report.py --format markdown
+
+report-json:
+	@$(PYTHON) bin/ont_report.py --format json
+
+# Git hooks
+hooks:
+	@$(PYTHON) bin/ont_hooks.py install
+
+hooks-status:
+	@$(PYTHON) bin/ont_hooks.py status
+
+# Project initialization
+init-project:
+	@echo "Usage: make init-project NAME=my-project"
+	@echo "  Options: TEMPLATE=minimal|standard|full (default: standard)"
+ifdef NAME
+	@$(PYTHON) bin/ont_init.py project $(NAME) --template $(or $(TEMPLATE),standard)
+endif
