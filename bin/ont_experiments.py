@@ -71,7 +71,8 @@ except ImportError:
 try:
     import jsonschema
     HAS_JSONSCHEMA = True
-except ImportError:
+except (ImportError, TypeError):
+    # TypeError can occur with incompatible referencing package on Python <3.13
     HAS_JSONSCHEMA = False
 
 
@@ -1202,21 +1203,234 @@ def parse_final_summary(filepath: Path) -> Dict[str, Any]:
     return metadata
 
 
+# =============================================================================
+# MinKNOW Output Structure Detection
+# Based on: https://software-docs.nanoporetech.com/output-specifications/latest/minknow/output_structure/
+# =============================================================================
+
+# Official MinKNOW data subdirectories
+MINKNOW_DATA_DIRS = {
+    # POD5 format (current standard)
+    'pod5', 'pod5_pass', 'pod5_fail', 'pod5_skip',
+    # FASTQ format
+    'fastq_pass', 'fastq_fail',
+    # BAM format
+    'bam_pass', 'bam_fail',
+    # Fast5 format (deprecated but still supported)
+    'fast5_pass', 'fast5_fail', 'fast5_skip',
+}
+
+# MinKNOW metadata file patterns (glob patterns)
+MINKNOW_METADATA_PATTERNS = [
+    'final_summary*.txt',           # Run completion summary
+    'report_*.html',                # HTML report
+    'sequencing_summary*.txt',      # Sequencing details
+    'sample_sheet*.csv',            # Sample metadata
+    'barcode_alignment*.tsv',       # Barcode assignment data
+    'output_hash*.csv',             # Output verification
+]
+
+# Optional MinKNOW directories
+MINKNOW_OPTIONAL_DIRS = {
+    'adaptive_sampling',            # Adaptive sampling data
+    'other_reports',                # Additional reports
+}
+
+
+def _has_data_files(path: Path) -> bool:
+    """Check if a directory contains actual data files (pod5, fast5, bam)."""
+    try:
+        for item in path.iterdir():
+            if item.is_dir() and item.name in MINKNOW_DATA_DIRS:
+                # Check if the data directory has files
+                try:
+                    for _ in item.iterdir():
+                        return True
+                except PermissionError:
+                    pass
+        # Also check for direct data files
+        for ext in ['*.pod5', '*.fast5', '*.bam']:
+            if list(path.glob(ext)):
+                return True
+    except PermissionError:
+        pass
+    return False
+
+
+def _find_minknow_run_dir(path: Path) -> Optional[Path]:
+    """Find the actual MinKNOW run directory within a path.
+
+    MinKNOW structure (pooling disabled):
+        {protocol_group_id}/{sample_id}/{timestamp}_{device}_{flowcell}_{run_id}/
+            ├── pod5/ or pod5_pass/, pod5_fail/, pod5_skip/
+            ├── fastq_pass/, fastq_fail/
+            ├── final_summary_*.txt
+            ├── report_*.html
+            └── sequencing_summary_*.txt
+
+    MinKNOW structure (pooling enabled):
+        {protocol_group_id}/{sample_id}/
+            ├── pod5/ or pod5_pass/, ...
+            └── final_summary_*.txt, ...
+
+    Returns the run directory path, or None if not found.
+    Prioritizes directories with actual data files over metadata-only directories.
+    """
+    # Check if this directory itself is a run directory with data
+    if _is_minknow_run_dir(path) and _has_data_files(path):
+        return path
+
+    candidates = []
+    metadata_only = []
+
+    try:
+        # Check immediate subdirectories (sample_id level)
+        for subdir in path.iterdir():
+            if subdir.is_dir() and not subdir.name.startswith('.'):
+                if _is_minknow_run_dir(subdir):
+                    if _has_data_files(subdir):
+                        candidates.append(subdir)
+                    else:
+                        metadata_only.append(subdir)
+                # Check one more level (timestamp_device_flowcell_runid level)
+                try:
+                    for subsubdir in subdir.iterdir():
+                        if subsubdir.is_dir() and not subsubdir.name.startswith('.'):
+                            if _is_minknow_run_dir(subsubdir):
+                                if _has_data_files(subsubdir):
+                                    candidates.append(subsubdir)
+                                else:
+                                    metadata_only.append(subsubdir)
+                except PermissionError:
+                    pass
+    except PermissionError:
+        pass
+
+    # Prefer directories with data, fall back to metadata-only
+    if candidates:
+        return candidates[0]
+    if metadata_only:
+        return metadata_only[0]
+
+    # Fall back to checking path itself even without data
+    if _is_minknow_run_dir(path):
+        return path
+
+    return None
+
+
+def _is_minknow_run_dir(path: Path) -> bool:
+    """Check if a directory is a MinKNOW run directory.
+
+    A MinKNOW run directory contains:
+    - At least one MinKNOW data subdirectory (pod5/, fastq_pass/, etc.)
+    - OR at least one MinKNOW metadata file (final_summary_*.txt, report_*.html, etc.)
+    """
+    if not path.is_dir():
+        return False
+
+    try:
+        # Check for MinKNOW data directories
+        for item in path.iterdir():
+            if item.is_dir() and item.name in MINKNOW_DATA_DIRS:
+                return True
+
+        # Check for MinKNOW metadata files
+        for pattern in MINKNOW_METADATA_PATTERNS:
+            if list(path.glob(pattern)):
+                return True
+    except PermissionError:
+        return False
+
+    return False
+
+
+def _count_experiments_in_subdirs(path: Path, max_to_check: int = 10) -> int:
+    """Count how many immediate subdirectories contain experiments.
+
+    Used to detect if a directory is a container (multiple experiments)
+    vs an experiment itself.
+    """
+    count = 0
+    checked = 0
+    try:
+        for subdir in path.iterdir():
+            if checked >= max_to_check:
+                break
+            if subdir.is_dir() and not subdir.name.startswith('.'):
+                checked += 1
+                # Check if this subdir or any of its subdirs is a run directory
+                if _is_minknow_run_dir(subdir):
+                    count += 1
+                else:
+                    # Check one level deeper
+                    try:
+                        for subsubdir in subdir.iterdir():
+                            if subsubdir.is_dir() and not subsubdir.name.startswith('.'):
+                                if _is_minknow_run_dir(subsubdir):
+                                    count += 1
+                                    break
+                    except PermissionError:
+                        pass
+    except PermissionError:
+        pass
+    return count
+
+
 def discover_experiment(path: Path) -> Optional[ExperimentMetadata]:
-    """Discover and extract metadata from an experiment directory"""
+    """Discover and extract metadata from an ONT experiment directory.
+
+    Based on MinKNOW output structure specification:
+    https://software-docs.nanoporetech.com/output-specifications/latest/minknow/output_structure/
+
+    Directory structure (pooling disabled - default):
+        /data/{protocol_group_id}/{sample_id}/{timestamp}_{device}_{flowcell}_{run_id}/
+            ├── pod5/ and/or pod5_skip/
+            ├── fastq_pass/ and/or fastq_fail/
+            ├── bam_pass/ and/or bam_fail/
+            ├── final_summary_{flowcell}_{run_id}_{short_run_id}.txt
+            ├── report_{flowcell}_{timestamp}_{run_id}.html
+            ├── sequencing_summary_{flowcell}_{run_id}_{short_run_id}.txt
+            └── adaptive_sampling/ (optional)
+
+    Directory structure (pooling enabled):
+        /data/{protocol_group_id}/{sample_id}/
+            └── (same contents as above)
+
+    Returns ExperimentMetadata if valid experiment found, None otherwise.
+    """
     path = path.resolve()
-    
+
     if not path.exists():
         return None
-    
-    # Find data files
-    pod5_files = list(path.rglob('*.pod5'))
-    fast5_files = list(path.rglob('*.fast5'))
-    bam_files = list(path.rglob('*.bam'))
-    
+
+    # First, check if this is a container directory (has multiple experiments in subdirs)
+    # If 2+ subdirectories contain experiments, this is a container, not an experiment
+    exp_count = _count_experiments_in_subdirs(path, max_to_check=10)
+    if exp_count >= 2:
+        return None
+
+    # Find the actual run directory (handles nested MinKNOW structure)
+    run_dir = _find_minknow_run_dir(path)
+    if run_dir is None:
+        # No MinKNOW structure found - check for raw data files as fallback
+        pod5_files = list(path.glob('*.pod5'))
+        fast5_files = list(path.glob('*.fast5'))
+        bam_files = list(path.glob('*.bam'))
+        if not (pod5_files or fast5_files or bam_files):
+            return None
+        # Has direct data files - treat as simple experiment
+        run_dir = path
+
+    # Collect all data files from the run directory
+    pod5_files = list(run_dir.rglob('*.pod5'))
+    fast5_files = list(run_dir.rglob('*.fast5'))
+    bam_files = list(run_dir.rglob('*.bam'))
+    fastq_files = list(run_dir.rglob('*.fastq')) + list(run_dir.rglob('*.fastq.gz'))
+
     if not pod5_files and not fast5_files and not bam_files:
         return None
-    
+
     # Determine primary format
     if pod5_files:
         data_format = 'pod5'
@@ -1227,20 +1441,22 @@ def discover_experiment(path: Path) -> Optional[ExperimentMetadata]:
     else:
         data_format = 'bam'
         data_files = bam_files
-    
+
     # Calculate size
     total_size = sum(f.stat().st_size for f in data_files)
     total_size_gb = total_size / (1024**3)
-    
+
     # Extract metadata from various sources
     metadata = {}
-    
-    # Try final_summary.txt first
-    final_summary = path / 'final_summary.txt'
-    if not final_summary.exists():
-        final_summary = list(path.rglob('final_summary*.txt'))
-        final_summary = final_summary[0] if final_summary else None
-    
+
+    # Find and parse final_summary file (in run_dir or its subdirectories)
+    final_summary = None
+    for pattern in ['final_summary*.txt', '*/final_summary*.txt', '*/*/final_summary*.txt']:
+        summaries = list(run_dir.glob(pattern))
+        if summaries:
+            final_summary = summaries[0]
+            break
+
     if final_summary:
         metadata.update(parse_final_summary(final_summary))
     
@@ -1304,25 +1520,31 @@ def discover_experiment(path: Path) -> Optional[ExperimentMetadata]:
 def scan_directory(root: Path, recursive: bool = True) -> List[ExperimentMetadata]:
     """Scan directory for nanopore experiments"""
     experiments = []
-    
+
     root = root.resolve()
     if not root.exists():
         return experiments
-    
+
     # Check if root itself is an experiment
     exp = discover_experiment(root)
     if exp:
         experiments.append(exp)
         return experiments  # Don't recurse into an experiment
-    
+
     # Scan subdirectories
     if recursive:
-        for subdir in root.iterdir():
-            if subdir.is_dir() and not subdir.name.startswith('.'):
-                exp = discover_experiment(subdir)
-                if exp:
-                    experiments.append(exp)
-    
+        try:
+            for subdir in root.iterdir():
+                if subdir.is_dir() and not subdir.name.startswith('.'):
+                    try:
+                        exp = discover_experiment(subdir)
+                        if exp:
+                            experiments.append(exp)
+                    except PermissionError:
+                        pass
+        except PermissionError:
+            pass
+
     return experiments
 
 
@@ -1659,19 +1881,31 @@ def cmd_init(args):
 
 
 def cmd_discover(args):
-    """Discover experiments"""
+    """Discover experiments with optional quick analysis"""
     path = Path(args.directory).resolve()
-    
+
     if not path.exists():
         print(f"Error: Path not found: {path}")
         return 1
-    
+
     print(f"\n  Scanning: {path}")
     experiments = scan_directory(path, recursive=not args.no_recursive)
-    
+
     print(f"  Found: {len(experiments)} experiments")
-    
-    if args.register and experiments:
+
+    if not experiments:
+        return 0
+
+    # --interactive implies --analyze
+    if args.interactive:
+        args.analyze = True
+
+    # Quick analysis mode
+    if args.analyze:
+        return cmd_discover_analyze(args, path, experiments)
+
+    # Standard mode: register or display
+    if args.register:
         registry = load_registry()
         registered = 0
         for exp in experiments:
@@ -1681,13 +1915,319 @@ def cmd_discover(args):
                 print(f"    + {exp.id}: {exp.name}")
             else:
                 print(f"    = {exp.id}: already registered")
-        
+
         save_registry(registry)
         print(f"\n  Registered: {registered} new experiments")
     else:
         print_experiment_table(experiments)
-    
+
     return 0
+
+
+def cmd_discover_analyze(args, path: Path, experiments: list):
+    """Run quick analysis on discovered experiments.
+
+    Args:
+        args: Command line arguments
+        path: Source directory path
+        experiments: List of discovered ExperimentMetadata
+    """
+    import time
+
+    # Import analysis modules - add lib to path first
+    import sys
+    lib_path = str(Path(__file__).parent.parent / 'lib')
+    if lib_path not in sys.path:
+        sys.path.insert(0, lib_path)
+
+    from quick_analysis import quick_analyze_batch, aggregate_summaries
+    from discovery_report import (
+        display_terminal_summary, generate_json_report,
+        generate_html_dashboard, generate_comparison_table
+    )
+
+    print(f"\n  Running quick analysis on {len(experiments)} experiments...")
+
+    # Run analysis
+    start_time = time.time()
+    analyzed = 0
+
+    def progress():
+        nonlocal analyzed
+        analyzed += 1
+        pct = int(analyzed / len(experiments) * 100)
+        print(f"\r  Analyzing: {analyzed}/{len(experiments)} ({pct}%)", end='', flush=True)
+
+    summaries = quick_analyze_batch(experiments, parallel=True, max_workers=4,
+                                    progress_callback=progress)
+    elapsed = time.time() - start_time
+    print()  # newline after progress
+
+    # Determine output directory
+    if args.output:
+        output_dir = Path(args.output)
+    else:
+        output_dir = path / '.ont-discovery'
+
+    # Display terminal summary
+    display_terminal_summary(summaries, str(path), elapsed)
+
+    # Generate reports
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    json_path = generate_json_report(summaries, output_dir / 'discovery_report.json',
+                                     str(path), elapsed)
+    html_path = generate_html_dashboard(summaries, output_dir / 'discovery_dashboard.html',
+                                        str(path), elapsed)
+
+    print(f"  Reports saved:")
+    print(f"    JSON: {json_path}")
+    print(f"    HTML: {html_path}")
+
+    # Generate comparison if multiple experiments
+    if len(experiments) > 1 and not args.no_compare:
+        csv_path = generate_comparison_table(summaries, output_dir / 'comparison_table.csv')
+        print(f"    CSV:  {csv_path}")
+
+    # Interactive menu
+    if args.interactive:
+        return interactive_discovery_menu(experiments, summaries, path, output_dir)
+
+    return 0
+
+
+def interactive_discovery_menu(experiments: list, summaries: list, source_path: Path, output_dir: Path) -> int:
+    """Interactive menu for post-discovery actions.
+
+    Args:
+        experiments: List of ExperimentMetadata objects
+        summaries: List of QuickSummary objects
+        source_path: Source directory path
+        output_dir: Output directory for reports
+
+    Returns:
+        Exit code
+    """
+    import webbrowser
+
+    def print_menu():
+        print("\n  " + "=" * 60)
+        print("  What would you like to do next?")
+        print("  " + "-" * 60)
+        print("  [1] Run FULL analysis on all experiments")
+        print("  [2] Run FULL analysis on selected experiments")
+        print("  [3] Generate comparison heatmap (requires matplotlib)")
+        print("  [4] Open HTML dashboard in browser")
+        print("  [5] Export to different format (CSV/TSV/JSON)")
+        print("  [6] Register all experiments to registry")
+        print("  [7] View experiment details")
+        print("  [0] Exit")
+        print("  " + "=" * 60)
+
+    while True:
+        print_menu()
+        try:
+            choice = input("\n  Enter choice [0-7]: ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\n  Exiting...")
+            return 0
+
+        if choice == '0':
+            print("\n  Goodbye!")
+            return 0
+
+        elif choice == '1':
+            # Full analysis on all
+            print("\n  Running full analysis on all experiments...")
+            for exp in experiments:
+                print(f"    Analyzing: {exp.name}...")
+                try:
+                    # Use existing run_analysis if available
+                    run_analysis(exp, 'end_reasons', [])
+                except Exception as e:
+                    print(f"      Error: {e}")
+            print("  Full analysis complete!")
+
+        elif choice == '2':
+            # Select experiments
+            print("\n  Select experiments (comma-separated numbers, or 'all'):")
+            for i, exp in enumerate(experiments):
+                grade = summaries[i].quality_grade if i < len(summaries) else '?'
+                print(f"    [{i+1}] {exp.name} (Grade {grade})")
+
+            selection = input("\n  Selection: ").strip()
+            if selection.lower() == 'all':
+                selected = experiments
+            else:
+                try:
+                    indices = [int(x.strip()) - 1 for x in selection.split(',')]
+                    selected = [experiments[i] for i in indices if 0 <= i < len(experiments)]
+                except ValueError:
+                    print("  Invalid selection")
+                    continue
+
+            print(f"\n  Running full analysis on {len(selected)} experiments...")
+            for exp in selected:
+                print(f"    Analyzing: {exp.name}...")
+                try:
+                    run_analysis(exp, 'end_reasons', [])
+                except Exception as e:
+                    print(f"      Error: {e}")
+
+        elif choice == '3':
+            # Generate heatmap
+            print("\n  Generating comparison heatmap...")
+            try:
+                heatmap_path = output_dir / 'metrics_heatmap.png'
+                generate_metrics_heatmap(summaries, heatmap_path)
+                print(f"  Saved: {heatmap_path}")
+            except ImportError:
+                print("  Error: matplotlib not available")
+            except Exception as e:
+                print(f"  Error: {e}")
+
+        elif choice == '4':
+            # Open HTML dashboard
+            html_path = output_dir / 'discovery_dashboard.html'
+            if html_path.exists():
+                print(f"\n  Opening: {html_path}")
+                webbrowser.open(f'file://{html_path}')
+            else:
+                print("  Error: HTML dashboard not found")
+
+        elif choice == '5':
+            # Export
+            print("\n  Export format:")
+            print("    [1] CSV")
+            print("    [2] TSV")
+            print("    [3] JSON")
+            fmt_choice = input("  Choice: ").strip()
+
+            from lib.discovery_report import generate_comparison_table
+
+            fmt_map = {'1': 'csv', '2': 'tsv', '3': 'json'}
+            fmt = fmt_map.get(fmt_choice, 'csv')
+            ext = fmt if fmt != 'tsv' else 'tsv'
+            export_path = output_dir / f'experiments.{ext}'
+            generate_comparison_table(summaries, export_path, format=fmt)
+            print(f"  Exported: {export_path}")
+
+        elif choice == '6':
+            # Register all
+            registry = load_registry()
+            registered = 0
+            for exp in experiments:
+                exp.status = 'registered'
+                if registry.add(exp):
+                    registered += 1
+                    print(f"    + {exp.id}: {exp.name}")
+                else:
+                    print(f"    = {exp.id}: already registered")
+            save_registry(registry)
+            print(f"\n  Registered: {registered} new experiments")
+
+        elif choice == '7':
+            # View details
+            print("\n  Select experiment:")
+            for i, exp in enumerate(experiments):
+                print(f"    [{i+1}] {exp.name}")
+            try:
+                idx = int(input("  Choice: ").strip()) - 1
+                if 0 <= idx < len(experiments):
+                    print_experiment_detail(experiments[idx])
+                    if idx < len(summaries):
+                        s = summaries[idx]
+                        print(f"\n  Quick Analysis:")
+                        print(f"    Grade: {s.quality_grade}")
+                        print(f"    Reads: {s.total_reads}")
+                        print(f"    Q-Score: {s.mean_qscore}")
+                        print(f"    N50: {s.n50}")
+                        if s.issues:
+                            print(f"    Issues: {', '.join(s.issues)}")
+            except (ValueError, IndexError):
+                print("  Invalid selection")
+
+        else:
+            print("  Invalid choice")
+
+    return 0
+
+
+def generate_metrics_heatmap(summaries: list, output_path: Path) -> Path:
+    """Generate a metrics comparison heatmap.
+
+    Args:
+        summaries: List of QuickSummary objects
+        output_path: Path for output image
+
+    Returns:
+        Path to generated image
+    """
+    try:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+        import numpy as np
+    except ImportError:
+        raise ImportError("matplotlib required for heatmap generation")
+
+    # Prepare data
+    metrics = ['Q-Score', 'N50 (K)', 'Pass Rate', 'Reads (M)']
+    names = [s.name[:20] for s in summaries]
+
+    data = []
+    for s in summaries:
+        row = [
+            s.mean_qscore or 0,
+            (s.n50 or 0) / 1000,
+            s.pass_rate or 0,
+            (s.total_reads or 0) / 1_000_000,
+        ]
+        data.append(row)
+
+    data = np.array(data)
+
+    # Normalize each column to 0-1 for heatmap
+    data_norm = np.zeros_like(data)
+    for i in range(data.shape[1]):
+        col = data[:, i]
+        if col.max() > col.min():
+            data_norm[:, i] = (col - col.min()) / (col.max() - col.min())
+        else:
+            data_norm[:, i] = 0.5
+
+    # Create heatmap
+    fig, ax = plt.subplots(figsize=(10, max(6, len(summaries) * 0.4)))
+
+    im = ax.imshow(data_norm, cmap='RdYlGn', aspect='auto')
+
+    # Labels
+    ax.set_xticks(range(len(metrics)))
+    ax.set_xticklabels(metrics)
+    ax.set_yticks(range(len(names)))
+    ax.set_yticklabels(names)
+
+    # Annotate with actual values
+    for i in range(len(names)):
+        for j in range(len(metrics)):
+            val = data[i, j]
+            if j == 2:  # Pass rate
+                text = f'{val:.0f}%'
+            elif j == 0:  # Q-score
+                text = f'{val:.1f}'
+            else:
+                text = f'{val:.1f}'
+            ax.text(j, i, text, ha='center', va='center', fontsize=8)
+
+    ax.set_title('Experiment Metrics Comparison')
+    plt.colorbar(im, ax=ax, label='Normalized Value')
+    plt.tight_layout()
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    plt.savefig(output_path, dpi=150, bbox_inches='tight')
+    plt.close()
+
+    return output_path
 
 
 def cmd_register(args):
@@ -2758,6 +3298,14 @@ def main():
     p_discover.add_argument('directory', help='Directory to scan')
     p_discover.add_argument('--register', '-r', action='store_true', help='Register discovered')
     p_discover.add_argument('--no-recursive', action='store_true', help='Do not recurse')
+    p_discover.add_argument('--analyze', '-a', action='store_true',
+                            help='Run quick analysis after discovery')
+    p_discover.add_argument('--interactive', '-i', action='store_true',
+                            help='Interactive menu after analysis (implies --analyze)')
+    p_discover.add_argument('--output', '-o', type=str, default=None,
+                            help='Output directory for reports (default: .ont-discovery in scanned dir)')
+    p_discover.add_argument('--no-compare', action='store_true',
+                            help='Skip comparison across experiments')
     
     # register
     p_register = subparsers.add_parser('register', help='Register experiment')
