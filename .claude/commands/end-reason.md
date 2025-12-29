@@ -1,3 +1,7 @@
+---
+description: Analyze Oxford Nanopore read end reasons for adaptive sampling QC. Use when checking sequencing quality, analyzing end_reason metadata, diagnosing adaptive sampling efficiency, or processing POD5/Fast5 data.
+---
+
 # /end-reason
 
 Oxford Nanopore read end reason QC analysis for adaptive sampling efficiency and sequencing quality assessment.

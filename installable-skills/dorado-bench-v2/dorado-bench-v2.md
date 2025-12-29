@@ -1,3 +1,7 @@
+---
+description: Run Dorado basecalling on University of Michigan HPC clusters (ARMIS2, Great Lakes). Use when basecalling ONT data, generating SLURM jobs, benchmarking models, or processing POD5 files with GPU optimization.
+---
+
 # /dorado-bench-v2
 
 Oxford Nanopore basecalling with Dorado on University of Michigan HPC clusters (ARMIS2 and Great Lakes).

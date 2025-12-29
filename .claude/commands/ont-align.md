@@ -1,3 +1,7 @@
+---
+description: Oxford Nanopore alignment with minimap2/dorado, reference genome management, and Levenshtein edit distance. Use when aligning ONT reads, managing reference genomes, computing BAM QC statistics, or calculating edit distances.
+---
+
 # /ont-align
 
 Oxford Nanopore alignment with minimap2/dorado, reference genome management, and edit distance computation.

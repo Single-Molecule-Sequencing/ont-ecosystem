@@ -1,3 +1,7 @@
+---
+description: SQLite database for tracking nanopore experiments with fast SQL queries. Use when building experiment databases, querying sequencing statistics, searching for experiments, or running custom SQL on ONT data.
+---
+
 # /experiment-db
 
 SQLite database for tracking nanopore experiments with fast SQL queries and statistics.

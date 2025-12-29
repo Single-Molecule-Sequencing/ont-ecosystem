@@ -1,3 +1,7 @@
+---
+description: Oxford Nanopore experiment management with event-sourced registry and provenance tracking. Use when discovering experiments, registering runs, tracking analysis history, or orchestrating multi-step pipelines with full audit trails.
+---
+
 # /ont-experiments-v2
 
 Enhanced Oxford Nanopore experiment management with event-sourced registry and pipeline orchestration.

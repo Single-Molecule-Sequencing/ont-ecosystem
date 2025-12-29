@@ -1,3 +1,7 @@
+---
+description: Real-time and retrospective Oxford Nanopore sequencing run monitoring. Use when tracking active runs, analyzing throughput/quality/pore activity, generating run reports, or diagnosing sequencing issues.
+---
+
 # /ont-monitor
 
 Real-time and retrospective Oxford Nanopore sequencing run monitoring.

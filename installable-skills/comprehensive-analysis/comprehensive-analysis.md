@@ -1,3 +1,7 @@
+---
+description: Generate 9 publication-quality figures from ONT sequencing data with KDE distributions, end-reason overlays, and intelligent data sampling. Use when analyzing nanopore experiments, creating publication figures, or running comprehensive sequencing QC.
+---
+
 # /comprehensive-analysis
 
 Comprehensive ONT sequencing analysis with 9 publication-quality figures, KDE distributions, end-reason overlays, and intelligent data sampling.

@@ -1,3 +1,7 @@
+---
+description: Generate publication-quality figures and tables from ONT experiments. Use when creating manuscript figures, exporting KDE plots, generating QC summary tables, or preparing LaTeX/HTML outputs for papers.
+---
+
 # /manuscript
 
 Generate publication-quality figures and tables from ONT sequencing experiments.
