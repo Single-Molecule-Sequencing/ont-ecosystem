@@ -764,3 +764,109 @@ def test_doctor_run_all_full():
     assert "Python Version" in check_names
     assert "Required Packages" in check_names
     assert "Skills" in check_names
+
+
+# =============================================================================
+# ont_report.py Tests
+# =============================================================================
+
+def test_report_imports():
+    """Test that ont_report.py can be imported"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_report",
+        bin_dir / "ont_report.py"
+    )
+    ont_report = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_report)
+
+    assert hasattr(ont_report, 'ReportGenerator')
+    assert hasattr(ont_report, 'ReportSection')
+    assert hasattr(ont_report, 'format_text')
+    assert hasattr(ont_report, 'format_markdown')
+
+
+def test_report_generator_generate():
+    """Test ReportGenerator.generate() returns proper structure"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_report",
+        bin_dir / "ont_report.py"
+    )
+    ont_report = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_report)
+
+    generator = ont_report.ReportGenerator()
+    data = generator.generate()
+
+    # Check required sections
+    assert "metadata" in data
+    assert "ecosystem" in data
+    assert "experiments" in data
+    assert "skills" in data
+    assert "generators" in data
+    assert "tests" in data
+    assert "git" in data
+    assert "dependencies" in data
+
+
+def test_report_metadata():
+    """Test report metadata section"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_report",
+        bin_dir / "ont_report.py"
+    )
+    ont_report = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_report)
+
+    generator = ont_report.ReportGenerator()
+    data = generator.generate()
+
+    meta = data["metadata"]
+    assert "generated_at" in meta
+    assert "version" in meta
+    assert "python_version" in meta
+
+
+def test_report_format_text():
+    """Test text formatting"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_report",
+        bin_dir / "ont_report.py"
+    )
+    ont_report = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_report)
+
+    generator = ont_report.ReportGenerator()
+    data = generator.generate()
+    text = ont_report.format_text(data)
+
+    assert "ONT Ecosystem Project Report" in text
+    assert "Generated:" in text
+    assert "Version:" in text
+
+
+def test_report_format_markdown():
+    """Test markdown formatting"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_report",
+        bin_dir / "ont_report.py"
+    )
+    ont_report = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_report)
+
+    generator = ont_report.ReportGenerator()
+    data = generator.generate()
+    md = ont_report.format_markdown(data)
+
+    assert "# ONT Ecosystem Project Report" in md
+    assert "## " in md  # Has section headers
+    assert "|" in md  # Has tables

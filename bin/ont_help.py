@@ -124,6 +124,15 @@ COMMANDS = {
                 "ont_doctor.py --json",
             ]
         },
+        "ont_report.py": {
+            "description": "Generate project summary reports",
+            "examples": [
+                "ont_report.py",
+                "ont_report.py --format markdown",
+                "ont_report.py --format json",
+                "ont_report.py --output report.md",
+            ]
+        },
         "ont_context.py": {
             "description": "Unified experiment context and equation execution",
             "examples": [
