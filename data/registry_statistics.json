@@ -1,7 +1,8 @@
 {
-  "generated_at": "2025-12-29T11:13:42.864649",
+  "generated_at": "2025-12-29T11:23:38.963726",
   "total_experiments": 165,
   "invalid_experiments": 1,
+  "needs_hpc_analysis": 15,
   "completeness": {
     "good": 165
   },
@@ -26,6 +27,14 @@
   "by_flowcell_type": {
     "PromethION": 119,
     "MinION": 40,
+    "Unknown": 6
+  },
+  "by_device_type": {
+    "PromethION": 29,
+    "Flongle": 4,
+    "Mk1D": 81,
+    "P2 Solo": 9,
+    "MinION": 36,
     "Unknown": 6
   },
   "by_sample_category": {
