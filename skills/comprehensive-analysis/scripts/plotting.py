@@ -184,7 +184,7 @@ def plot_length_kde_by_end_reason(df, output_path, length_col, end_reason_col, d
             er_data.append(er_lengths)
             er_labels.append(end_reason.replace('_', '\n'))
             er_colors.append(END_REASON_COLORS.get(end_reason, COLORS['primary']))
-    bp = ax5.boxplot(er_data, tick_labels=er_labels, patch_artist=True, showfliers=False)
+    bp = ax5.boxplot(er_data, labels=er_labels, patch_artist=True, showfliers=False)
     for patch, color in zip(bp['boxes'], er_colors):
         patch.set_facecolor(color)
         patch.set_alpha(0.6)
@@ -348,7 +348,7 @@ def plot_quality_kde_by_end_reason(df, output_path, qscore_col, end_reason_col, 
             er_data.append(er_qscores)
             er_labels.append(end_reason.replace('_', '\n'))
             er_colors.append(END_REASON_COLORS.get(end_reason, COLORS['primary']))
-    bp = ax4.boxplot(er_data, tick_labels=er_labels, patch_artist=True, showfliers=False)
+    bp = ax4.boxplot(er_data, labels=er_labels, patch_artist=True, showfliers=False)
     for patch, color in zip(bp['boxes'], er_colors):
         patch.set_facecolor(color)
         patch.set_alpha(0.6)
