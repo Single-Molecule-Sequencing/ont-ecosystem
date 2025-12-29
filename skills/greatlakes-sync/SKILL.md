@@ -1,10 +1,12 @@
 ---
 name: greatlakes-sync
-description: Great Lakes HPC experiment discovery, database sync, and GitHub registry updates. Two-stage SLURM workflow with proposal review and HTML visualization.
-version: 1.0.0
-author: Single Molecule Sequencing Lab
-category: data-management
-tags:
+description: Great Lakes HPC experiment discovery, database sync, and GitHub registry
+  updates. Two-stage SLURM workflow with proposal review and HTML visualization.
+metadata:
+  version: 1.0.0
+  author: Single Molecule Sequencing Lab
+  category: data-management
+  tags:
   - greatlakes
   - hpc
   - discovery
@@ -12,7 +14,7 @@ tags:
   - slurm
   - github
   - database
-invocable: true
+  invocable: true
 ---
 
 # Great Lakes Sync

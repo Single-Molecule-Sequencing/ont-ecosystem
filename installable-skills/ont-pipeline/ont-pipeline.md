@@ -1,5 +1,10 @@
 ---
-description: Oxford Nanopore multi-step workflow orchestration with unified QC aggregation. Use when running complete analysis pipelines (QC → basecalling → alignment → variants → pharmacogenomics), generating unified reports, batch processing experiments, or coordinating complex multi-step workflows. Integrates with ont-experiments registry for full provenance tracking.
+description: "Oxford Nanopore multi-step workflow orchestration with unified QC aggregation.\
+  \ Use when running complete analysis pipelines (QC \u2192 basecalling \u2192 alignment\
+  \ \u2192 variants \u2192 pharmacogenomics), generating unified reports, batch processing\
+  \ experiments, or coordinating complex multi-step workflows. Integrates with ont-experiments\
+  \ registry for full provenance tracking."
+name: ont-pipeline
 ---
 
 # /ont-pipeline

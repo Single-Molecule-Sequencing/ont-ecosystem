@@ -1,11 +1,14 @@
 ---
 name: registry-scrutinize
-version: 1.0.0
-description: Deep validation, re-analysis, and enrichment of ONT experiment registry entries. Scrutinizes metadata completeness, validates against strict standards, re-analyzes from source data, and maintains comprehensive audit logs.
-author: Single Molecule Sequencing Lab
-slash_command: registry-scrutinize
-user_invocable: true
-tags:
+description: Deep validation, re-analysis, and enrichment of ONT experiment registry
+  entries. Scrutinizes metadata completeness, validates against strict standards,
+  re-analyzes from source data, and maintains comprehensive audit logs.
+metadata:
+  version: 1.0.0
+  author: Single Molecule Sequencing Lab
+  slash_command: registry-scrutinize
+  user_invocable: true
+  tags:
   - ont
   - registry
   - validation
@@ -13,7 +16,7 @@ tags:
   - audit
   - metadata
   - qc
-dependencies:
+  dependencies:
   - pyyaml
   - pysam (optional)
   - requests (optional)

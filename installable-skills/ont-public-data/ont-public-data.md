@@ -1,9 +1,11 @@
 ---
 name: ont-public-data
-version: 1.0.0
-description: Discover, stream, and analyze public ONT datasets from S3 without full downloads
-author: Single Molecule Sequencing Lab
-user_invocable: true
+description: Discover, stream, and analyze public ONT datasets from S3 without full
+  downloads
+metadata:
+  version: 1.0.0
+  author: Single Molecule Sequencing Lab
+  user_invocable: true
 ---
 
 # ONT Public Data Analysis

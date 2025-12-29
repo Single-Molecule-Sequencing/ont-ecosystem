@@ -1,11 +1,14 @@
 ---
 name: registry-browser
-version: 3.0.0
-description: Interactive registry browser with validation, re-analysis, and completeness tracking for ONT experiments. Features 42basepairs.com integration, audit logging, metadata validation, and publication-ready data access.
-author: Single Molecule Sequencing Lab
-slash_command: registry-browser
-user_invocable: true
-tags:
+description: Interactive registry browser with validation, re-analysis, and completeness
+  tracking for ONT experiments. Features 42basepairs.com integration, audit logging,
+  metadata validation, and publication-ready data access.
+metadata:
+  version: 3.0.0
+  author: Single Molecule Sequencing Lab
+  slash_command: registry-browser
+  user_invocable: true
+  tags:
   - ont
   - registry
   - visualization
@@ -16,7 +19,7 @@ tags:
   - bam-header
   - filtering
   - provenance
-dependencies:
+  dependencies:
   - pyyaml
   - jinja2 (optional, for HTML reports)
 ---

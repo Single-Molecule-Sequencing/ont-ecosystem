@@ -1,5 +1,10 @@
 ---
-description: Real-time and retrospective Oxford Nanopore sequencing run monitoring. Use when tracking active sequencing runs, analyzing completed run performance, checking throughput/quality/pore activity metrics, generating run reports, or diagnosing sequencing issues. Integrates with ont-experiments for provenance tracking via Pattern B orchestration.
+description: Real-time and retrospective Oxford Nanopore sequencing run monitoring.
+  Use when tracking active sequencing runs, analyzing completed run performance, checking
+  throughput/quality/pore activity metrics, generating run reports, or diagnosing
+  sequencing issues. Integrates with ont-experiments for provenance tracking via Pattern
+  B orchestration.
+name: ont-monitor
 ---
 
 # /ont-monitor

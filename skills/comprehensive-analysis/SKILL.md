@@ -1,25 +1,28 @@
 ---
 name: comprehensive-analysis
-version: "2.0.0"
-description: "Comprehensive ONT sequencing analysis with KDE distributions, end-reason overlays, runtime estimation, and publication-quality figures. Supports data sampling for quick previews with estimated full runtime."
-author: "ONT Ecosystem"
-category: analysis
-command: /comprehensive-analysis
-tags:
+description: Comprehensive ONT sequencing analysis with KDE distributions, end-reason
+  overlays, runtime estimation, and publication-quality figures. Supports data sampling
+  for quick previews with estimated full runtime.
+metadata:
+  version: 2.0.0
+  author: ONT Ecosystem
+  category: analysis
+  command: /comprehensive-analysis
+  tags:
   - visualization
   - quality-control
   - kde
   - publication
   - end-reason
   - sampling
-dependencies:
+  dependencies:
   - numpy
   - pandas
   - matplotlib
   - scipy
-inputs:
+  inputs:
   - sequencing_summary.txt
-outputs:
+  outputs:
   - figures/*.png (9 publication-quality figures)
   - statistics.json
   - dashboard.html

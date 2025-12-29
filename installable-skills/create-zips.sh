@@ -22,11 +22,18 @@ SKILLS=(
     "dorado-bench-v2"
     "end-reason"
     "experiment-db"
+    "greatlakes-sync"
     "manuscript"
     "ont-align"
     "ont-experiments-v2"
+    "ont-metadata"
     "ont-monitor"
     "ont-pipeline"
+    "ont-public-data"
+    "registry-browser"
+    "registry-explorer"
+    "registry-scrutinize"
+    "skill-maker"
 )
 
 # Create ZIP for each skill

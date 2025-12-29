@@ -1,11 +1,14 @@
 ---
 name: registry-explorer
-version: 1.0.0
-description: Deep source data inspection for ONT experiments. Explores local paths and remote URLs to extract metadata from BAM headers, POD5 files, final_summary.txt, and other source files.
-author: Single Molecule Sequencing Lab
-slash_command: registry-explorer
-user_invocable: true
-tags:
+description: Deep source data inspection for ONT experiments. Explores local paths
+  and remote URLs to extract metadata from BAM headers, POD5 files, final_summary.txt,
+  and other source files.
+metadata:
+  version: 1.0.0
+  author: Single Molecule Sequencing Lab
+  slash_command: registry-explorer
+  user_invocable: true
+  tags:
   - ont
   - registry
   - explorer
@@ -13,7 +16,7 @@ tags:
   - bam
   - pod5
   - qc
-dependencies:
+  dependencies:
   - pyyaml
   - pysam (optional)
   - pod5 (optional)

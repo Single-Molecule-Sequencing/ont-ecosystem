@@ -1,5 +1,7 @@
 ---
-description: SQLite database for tracking nanopore experiments with fast SQL queries and statistics
+description: SQLite database for tracking nanopore experiments with fast SQL queries
+  and statistics
+name: experiment-db
 ---
 
 # /experiment-db

@@ -1,5 +1,8 @@
 ---
-description: Comprehensive ONT sequencing analysis with KDE distributions, end-reason overlays, runtime estimation, and publication-quality figures. Supports data sampling for quick previews with estimated full runtime.
+description: Comprehensive ONT sequencing analysis with KDE distributions, end-reason
+  overlays, runtime estimation, and publication-quality figures. Supports data sampling
+  for quick previews with estimated full runtime.
+name: comprehensive-analysis
 ---
 
 # /comprehensive-analysis

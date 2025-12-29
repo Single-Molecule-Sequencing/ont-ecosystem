@@ -1,5 +1,9 @@
 ---
-description: Create, update, and manage Claude skills automatically. Use when developing new analysis functions, fixing skill bugs, improving existing skills, or packaging skills for distribution. Handles SKILL.md creation, slash commands, ZIP packaging, and ecosystem integration.
+description: Create, update, and manage Claude skills automatically. Use when developing
+  new analysis functions, fixing skill bugs, improving existing skills, or packaging
+  skills for distribution. Handles SKILL.md creation, slash commands, ZIP packaging,
+  and ecosystem integration.
+name: skill-maker
 ---
 
 # /skill-maker

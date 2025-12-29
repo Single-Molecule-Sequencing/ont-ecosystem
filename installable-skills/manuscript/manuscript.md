@@ -1,5 +1,10 @@
 ---
-description: Generate publication-quality figures and tables from ONT sequencing experiments. Supports KDE plots, quality distributions, QC summary tables, and multi-format export (PDF, PNG, LaTeX, HTML, JSON). Integrates with SMS_textbook for versioned artifact storage. Use for manuscript preparation, textbook figure generation, or experiment comparison.
+description: Generate publication-quality figures and tables from ONT sequencing experiments.
+  Supports KDE plots, quality distributions, QC summary tables, and multi-format export
+  (PDF, PNG, LaTeX, HTML, JSON). Integrates with SMS_textbook for versioned artifact
+  storage. Use for manuscript preparation, textbook figure generation, or experiment
+  comparison.
+name: manuscript
 ---
 
 # /manuscript

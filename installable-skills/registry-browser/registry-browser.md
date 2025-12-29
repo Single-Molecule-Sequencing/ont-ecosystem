@@ -1,9 +1,12 @@
 ---
 name: registry-browser
-version: 2.0.0
-description: Interactive registry browser with rigorous metadata schema for ONT experiments. Features clear read count provenance (sampled/estimated/counted), direct S3/HTTPS URLs, comprehensive metadata extraction, and detail modal views.
-author: Single Molecule Sequencing Lab
-user_invocable: true
+description: Interactive registry browser with rigorous metadata schema for ONT experiments.
+  Features clear read count provenance (sampled/estimated/counted), direct S3/HTTPS
+  URLs, comprehensive metadata extraction, and detail modal views.
+metadata:
+  version: 2.0.0
+  author: Single Molecule Sequencing Lab
+  user_invocable: true
 ---
 
 # Registry Browser v2.0

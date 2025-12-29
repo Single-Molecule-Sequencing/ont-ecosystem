@@ -1,10 +1,14 @@
 ---
 name: ont-metadata
-description: Extract metadata from Oxford Nanopore POD5 and Fast5 raw data files. Use when discovering experiments without summary files, parsing raw sequencing data metadata, detecting Fast5 file types (single/multi/bulk), or extracting run information from raw data. Supports pod5 library and ont_fast5_api for efficient parsing.
-version: 1.0.0
-author: Single Molecule Sequencing Lab
-category: data-management
-tags:
+description: Extract metadata from Oxford Nanopore POD5 and Fast5 raw data files.
+  Use when discovering experiments without summary files, parsing raw sequencing data
+  metadata, detecting Fast5 file types (single/multi/bulk), or extracting run information
+  from raw data. Supports pod5 library and ont_fast5_api for efficient parsing.
+metadata:
+  version: 1.0.0
+  author: Single Molecule Sequencing Lab
+  category: data-management
+  tags:
   - nanopore
   - pod5
   - fast5
