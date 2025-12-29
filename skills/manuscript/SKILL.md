@@ -44,24 +44,24 @@ ont_manuscript.py compare exp1 exp2 exp3
 
 ## Figure Generators
 
-| ID | Description | Formats |
-|----|-------------|---------|
-| fig_end_reason_kde | KDE plot of read lengths by end reason | pdf, png |
-| fig_quality_dist | Q-score distribution histogram | pdf, png |
-| fig_coverage | Coverage depth plot | pdf, png |
-| fig_alignment_stats | Alignment statistics | pdf, png |
-| fig_comparison_overlay | Multi-experiment overlay | pdf, png |
-| fig_box_comparison | Box plot comparison | pdf, png |
+| ID | Description | Formats | Script |
+|----|-------------|---------|--------|
+| fig_end_reason_kde | KDE plot by end reason | pdf, png | gen_end_reason_kde.py |
+| fig_quality_dist | Q-score distribution | pdf, png | gen_quality_distribution.py |
+| fig_read_length | Read length distribution | pdf, png | gen_read_length_distribution.py |
+| fig_coverage | Coverage depth plot | pdf, png | gen_coverage_plot.py |
+| fig_alignment_stats | Alignment statistics | pdf, png | gen_alignment_stats.py |
+| fig_comparison | Multi-experiment comparison | pdf, png | gen_comparison_plot.py |
 
 ## Table Generators
 
-| ID | Description | Formats |
-|----|-------------|---------|
-| tbl_qc_summary | QC metrics summary | tex, csv, json, html |
-| tbl_basecalling | Basecalling statistics | tex, csv, json, html |
-| tbl_alignment | Alignment statistics | tex, csv, json, html |
-| tbl_comparison | Multi-experiment comparison | tex, csv, json, html |
-| tbl_experiment_summary | Single experiment summary | tex, csv, json, html |
+| ID | Description | Formats | Script |
+|----|-------------|---------|--------|
+| tbl_qc_summary | QC metrics summary | tex, csv, json, html | gen_qc_summary_table.py |
+| tbl_basecalling | Basecalling statistics | tex, csv, json, html | gen_basecalling_table.py |
+| tbl_alignment | Alignment statistics | tex, csv, json, html | gen_alignment_table.py |
+| tbl_comparison | Multi-experiment comparison | tex, csv, json, html | gen_comparison_table.py |
+| tbl_experiment_summary | Single experiment summary | tex, csv, json, html | gen_experiment_summary_table.py |
 
 ## Artifact Storage
 
