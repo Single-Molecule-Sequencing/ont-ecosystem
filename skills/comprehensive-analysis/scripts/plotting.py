@@ -17,7 +17,7 @@ try:
     from scipy import stats
     from scipy.signal import find_peaks, savgol_filter
     HAS_MATPLOTLIB = True
-except ImportError:
+except (ImportError, AttributeError):  # AttributeError for numpy compatibility
     HAS_MATPLOTLIB = False
 
 # Consistent color scheme for end reasons

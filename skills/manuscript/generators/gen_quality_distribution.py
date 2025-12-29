@@ -26,7 +26,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "bin"))
 try:
     from ont_context import load_experiment_context
     HAS_CONTEXT = True
-except ImportError:
+except (ImportError, AttributeError):  # AttributeError for numpy compatibility
     HAS_CONTEXT = False
 
 try:
@@ -37,13 +37,13 @@ try:
     from scipy import stats
     from scipy.signal import find_peaks, savgol_filter
     HAS_MATPLOTLIB = True
-except ImportError:
+except (ImportError, AttributeError):  # AttributeError for numpy compatibility
     HAS_MATPLOTLIB = False
 
 try:
     import pandas as pd
     HAS_PANDAS = True
-except ImportError:
+except (ImportError, AttributeError):  # AttributeError for numpy compatibility
     HAS_PANDAS = False
 
 

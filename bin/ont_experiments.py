@@ -2039,14 +2039,54 @@ def interactive_discovery_menu(experiments: list, summaries: list, source_path: 
         elif choice == '1':
             # Full analysis on all
             print("\n  Running full analysis on all experiments...")
+            print("  Available analyses: end_reasons")
+            analysis_choice = input("  Which analysis? [end_reasons]: ").strip() or 'end_reasons'
+
             for exp in experiments:
-                print(f"    Analyzing: {exp.name}...")
+                print(f"\n    [{exp.name}]")
                 try:
-                    # Use existing run_analysis if available
-                    run_analysis(exp, 'end_reasons', [])
+                    # Run end_reason.py directly on the experiment location
+                    import subprocess
+                    script_dir = Path(__file__).parent
+                    script_path = script_dir / 'end_reason.py'
+
+                    if not script_path.exists():
+                        # Try skills location
+                        script_path = script_dir.parent / 'skills' / 'end-reason' / 'scripts' / 'end_reason.py'
+
+                    if script_path.exists():
+                        # Find the actual data directory (MinKNOW nests data)
+                        data_path = Path(exp.location)
+                        # Look for sequencing_summary in nested paths
+                        seq_summaries = list(data_path.rglob('sequencing_summary*.txt'))
+                        if seq_summaries:
+                            data_path = seq_summaries[0].parent
+
+                        result = subprocess.run(
+                            ['python3', str(script_path), str(data_path), '--quick'],
+                            capture_output=True,
+                            text=True,
+                            timeout=300
+                        )
+                        # Filter numpy warnings from stderr and show stdout
+                        if result.stdout.strip():
+                            for line in result.stdout.strip().split('\n'):
+                                print(f"      {line}")
+                        if result.returncode != 0:
+                            # Show error but filter numpy warnings
+                            stderr_lines = [l for l in result.stderr.split('\n')
+                                          if 'NumPy' not in l and '_ARRAY_API' not in l
+                                          and 'pybind11' not in l and l.strip()]
+                            if stderr_lines:
+                                print(f"      Error: {' '.join(stderr_lines[:3])}")
+                    else:
+                        print(f"      Error: Analysis script not found")
+                except subprocess.TimeoutExpired:
+                    print(f"      Error: Analysis timed out (>5 min)")
                 except Exception as e:
                     print(f"      Error: {e}")
-            print("  Full analysis complete!")
+
+            print("\n  Full analysis complete!")
 
         elif choice == '2':
             # Select experiments
@@ -2068,9 +2108,38 @@ def interactive_discovery_menu(experiments: list, summaries: list, source_path: 
 
             print(f"\n  Running full analysis on {len(selected)} experiments...")
             for exp in selected:
-                print(f"    Analyzing: {exp.name}...")
+                print(f"\n    [{exp.name}]")
                 try:
-                    run_analysis(exp, 'end_reasons', [])
+                    import subprocess
+                    script_dir = Path(__file__).parent
+                    script_path = script_dir / 'end_reason.py'
+                    if not script_path.exists():
+                        script_path = script_dir.parent / 'skills' / 'end-reason' / 'scripts' / 'end_reason.py'
+
+                    if script_path.exists():
+                        # Find the actual data directory (MinKNOW nests data)
+                        data_path = Path(exp.location)
+                        seq_summaries = list(data_path.rglob('sequencing_summary*.txt'))
+                        if seq_summaries:
+                            data_path = seq_summaries[0].parent
+
+                        result = subprocess.run(
+                            ['python3', str(script_path), str(data_path), '--quick'],
+                            capture_output=True, text=True, timeout=300
+                        )
+                        if result.stdout.strip():
+                            for line in result.stdout.strip().split('\n'):
+                                print(f"      {line}")
+                        if result.returncode != 0:
+                            stderr_lines = [l for l in result.stderr.split('\n')
+                                          if 'NumPy' not in l and '_ARRAY_API' not in l
+                                          and 'pybind11' not in l and l.strip()]
+                            if stderr_lines:
+                                print(f"      Error: {' '.join(stderr_lines[:3])}")
+                    else:
+                        print(f"      Error: Analysis script not found")
+                except subprocess.TimeoutExpired:
+                    print(f"      Error: Timed out (>5 min)")
                 except Exception as e:
                     print(f"      Error: {e}")
 
@@ -2081,8 +2150,21 @@ def interactive_discovery_menu(experiments: list, summaries: list, source_path: 
                 heatmap_path = output_dir / 'metrics_heatmap.png'
                 generate_metrics_heatmap(summaries, heatmap_path)
                 print(f"  Saved: {heatmap_path}")
-            except ImportError:
+            except ImportError as e:
                 print("  Error: matplotlib not available")
+                print("  This may be due to numpy version incompatibility.")
+                print("  To fix, try one of:")
+                print("    pip install 'numpy<2'  # downgrade numpy")
+                print("    pip install --upgrade matplotlib  # upgrade matplotlib")
+            except AttributeError as e:
+                if '_ARRAY_API' in str(e) or 'numpy' in str(e).lower():
+                    print("  Error: matplotlib/numpy version mismatch")
+                    print("  Your matplotlib was compiled against numpy 1.x but numpy 2.x is installed.")
+                    print("  To fix, run one of:")
+                    print("    pip install 'numpy<2'  # downgrade numpy")
+                    print("    pip install --upgrade matplotlib  # upgrade matplotlib")
+                else:
+                    print(f"  Error: {e}")
             except Exception as e:
                 print(f"  Error: {e}")
 
@@ -2168,8 +2250,9 @@ def generate_metrics_heatmap(summaries: list, output_path: Path) -> Path:
         matplotlib.use('Agg')
         import matplotlib.pyplot as plt
         import numpy as np
-    except ImportError:
-        raise ImportError("matplotlib required for heatmap generation")
+    except (ImportError, AttributeError) as e:
+        # AttributeError catches numpy version incompatibility (_ARRAY_API not found)
+        raise ImportError(f"matplotlib required for heatmap generation: {e}")
 
     # Prepare data
     metrics = ['Q-Score', 'N50 (K)', 'Pass Rate', 'Reads (M)']

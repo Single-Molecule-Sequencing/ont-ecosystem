@@ -47,13 +47,15 @@ try:
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
     HAS_MATPLOTLIB = True
-except ImportError:
+except (ImportError, AttributeError):
+    # AttributeError catches numpy version incompatibility (_ARRAY_API not found)
     HAS_MATPLOTLIB = False
 
 try:
     import pandas as pd
     HAS_PANDAS = True
-except ImportError:
+except (ImportError, AttributeError):
+    # AttributeError catches numpy version incompatibility
     HAS_PANDAS = False
 
 
@@ -275,23 +277,32 @@ def extract_from_summary(path: Path, quick: bool = False, max_reads: int = 10000
 
 
 def detect_format(path: Path) -> str:
-    """Detect data format in path"""
+    """Detect data format in path.
+
+    Prefers summary files (always available) over pod5/fast5 which require
+    optional dependencies.
+    """
     if path.suffix == '.pod5':
         return 'pod5'
     if path.suffix == '.fast5':
         return 'fast5'
     if path.suffix == '.txt' and 'sequencing_summary' in path.name:
         return 'summary'
-    
+
     if path.is_dir():
-        # Prefer POD5 > summary > Fast5 (speed order)
-        if list(path.rglob('*.pod5')):
-            return 'pod5'
+        # Prefer summary (always works) > POD5 (if installed) > Fast5 (if installed)
         if list(path.rglob('*sequencing_summary*.txt')):
             return 'summary'
+        if HAS_POD5 and list(path.rglob('*.pod5')):
+            return 'pod5'
+        if HAS_H5PY and list(path.rglob('*.fast5')):
+            return 'fast5'
+        # Fall back to pod5/fast5 even if not installed (will error with helpful message)
+        if list(path.rglob('*.pod5')):
+            return 'pod5'
         if list(path.rglob('*.fast5')):
             return 'fast5'
-    
+
     return 'unknown'
 
 

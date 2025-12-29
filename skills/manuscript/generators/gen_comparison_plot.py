@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "bin"))
 try:
     from ont_context import load_experiment_context
     HAS_CONTEXT = True
-except ImportError:
+except (ImportError, AttributeError):  # AttributeError for numpy compatibility
     HAS_CONTEXT = False
 
 try:
@@ -28,7 +28,7 @@ try:
     import matplotlib.pyplot as plt
     import numpy as np
     HAS_MATPLOTLIB = True
-except ImportError:
+except (ImportError, AttributeError):  # AttributeError for numpy compatibility
     HAS_MATPLOTLIB = False
 
 
