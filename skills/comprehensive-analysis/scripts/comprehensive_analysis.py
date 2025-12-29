@@ -21,6 +21,7 @@ Usage:
 import argparse
 import json
 import sys
+import time
 import webbrowser
 from pathlib import Path
 from datetime import datetime
@@ -57,16 +58,28 @@ except ImportError:
     HAS_MATPLOTLIB = False
 
 
+# Default sample size for quick analysis
+DEFAULT_SAMPLE_SIZE = 50000
+
+
 class ComprehensiveAnalyzer:
     """Comprehensive experiment analysis generator."""
 
-    def __init__(self, experiment_path: Path, output_path: Path, dpi: int = 300):
+    def __init__(self, experiment_path: Path, output_path: Path, dpi: int = 300,
+                 full_data: bool = False, sample_size: int = DEFAULT_SAMPLE_SIZE):
         self.experiment_path = Path(experiment_path)
         self.output_path = Path(output_path)
         self.figures_path = self.output_path / 'figures'
         self.dpi = dpi
+        self.full_data = full_data
+        self.sample_size = sample_size
         self.df = None
+        self.df_full = None  # Keep full data for statistics
         self.stats = {}
+        self.is_sampled = False
+        self.total_reads = 0
+        self.figure_generation_time = 0  # seconds
+        self.estimated_full_time = None  # seconds
 
         # Column mappings
         self.length_col = None
@@ -92,7 +105,7 @@ class ComprehensiveAnalyzer:
         return None
 
     def load_data(self, summary_path: Path = None) -> bool:
-        """Load sequencing summary data."""
+        """Load sequencing summary data with optional stratified sampling."""
         if summary_path is None:
             summary_path = self.find_sequencing_summary()
 
@@ -101,20 +114,50 @@ class ComprehensiveAnalyzer:
             return False
 
         print(f"Loading: {summary_path}")
-        self.df = pd.read_csv(summary_path, sep='\t')
-        print(f"  Loaded {len(self.df):,} reads")
+        self.df_full = pd.read_csv(summary_path, sep='\t')
+        self.total_reads = len(self.df_full)
+        print(f"  Loaded {self.total_reads:,} reads")
 
-        # Identify columns
+        # Identify columns first (needed for stratified sampling)
         self.length_col = next((c for c in ['sequence_length_template', 'sequence_length', 'read_length']
-                                if c in self.df.columns), None)
+                                if c in self.df_full.columns), None)
         self.qscore_col = next((c for c in ['mean_qscore_template', 'mean_qscore', 'qscore']
-                                if c in self.df.columns), None)
+                                if c in self.df_full.columns), None)
         self.time_col = next((c for c in ['start_time', 'time']
-                              if c in self.df.columns), None)
+                              if c in self.df_full.columns), None)
         self.channel_col = next((c for c in ['channel']
-                                 if c in self.df.columns), None)
+                                 if c in self.df_full.columns), None)
         self.end_reason_col = next((c for c in ['end_reason']
-                                    if c in self.df.columns), None)
+                                    if c in self.df_full.columns), None)
+
+        # Apply sampling if not using full data and dataset is large enough
+        if not self.full_data and self.total_reads > self.sample_size:
+            self.is_sampled = True
+            print(f"\n  [SAMPLING] Dataset has {self.total_reads:,} reads > {self.sample_size:,} threshold")
+
+            # Stratified sampling by end_reason to maintain proportions
+            if self.end_reason_col and self.end_reason_col in self.df_full.columns:
+                print(f"  [SAMPLING] Using stratified sampling by end_reason")
+                sampled_dfs = []
+                for er in self.df_full[self.end_reason_col].unique():
+                    er_df = self.df_full[self.df_full[self.end_reason_col] == er]
+                    proportion = len(er_df) / self.total_reads
+                    n_sample = max(10, int(self.sample_size * proportion))
+                    if len(er_df) > n_sample:
+                        sampled_dfs.append(er_df.sample(n=n_sample, random_state=42))
+                    else:
+                        sampled_dfs.append(er_df)
+                self.df = pd.concat(sampled_dfs, ignore_index=True)
+            else:
+                # Random sampling if no end_reason column
+                self.df = self.df_full.sample(n=self.sample_size, random_state=42)
+
+            print(f"  [SAMPLING] Using {len(self.df):,} sampled reads for visualization")
+            print(f"  [SAMPLING] NOTE: Run with --full flag to use all {self.total_reads:,} reads")
+        else:
+            self.df = self.df_full
+            if self.full_data and self.total_reads > self.sample_size:
+                print(f"  [FULL DATA] Using all {self.total_reads:,} reads (--full flag enabled)")
 
         # Report columns found
         print(f"  Columns: length={self.length_col}, qscore={self.qscore_col}, "
@@ -123,12 +166,16 @@ class ComprehensiveAnalyzer:
         return True
 
     def calculate_statistics(self):
-        """Calculate comprehensive statistics."""
-        lengths = self.df[self.length_col].values if self.length_col else np.array([])
-        qscores = self.df[self.qscore_col].values if self.qscore_col else np.array([])
+        """Calculate comprehensive statistics from FULL data (not sampled)."""
+        # Always use full data for statistics
+        df_stats = self.df_full if self.df_full is not None else self.df
+        lengths = df_stats[self.length_col].values if self.length_col else np.array([])
+        qscores = df_stats[self.qscore_col].values if self.qscore_col else np.array([])
 
         self.stats = {
-            'total_reads': len(self.df),
+            'total_reads': self.total_reads,  # Always report full count
+            'sampled_reads': len(self.df) if self.is_sampled else None,
+            'is_sampled': self.is_sampled,
             'total_bases': int(np.sum(lengths)) if len(lengths) > 0 else 0,
             'mean_length': float(np.mean(lengths)) if len(lengths) > 0 else 0,
             'median_length': float(np.median(lengths)) if len(lengths) > 0 else 0,
@@ -140,12 +187,12 @@ class ComprehensiveAnalyzer:
             'pass_rate': 100.0,
         }
 
-        # End reason counts
-        if self.end_reason_col and self.end_reason_col in self.df.columns:
-            end_reasons = self.df[self.end_reason_col].value_counts().to_dict()
+        # End reason counts (from full data)
+        if self.end_reason_col and self.end_reason_col in df_stats.columns:
+            end_reasons = df_stats[self.end_reason_col].value_counts().to_dict()
             self.stats['end_reasons'] = {str(k): int(v) for k, v in end_reasons.items()}
 
-        print(f"\n=== Statistics ===")
+        print(f"\n=== Statistics (from full dataset) ===")
         print(f"Reads: {self.stats['total_reads']:,}")
         print(f"Bases: {format_bp(self.stats['total_bases'])}b")
         print(f"N50: {format_bp(self.stats['n50'])} bp")
@@ -164,12 +211,24 @@ class ComprehensiveAnalyzer:
         print(f"\nSaved: {stats_path}")
 
     def generate_all_figures(self, title: str = None):
-        """Generate all analysis figures."""
+        """Generate all analysis figures with timing for runtime estimation."""
         print("\n=== Generating Figures ===")
 
         if not HAS_MATPLOTLIB:
             print("Warning: matplotlib not available, skipping figures")
             return
+
+        # Build title with sampling annotation
+        base_title = title or "Experiment Analysis"
+        if self.is_sampled:
+            sample_note = f" [SAMPLED: {len(self.df):,} of {self.total_reads:,} reads]"
+            print(f"  NOTE: Figures use {len(self.df):,} sampled reads (stratified by end_reason)")
+            print(f"  NOTE: Run with --full flag for final publication figures\n")
+        else:
+            sample_note = f" [{self.total_reads:,} reads]"
+
+        # Start timing
+        start_time = time.time()
 
         # 1. Quick overview summary (first for immediate viewing)
         if self.length_col and self.qscore_col and self.end_reason_col:
@@ -177,7 +236,7 @@ class ComprehensiveAnalyzer:
                 self.df, self.figures_path / '01_overview_summary.png',
                 self.length_col, self.qscore_col, self.end_reason_col,
                 time_col=self.time_col, channel_col=self.channel_col,
-                title=title or "Experiment Overview", dpi=self.dpi
+                title=base_title + sample_note, dpi=self.dpi
             )
             if output:
                 print(f"  Generated: {output.name}")
@@ -250,14 +309,35 @@ class ComprehensiveAnalyzer:
 
         # 9. Publication-ready summary (high DPI)
         if self.length_col and self.qscore_col and self.end_reason_col:
+            pub_title = base_title + sample_note
             output = plot_publication_summary(
                 self.df, self.figures_path / '09_publication_summary.png',
                 self.length_col, self.qscore_col, self.end_reason_col,
-                time_col=self.time_col, title=title or "Sequencing Analysis",
+                time_col=self.time_col, title=pub_title,
                 dpi=min(self.dpi, 600)  # Cap at 600 for publication
             )
             if output:
                 print(f"  Generated: {output.name}")
+
+        # Calculate timing and estimate
+        self.figure_generation_time = time.time() - start_time
+        print(f"\n  Figure generation time: {self.figure_generation_time:.1f}s")
+
+        if self.is_sampled:
+            # Estimate full runtime based on linear scaling with some overhead
+            # Actual scaling may vary based on complexity, but linear is a reasonable estimate
+            scaling_factor = self.total_reads / len(self.df)
+            # Add 20% overhead for larger datasets (memory, disk I/O)
+            overhead_factor = 1.2
+            self.estimated_full_time = self.figure_generation_time * scaling_factor * overhead_factor
+            # Format for display
+            if self.estimated_full_time < 60:
+                time_str = f"{self.estimated_full_time:.0f} seconds"
+            elif self.estimated_full_time < 3600:
+                time_str = f"{self.estimated_full_time/60:.1f} minutes"
+            else:
+                time_str = f"{self.estimated_full_time/3600:.1f} hours"
+            print(f"  Estimated time for full {self.total_reads:,} reads: ~{time_str}")
 
     def generate_dashboard(self, title: str = None):
         """Generate HTML dashboard."""
@@ -266,6 +346,7 @@ class ComprehensiveAnalyzer:
 
         # Get stats for display
         total_reads = self.stats.get('total_reads', 0)
+        sampled_reads = self.stats.get('sampled_reads', None)
         total_bases = self.stats.get('total_bases', 0)
         n50 = self.stats.get('n50', 0)
         mean_q = self.stats.get('mean_qscore', 0)
@@ -273,6 +354,28 @@ class ComprehensiveAnalyzer:
         sp_pct = 0
         if 'end_reasons' in self.stats and 'signal_positive' in self.stats['end_reasons']:
             sp_pct = self.stats['end_reasons']['signal_positive'] / total_reads * 100
+
+        # Sampling banner with runtime estimate
+        if self.is_sampled:
+            # Format estimated time
+            if self.estimated_full_time and self.estimated_full_time > 0:
+                if self.estimated_full_time < 60:
+                    est_str = f"{self.estimated_full_time:.0f} seconds"
+                elif self.estimated_full_time < 3600:
+                    est_str = f"{self.estimated_full_time/60:.1f} minutes"
+                else:
+                    est_str = f"{self.estimated_full_time/3600:.1f} hours"
+                time_note = f"<br><em>Estimated time for full analysis: ~{est_str}</em>"
+            else:
+                time_note = ""
+            sampling_banner = f"""
+        <div class="sampling-banner">
+            <strong>SAMPLED DATA:</strong> Figures generated from {sampled_reads:,} randomly sampled reads
+            (stratified by end_reason) out of {total_reads:,} total reads.
+            <br>Run with <code>--full</code> flag to generate final publication figures using all data.{time_note}
+        </div>"""
+        else:
+            sampling_banner = ""
 
         html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -337,6 +440,21 @@ class ComprehensiveAnalyzer:
             color: #888;
             font-size: 0.9em;
         }}
+        .sampling-banner {{
+            background: rgba(243, 156, 18, 0.3);
+            border: 2px solid #f39c12;
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #fff;
+        }}
+        .sampling-banner code {{
+            background: rgba(0,0,0,0.3);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+        }}
         .modal {{
             display: none;
             position: fixed;
@@ -384,7 +502,7 @@ class ComprehensiveAnalyzer:
             </div>
         </div>
     </header>
-
+{sampling_banner}
     <div class="gallery">
 """
         for fig_path in figures:
@@ -450,8 +568,14 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-    # Analyze experiment directory
+    # Quick analysis (sampled, <=50K reads)
     comprehensive_analysis.py /path/to/experiment -o output/
+
+    # Full analysis (all reads - for publication)
+    comprehensive_analysis.py /path/to/experiment -o output/ --full
+
+    # Custom sample size
+    comprehensive_analysis.py /path/to/experiment -o output/ --sample-size 100000
 
     # From sequencing summary directly
     comprehensive_analysis.py --summary /path/to/sequencing_summary.txt -o output/
@@ -462,6 +586,8 @@ Examples:
 Features:
     - KDE-based distributions with semi-transparent end-reason overlays
     - Consistent color scheme across all figures
+    - Stratified sampling by end_reason (maintains proportions)
+    - Statistics always computed from full data
     - Publication-quality output (up to 600 DPI)
     - Interactive HTML dashboard
         """
@@ -471,6 +597,10 @@ Features:
     parser.add_argument("--summary", help="Path to sequencing_summary.txt (overrides auto-detection)")
     parser.add_argument("--title", help="Custom title for figures and dashboard")
     parser.add_argument("--dpi", type=int, default=300, help="DPI for figures (default: 300)")
+    parser.add_argument("--full", action="store_true",
+                        help="Use all reads (default: sample <=50,000 for quick analysis)")
+    parser.add_argument("--sample-size", type=int, default=DEFAULT_SAMPLE_SIZE,
+                        help=f"Number of reads to sample (default: {DEFAULT_SAMPLE_SIZE:,})")
     parser.add_argument("--open-browser", action="store_true", help="Open dashboard in browser when done")
 
     args = parser.parse_args()
@@ -490,7 +620,9 @@ Features:
     analyzer = ComprehensiveAnalyzer(
         experiment_path=experiment_path,
         output_path=Path(args.output),
-        dpi=args.dpi
+        dpi=args.dpi,
+        full_data=args.full,
+        sample_size=args.sample_size
     )
 
     title = args.title or experiment_path.name
