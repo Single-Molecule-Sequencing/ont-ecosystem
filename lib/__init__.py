@@ -54,3 +54,16 @@ def setup_logging(**kwargs):
     """Setup logging configuration. Lazy import to avoid startup overhead."""
     from .logging_config import setup_logging as _setup_logging
     return _setup_logging(**kwargs)
+
+
+# Timing utilities - import on demand
+def Timer(name: str = "Operation", verbose: bool = False):
+    """Get a Timer context manager. Lazy import to avoid startup overhead."""
+    from .timing import Timer as _Timer
+    return _Timer(name, verbose)
+
+
+def timed(func=None, **kwargs):
+    """Timing decorator. Lazy import to avoid startup overhead."""
+    from .timing import timed as _timed
+    return _timed(func, **kwargs)

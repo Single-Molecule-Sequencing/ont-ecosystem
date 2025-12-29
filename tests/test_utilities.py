@@ -415,3 +415,113 @@ def test_lib_exports_logging():
     assert hasattr(lib, 'setup_logging')
     assert callable(lib.get_logger)
     assert callable(lib.setup_logging)
+
+
+# =============================================================================
+# lib/timing.py Tests
+# =============================================================================
+
+def test_timing_imports():
+    """Test that timing.py can be imported"""
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    sys.path.insert(0, str(lib_dir.parent))
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "timing",
+        lib_dir / "timing.py"
+    )
+    timing = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(timing)
+
+    assert hasattr(timing, 'Timer')
+    assert hasattr(timing, 'timed')
+    assert hasattr(timing, 'profile_block')
+    assert hasattr(timing, 'StepTimer')
+    assert hasattr(timing, 'format_duration')
+
+
+def test_timer_context_manager():
+    """Test Timer context manager"""
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    sys.path.insert(0, str(lib_dir.parent))
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "timing",
+        lib_dir / "timing.py"
+    )
+    timing = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(timing)
+
+    import time
+    with timing.Timer("test_operation") as t:
+        time.sleep(0.01)  # Sleep 10ms
+
+    assert t.duration >= 0.01
+    assert t.result is not None
+    assert t.result.name == "test_operation"
+
+
+def test_format_duration():
+    """Test duration formatting"""
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    sys.path.insert(0, str(lib_dir.parent))
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "timing",
+        lib_dir / "timing.py"
+    )
+    timing = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(timing)
+
+    # Test various durations
+    assert "us" in timing.format_duration(0.0001)
+    assert "ms" in timing.format_duration(0.1)
+    assert "s" in timing.format_duration(5)
+    assert "m" in timing.format_duration(90)
+    assert "h" in timing.format_duration(3700)
+
+
+def test_step_timer():
+    """Test StepTimer for multi-step operations"""
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    sys.path.insert(0, str(lib_dir.parent))
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "timing",
+        lib_dir / "timing.py"
+    )
+    timing = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(timing)
+
+    import time
+    timer = timing.StepTimer("test_pipeline")
+    timer.start()
+    timer.step("step1")
+    time.sleep(0.01)
+    timer.step("step2")
+    time.sleep(0.01)
+    timer.finish()
+
+    assert len(timer.steps) == 2
+    assert timer.steps[0]["name"] == "step1"
+    assert timer.steps[1]["name"] == "step2"
+
+
+def test_lib_exports_timing():
+    """Test that lib exports timing functions"""
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    sys.path.insert(0, str(lib_dir.parent))
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("lib", lib_dir / "__init__.py")
+    lib = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(lib)
+
+    assert hasattr(lib, 'Timer')
+    assert hasattr(lib, 'timed')
+    assert callable(lib.Timer)
+    assert callable(lib.timed)

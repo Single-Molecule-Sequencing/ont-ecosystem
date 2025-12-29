@@ -1,8 +1,9 @@
 # ONT Ecosystem Makefile
 # Version 3.0.0
 
-.PHONY: install install-dev test test-quick lint validate clean package dashboard help
-.PHONY: validate-skills validate-registry validate-equations pre-commit
+.PHONY: install install-dev test test-quick test-coverage lint validate clean package dashboard help
+.PHONY: validate-skills validate-registry validate-equations pre-commit pre-commit-install
+.PHONY: list-figures list-tables list-pipes version stats check docs
 
 PYTHON := python3
 PIP := pip3
@@ -11,22 +12,38 @@ VERSION := 3.0.0
 help:
 	@echo "ONT Ecosystem v$(VERSION)"
 	@echo ""
-	@echo "Available targets:"
-	@echo "  install       Install core dependencies"
-	@echo "  install-dev   Install with development dependencies"
-	@echo "  test          Run all tests (62 tests)"
-	@echo "  test-quick    Run core tests only"
-	@echo "  lint          Check Python syntax"
-	@echo "  validate      Validate skills, registry, and equations"
-	@echo "  pre-commit    Run pre-commit hooks"
-	@echo "  package       Create skill packages"
-	@echo "  clean         Remove build artifacts"
-	@echo "  dashboard     Start web dashboard"
+	@echo "Setup:"
+	@echo "  install         Install core dependencies"
+	@echo "  install-dev     Install with development dependencies"
 	@echo ""
-	@echo "Manuscript targets:"
-	@echo "  list-figures  List available figure generators"
-	@echo "  list-tables   List available table generators"
-	@echo "  list-pipes    List available pipelines"
+	@echo "Testing:"
+	@echo "  test            Run all tests (86 tests)"
+	@echo "  test-quick      Run core tests only"
+	@echo "  test-coverage   Run tests with coverage report"
+	@echo "  lint            Check Python syntax"
+	@echo ""
+	@echo "Validation:"
+	@echo "  validate        Validate skills, registry, and equations"
+	@echo "  validate-skills Validate SKILL.md frontmatter"
+	@echo "  validate-registry Validate experiment registry"
+	@echo "  validate-equations Validate equations YAML"
+	@echo ""
+	@echo "Utilities:"
+	@echo "  stats           Show ecosystem statistics"
+	@echo "  check           Run health check"
+	@echo "  version         Show version information"
+	@echo "  docs            List documentation files"
+	@echo ""
+	@echo "Manuscript:"
+	@echo "  list-figures    List available figure generators"
+	@echo "  list-tables     List available table generators"
+	@echo "  list-pipes      List available pipelines"
+	@echo ""
+	@echo "Other:"
+	@echo "  pre-commit      Run pre-commit hooks"
+	@echo "  package         Create skill packages"
+	@echo "  dashboard       Start web dashboard"
+	@echo "  clean           Remove build artifacts"
 	@echo ""
 
 # Installation
@@ -143,3 +160,33 @@ version:
 	@echo "ONT Ecosystem v$(VERSION)"
 	@echo "Python: $$($(PYTHON) --version)"
 	@$(PYTHON) -c "from lib import __version__; print(f'lib version: {__version__}')"
+
+# Ecosystem stats
+stats:
+	@$(PYTHON) bin/ont_stats.py
+
+stats-brief:
+	@$(PYTHON) bin/ont_stats.py --brief
+
+# Health check
+check:
+	@$(PYTHON) bin/ont_check.py
+
+# Documentation
+docs:
+	@echo "Documentation Files:"
+	@echo ""
+	@echo "  README.md              - Project overview"
+	@echo "  CONTRIBUTING.md        - Contribution guide"
+	@echo "  CHANGELOG.md           - Version history"
+	@echo "  LICENSE                - MIT License"
+	@echo ""
+	@echo "  docs/ENVIRONMENT.md    - Environment variables"
+	@echo "  docs/QUICKSTART.md     - Quick start guide"
+	@echo "  docs/SKILLS.md         - Skills documentation"
+	@echo "  docs/GITHUB-SETUP.md   - GitHub setup guide"
+	@echo ""
+	@echo "  CLAUDE.md              - Claude Code guidance"
+	@echo "  AUTHORITATIVE_SOURCES.md - Source code locations"
+	@echo ""
+	@ls -la docs/*.md 2>/dev/null | awk '{print "  " $$NF " (" $$5 " bytes)"}' || true
