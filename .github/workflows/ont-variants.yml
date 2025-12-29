@@ -1,0 +1,382 @@
+name: ONT Variant Calling Tasks
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Variant calling task'
+        required: true
+        type: choice
+        options:
+          - list-callers
+          - compare-callers
+          - show-clair3-models
+          - benchmark-accuracy
+          - sv-detection-overview
+          - vcf-stats-demo
+          - filter-recommendations
+          - truth-sets
+      caller:
+        description: 'Variant caller'
+        required: false
+        type: choice
+        default: 'clair3'
+        options:
+          - clair3
+          - deepvariant
+          - medaka
+          - sniffles
+          - cutesv
+      variant_type:
+        description: 'Variant type focus'
+        required: false
+        type: choice
+        default: 'snv'
+        options:
+          - snv
+          - indel
+          - sv
+          - all
+
+env:
+  PYTHONPATH: ${{ github.workspace }}/bin:${{ github.workspace }}
+
+jobs:
+  variants:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pyyaml numpy pandas
+          mkdir -p outputs
+
+      - name: List Variant Callers
+        if: inputs.task == 'list-callers'
+        run: |
+          echo "## ONT Variant Callers" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          callers = {
+              'SNV/Indel Callers': [
+                  {'name': 'Clair3', 'type': 'Deep learning', 'speed': 'Fast', 'accuracy': 'High', 'recommended': True},
+                  {'name': 'DeepVariant', 'type': 'Deep learning', 'speed': 'Slow', 'accuracy': 'Very High', 'recommended': False},
+                  {'name': 'Medaka', 'type': 'Neural network', 'speed': 'Fast', 'accuracy': 'Medium', 'recommended': False},
+                  {'name': 'Longshot', 'type': 'HMM-based', 'speed': 'Medium', 'accuracy': 'Medium', 'recommended': False},
+              ],
+              'SV Callers': [
+                  {'name': 'Sniffles2', 'type': 'Split-read', 'speed': 'Fast', 'accuracy': 'High', 'recommended': True},
+                  {'name': 'CuteSV', 'type': 'Signature-based', 'speed': 'Fast', 'accuracy': 'High', 'recommended': True},
+                  {'name': 'SVIM', 'type': 'Multi-signal', 'speed': 'Medium', 'accuracy': 'Medium', 'recommended': False},
+                  {'name': 'NanoVar', 'type': 'Neural network', 'speed': 'Slow', 'accuracy': 'High', 'recommended': False},
+              ],
+          }
+
+          for category, tools in callers.items():
+              print(f'### {category}')
+              print('')
+              print('| Caller | Type | Speed | Accuracy | Recommended |')
+              print('|--------|------|-------|----------|-------------|')
+              for tool in tools:
+                  rec = '⭐' if tool.get('recommended') else ''
+                  print(f'| {tool[\"name\"]} | {tool[\"type\"]} | {tool[\"speed\"]} | {tool[\"accuracy\"]} | {rec} |')
+              print('')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Compare Callers
+        if: inputs.task == 'compare-callers'
+        run: |
+          echo "## Variant Caller Comparison" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### SNV/Indel Calling Performance (HG002)')
+          print('')
+          print('| Caller | SNV F1 | Indel F1 | Runtime | GPU |')
+          print('|--------|--------|----------|---------|-----|')
+          print('| Clair3 (SUP) | 99.7% | 95.2% | ~2h | Yes |')
+          print('| DeepVariant | 99.8% | 96.1% | ~8h | Yes |')
+          print('| Medaka | 98.5% | 88.0% | ~1h | No |')
+          print('')
+
+          print('### SV Calling Performance (HG002)')
+          print('')
+          print('| Caller | Precision | Recall | F1 |')
+          print('|--------|-----------|--------|-----|')
+          print('| Sniffles2 | 95.2% | 93.1% | 94.1% |')
+          print('| CuteSV | 94.8% | 92.5% | 93.6% |')
+          print('| SVIM | 92.1% | 90.3% | 91.2% |')
+          print('')
+
+          print('### Recommendations by Use Case')
+          print('')
+          print('| Use Case | Recommended Caller |')
+          print('|----------|-------------------|')
+          print('| Clinical SNV | Clair3 (SUP model) |')
+          print('| Research SNV | DeepVariant |')
+          print('| Quick QC | Medaka |')
+          print('| SV Discovery | Sniffles2 + CuteSV |')
+          print('| Pharmacogenomics | Clair3 + Cyrius |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Show Clair3 Models
+        if: inputs.task == 'show-clair3-models'
+        run: |
+          echo "## Clair3 Model Reference" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          models = {
+              'R10.4.1': [
+                  {'model': 'r1041_e82_400bps_sup_v500', 'basecaller': 'SUP', 'recommended': True},
+                  {'model': 'r1041_e82_400bps_hac_v500', 'basecaller': 'HAC', 'recommended': False},
+                  {'model': 'r1041_e82_260bps_sup_v500', 'basecaller': 'SUP 260bps', 'recommended': False},
+              ],
+              'R9.4.1': [
+                  {'model': 'r941_prom_sup_g5014', 'basecaller': 'SUP', 'recommended': True},
+                  {'model': 'r941_prom_hac_g5014', 'basecaller': 'HAC', 'recommended': False},
+              ],
+          }
+
+          for chemistry, model_list in models.items():
+              print(f'### {chemistry}')
+              print('')
+              print('| Model | Basecaller | Recommended |')
+              print('|-------|------------|-------------|')
+              for m in model_list:
+                  rec = '⭐' if m['recommended'] else ''
+                  print(f'| \`{m[\"model\"]}\` | {m[\"basecaller\"]} | {rec} |')
+              print('')
+
+          print('### Command Example')
+          print('')
+          print('\`\`\`bash')
+          print('run_clair3.sh \\\\')
+          print('  --bam_fn=aligned.bam \\\\')
+          print('  --ref_fn=reference.fa \\\\')
+          print('  --model_path=/path/to/r1041_e82_400bps_sup_v500 \\\\')
+          print('  --threads=32 \\\\')
+          print('  --platform=ont \\\\')
+          print('  --output=./clair3_output')
+          print('\`\`\`')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Benchmark Accuracy
+        if: inputs.task == 'benchmark-accuracy'
+        run: |
+          echo "## Variant Calling Accuracy Benchmarks" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### GIAB HG002 Benchmark (30x coverage)')
+          print('')
+          print('#### SNVs')
+          print('| Metric | Clair3 | DeepVariant |')
+          print('|--------|--------|-------------|')
+          print('| True Positives | 3,365,000 | 3,368,000 |')
+          print('| False Positives | 8,500 | 6,200 |')
+          print('| False Negatives | 12,000 | 9,000 |')
+          print('| Precision | 99.75% | 99.82% |')
+          print('| Recall | 99.64% | 99.73% |')
+          print('| F1 Score | 99.70% | 99.77% |')
+          print('')
+
+          print('#### Indels')
+          print('| Metric | Clair3 | DeepVariant |')
+          print('|--------|--------|-------------|')
+          print('| True Positives | 520,000 | 525,000 |')
+          print('| Precision | 96.2% | 97.1% |')
+          print('| Recall | 94.3% | 95.2% |')
+          print('| F1 Score | 95.2% | 96.1% |')
+          print('')
+
+          print('### Performance by Coverage')
+          print('')
+          print('| Coverage | SNV F1 | Indel F1 |')
+          print('|----------|--------|----------|')
+          print('| 10x | 97.5% | 85.2% |')
+          print('| 20x | 99.2% | 92.1% |')
+          print('| 30x | 99.7% | 95.2% |')
+          print('| 50x | 99.8% | 96.5% |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: SV Detection Overview
+        if: inputs.task == 'sv-detection-overview'
+        run: |
+          echo "## Structural Variant Detection" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### SV Types Detected')
+          print('')
+          print('| Type | Abbreviation | Min Size | Detection Method |')
+          print('|------|--------------|----------|-----------------|')
+          print('| Deletion | DEL | 50 bp | Split reads, coverage |')
+          print('| Insertion | INS | 50 bp | Split reads, assembly |')
+          print('| Duplication | DUP | 50 bp | Coverage, split reads |')
+          print('| Inversion | INV | 50 bp | Split reads |')
+          print('| Translocation | BND | N/A | Discordant reads |')
+          print('')
+
+          print('### Sniffles2 Command')
+          print('')
+          print('\`\`\`bash')
+          print('sniffles --input aligned.bam \\\\')
+          print('         --vcf output.vcf \\\\')
+          print('         --reference reference.fa \\\\')
+          print('         --threads 8 \\\\')
+          print('         --minsupport 3')
+          print('\`\`\`')
+          print('')
+
+          print('### SV Size Distribution (typical)')
+          print('')
+          print('| Size Range | Percentage |')
+          print('|------------|------------|')
+          print('| 50-100 bp | 35% |')
+          print('| 100-500 bp | 30% |')
+          print('| 500-1kb | 15% |')
+          print('| 1-10 kb | 12% |')
+          print('| >10 kb | 8% |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: VCF Stats Demo
+        if: inputs.task == 'vcf-stats-demo'
+        run: |
+          echo "## VCF Statistics Demo" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import json
+          from pathlib import Path
+
+          stats = {
+              'total_variants': 4_500_000,
+              'snvs': 3_800_000,
+              'indels': 700_000,
+              'transitions': 2_600_000,
+              'transversions': 1_200_000,
+              'ti_tv_ratio': 2.17,
+              'het_hom_ratio': 1.52,
+              'by_chromosome': {
+                  'chr1': 350000, 'chr2': 320000, 'chr3': 280000,
+                  'chr22': 85000, 'chrX': 95000, 'chrY': 8000,
+              },
+              'quality_distribution': {
+                  'Q30+': 3_800_000,
+                  'Q20-30': 500_000,
+                  'Q10-20': 150_000,
+                  '<Q10': 50_000,
+              }
+          }
+
+          print('### Summary Statistics')
+          print('')
+          print('| Metric | Value |')
+          print('|--------|-------|')
+          print(f'| Total Variants | {stats[\"total_variants\"]:,} |')
+          print(f'| SNVs | {stats[\"snvs\"]:,} ({stats[\"snvs\"]/stats[\"total_variants\"]*100:.1f}%) |')
+          print(f'| Indels | {stats[\"indels\"]:,} ({stats[\"indels\"]/stats[\"total_variants\"]*100:.1f}%) |')
+          print(f'| Ti/Tv Ratio | {stats[\"ti_tv_ratio\"]:.2f} |')
+          print(f'| Het/Hom Ratio | {stats[\"het_hom_ratio\"]:.2f} |')
+          print('')
+
+          print('### Quality Distribution')
+          print('')
+          print('| Quality | Count | Percentage |')
+          print('|---------|-------|------------|')
+          for q, count in stats['quality_distribution'].items():
+              pct = count / stats['total_variants'] * 100
+              print(f'| {q} | {count:,} | {pct:.1f}% |')
+
+          Path('outputs').mkdir(exist_ok=True)
+          Path('outputs/vcf_stats.json').write_text(json.dumps(stats, indent=2))
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Filter Recommendations
+        if: inputs.task == 'filter-recommendations'
+        run: |
+          echo "## Variant Filtering Recommendations" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Quality Filters')
+          print('')
+          print('| Filter | Threshold | Rationale |')
+          print('|--------|-----------|-----------|')
+          print('| QUAL | >= 20 | Basic quality |')
+          print('| DP | >= 10 | Depth support |')
+          print('| GQ | >= 20 | Genotype quality |')
+          print('| AF | >= 0.15 | Allele frequency |')
+          print('')
+
+          print('### Region Filters')
+          print('')
+          print('| Filter | Description |')
+          print('|--------|-------------|')
+          print('| Low complexity | Remove tandem repeats |')
+          print('| Segmental dups | Remove high-copy regions |')
+          print('| Centromeres | Exclude centromeric regions |')
+          print('| Telomeres | Exclude telomeric regions |')
+          print('')
+
+          print('### BCFtools Filter Command')
+          print('')
+          print('\`\`\`bash')
+          print('bcftools filter \\\\')
+          print('  -i \"QUAL>=20 && DP>=10 && GQ>=20\" \\\\')
+          print('  -e \"TYPE=\\\"indel\\\" && ABS(ILEN)>50\" \\\\')
+          print('  input.vcf.gz > filtered.vcf')
+          print('\`\`\`')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Truth Sets
+        if: inputs.task == 'truth-sets'
+        run: |
+          echo "## Variant Calling Truth Sets" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### GIAB Truth Sets')
+          print('')
+          print('| Sample | SNVs | Indels | SVs | Regions |')
+          print('|--------|------|--------|-----|---------|')
+          print('| HG001 | 3.4M | 530K | 12K | 2.5 Gb |')
+          print('| HG002 | 3.4M | 545K | 13K | 2.5 Gb |')
+          print('| HG003 | 3.4M | 540K | 12K | 2.5 Gb |')
+          print('| HG004 | 3.4M | 535K | 12K | 2.5 Gb |')
+          print('')
+
+          print('### Download URLs')
+          print('')
+          print('- GIAB FTP: ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/')
+          print('- HG002 v4.2.1: /release/AshkenazimTrio/HG002_NA24385_son/')
+          print('')
+
+          print('### Benchmarking with hap.py')
+          print('')
+          print('\`\`\`bash')
+          print('hap.py \\\\')
+          print('  truth.vcf.gz \\\\')
+          print('  query.vcf.gz \\\\')
+          print('  -r reference.fa \\\\')
+          print('  -f confident_regions.bed \\\\')
+          print('  -o benchmark_output \\\\')
+          print('  --threads 8')
+          print('\`\`\`')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: variants-output-${{ inputs.task }}
+          path: outputs/
+          if-no-files-found: ignore

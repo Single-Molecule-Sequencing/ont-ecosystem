@@ -1,0 +1,486 @@
+name: ONT Troubleshooting Tasks
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Troubleshooting task'
+        required: true
+        type: choice
+        options:
+          - common-issues
+          - flowcell-problems
+          - basecalling-errors
+          - low-yield
+          - quality-issues
+          - data-corruption
+          - software-errors
+          - performance-tuning
+      component:
+        description: 'Component'
+        required: false
+        type: choice
+        default: 'general'
+        options:
+          - general
+          - minknow
+          - dorado
+          - flowcell
+          - library
+          - analysis
+
+env:
+  PYTHONPATH: ${{ github.workspace }}/bin:${{ github.workspace }}
+
+jobs:
+  troubleshooting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install numpy pandas
+          mkdir -p outputs
+
+      - name: Common Issues
+        if: inputs.task == 'common-issues'
+        run: |
+          echo "## Common ONT Issues and Solutions" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Quick Diagnosis')
+          print('')
+          print('| Symptom | Likely Cause | Quick Fix |')
+          print('|---------|--------------|-----------|')
+          print('| No reads | Flowcell issue | Check pore count, reload |')
+          print('| Low yield | Library quality | Check input DNA/RNA |')
+          print('| Poor quality | Basecalling issue | Use SUP model |')
+          print('| Run crash | Software/GPU | Update drivers |')
+          print('| Slow basecalling | Resource issue | Check GPU memory |')
+          print('')
+
+          print('### Pre-Run Checklist')
+          print('')
+          print('- [ ] Flowcell has >800 pores (MinION) or >5000 (PromethION)')
+          print('- [ ] Library passed QC (260/280 > 1.8)')
+          print('- [ ] Correct protocol selected')
+          print('- [ ] GPU drivers up to date')
+          print('- [ ] Sufficient disk space (>100GB free)')
+          print('- [ ] MinKNOW version current')
+          print('')
+
+          print('### Emergency Procedures')
+          print('')
+          print('| Issue | Action |')
+          print('|-------|--------|')
+          print('| Run stuck | Pause, check logs, resume |')
+          print('| No basecalling | Switch to live basecalling off |')
+          print('| Flowcell dead | Start new run on spare |')
+          print('| Data not saving | Check disk, restart MinKNOW |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Flowcell Problems
+        if: inputs.task == 'flowcell-problems'
+        run: |
+          echo "## Flowcell Troubleshooting" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Pore Count Issues')
+          print('')
+          print('| Symptom | Cause | Solution |')
+          print('|---------|-------|----------|')
+          print('| 0 pores | Chip not detected | Reseat flowcell |')
+          print('| Low pores | Old/damaged | Use fresh flowcell |')
+          print('| Rapid pore loss | Contamination | Clean priming port |')
+          print('| Blocked pores | Air bubbles | Prime with flush buffer |')
+          print('')
+
+          print('### Flowcell Check Commands')
+          print('')
+          print('\`\`\`bash')
+          print('# Check flowcell in MinKNOW UI')
+          print('# Device > Check Flowcell')
+          print('')
+          print('# Or via API')
+          print('python -c \"')
+          print('from minknow_api import Connection')
+          print('conn = Connection(\\'localhost:9501\\')')
+          print('print(conn.device.get_flow_cell_info())')
+          print('\"')
+          print('\`\`\`')
+          print('')
+
+          print('### Expected Pore Counts')
+          print('')
+          print('| Flowcell | New | Acceptable | Replace |')
+          print('|----------|-----|------------|---------|')
+          print('| MinION | 1500+ | >800 | <500 |')
+          print('| PromethION | 8000+ | >5000 | <3000 |')
+          print('')
+
+          print('### Storage Issues')
+          print('')
+          print('| Problem | Cause | Prevention |')
+          print('|---------|-------|------------|')
+          print('| Low pores after storage | Drying | Store at 4C, sealed |')
+          print('| Expired | Past date | Check expiry before use |')
+          print('| Crystallization | Temperature shock | Equilibrate slowly |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Basecalling Errors
+        if: inputs.task == 'basecalling-errors'
+        run: |
+          echo "## Basecalling Troubleshooting" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Common Errors')
+          print('')
+          print('| Error | Cause | Solution |')
+          print('|-------|-------|----------|')
+          print('| CUDA out of memory | GPU full | Reduce batch size |')
+          print('| Model not found | Wrong path | Check model name |')
+          print('| Segmentation fault | Driver issue | Update CUDA |')
+          print('| No output | Input issue | Check POD5/FAST5 path |')
+          print('')
+
+          print('### Dorado Troubleshooting')
+          print('')
+          print('\`\`\`bash')
+          print('# Check Dorado version')
+          print('dorado --version')
+          print('')
+          print('# List available models')
+          print('dorado download --list')
+          print('')
+          print('# Check GPU')
+          print('nvidia-smi')
+          print('')
+          print('# Test with small batch')
+          print('dorado basecaller fast pod5/ --emit-fastq | head -n 4')
+          print('\`\`\`')
+          print('')
+
+          print('### Memory Issues')
+          print('')
+          print('\`\`\`bash')
+          print('# Reduce batch size')
+          print('dorado basecaller sup pod5/ --batchsize 32')
+          print('')
+          print('# Reduce chunk size')
+          print('dorado basecaller sup pod5/ --chunksize 6000')
+          print('')
+          print('# Use smaller model')
+          print('dorado basecaller hac pod5/ > output.bam')
+          print('\`\`\`')
+          print('')
+
+          print('### Model Selection Issues')
+          print('')
+          print('| Symptom | Cause | Fix |')
+          print('|---------|-------|-----|')
+          print('| Poor accuracy | Wrong chemistry | Match model to flowcell |')
+          print('| No modifications | Wrong model | Add modification suffix |')
+          print('| Slow speed | SUP model | Use HAC for speed |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Low Yield
+        if: inputs.task == 'low-yield'
+        run: |
+          echo "## Low Yield Troubleshooting" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Yield Expectations')
+          print('')
+          print('| Flowcell | Good Run | Typical | Poor |')
+          print('|----------|----------|---------|------|')
+          print('| MinION | >10 Gb | 5-10 Gb | <5 Gb |')
+          print('| PromethION | >100 Gb | 50-100 Gb | <50 Gb |')
+          print('')
+
+          print('### Diagnosis by Stage')
+          print('')
+          print('| Stage | Check | Action |')
+          print('|-------|-------|--------|')
+          print('| Library | Concentration | Measure with Qubit |')
+          print('| Loading | Priming | Reflush, reload |')
+          print('| Sequencing | Pore activity | Check mux scan |')
+          print('| Data | Read length | Check end reasons |')
+          print('')
+
+          print('### Library Issues')
+          print('')
+          print('\`\`\`bash')
+          print('# Check library concentration')
+          print('# Target: 50-100 fmol for MinION')
+          print('')
+          print('# Check fragment size')
+          print('# Agilent TapeStation or Bioanalyzer')
+          print('')
+          print('# Check purity')
+          print('# 260/280 > 1.8')
+          print('# 260/230 > 2.0')
+          print('\`\`\`')
+          print('')
+
+          print('### During-Run Interventions')
+          print('')
+          print('| Hour | Action |')
+          print('|------|--------|')
+          print('| 0-4 | Monitor, dont intervene |')
+          print('| 4-8 | Nuclease flush if declining |')
+          print('| 8-24 | Reload library if needed |')
+          print('| 24+ | Consider stopping if <1Gb/hr |')
+          print('')
+
+          print('### End Reason Analysis')
+          print('')
+          print('| End Reason | Meaning | If High |')
+          print('|------------|---------|---------|')
+          print('| signal_positive | Good - full reads | Expected >70% |')
+          print('| mux_change | Normal scan | Expected 5-15% |')
+          print('| unblock_mux_change | Blocked pore | Problem if >20% |')
+          print('| data_service_unblock | Software issue | Check MinKNOW |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Quality Issues
+        if: inputs.task == 'quality-issues'
+        run: |
+          echo "## Quality Troubleshooting" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Quality Expectations')
+          print('')
+          print('| Model | Median Q | Modal Accuracy |')
+          print('|-------|----------|----------------|')
+          print('| Fast | Q10-12 | 90-93% |')
+          print('| HAC | Q15-18 | 95-98% |')
+          print('| SUP | Q20-25 | 99-99.5% |')
+          print('')
+
+          print('### Low Quality Causes')
+          print('')
+          print('| Cause | Indicator | Solution |')
+          print('|-------|-----------|----------|')
+          print('| Wrong model | Systematic low Q | Use correct chemistry model |')
+          print('| DNA damage | Low Q throughout | Improve extraction |')
+          print('| Overloading | Early quality drop | Reduce loading |')
+          print('| Old flowcell | Variable quality | Use fresh flowcell |')
+          print('')
+
+          print('### Quality Analysis')
+          print('')
+          print('\`\`\`bash')
+          print('# Quick quality check')
+          print('samtools view aligned.bam | \\\\')
+          print('  awk \\'{sum+=$5; count++} END {print \"Mean MAPQ:\", sum/count}\\'')
+          print('')
+          print('# Q-score distribution')
+          print('dorado summary calls.bam > summary.tsv')
+          print('')
+          print('# Using NanoPlot')
+          print('NanoPlot --bam aligned.bam -o nanoplot_output')
+          print('\`\`\`')
+          print('')
+
+          print('### Improving Quality')
+          print('')
+          print('1. Use SUP model (not HAC or fast)')
+          print('2. Ensure correct model matches chemistry')
+          print('3. Filter low-quality reads (Q10+)')
+          print('4. Polish assemblies')
+          print('5. Use duplex reads if available')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Data Corruption
+        if: inputs.task == 'data-corruption'
+        run: |
+          echo "## Data Corruption Issues" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Signs of Corruption')
+          print('')
+          print('| Symptom | File Type | Likely Cause |')
+          print('|---------|-----------|--------------|')
+          print('| Cannot open | POD5/FAST5 | Incomplete write |')
+          print('| Truncated reads | FASTQ | Disk full |')
+          print('| BAM index fails | BAM | Interrupted sort |')
+          print('| Zero-byte files | Any | Write failure |')
+          print('')
+
+          print('### File Validation')
+          print('')
+          print('\`\`\`bash')
+          print('# Check POD5 files')
+          print('pod5 view file.pod5 | head')
+          print('')
+          print('# Check BAM integrity')
+          print('samtools quickcheck aligned.bam && echo \"OK\" || echo \"Corrupted\"')
+          print('')
+          print('# Check FASTQ')
+          print('gzip -t reads.fastq.gz && echo \"OK\" || echo \"Corrupted\"')
+          print('')
+          print('# Validate all BAMs in directory')
+          print('for f in *.bam; do')
+          print('  samtools quickcheck $f || echo \"$f is corrupted\"')
+          print('done')
+          print('\`\`\`')
+          print('')
+
+          print('### Recovery Attempts')
+          print('')
+          print('\`\`\`bash')
+          print('# Recover partial BAM')
+          print('samtools view -h input.bam 2>/dev/null | \\\\')
+          print('  samtools view -bS > recovered.bam')
+          print('')
+          print('# Recover partial POD5')
+          print('pod5 recover input.pod5 -o recovered.pod5')
+          print('')
+          print('# Rebasecall from raw signal')
+          print('dorado basecaller sup pod5/ > new_calls.bam')
+          print('\`\`\`')
+          print('')
+
+          print('### Prevention')
+          print('')
+          print('- Monitor disk space during runs')
+          print('- Use UPS for power protection')
+          print('- Avoid interrupting write operations')
+          print('- Validate files after transfer')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Software Errors
+        if: inputs.task == 'software-errors'
+        run: |
+          echo "## Software Error Resolution" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### MinKNOW Issues')
+          print('')
+          print('| Error | Solution |')
+          print('|-------|----------|')
+          print('| Won\\'t start | Restart service, check logs |')
+          print('| Device not found | Reconnect USB, restart |')
+          print('| Run won\\'t start | Check flowcell, protocol |')
+          print('| Crashes | Update MinKNOW, check memory |')
+          print('')
+
+          print('### Dorado Issues')
+          print('')
+          print('\`\`\`bash')
+          print('# GPU not detected')
+          print('export CUDA_VISIBLE_DEVICES=0')
+          print('nvidia-smi  # Verify GPU visible')
+          print('')
+          print('# Wrong CUDA version')
+          print('nvcc --version  # Check CUDA')
+          print('# Match Dorado version to CUDA')
+          print('')
+          print('# Model download issues')
+          print('dorado download --model sup@v5.0.0')
+          print('\`\`\`')
+          print('')
+
+          print('### Python Environment')
+          print('')
+          print('\`\`\`bash')
+          print('# Dependency conflicts')
+          print('conda create -n ont python=3.10')
+          print('conda activate ont')
+          print('pip install pod5 pysam ont-pyguppy-client-lib')
+          print('')
+          print('# Version check')
+          print('python -c \"import pod5; print(pod5.__version__)\"')
+          print('\`\`\`')
+          print('')
+
+          print('### Log Locations')
+          print('')
+          print('| Component | Log Path |')
+          print('|-----------|----------|')
+          print('| MinKNOW | /var/log/minknow/ |')
+          print('| Dorado | stderr (redirect to file) |')
+          print('| Guppy | --log_path option |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Performance Tuning
+        if: inputs.task == 'performance-tuning'
+        run: |
+          echo "## Performance Optimization" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Basecalling Performance')
+          print('')
+          print('| Setting | Faster | More Accurate |')
+          print('|---------|--------|---------------|')
+          print('| Model | fast/hac | sup |')
+          print('| Batch size | Larger | Default |')
+          print('| GPU | Use all | Single |')
+          print('')
+
+          print('### Dorado Optimization')
+          print('')
+          print('\`\`\`bash')
+          print('# Use multiple GPUs')
+          print('dorado basecaller sup pod5/ --device cuda:all')
+          print('')
+          print('# Increase batch size (more VRAM)')
+          print('dorado basecaller sup pod5/ --batchsize 64')
+          print('')
+          print('# Optimal for A100')
+          print('dorado basecaller sup pod5/ --batchsize 256')
+          print('\`\`\`')
+          print('')
+
+          print('### I/O Optimization')
+          print('')
+          print('\`\`\`bash')
+          print('# Use SSD for input/output')
+          print('# Avoid network storage for real-time')
+          print('')
+          print('# Parallel file processing')
+          print('find pod5/ -name \"*.pod5\" | \\\\')
+          print('  parallel -j 4 \"dorado basecaller sup {} > {.}.bam\"')
+          print('\`\`\`')
+          print('')
+
+          print('### Memory Management')
+          print('')
+          print('| Component | Recommendation |')
+          print('|-----------|----------------|')
+          print('| System RAM | 64 GB+ for human |')
+          print('| GPU VRAM | 8 GB+ (24 GB ideal) |')
+          print('| Swap | Disable or SSD |')
+          print('')
+
+          print('### Benchmarks')
+          print('')
+          print('| GPU | Model | Speed (reads/s) |')
+          print('|-----|-------|-----------------|')
+          print('| RTX 3090 | SUP | 1,500 |')
+          print('| A100 | SUP | 3,500 |')
+          print('| V100 | SUP | 1,800 |')
+          print('| RTX 4090 | SUP | 2,200 |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: troubleshooting-output-${{ inputs.task }}
+          path: outputs/
+          if-no-files-found: ignore

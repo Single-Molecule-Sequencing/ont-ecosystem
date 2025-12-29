@@ -1,0 +1,534 @@
+name: ONT Phasing Tasks
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Phasing task'
+        required: true
+        type: choice
+        options:
+          - overview
+          - whatshap-workflow
+          - longphase-workflow
+          - haplotag-workflow
+          - trio-phasing
+          - pharmacogenomics-phasing
+          - methylation-phasing
+          - benchmarks
+      method:
+        description: 'Phasing method'
+        required: false
+        type: choice
+        default: 'whatshap'
+        options:
+          - whatshap
+          - longphase
+          - margin
+          - trio
+
+env:
+  PYTHONPATH: ${{ github.workspace }}/bin:${{ github.workspace }}
+
+jobs:
+  phasing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install numpy pandas matplotlib
+          mkdir -p outputs
+
+      - name: Phasing Overview
+        if: inputs.task == 'overview'
+        run: |
+          echo "## Haplotype Phasing Overview" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### What is Phasing?')
+          print('')
+          print('Determining which alleles are on the same chromosome (haplotype).')
+          print('')
+          print('\`\`\`')
+          print('Unphased:  A/G at pos 100, T/C at pos 200')
+          print('')
+          print('Phased:    Haplotype 1: A---T')
+          print('           Haplotype 2: G---C')
+          print('\`\`\`')
+          print('')
+
+          print('### Why Long Reads Excel')
+          print('')
+          print('| Feature | Short Reads | Long Reads |')
+          print('|---------|-------------|------------|')
+          print('| Phase block N50 | 10-50 kb | 100 kb - 10 Mb |')
+          print('| Heterozygous sites/block | ~50 | 500-5000 |')
+          print('| Complex regions | Poor | Good |')
+          print('| Structural variants | Cannot phase | Can phase |')
+          print('')
+
+          print('### Phasing Methods')
+          print('')
+          print('| Method | Input | Best For |')
+          print('|--------|-------|----------|')
+          print('| Read-backed | Long reads | Standard |')
+          print('| Trio | Parents + child | Most complete |')
+          print('| Population | Reference panel | Common variants |')
+          print('| Statistical | Genotypes only | Sparse data |')
+          print('')
+
+          print('### Tools Comparison')
+          print('')
+          print('| Tool | Speed | Accuracy | Features |')
+          print('|------|-------|----------|----------|')
+          print('| WhatsHap | Fast | High | Standard, haplotag |')
+          print('| LongPhase | Very fast | High | SNP+SV |')
+          print('| Margin | Medium | Very high | HMM-based |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: WhatsHap Workflow
+        if: inputs.task == 'whatshap-workflow'
+        run: |
+          echo "## WhatsHap Phasing Workflow" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Installation')
+          print('')
+          print('\`\`\`bash')
+          print('pip install whatshap')
+          print('# or')
+          print('conda install -c bioconda whatshap')
+          print('\`\`\`')
+          print('')
+
+          print('### Basic Phasing')
+          print('')
+          print('\`\`\`bash')
+          print('# Phase VCF using reads')
+          print('whatshap phase \\\\')
+          print('    -o phased.vcf \\\\')
+          print('    --reference reference.fa \\\\')
+          print('    input.vcf \\\\')
+          print('    aligned.bam')
+          print('')
+          print('# With specific sample')
+          print('whatshap phase \\\\')
+          print('    -o phased.vcf \\\\')
+          print('    --reference reference.fa \\\\')
+          print('    --sample SAMPLE_NAME \\\\')
+          print('    input.vcf \\\\')
+          print('    aligned.bam')
+          print('\`\`\`')
+          print('')
+
+          print('### Phasing Statistics')
+          print('')
+          print('\`\`\`bash')
+          print('# Get phasing statistics')
+          print('whatshap stats phased.vcf --gtf phasing_stats.gtf')
+          print('')
+          print('# Compare to truth')
+          print('whatshap compare --names truth,phased \\\\')
+          print('    truth.vcf phased.vcf')
+          print('\`\`\`')
+          print('')
+
+          print('### Output Format')
+          print('')
+          print('| Tag | Meaning |')
+          print('|-----|---------|')
+          print('| PS | Phase set ID |')
+          print('| GT | 0|1 or 1|0 (phased) |')
+          print('')
+
+          print('### Expected Performance')
+          print('')
+          print('| Coverage | Phase Block N50 | % Phased |')
+          print('|----------|-----------------|----------|')
+          print('| 10x | 100-500 kb | 85% |')
+          print('| 20x | 500 kb - 2 Mb | 95% |')
+          print('| 30x | 1-5 Mb | 98% |')
+          print('| 50x | 5-20 Mb | 99% |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: LongPhase Workflow
+        if: inputs.task == 'longphase-workflow'
+        run: |
+          echo "## LongPhase Workflow" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Installation')
+          print('')
+          print('\`\`\`bash')
+          print('# From conda')
+          print('conda install -c bioconda longphase')
+          print('')
+          print('# From source')
+          print('git clone https://github.com/twolinin/longphase')
+          print('cd longphase && make')
+          print('\`\`\`')
+          print('')
+
+          print('### SNP Phasing')
+          print('')
+          print('\`\`\`bash')
+          print('longphase phase \\\\')
+          print('    -s input.vcf \\\\')
+          print('    -b aligned.bam \\\\')
+          print('    -r reference.fa \\\\')
+          print('    -t 16 \\\\')
+          print('    --ont \\\\')
+          print('    -o phased')
+          print('\`\`\`')
+          print('')
+
+          print('### SNP + SV Phasing')
+          print('')
+          print('\`\`\`bash')
+          print('# Phase both SNPs and SVs')
+          print('longphase phase \\\\')
+          print('    -s snp.vcf \\\\')
+          print('    --sv-file sv.vcf \\\\')
+          print('    -b aligned.bam \\\\')
+          print('    -r reference.fa \\\\')
+          print('    -t 16 \\\\')
+          print('    --ont \\\\')
+          print('    -o phased')
+          print('\`\`\`')
+          print('')
+
+          print('### Haplotagging')
+          print('')
+          print('\`\`\`bash')
+          print('# Tag reads with haplotype')
+          print('longphase haplotag \\\\')
+          print('    -s phased.vcf \\\\')
+          print('    -b aligned.bam \\\\')
+          print('    -r reference.fa \\\\')
+          print('    -t 16 \\\\')
+          print('    -o haplotagged.bam')
+          print('\`\`\`')
+          print('')
+
+          print('### Performance vs WhatsHap')
+          print('')
+          print('| Metric | LongPhase | WhatsHap |')
+          print('|--------|-----------|----------|')
+          print('| Speed | 10x faster | Baseline |')
+          print('| Memory | Lower | Higher |')
+          print('| SV phasing | Native | Limited |')
+          print('| Accuracy | Comparable | Comparable |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Haplotag Workflow
+        if: inputs.task == 'haplotag-workflow'
+        run: |
+          echo "## Read Haplotagging" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### What is Haplotagging?')
+          print('')
+          print('Adding haplotype labels (HP:i:1 or HP:i:2) to BAM reads.')
+          print('')
+          print('\`\`\`')
+          print('Before: read123  chr1  1000  ACGT...')
+          print('After:  read123  chr1  1000  ACGT...  HP:i:1  PS:i:100')
+          print('\`\`\`')
+          print('')
+
+          print('### WhatsHap Haplotagging')
+          print('')
+          print('\`\`\`bash')
+          print('# Tag reads with haplotype')
+          print('whatshap haplotag \\\\')
+          print('    -o haplotagged.bam \\\\')
+          print('    --reference reference.fa \\\\')
+          print('    phased.vcf \\\\')
+          print('    aligned.bam')
+          print('')
+          print('# Index output')
+          print('samtools index haplotagged.bam')
+          print('\`\`\`')
+          print('')
+
+          print('### Extract Haplotype-Specific Reads')
+          print('')
+          print('\`\`\`bash')
+          print('# Extract haplotype 1 reads')
+          print('samtools view -h haplotagged.bam | \\\\')
+          print('  grep -E \"^@|HP:i:1\" | \\\\')
+          print('  samtools view -bS > hap1.bam')
+          print('')
+          print('# Extract haplotype 2 reads')
+          print('samtools view -h haplotagged.bam | \\\\')
+          print('  grep -E \"^@|HP:i:2\" | \\\\')
+          print('  samtools view -bS > hap2.bam')
+          print('')
+          print('# Or use whatshap split')
+          print('whatshap split \\\\')
+          print('    --output-h1 hap1.bam \\\\')
+          print('    --output-h2 hap2.bam \\\\')
+          print('    haplotagged.bam \\\\')
+          print('    phased.vcf')
+          print('\`\`\`')
+          print('')
+
+          print('### Applications')
+          print('')
+          print('| Application | Use |')
+          print('|-------------|-----|')
+          print('| Allele-specific expression | RNA-seq per haplotype |')
+          print('| Compound heterozygotes | Phase variants on same gene |')
+          print('| SV validation | Confirm phasing |')
+          print('| Methylation | Allele-specific methylation |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Trio Phasing
+        if: inputs.task == 'trio-phasing'
+        run: |
+          echo "## Trio-Based Phasing" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Trio Phasing Advantages')
+          print('')
+          print('| Metric | Read-only | With Trio |')
+          print('|--------|-----------|-----------|')
+          print('| Phase block N50 | 1-10 Mb | Chromosome-scale |')
+          print('| % phased | 95-98% | 99.5%+ |')
+          print('| Accuracy | 99% | 99.9%+ |')
+          print('')
+
+          print('### WhatsHap Trio Phasing')
+          print('')
+          print('\`\`\`bash')
+          print('# Create pedigree file (PED format)')
+          print('echo -e \"FAM1\\\\tCHILD\\\\tFATHER\\\\tMOTHER\\\\t0\\\\t0\" > trio.ped')
+          print('')
+          print('# Phase with pedigree')
+          print('whatshap phase \\\\')
+          print('    -o phased.vcf \\\\')
+          print('    --reference reference.fa \\\\')
+          print('    --ped trio.ped \\\\')
+          print('    merged.vcf \\\\')
+          print('    child.bam \\\\')
+          print('    father.bam \\\\')
+          print('    mother.bam')
+          print('\`\`\`')
+          print('')
+
+          print('### PED File Format')
+          print('')
+          print('| Column | Description |')
+          print('|--------|-------------|')
+          print('| 1 | Family ID |')
+          print('| 2 | Individual ID |')
+          print('| 3 | Father ID |')
+          print('| 4 | Mother ID |')
+          print('| 5 | Sex (1=M, 2=F, 0=unknown) |')
+          print('| 6 | Phenotype |')
+          print('')
+
+          print('### Mendelian Inheritance')
+          print('')
+          print('\`\`\`')
+          print('Father: A/G  →  Child inherits A or G')
+          print('Mother: T/C  →  Child inherits T or C')
+          print('')
+          print('Child:  A/T  →  A from father, T from mother')
+          print('        (Fully phased by inheritance)')
+          print('\`\`\`')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Pharmacogenomics Phasing
+        if: inputs.task == 'pharmacogenomics-phasing'
+        run: |
+          echo "## Pharmacogenomics Phasing" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Why Phasing Matters for PGx')
+          print('')
+          print('Star alleles require knowing which variants are on the same chromosome.')
+          print('')
+          print('\`\`\`')
+          print('Unphased: *1/*4 or *2/*3 ???')
+          print('          Both have same variants, different arrangements')
+          print('')
+          print('Phased:   *1 (normal) + *4 (non-functional)')
+          print('          → Intermediate metabolizer')
+          print('\`\`\`')
+          print('')
+
+          print('### CYP2D6 Example')
+          print('')
+          print('| Allele | Key Variants | Function |')
+          print('|--------|--------------|----------|')
+          print('| *1 | Reference | Normal |')
+          print('| *4 | 1846G>A (splicing) | None |')
+          print('| *10 | 100C>T | Decreased |')
+          print('| *41 | 2988G>A | Decreased |')
+          print('')
+
+          print('### Phasing CYP2D6')
+          print('')
+          print('\`\`\`bash')
+          print('# 1. Call variants in CYP2D6 region')
+          print('clair3.py --bam aligned.bam \\\\')
+          print('          --ref reference.fa \\\\')
+          print('          --bed cyp2d6_region.bed \\\\')
+          print('          --output cyp2d6_variants')
+          print('')
+          print('# 2. Phase the variants')
+          print('whatshap phase \\\\')
+          print('    -o cyp2d6_phased.vcf \\\\')
+          print('    --reference reference.fa \\\\')
+          print('    cyp2d6_variants.vcf \\\\')
+          print('    aligned.bam')
+          print('')
+          print('# 3. Assign star alleles (Cyrius)')
+          print('star_caller.py \\\\')
+          print('    --manifest manifest.txt \\\\')
+          print('    --genome 38 \\\\')
+          print('    --outDir cyrius_output')
+          print('\`\`\`')
+          print('')
+
+          print('### Integration with PharmCAT')
+          print('')
+          print('PharmCAT uses phased VCF to determine diplotypes:')
+          print('')
+          print('\`\`\`bash')
+          print('# PharmCAT with phased VCF')
+          print('java -jar pharmcat.jar \\\\')
+          print('    -vcf phased.vcf \\\\')
+          print('    -o pharmcat_output')
+          print('\`\`\`')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Methylation Phasing
+        if: inputs.task == 'methylation-phasing'
+        run: |
+          echo "## Allele-Specific Methylation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Phased Methylation Analysis')
+          print('')
+          print('Combine haplotype and methylation information:')
+          print('')
+          print('\`\`\`')
+          print('Read: chr1:1000  HP:i:1  Mm:Z:C+m,0,1,0,1,1...')
+          print('      ↑ position  ↑ hap1  ↑ methylation pattern')
+          print('\`\`\`')
+          print('')
+
+          print('### Workflow')
+          print('')
+          print('\`\`\`bash')
+          print('# 1. Basecall with modifications')
+          print('dorado basecaller sup,5mCG_5hmCG pod5/ > calls.bam')
+          print('')
+          print('# 2. Align')
+          print('dorado aligner reference.fa calls.bam > aligned.bam')
+          print('')
+          print('# 3. Call and phase variants')
+          print('clair3.py ... # call variants')
+          print('whatshap phase ... # phase')
+          print('')
+          print('# 4. Haplotag reads')
+          print('whatshap haplotag \\\\')
+          print('    -o haplotagged.bam \\\\')
+          print('    --reference reference.fa \\\\')
+          print('    phased.vcf \\\\')
+          print('    aligned.bam')
+          print('')
+          print('# 5. Haplotype-specific methylation')
+          print('modkit pileup haplotagged.bam meth_hap1.bed \\\\')
+          print('    --partition-tag HP \\\\')
+          print('    --ref reference.fa \\\\')
+          print('    --filter-threshold 0.5 \\\\')
+          print('    --haplotype 1')
+          print('')
+          print('modkit pileup haplotagged.bam meth_hap2.bed \\\\')
+          print('    --partition-tag HP \\\\')
+          print('    --ref reference.fa \\\\')
+          print('    --filter-threshold 0.5 \\\\')
+          print('    --haplotype 2')
+          print('\`\`\`')
+          print('')
+
+          print('### Applications')
+          print('')
+          print('| Application | Example |')
+          print('|-------------|---------|')
+          print('| Imprinting | Parent-of-origin methylation |')
+          print('| X-inactivation | Active vs inactive X |')
+          print('| Cancer | LOH + methylation changes |')
+          print('| Regulatory | Allele-specific enhancers |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Benchmarks
+        if: inputs.task == 'benchmarks'
+        run: |
+          echo "## Phasing Benchmarks" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### HG002 Phasing Performance (30x ONT)')
+          print('')
+          print('| Tool | Phase Block N50 | Switch Error | Time |')
+          print('|------|-----------------|--------------|------|')
+          print('| WhatsHap | 2.5 Mb | 0.15% | 45 min |')
+          print('| LongPhase | 2.8 Mb | 0.12% | 5 min |')
+          print('| Margin | 3.1 Mb | 0.10% | 2 h |')
+          print('')
+
+          print('### Coverage Impact')
+          print('')
+          print('| Coverage | Block N50 | % Variants Phased |')
+          print('|----------|-----------|-------------------|')
+          print('| 10x | 300 kb | 85% |')
+          print('| 20x | 1.2 Mb | 94% |')
+          print('| 30x | 2.5 Mb | 97% |')
+          print('| 50x | 8 Mb | 99% |')
+          print('| 100x | 15 Mb | 99.5% |')
+          print('')
+
+          print('### Trio vs Single-Sample')
+          print('')
+          print('| Metric | Single 30x | Trio 30x each |')
+          print('|--------|------------|---------------|')
+          print('| Block N50 | 2.5 Mb | Chromosome |')
+          print('| Switch error | 0.15% | 0.01% |')
+          print('| % phased | 97% | 99.9% |')
+          print('')
+
+          print('### Difficult Regions')
+          print('')
+          print('| Region | Short-read | Long-read |')
+          print('|--------|------------|-----------|')
+          print('| MHC | Poor | Good |')
+          print('| Centromeres | Cannot | Partial |')
+          print('| Segmental dups | Poor | Moderate |')
+          print('| CYP2D6 | Challenging | Good |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phasing-output-${{ inputs.task }}
+          path: outputs/
+          if-no-files-found: ignore

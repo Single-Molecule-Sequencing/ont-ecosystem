@@ -1,0 +1,449 @@
+name: ONT Assembly Tasks
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Assembly task'
+        required: true
+        type: choice
+        options:
+          - assemblers-overview
+          - flye-workflow
+          - shasta-workflow
+          - hifiasm-ont
+          - assembly-qc
+          - polishing
+          - scaffolding
+          - comparison
+      genome_size:
+        description: 'Estimated genome size'
+        required: false
+        type: choice
+        default: 'human'
+        options:
+          - bacterial
+          - fungal
+          - plant
+          - human
+          - custom
+
+env:
+  PYTHONPATH: ${{ github.workspace }}/bin:${{ github.workspace }}
+
+jobs:
+  assembly:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install numpy pandas matplotlib
+          mkdir -p outputs
+
+      - name: Assemblers Overview
+        if: inputs.task == 'assemblers-overview'
+        run: |
+          echo "## ONT Genome Assemblers" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Long-Read Assemblers')
+          print('')
+          print('| Assembler | Algorithm | Speed | Accuracy | Best For |')
+          print('|-----------|-----------|-------|----------|----------|')
+          print('| Flye | Repeat graph | Fast | High | General purpose |')
+          print('| Shasta | Marker-based | Very fast | Medium | Large genomes |')
+          print('| Canu | OLC | Slow | High | High accuracy |')
+          print('| Raven | OLC | Fast | Medium | Bacterial |')
+          print('| wtdbg2 | Fuzzy Bruijn | Very fast | Medium | Draft assemblies |')
+          print('| Hifiasm | Phased | Medium | Very high | With HiFi or UL |')
+          print('')
+
+          print('### Recommended by Genome Size')
+          print('')
+          print('| Size | Recommended | Alternative |')
+          print('|------|-------------|-------------|')
+          print('| Bacteria (<10 Mb) | Flye | Raven |')
+          print('| Fungal (10-100 Mb) | Flye | Canu |')
+          print('| Plant (100 Mb-10 Gb) | Flye/Shasta | NextDenovo |')
+          print('| Mammalian (2-4 Gb) | Shasta/Flye | Hifiasm |')
+          print('')
+
+          print('### Coverage Requirements')
+          print('')
+          print('| Quality | Min Coverage | Recommended |')
+          print('|---------|--------------|-------------|')
+          print('| Draft | 20x | 30x |')
+          print('| Good | 30x | 50x |')
+          print('| High quality | 50x | 80x+ |')
+          print('| Phased | 40x | 60x |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Flye Workflow
+        if: inputs.task == 'flye-workflow'
+        run: |
+          echo "## Flye Assembly Workflow" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Installation')
+          print('')
+          print('\`\`\`bash')
+          print('# Conda')
+          print('conda install -c bioconda flye')
+          print('')
+          print('# Or from source')
+          print('git clone https://github.com/fenderglass/Flye')
+          print('cd Flye && python setup.py install')
+          print('\`\`\`')
+          print('')
+
+          print('### Basic Usage')
+          print('')
+          print('\`\`\`bash')
+          print('# Standard ONT assembly')
+          print('flye --nano-raw reads.fastq \\\\')
+          print('     --out-dir assembly_output \\\\')
+          print('     --threads 32 \\\\')
+          print('     --genome-size 3g')
+          print('')
+          print('# For high-quality (Q20+) reads')
+          print('flye --nano-hq reads.fastq \\\\')
+          print('     --out-dir assembly_output \\\\')
+          print('     --threads 32')
+          print('')
+          print('# With polishing iterations')
+          print('flye --nano-raw reads.fastq \\\\')
+          print('     --out-dir assembly_output \\\\')
+          print('     --iterations 3')
+          print('\`\`\`')
+          print('')
+
+          print('### Output Files')
+          print('')
+          print('| File | Description |')
+          print('|------|-------------|')
+          print('| assembly.fasta | Final assembly |')
+          print('| assembly_graph.gfa | Assembly graph |')
+          print('| assembly_info.txt | Contig statistics |')
+          print('| flye.log | Run log |')
+          print('')
+
+          print('### Resource Estimates')
+          print('')
+          print('| Genome | RAM | Time (32 cores) |')
+          print('|--------|-----|-----------------|')
+          print('| Bacteria | 8 GB | 30 min |')
+          print('| Fungal | 16 GB | 2 h |')
+          print('| Human | 128 GB | 24-48 h |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Shasta Workflow
+        if: inputs.task == 'shasta-workflow'
+        run: |
+          echo "## Shasta Assembly Workflow" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Installation')
+          print('')
+          print('\`\`\`bash')
+          print('# Download binary')
+          print('wget https://github.com/paoloshasta/shasta/releases/download/0.11.1/shasta-Linux-0.11.1')
+          print('chmod +x shasta-Linux-0.11.1')
+          print('mv shasta-Linux-0.11.1 shasta')
+          print('\`\`\`')
+          print('')
+
+          print('### Basic Usage')
+          print('')
+          print('\`\`\`bash')
+          print('# Human genome assembly')
+          print('./shasta --input reads.fastq \\\\')
+          print('         --config Nanopore-R10-Fast-Nov2022 \\\\')
+          print('         --threads 32 \\\\')
+          print('         --memoryMode filesystem \\\\')
+          print('         --memoryBacking disk')
+          print('')
+          print('# Ultra-long reads')
+          print('./shasta --input reads.fastq \\\\')
+          print('         --config Nanopore-UL-Dec2023 \\\\')
+          print('         --threads 32')
+          print('\`\`\`')
+          print('')
+
+          print('### Configuration Options')
+          print('')
+          print('| Config | Read Type | Speed |')
+          print('|--------|-----------|-------|')
+          print('| Nanopore-R10-Fast-Nov2022 | R10.4.1 | Fastest |')
+          print('| Nanopore-R10-Slow-Nov2022 | R10.4.1 | Better contiguity |')
+          print('| Nanopore-UL-Dec2023 | Ultra-long | Best for UL |')
+          print('')
+
+          print('### Performance')
+          print('')
+          print('| Metric | Shasta | Notes |')
+          print('|--------|--------|-------|')
+          print('| Speed | ~1h for human | Fastest assembler |')
+          print('| Memory | ~128 GB | For human |')
+          print('| N50 | 20-40 Mb | Depends on data |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Hifiasm ONT
+        if: inputs.task == 'hifiasm-ont'
+        run: |
+          echo "## Hifiasm with ONT Data" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### ONT-Only Assembly')
+          print('')
+          print('\`\`\`bash')
+          print('# Ultra-long ONT reads')
+          print('hifiasm -o output \\\\')
+          print('        -t 32 \\\\')
+          print('        --ul reads.fastq')
+          print('\`\`\`')
+          print('')
+
+          print('### Hybrid Assembly (HiFi + ONT)')
+          print('')
+          print('\`\`\`bash')
+          print('# Best quality: HiFi primary + ONT UL for scaffolding')
+          print('hifiasm -o hybrid \\\\')
+          print('        -t 32 \\\\')
+          print('        --hifi hifi_reads.fastq \\\\')
+          print('        --ul ont_ul_reads.fastq')
+          print('\`\`\`')
+          print('')
+
+          print('### Output Files')
+          print('')
+          print('| File | Description |')
+          print('|------|-------------|')
+          print('| *.bp.p_ctg.gfa | Primary contigs |')
+          print('| *.bp.hap1.p_ctg.gfa | Haplotype 1 |')
+          print('| *.bp.hap2.p_ctg.gfa | Haplotype 2 |')
+          print('')
+
+          print('### When to Use Hifiasm')
+          print('')
+          print('| Scenario | Recommended |')
+          print('|----------|-------------|')
+          print('| HiFi + ONT UL | Yes - best quality |')
+          print('| ONT UL only | Yes - good phasing |')
+          print('| ONT standard | No - use Flye |')
+          print('| Bacterial | No - use Flye |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Assembly QC
+        if: inputs.task == 'assembly-qc'
+        run: |
+          echo "## Assembly Quality Control" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Key Metrics')
+          print('')
+          print('| Metric | Description | Good Value |')
+          print('|--------|-------------|------------|')
+          print('| N50 | Half of assembly in contigs >= N50 | >10 Mb |')
+          print('| NG50 | N50 normalized to genome size | >10 Mb |')
+          print('| L50 | Number of contigs for N50 | <100 |')
+          print('| BUSCO | Gene completeness | >95% |')
+          print('| QV | Consensus accuracy | >Q40 |')
+          print('')
+
+          print('### QUAST Analysis')
+          print('')
+          print('\`\`\`bash')
+          print('# Basic stats')
+          print('quast.py assembly.fasta -o quast_output')
+          print('')
+          print('# With reference')
+          print('quast.py assembly.fasta \\\\')
+          print('         -r reference.fa \\\\')
+          print('         -g genes.gff \\\\')
+          print('         -o quast_output')
+          print('\`\`\`')
+          print('')
+
+          print('### BUSCO Analysis')
+          print('')
+          print('\`\`\`bash')
+          print('# Run BUSCO')
+          print('busco -i assembly.fasta \\\\')
+          print('      -l mammalia_odb10 \\\\')
+          print('      -o busco_output \\\\')
+          print('      -m genome')
+          print('')
+          print('# Lineage options: bacteria, mammalia, vertebrata, etc.')
+          print('\`\`\`')
+          print('')
+
+          print('### Merqury QV Estimation')
+          print('')
+          print('\`\`\`bash')
+          print('# Build k-mer database from reads')
+          print('meryl k=21 count output read.meryl reads.fastq')
+          print('')
+          print('# Evaluate assembly')
+          print('merqury.sh read.meryl assembly.fasta output_prefix')
+          print('\`\`\`')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Polishing
+        if: inputs.task == 'polishing'
+        run: |
+          echo "## Assembly Polishing" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Polishing Overview')
+          print('')
+          print('| Tool | Input | Speed | Best For |')
+          print('|------|-------|-------|----------|')
+          print('| Medaka | ONT | Fast | ONT-only |')
+          print('| Racon | Any | Fast | Initial polish |')
+          print('| Pilon | Illumina | Slow | Final polish |')
+          print('| NextPolish | Any | Medium | Multi-round |')
+          print('')
+
+          print('### Medaka Polishing')
+          print('')
+          print('\`\`\`bash')
+          print('# Polish with ONT reads')
+          print('medaka_consensus -i reads.fastq \\\\')
+          print('                 -d assembly.fasta \\\\')
+          print('                 -o medaka_output \\\\')
+          print('                 -m r1041_e82_400bps_sup_v5.0.0 \\\\')
+          print('                 -t 8')
+          print('\`\`\`')
+          print('')
+
+          print('### Racon + Medaka Pipeline')
+          print('')
+          print('\`\`\`bash')
+          print('# Round 1: Racon')
+          print('minimap2 -ax map-ont assembly.fasta reads.fastq > aln.sam')
+          print('racon reads.fastq aln.sam assembly.fasta > racon1.fasta')
+          print('')
+          print('# Round 2: Medaka')
+          print('medaka_consensus -i reads.fastq -d racon1.fasta -o medaka_out')
+          print('\`\`\`')
+          print('')
+
+          print('### Hybrid Polishing (ONT + Illumina)')
+          print('')
+          print('\`\`\`bash')
+          print('# 1. Polish with ONT (Medaka)')
+          print('medaka_consensus -i ont.fastq -d assembly.fasta -o medaka_out')
+          print('')
+          print('# 2. Polish with Illumina (Pilon)')
+          print('bwa index medaka_out/consensus.fasta')
+          print('bwa mem medaka_out/consensus.fasta illumina_R1.fq illumina_R2.fq | \\\\')
+          print('  samtools sort -o illumina.bam')
+          print('pilon --genome medaka_out/consensus.fasta --frags illumina.bam --output final')
+          print('\`\`\`')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Scaffolding
+        if: inputs.task == 'scaffolding'
+        run: |
+          echo "## Assembly Scaffolding" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Scaffolding Methods')
+          print('')
+          print('| Method | Data | Resolution | Best For |')
+          print('|--------|------|------------|----------|')
+          print('| Ultra-long reads | ONT UL | 100kb-1Mb | Gap filling |')
+          print('| Hi-C | Proximity ligation | Chromosome | Chromosome-scale |')
+          print('| Optical mapping | BioNano | 10kb-1Mb | Large SVs |')
+          print('| Reference-guided | Related species | Variable | Known structure |')
+          print('')
+
+          print('### Hi-C Scaffolding')
+          print('')
+          print('\`\`\`bash')
+          print('# Using YaHS')
+          print('yahs assembly.fasta hic_reads.bam -o scaffolds')
+          print('')
+          print('# Using SALSA2')
+          print('run_pipeline.py -a assembly.fasta \\\\')
+          print('                -l assembly.fasta.fai \\\\')
+          print('                -b hic.bed \\\\')
+          print('                -o salsa_output')
+          print('\`\`\`')
+          print('')
+
+          print('### Gap Filling with Ultra-Long Reads')
+          print('')
+          print('\`\`\`bash')
+          print('# Using TGS-GapCloser')
+          print('tgsgapcloser --scaff assembly.fasta \\\\')
+          print('             --reads ul_reads.fastq \\\\')
+          print('             --output gapclosed \\\\')
+          print('             --thread 16')
+          print('\`\`\`')
+          print('')
+
+          print('### Reference-Guided Scaffolding')
+          print('')
+          print('\`\`\`bash')
+          print('# Using RagTag')
+          print('ragtag.py scaffold reference.fa assembly.fasta -o ragtag_output')
+          print('\`\`\`')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Comparison
+        if: inputs.task == 'comparison'
+        run: |
+          echo "## Assembler Comparison" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Human Genome Benchmarks (HG002, 60x)')
+          print('')
+          print('| Assembler | N50 | Contigs | Time | RAM |')
+          print('|-----------|-----|---------|------|-----|')
+          print('| Shasta | 25 Mb | 800 | 2h | 128 GB |')
+          print('| Flye | 35 Mb | 600 | 36h | 128 GB |')
+          print('| Hifiasm (UL) | 45 Mb | 400 | 24h | 200 GB |')
+          print('')
+
+          print('### Bacterial Benchmarks (E. coli, 100x)')
+          print('')
+          print('| Assembler | Contigs | Accuracy | Time |')
+          print('|-----------|---------|----------|------|')
+          print('| Flye | 1 | 99.9% | 10 min |')
+          print('| Raven | 1 | 99.8% | 5 min |')
+          print('| Canu | 1 | 99.9% | 2h |')
+          print('')
+
+          print('### Recommendation Matrix')
+          print('')
+          print('| Priority | Bacteria | Fungi | Human |')
+          print('|----------|----------|-------|-------|')
+          print('| Speed | Raven | Flye | Shasta |')
+          print('| Quality | Flye | Flye | Hifiasm |')
+          print('| Balance | Flye | Flye | Flye |')
+          print('| Phasing | - | Hifiasm | Hifiasm |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: assembly-output-${{ inputs.task }}
+          path: outputs/
+          if-no-files-found: ignore

@@ -1,0 +1,473 @@
+name: ONT Basecalling Tasks
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Basecalling task to run'
+        required: true
+        type: choice
+        options:
+          - list-models
+          - compare-models
+          - show-model-specs
+          - validate-dorado-config
+          - estimate-resources
+          - benchmark-accuracy
+          - show-modifications
+          - generate-slurm-template
+      model_tier:
+        description: 'Model tier'
+        required: false
+        type: choice
+        default: 'sup'
+        options:
+          - fast
+          - hac
+          - sup
+      chemistry:
+        description: 'Chemistry version'
+        required: false
+        type: choice
+        default: 'r10.4.1'
+        options:
+          - r9.4.1
+          - r10.4.1
+          - r10.4.2
+      data_size_gb:
+        description: 'Estimated data size (GB)'
+        required: false
+        type: number
+        default: 50
+
+env:
+  PYTHONPATH: ${{ github.workspace }}/bin:${{ github.workspace }}
+
+jobs:
+  basecalling:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml jsonschema numpy pandas
+          mkdir -p outputs
+
+      - name: List Dorado Models
+        if: inputs.task == 'list-models'
+        run: |
+          echo "## Available Dorado Models" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          models = {
+              'R10.4.1 E8.2 400bps': {
+                  'fast': 'dna_r10.4.1_e8.2_400bps_fast@v5.0.0',
+                  'hac': 'dna_r10.4.1_e8.2_400bps_hac@v5.0.0',
+                  'sup': 'dna_r10.4.1_e8.2_400bps_sup@v5.0.0',
+              },
+              'R10.4.1 E8.2 260bps': {
+                  'fast': 'dna_r10.4.1_e8.2_260bps_fast@v5.0.0',
+                  'hac': 'dna_r10.4.1_e8.2_260bps_hac@v5.0.0',
+                  'sup': 'dna_r10.4.1_e8.2_260bps_sup@v5.0.0',
+              },
+              'R9.4.1 E8 (legacy)': {
+                  'fast': 'dna_r9.4.1_e8_fast@v3.4',
+                  'hac': 'dna_r9.4.1_e8_hac@v3.4',
+                  'sup': 'dna_r9.4.1_e8_sup@v3.4',
+              },
+          }
+
+          print('### Simplex Models')
+          print('')
+          print('| Chemistry | Fast | HAC | SUP |')
+          print('|-----------|------|-----|-----|')
+
+          for chem, tiers in models.items():
+              print(f'| {chem} | \`{tiers[\"fast\"]}\` | \`{tiers[\"hac\"]}\` | \`{tiers[\"sup\"]}\` |')
+
+          print('')
+          print('### Modification Models')
+          print('')
+          print('| Modification | Model Suffix |')
+          print('|--------------|--------------|')
+          print('| 5mCG (CpG methylation) | \`5mCG_5hmCG\` |')
+          print('| 5mC (all context) | \`5mC\` |')
+          print('| 6mA | \`6mA\` |')
+          print('| 4mC_5mC | \`4mC_5mC\` |')
+          print('')
+          print('### Duplex Models')
+          print('')
+          print('Use \`--duplex\` flag with simplex model for duplex calling.')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Compare Models
+        if: inputs.task == 'compare-models'
+        run: |
+          echo "## Model Comparison" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import numpy as np
+
+          comparisons = {
+              'fast': {
+                  'accuracy': '~97%',
+                  'speed': '~500 samples/s',
+                  'gpu_memory': '4 GB',
+                  'use_case': 'Real-time, adaptive sampling',
+              },
+              'hac': {
+                  'accuracy': '~99%',
+                  'speed': '~150 samples/s',
+                  'gpu_memory': '8 GB',
+                  'use_case': 'Balanced speed/accuracy',
+              },
+              'sup': {
+                  'accuracy': '~99.5%',
+                  'speed': '~50 samples/s',
+                  'gpu_memory': '16 GB',
+                  'use_case': 'Maximum accuracy, research',
+              },
+          }
+
+          print('### Model Tier Comparison')
+          print('')
+          print('| Tier | Accuracy | Speed | GPU Memory | Use Case |')
+          print('|------|----------|-------|------------|----------|')
+
+          for tier, specs in comparisons.items():
+              print(f'| {tier.upper()} | {specs[\"accuracy\"]} | {specs[\"speed\"]} | {specs[\"gpu_memory\"]} | {specs[\"use_case\"]} |')
+
+          print('')
+          print('### Accuracy by Read Length')
+          print('')
+          print('| Read Length | Fast | HAC | SUP |')
+          print('|-------------|------|-----|-----|')
+          print('| < 1 kb | 96.5% | 98.5% | 99.2% |')
+          print('| 1-10 kb | 97.0% | 99.0% | 99.5% |')
+          print('| 10-50 kb | 97.2% | 99.1% | 99.6% |')
+          print('| > 50 kb | 97.0% | 99.0% | 99.5% |')
+          print('')
+          print('### Recommendations')
+          print('')
+          print('- **Clinical/Pharmacogenomics**: SUP model required')
+          print('- **Variant Calling**: HAC or SUP recommended')
+          print('- **Assembly**: SUP for best contiguity')
+          print('- **Adaptive Sampling**: Fast model only')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Show Model Specs
+        if: inputs.task == 'show-model-specs'
+        run: |
+          echo "## Model Specifications" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Selected: **${{ inputs.model_tier }}** / **${{ inputs.chemistry }}**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          tier = '${{ inputs.model_tier }}'
+          chemistry = '${{ inputs.chemistry }}'
+
+          specs = {
+              'r10.4.1': {
+                  'fast': {'layers': 5, 'features': 64, 'chunk_size': 10000},
+                  'hac': {'layers': 5, 'features': 384, 'chunk_size': 10000},
+                  'sup': {'layers': 7, 'features': 512, 'chunk_size': 12000},
+              },
+              'r9.4.1': {
+                  'fast': {'layers': 3, 'features': 48, 'chunk_size': 8000},
+                  'hac': {'layers': 5, 'features': 256, 'chunk_size': 8000},
+                  'sup': {'layers': 5, 'features': 384, 'chunk_size': 10000},
+              },
+          }
+
+          chem_key = 'r10.4.1' if 'r10' in chemistry else 'r9.4.1'
+          model_specs = specs.get(chem_key, {}).get(tier, {})
+
+          print('### Architecture')
+          print('')
+          print(f'- **Transformer Layers**: {model_specs.get(\"layers\", \"N/A\")}')
+          print(f'- **Feature Dimensions**: {model_specs.get(\"features\", \"N/A\")}')
+          print(f'- **Chunk Size**: {model_specs.get(\"chunk_size\", \"N/A\")}')
+          print('')
+
+          print('### Memory Requirements')
+          print('')
+          mem = {'fast': 4, 'hac': 8, 'sup': 16}
+          print(f'- **GPU Memory**: {mem.get(tier, 8)} GB minimum')
+          print(f'- **System Memory**: {mem.get(tier, 8) * 2} GB recommended')
+          print('')
+
+          print('### Recommended Hardware')
+          print('')
+          if tier == 'fast':
+              print('- Any CUDA-capable GPU (GTX 1080+)')
+          elif tier == 'hac':
+              print('- RTX 3080/4080 or A40/A100')
+          else:
+              print('- A40/A100 for optimal performance')
+              print('- Multi-GPU supported')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Validate Dorado Config
+        if: inputs.task == 'validate-dorado-config'
+        run: |
+          echo "## Dorado Configuration Validation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          from pathlib import Path
+          import yaml
+
+          config_files = list(Path('skills/dorado-bench-v2/assets').glob('*.yml'))
+
+          print('### Configuration Files')
+          print('')
+
+          for config_file in sorted(config_files):
+              print(f'#### {config_file.name}')
+              print('')
+
+              try:
+                  config = yaml.safe_load(config_file.read_text())
+
+                  # Validate required fields
+                  required = ['cluster', 'partitions', 'dorado_path']
+                  missing = [f for f in required if f not in config]
+
+                  if missing:
+                      print(f'❌ Missing fields: {missing}')
+                  else:
+                      print('✅ All required fields present')
+                      print('')
+                      print(f'- Cluster: {config.get(\"cluster\")}')
+                      print(f'- Partitions: {list(config.get(\"partitions\", {}).keys())}')
+                      print(f'- Dorado path: {config.get(\"dorado_path\")}')
+
+              except Exception as e:
+                  print(f'❌ Error: {e}')
+
+              print('')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Estimate Resources
+        if: inputs.task == 'estimate-resources'
+        run: |
+          echo "## Resource Estimation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Data size: **${{ inputs.data_size_gb }} GB**" >> $GITHUB_STEP_SUMMARY
+          echo "Model: **${{ inputs.model_tier }}**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          data_gb = ${{ inputs.data_size_gb }}
+          tier = '${{ inputs.model_tier }}'
+
+          # Speed estimates (GB/hour per GPU)
+          speeds = {'fast': 50, 'hac': 15, 'sup': 5}
+          speed = speeds.get(tier, 10)
+
+          # Calculate time
+          hours_1gpu = data_gb / speed
+          hours_2gpu = hours_1gpu / 1.8  # 90% scaling
+          hours_4gpu = hours_1gpu / 3.2  # 80% scaling
+
+          print('### Time Estimates')
+          print('')
+          print('| GPUs | Estimated Time | Efficiency |')
+          print('|------|----------------|------------|')
+          print(f'| 1 | {hours_1gpu:.1f} hours | 100% |')
+          print(f'| 2 | {hours_2gpu:.1f} hours | 90% |')
+          print(f'| 4 | {hours_4gpu:.1f} hours | 80% |')
+          print('')
+
+          # Memory estimates
+          mem = {'fast': 4, 'hac': 8, 'sup': 16}
+          gpu_mem = mem.get(tier, 8)
+
+          print('### Memory Requirements')
+          print('')
+          print(f'- **GPU Memory**: {gpu_mem} GB per GPU')
+          print(f'- **System RAM**: {gpu_mem * 4} GB recommended')
+          print(f'- **Disk Space**: {data_gb * 2} GB (input + output)')
+          print('')
+
+          # SLURM recommendations
+          print('### SLURM Recommendations')
+          print('')
+          if hours_1gpu < 4:
+              print('- Partition: standard or gpu')
+              print('- Walltime: 4 hours')
+          elif hours_1gpu < 24:
+              print('- Partition: gpu')
+              print('- Walltime: 24 hours')
+          else:
+              print('- Partition: gpu-long or sigbio-a40')
+              print(f'- Walltime: {min(72, int(hours_1gpu * 1.5))} hours')
+              print('- Consider multi-GPU or array jobs')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Benchmark Accuracy
+        if: inputs.task == 'benchmark-accuracy'
+        run: |
+          echo "## Basecalling Accuracy Benchmarks" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import numpy as np
+
+          print('### Published Accuracy (Dorado v0.7+)')
+          print('')
+          print('| Dataset | Chemistry | Fast | HAC | SUP |')
+          print('|---------|-----------|------|-----|-----|')
+          print('| E. coli K12 | R10.4.1 | 97.2% | 99.1% | 99.6% |')
+          print('| HG002 (Human) | R10.4.1 | 96.8% | 98.9% | 99.4% |')
+          print('| Lambda phage | R10.4.1 | 97.5% | 99.2% | 99.7% |')
+          print('| Zymo mock | R10.4.1 | 96.5% | 98.8% | 99.3% |')
+          print('')
+
+          print('### Error Profiles')
+          print('')
+          print('| Error Type | Fast | HAC | SUP |')
+          print('|------------|------|-----|-----|')
+          print('| Substitutions | 1.8% | 0.6% | 0.3% |')
+          print('| Insertions | 0.8% | 0.3% | 0.2% |')
+          print('| Deletions | 0.6% | 0.2% | 0.1% |')
+          print('')
+
+          print('### Homopolymer Accuracy')
+          print('')
+          print('| Length | Fast | HAC | SUP |')
+          print('|--------|------|-----|-----|')
+          print('| 4-5 bp | 98% | 99.5% | 99.8% |')
+          print('| 6-8 bp | 95% | 98% | 99% |')
+          print('| 9-12 bp | 90% | 95% | 97% |')
+          print('| >12 bp | 80% | 90% | 94% |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Show Modifications
+        if: inputs.task == 'show-modifications'
+        run: |
+          echo "## Base Modification Detection" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Available Modifications')
+          print('')
+          print('| Modification | Code | Context | Model Suffix |')
+          print('|--------------|------|---------|--------------|')
+          print('| 5-methylcytosine (CpG) | 5mC | CG | \`5mCG_5hmCG\` |')
+          print('| 5-hydroxymethylcytosine | 5hmC | CG | \`5mCG_5hmCG\` |')
+          print('| 5-methylcytosine (all) | 5mC | All | \`5mC\` |')
+          print('| N6-methyladenine | 6mA | All | \`6mA\` |')
+          print('| N4-methylcytosine | 4mC | All | \`4mC_5mC\` |')
+          print('')
+
+          print('### Command Examples')
+          print('')
+          print('\`\`\`bash')
+          print('# CpG methylation calling')
+          print('dorado basecaller sup,5mCG_5hmCG /path/to/pod5 > calls.bam')
+          print('')
+          print('# All-context 5mC')
+          print('dorado basecaller sup,5mC /path/to/pod5 > calls.bam')
+          print('')
+          print('# Bacterial methylation (6mA)')
+          print('dorado basecaller sup,6mA /path/to/pod5 > calls.bam')
+          print('\`\`\`')
+          print('')
+
+          print('### Output Tags')
+          print('')
+          print('| BAM Tag | Description |')
+          print('|---------|-------------|')
+          print('| MM | Base modification string |')
+          print('| ML | Modification probabilities |')
+          print('| MN | Sequence length |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Generate SLURM Template
+        if: inputs.task == 'generate-slurm-template'
+        run: |
+          echo "## SLURM Job Template" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          tier = '${{ inputs.model_tier }}'
+          data_gb = ${{ inputs.data_size_gb }}
+
+          # Calculate resources
+          speeds = {'fast': 50, 'hac': 15, 'sup': 5}
+          mem = {'fast': 32, 'hac': 64, 'sup': 100}
+
+          hours = int(data_gb / speeds.get(tier, 10) * 1.5) + 1
+          hours = min(72, max(4, hours))
+
+          template = f'''#!/bin/bash
+          #SBATCH --job-name=dorado-{tier}
+          #SBATCH --partition=spgpu
+          #SBATCH --account=bleu1
+          #SBATCH --gpus=1
+          #SBATCH --cpus-per-task=8
+          #SBATCH --mem={mem.get(tier, 64)}G
+          #SBATCH --time={hours}:00:00
+          #SBATCH --output=dorado_%j.log
+
+          # Load modules
+          module load cuda/12.1
+
+          # Paths
+          DORADO=/path/to/dorado
+          MODEL={tier}@v5.0.0
+          INPUT=/path/to/pod5
+          OUTPUT=/path/to/output.bam
+
+          # Run basecalling
+          $DORADO basecaller $MODEL $INPUT > $OUTPUT
+
+          # Index output
+          samtools index $OUTPUT
+
+          echo \"Basecalling complete\"
+          '''
+
+          print('\`\`\`bash')
+          print(template)
+          print('\`\`\`')
+          "
+
+          # Save template
+          python -c "
+          tier = '${{ inputs.model_tier }}'
+          template = '''#!/bin/bash
+          #SBATCH --job-name=dorado-''' + tier + '''
+          #SBATCH --partition=spgpu
+          #SBATCH --gpus=1
+          #SBATCH --cpus-per-task=8
+          #SBATCH --mem=64G
+          #SBATCH --time=24:00:00
+
+          dorado basecaller ''' + tier + '''@v5.0.0 \$INPUT > \$OUTPUT
+          '''
+          with open('outputs/dorado_job.sbatch', 'w') as f:
+              f.write(template)
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: basecalling-output-${{ inputs.task }}
+          path: outputs/
+          if-no-files-found: ignore

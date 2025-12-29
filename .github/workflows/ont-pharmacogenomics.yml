@@ -1,0 +1,394 @@
+name: ONT Pharmacogenomics Tasks
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Pharmacogenomics task'
+        required: true
+        type: choice
+        options:
+          - overview
+          - cyp2d6-calling
+          - pharmcat-workflow
+          - star-alleles
+          - drug-interactions
+          - clinical-guidelines
+          - validation-samples
+          - report-demo
+      gene:
+        description: 'Target gene'
+        required: false
+        type: choice
+        default: 'CYP2D6'
+        options:
+          - CYP2D6
+          - CYP2C19
+          - CYP2C9
+          - DPYD
+          - TPMT
+          - all
+
+env:
+  PYTHONPATH: ${{ github.workspace }}/bin:${{ github.workspace }}
+
+jobs:
+  pharmacogenomics:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pyyaml numpy pandas
+          mkdir -p outputs
+
+      - name: PGx Overview
+        if: inputs.task == 'overview'
+        run: |
+          echo "## Pharmacogenomics with ONT" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Why Long Reads for PGx?')
+          print('')
+          print('1. **Resolve complex genes**: CYP2D6 has high homology with CYP2D7/CYP2D8')
+          print('2. **Detect SVs**: Gene deletions, duplications, hybrids')
+          print('3. **Phase variants**: Determine star allele haplotypes')
+          print('4. **Single workflow**: Variants + SVs + phasing together')
+          print('')
+
+          print('### Key PGx Genes')
+          print('')
+          print('| Gene | Drugs Affected | Complexity |')
+          print('|------|----------------|------------|')
+          print('| CYP2D6 | Codeine, tamoxifen, antidepressants | Very high |')
+          print('| CYP2C19 | Clopidogrel, PPIs | Medium |')
+          print('| CYP2C9 | Warfarin, NSAIDs | Medium |')
+          print('| DPYD | Fluoropyrimidines | High |')
+          print('| TPMT | Thiopurines | Low |')
+          print('')
+
+          print('### Workflow')
+          print('')
+          print('\`\`\`')
+          print('ONT reads → Dorado (SUP) → Alignment → Clair3 → Cyrius → PharmCAT')
+          print('\`\`\`')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: CYP2D6 Calling
+        if: inputs.task == 'cyp2d6-calling'
+        run: |
+          echo "## CYP2D6 Star Allele Calling" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### CYP2D6 Complexity')
+          print('')
+          print('- Located in highly repetitive region (chr22)')
+          print('- Pseudogenes: CYP2D7, CYP2D8')
+          print('- Common structural variants:')
+          print('  - Gene deletions (*5)')
+          print('  - Gene duplications (*1xN, *2xN)')
+          print('  - CYP2D6/2D7 hybrids (*13, *36)')
+          print('')
+
+          print('### Cyrius for CYP2D6')
+          print('')
+          print('\`\`\`bash')
+          print('# Run Cyrius')
+          print('star_caller.py \\\\')
+          print('  --manifest sample_manifest.txt \\\\')
+          print('  --genome 38 \\\\')
+          print('  --outDir ./cyrius_output \\\\')
+          print('  --prefix sample')
+          print('')
+          print('# Manifest format')
+          print('# sample_id\\tbam_path')
+          print('SAMPLE1\\t/path/to/aligned.bam')
+          print('\`\`\`')
+          print('')
+
+          print('### Common Star Alleles')
+          print('')
+          print('| Allele | Function | Frequency (EUR) |')
+          print('|--------|----------|-----------------|')
+          print('| *1 | Normal | 35% |')
+          print('| *2 | Normal | 25% |')
+          print('| *3 | None | 2% |')
+          print('| *4 | None | 20% |')
+          print('| *5 | None (deletion) | 3% |')
+          print('| *10 | Decreased | 2% |')
+          print('| *41 | Decreased | 8% |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: PharmCAT Workflow
+        if: inputs.task == 'pharmcat-workflow'
+        run: |
+          echo "## PharmCAT Integration" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### PharmCAT Pipeline')
+          print('')
+          print('\`\`\`bash')
+          print('# 1. Prepare VCF (normalize, left-align)')
+          print('bcftools norm -f reference.fa -m -any input.vcf.gz | \\\\')
+          print('  bcftools view -Oz -o normalized.vcf.gz')
+          print('')
+          print('# 2. Run PharmCAT preprocessor')
+          print('java -jar pharmcat.jar -vcf normalized.vcf.gz \\\\')
+          print('  -refVcf pharmcat_positions.vcf.bgz \\\\')
+          print('  -o preprocessed/')
+          print('')
+          print('# 3. Add outside calls (CYP2D6 from Cyrius)')
+          print('# Create outside_calls.tsv with Cyrius results')
+          print('')
+          print('# 4. Run PharmCAT')
+          print('java -jar pharmcat.jar \\\\')
+          print('  -vcf preprocessed/sample.vcf \\\\')
+          print('  -po outside_calls.tsv \\\\')
+          print('  -reporterJson \\\\')
+          print('  -o results/')
+          print('\`\`\`')
+          print('')
+
+          print('### PharmCAT Output')
+          print('')
+          print('| File | Content |')
+          print('|------|---------|')
+          print('| *.html | Interactive report |')
+          print('| *.json | Machine-readable results |')
+          print('| *_report.html | Clinical recommendations |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Star Alleles
+        if: inputs.task == 'star-alleles'
+        run: |
+          echo "## Star Allele Reference" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### CYP2D6 Activity Scores')
+          print('')
+          print('| Allele | Activity | Score |')
+          print('|--------|----------|-------|')
+          print('| *1 | Normal | 1.0 |')
+          print('| *2 | Normal | 1.0 |')
+          print('| *9 | Decreased | 0.5 |')
+          print('| *10 | Decreased | 0.25 |')
+          print('| *41 | Decreased | 0.5 |')
+          print('| *3 | None | 0 |')
+          print('| *4 | None | 0 |')
+          print('| *5 | None | 0 |')
+          print('| *6 | None | 0 |')
+          print('')
+
+          print('### Phenotype from Activity Score')
+          print('')
+          print('| Score | Phenotype |')
+          print('|-------|-----------|')
+          print('| 0 | Poor Metabolizer (PM) |')
+          print('| 0.25-1.0 | Intermediate Metabolizer (IM) |')
+          print('| 1.25-2.25 | Normal Metabolizer (NM) |')
+          print('| >2.25 | Ultrarapid Metabolizer (UM) |')
+          print('')
+
+          print('### CYP2C19 Alleles')
+          print('')
+          print('| Allele | Function | Key Variant |')
+          print('|--------|----------|-------------|')
+          print('| *1 | Normal | Reference |')
+          print('| *2 | None | c.681G>A |')
+          print('| *3 | None | c.636G>A |')
+          print('| *17 | Increased | c.-806C>T |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Drug Interactions
+        if: inputs.task == 'drug-interactions'
+        run: |
+          echo "## Drug-Gene Interactions" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### High-Priority Drug-Gene Pairs')
+          print('')
+          print('| Drug | Gene | Effect in PM | CPIC Level |')
+          print('|------|------|--------------|------------|')
+          print('| Codeine | CYP2D6 | No analgesia | A |')
+          print('| Tamoxifen | CYP2D6 | Reduced efficacy | A |')
+          print('| Clopidogrel | CYP2C19 | Reduced efficacy | A |')
+          print('| Warfarin | CYP2C9/VKORC1 | Increased bleeding | A |')
+          print('| Fluorouracil | DPYD | Severe toxicity | A |')
+          print('| Azathioprine | TPMT | Myelosuppression | A |')
+          print('')
+
+          print('### Actionable Recommendations')
+          print('')
+          print('| Phenotype | Codeine | Clopidogrel |')
+          print('|-----------|---------|-------------|')
+          print('| PM | Avoid | Alternative |')
+          print('| IM | Caution | Consider alternative |')
+          print('| NM | Standard | Standard |')
+          print('| UM | Avoid (toxicity) | Standard |')
+          print('')
+
+          print('### Clinical Decision Support')
+          print('')
+          print('CPIC Guidelines: https://cpicpgx.org/')
+          print('DPWG Guidelines: https://www.pharmgkb.org/page/dpwg')
+          print('FDA Table: https://www.fda.gov/drugs/science-and-research-drugs/table-pharmacogenomic-biomarkers-drug-labeling')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Clinical Guidelines
+        if: inputs.task == 'clinical-guidelines'
+        run: |
+          echo "## Clinical Implementation Guidelines" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Pre-Test Considerations')
+          print('')
+          print('1. **Informed consent** required')
+          print('2. **Clinical validity** established for target genes')
+          print('3. **Clinical utility** demonstrated')
+          print('4. **Turnaround time** acceptable')
+          print('')
+
+          print('### Quality Requirements')
+          print('')
+          print('| Metric | Requirement |')
+          print('|--------|-------------|')
+          print('| Coverage | >= 30x |')
+          print('| Variant calling accuracy | >= 99% |')
+          print('| Diplotype concordance | >= 99% |')
+          print('| Known variant detection | 100% |')
+          print('')
+
+          print('### Reporting Standards')
+          print('')
+          print('Include in clinical report:')
+          print('- Gene(s) tested')
+          print('- Diplotype (star alleles)')
+          print('- Phenotype assignment')
+          print('- Activity score (if applicable)')
+          print('- Drug recommendations')
+          print('- Guideline citations')
+          print('- Limitations and caveats')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Validation Samples
+        if: inputs.task == 'validation-samples'
+        run: |
+          echo "## PGx Validation Resources" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### GeT-RM Reference Samples')
+          print('')
+          print('| Sample | CYP2D6 | CYP2C19 | Source |')
+          print('|--------|--------|---------|--------|')
+          print('| NA12878 | *1/*4 | *1/*1 | Coriell |')
+          print('| NA18861 | *1/*1 | *2/*2 | Coriell |')
+          print('| NA19226 | *41/*4 | *1/*17 | Coriell |')
+          print('| HG002 | *2/*4 | *1/*2 | GIAB |')
+          print('')
+
+          print('### Validation Strategy')
+          print('')
+          print('1. **Orthogonal testing**: Compare with TaqMan/Sanger')
+          print('2. **Reference samples**: Use characterized samples')
+          print('3. **Replicate testing**: Same sample, multiple runs')
+          print('4. **Proficiency testing**: CAP/external QC')
+          print('')
+
+          print('### ONT Open Data PGx Samples')
+          print('')
+          print('GIAB samples with PGx characterization available at:')
+          print('s3://ont-open-data/giab_2025.01/')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Report Demo
+        if: inputs.task == 'report-demo'
+        run: |
+          echo "## PGx Report Demo" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import json
+          from pathlib import Path
+
+          report = {
+              'patient_id': 'DEMO-001',
+              'test_date': '2025-01-15',
+              'genes_tested': ['CYP2D6', 'CYP2C19', 'CYP2C9', 'DPYD', 'TPMT'],
+              'results': {
+                  'CYP2D6': {
+                      'diplotype': '*1/*4',
+                      'phenotype': 'Intermediate Metabolizer',
+                      'activity_score': 1.0,
+                  },
+                  'CYP2C19': {
+                      'diplotype': '*1/*2',
+                      'phenotype': 'Intermediate Metabolizer',
+                      'activity_score': 1.0,
+                  },
+                  'CYP2C9': {
+                      'diplotype': '*1/*1',
+                      'phenotype': 'Normal Metabolizer',
+                      'activity_score': 2.0,
+                  },
+                  'DPYD': {
+                      'diplotype': '*1/*1',
+                      'phenotype': 'Normal Metabolizer',
+                  },
+                  'TPMT': {
+                      'diplotype': '*1/*1',
+                      'phenotype': 'Normal Metabolizer',
+                  },
+              },
+              'recommendations': [
+                  {'drug': 'Codeine', 'gene': 'CYP2D6', 'recommendation': 'Use with caution, consider alternative'},
+                  {'drug': 'Clopidogrel', 'gene': 'CYP2C19', 'recommendation': 'Consider alternative antiplatelet'},
+                  {'drug': 'Warfarin', 'gene': 'CYP2C9', 'recommendation': 'Standard dosing'},
+              ],
+          }
+
+          print('### Sample Report')
+          print('')
+          print(f'**Patient ID**: {report[\"patient_id\"]}')
+          print(f'**Test Date**: {report[\"test_date\"]}')
+          print('')
+
+          print('### Genotype Results')
+          print('')
+          print('| Gene | Diplotype | Phenotype | Activity |')
+          print('|------|-----------|-----------|----------|')
+          for gene, data in report['results'].items():
+              activity = data.get('activity_score', '-')
+              print(f'| {gene} | {data[\"diplotype\"]} | {data[\"phenotype\"]} | {activity} |')
+          print('')
+
+          print('### Drug Recommendations')
+          print('')
+          print('| Drug | Gene | Recommendation |')
+          print('|------|------|----------------|')
+          for rec in report['recommendations']:
+              print(f'| {rec[\"drug\"]} | {rec[\"gene\"]} | {rec[\"recommendation\"]} |')
+
+          Path('outputs').mkdir(exist_ok=True)
+          Path('outputs/pgx_report.json').write_text(json.dumps(report, indent=2))
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pgx-output-${{ inputs.task }}
+          path: outputs/
+          if-no-files-found: ignore

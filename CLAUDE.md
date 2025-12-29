@@ -6,6 +6,39 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ONT Ecosystem (v3.0) is a consolidated monorepo for Oxford Nanopore sequencing experiment management with provenance tracking, event-sourced registry, integrated analysis workflows, and publication-quality figure generation. Designed for bioinformatics researchers working with nanopore sequencing data.
 
+## Skills (Slash Commands)
+
+Skills are automatically available via slash commands. Use these for common ONT analysis tasks:
+
+| Skill | Command | Purpose |
+|-------|---------|---------|
+| End Reason QC | `/end-reason` | Analyze read end reasons, check adaptive sampling |
+| End Reason v2 | `/end-reason-v2` | Advanced analysis with parallel processing |
+| Experiments | `/ont-experiments` | Create/manage experiments with provenance |
+| Alignment | `/ont-align` | Align reads to reference genome |
+| Pipeline | `/ont-pipeline` | Run multi-step analysis pipelines |
+| Monitor | `/ont-monitor` | Real-time sequencing run monitoring |
+| Dorado Bench | `/dorado-bench` | Basecalling benchmarks and optimization |
+| Experiment DB | `/experiment-db` | SQLite database queries and exports |
+| Manuscript | `/manuscript` | Generate figures and tables for papers |
+| Full Analysis | `/comprehensive-analysis` | Complete analysis workflow |
+
+### Quick Examples
+
+```bash
+# Analyze end reasons for a POD5 directory
+/end-reason /path/to/pod5 --json results.json --plot qc.png
+
+# Create and track an experiment
+/ont-experiments create exp-001 --sample HG002 --flowcell PAM12345
+/ont-experiments run end_reasons exp-001 --json qc.json
+
+# Generate manuscript figures
+/manuscript figure fig_end_reason_kde exp-001 --format pdf
+```
+
+See `.claude/skills.md` for complete skill documentation.
+
 ## Common Commands
 
 ```bash

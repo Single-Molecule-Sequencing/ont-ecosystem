@@ -1,0 +1,419 @@
+name: ONT Validation Tasks
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Validation task'
+        required: true
+        type: choice
+        options:
+          - truth-sets-overview
+          - giab-benchmarks
+          - happy-workflow
+          - sv-validation
+          - methylation-validation
+          - truvari-workflow
+          - accuracy-metrics
+          - validation-report
+      sample:
+        description: 'Reference sample'
+        required: false
+        type: choice
+        default: 'HG002'
+        options:
+          - HG002
+          - HG001
+          - HG003
+          - HG004
+          - HG005
+
+env:
+  PYTHONPATH: ${{ github.workspace }}/bin:${{ github.workspace }}
+
+jobs:
+  validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install numpy pandas matplotlib
+          mkdir -p outputs
+
+      - name: Truth Sets Overview
+        if: inputs.task == 'truth-sets-overview'
+        run: |
+          echo "## Variant Calling Truth Sets" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### GIAB Truth Sets')
+          print('')
+          print('| Sample | Relation | Ethnicity | Version |')
+          print('|--------|----------|-----------|---------|')
+          print('| HG001/NA12878 | Pilot | CEU | v4.2.1 |')
+          print('| HG002/NA24385 | Son | Ashkenazi | v4.2.1 |')
+          print('| HG003/NA24149 | Father | Ashkenazi | v4.2.1 |')
+          print('| HG004/NA24143 | Mother | Ashkenazi | v4.2.1 |')
+          print('| HG005/NA24631 | Son | Chinese | v4.2.1 |')
+          print('')
+
+          print('### Truth Set Contents')
+          print('')
+          print('| Component | Description |')
+          print('|-----------|-------------|')
+          print('| VCF | High-confidence variant calls |')
+          print('| BED | High-confidence regions |')
+          print('| Reference | GRCh37 and GRCh38 |')
+          print('')
+
+          print('### Download Locations')
+          print('')
+          print('- **GIAB FTP**: ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/')
+          print('- **NCBI**: https://www.ncbi.nlm.nih.gov/bioproject/PRJNA200694')
+          print('- **ONT Open Data**: s3://ont-open-data/giab_2025.01/')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: GIAB Benchmarks
+        if: inputs.task == 'giab-benchmarks'
+        run: |
+          echo "## GIAB Benchmark Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Sample: **${{ inputs.sample }}**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          sample = '${{ inputs.sample }}'
+
+          # Simulated benchmark results
+          results = {
+              'HG002': {'snv_f1': 99.72, 'indel_f1': 95.3, 'sv_f1': 94.1},
+              'HG001': {'snv_f1': 99.68, 'indel_f1': 94.8, 'sv_f1': 93.5},
+              'HG003': {'snv_f1': 99.70, 'indel_f1': 95.1, 'sv_f1': 93.8},
+              'HG004': {'snv_f1': 99.69, 'indel_f1': 95.0, 'sv_f1': 93.7},
+              'HG005': {'snv_f1': 99.65, 'indel_f1': 94.5, 'sv_f1': 93.2},
+          }
+
+          r = results.get(sample, results['HG002'])
+
+          print('### Performance Metrics (30x ONT R10.4.1 SUP)')
+          print('')
+          print('| Variant Type | Precision | Recall | F1 Score |')
+          print('|--------------|-----------|--------|----------|')
+          print(f'| SNVs | 99.8% | 99.6% | {r[\"snv_f1\"]:.2f}% |')
+          print(f'| Indels | 96.5% | 94.2% | {r[\"indel_f1\"]:.1f}% |')
+          print(f'| SVs | 95.5% | 92.8% | {r[\"sv_f1\"]:.1f}% |')
+          print('')
+
+          print('### Detailed SNV Metrics')
+          print('')
+          print('| Metric | Value |')
+          print('|--------|-------|')
+          print('| True Positives | 3,365,000 |')
+          print('| False Positives | 8,500 |')
+          print('| False Negatives | 12,000 |')
+          print('| Ti/Tv Ratio | 2.08 |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: hap.py Workflow
+        if: inputs.task == 'happy-workflow'
+        run: |
+          echo "## hap.py Benchmarking Workflow" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Installation')
+          print('')
+          print('\`\`\`bash')
+          print('# Using Docker (recommended)')
+          print('docker pull jmcdani20/hap.py:latest')
+          print('')
+          print('# Or conda')
+          print('conda install -c bioconda hap.py')
+          print('\`\`\`')
+          print('')
+
+          print('### Running hap.py')
+          print('')
+          print('\`\`\`bash')
+          print('hap.py \\\\')
+          print('  truth.vcf.gz \\\\')
+          print('  query.vcf.gz \\\\')
+          print('  -r GRCh38.fa \\\\')
+          print('  -f high_confidence.bed \\\\')
+          print('  -o benchmark_results \\\\')
+          print('  --threads 16 \\\\')
+          print('  --engine vcfeval')
+          print('\`\`\`')
+          print('')
+
+          print('### Output Files')
+          print('')
+          print('| File | Description |')
+          print('|------|-------------|')
+          print('| *.summary.csv | Overall metrics |')
+          print('| *.extended.csv | Detailed breakdown |')
+          print('| *.roc.* | ROC curve data |')
+          print('| *.vcf.gz | Annotated variants |')
+          print('')
+
+          print('### Key Metrics')
+          print('')
+          print('- **METRIC.Recall**: Sensitivity (TP / (TP + FN))')
+          print('- **METRIC.Precision**: PPV (TP / (TP + FP))')
+          print('- **METRIC.F1_Score**: Harmonic mean')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: SV Validation
+        if: inputs.task == 'sv-validation'
+        run: |
+          echo "## Structural Variant Validation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### GIAB SV Truth Set')
+          print('')
+          print('| SV Type | Count | Size Range |')
+          print('|---------|-------|------------|')
+          print('| Deletions | 8,500 | 50 bp - 1 Mb |')
+          print('| Insertions | 4,200 | 50 bp - 50 kb |')
+          print('| Inversions | 50 | 1 kb - 10 Mb |')
+          print('| Total | ~13,000 | - |')
+          print('')
+
+          print('### Truvari Benchmarking')
+          print('')
+          print('\`\`\`bash')
+          print('truvari bench \\\\')
+          print('  -b truth_sv.vcf.gz \\\\')
+          print('  -c query_sv.vcf.gz \\\\')
+          print('  -f GRCh38.fa \\\\')
+          print('  --includebed high_conf_sv.bed \\\\')
+          print('  -o truvari_output/')
+          print('\`\`\`')
+          print('')
+
+          print('### SV Matching Parameters')
+          print('')
+          print('| Parameter | Default | Description |')
+          print('|-----------|---------|-------------|')
+          print('| refdist | 500 | Max reference distance |')
+          print('| pctseq | 0.70 | Min sequence similarity |')
+          print('| pctsize | 0.70 | Min size similarity |')
+          print('| pctovl | 0.0 | Min reciprocal overlap |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Methylation Validation
+        if: inputs.task == 'methylation-validation'
+        run: |
+          echo "## Methylation Calling Validation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Truth Standards')
+          print('')
+          print('| Standard | Type | Use |')
+          print('|----------|------|-----|')
+          print('| Bisulfite-seq | Orthogonal | Gold standard comparison |')
+          print('| Synthetic DNA | Known modifications | Accuracy calibration |')
+          print('| pUC19 | 0% methylated | Specificity |')
+          print('| Lambda | Dam methylated | Sensitivity |')
+          print('')
+
+          print('### Validation Metrics')
+          print('')
+          print('| Metric | Description | Target |')
+          print('|--------|-------------|--------|')
+          print('| Per-read accuracy | Single read calls | >95% |')
+          print('| Per-site accuracy | Aggregated calls | >98% |')
+          print('| Correlation | vs bisulfite | r > 0.95 |')
+          print('| Specificity | Unmethylated control | >99% |')
+          print('')
+
+          print('### Comparison Tools')
+          print('')
+          print('\`\`\`bash')
+          print('# Compare bedMethyl files')
+          print('bedtools intersect -a ont_meth.bed -b bisulfite_meth.bed -wa -wb | \\\\')
+          print('  awk \\'BEGIN{OFS=\"\\t\"} {print \\$4, \\$11, \\$14, \\$22}\\' > comparison.tsv')
+          print('')
+          print('# Calculate correlation')
+          print('python -c \"')
+          print('import pandas as pd')
+          print('from scipy.stats import pearsonr')
+          print('df = pd.read_csv(\"comparison.tsv\", sep=\"\\t\", header=None)')
+          print('print(f\"Pearson r: {pearsonr(df[0], df[1])[0]:.3f}\")\"')
+          print('\`\`\`')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Truvari Workflow
+        if: inputs.task == 'truvari-workflow'
+        run: |
+          echo "## Truvari SV Benchmarking" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Installation')
+          print('')
+          print('\`\`\`bash')
+          print('pip install truvari')
+          print('\`\`\`')
+          print('')
+
+          print('### Basic Benchmarking')
+          print('')
+          print('\`\`\`bash')
+          print('truvari bench \\\\')
+          print('  -b giab_sv_truth.vcf.gz \\\\')
+          print('  -c my_sv_calls.vcf.gz \\\\')
+          print('  -f reference.fa \\\\')
+          print('  -o truvari_results/')
+          print('\`\`\`')
+          print('')
+
+          print('### Output Files')
+          print('')
+          print('| File | Description |')
+          print('|------|-------------|')
+          print('| summary.json | Overall metrics |')
+          print('| tp-base.vcf | True positives (truth) |')
+          print('| tp-comp.vcf | True positives (query) |')
+          print('| fp.vcf | False positives |')
+          print('| fn.vcf | False negatives |')
+          print('')
+
+          print('### Stratification')
+          print('')
+          print('\`\`\`bash')
+          print('# By SV type')
+          print('truvari bench ... --svtype DEL')
+          print('')
+          print('# By size range')
+          print('truvari bench ... --sizemin 50 --sizemax 1000')
+          print('\`\`\`')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Accuracy Metrics
+        if: inputs.task == 'accuracy-metrics'
+        run: |
+          echo "## Accuracy Metrics Reference" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Core Metrics')
+          print('')
+          print('| Metric | Formula | Description |')
+          print('|--------|---------|-------------|')
+          print('| Recall (Sensitivity) | TP / (TP + FN) | True positive rate |')
+          print('| Precision (PPV) | TP / (TP + FP) | Positive predictive value |')
+          print('| F1 Score | 2 * (P * R) / (P + R) | Harmonic mean |')
+          print('| Specificity | TN / (TN + FP) | True negative rate |')
+          print('')
+
+          print('### Variant-Specific Metrics')
+          print('')
+          print('| Metric | Variants | Description |')
+          print('|--------|----------|-------------|')
+          print('| Ti/Tv | SNVs | Transition/transversion ratio |')
+          print('| Het/Hom | All | Heterozygous/homozygous ratio |')
+          print('| Mendelian errors | Trios | Inheritance violations |')
+          print('| GenCon | All | Genotype concordance |')
+          print('')
+
+          print('### Expected Values')
+          print('')
+          print('| Metric | Expected | Concern If |')
+          print('|--------|----------|------------|')
+          print('| Ti/Tv (WGS) | 2.0-2.1 | <1.8 or >2.5 |')
+          print('| Het/Hom | 1.5-2.0 | <1.0 or >3.0 |')
+          print('| SNV F1 | >99.5% | <99% |')
+          print('| Indel F1 | >95% | <90% |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Validation Report
+        if: inputs.task == 'validation-report'
+        run: |
+          echo "## Validation Report Template" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import json
+          from pathlib import Path
+          from datetime import datetime
+
+          report = {
+              'report_date': datetime.now().isoformat(),
+              'sample': '${{ inputs.sample }}',
+              'reference': 'GRCh38',
+              'truth_version': 'GIAB v4.2.1',
+              'caller': 'Clair3 r1041_e82_400bps_sup_v500',
+              'coverage': '32x',
+              'snv_metrics': {
+                  'true_positives': 3365000,
+                  'false_positives': 8500,
+                  'false_negatives': 12000,
+                  'precision': 0.9975,
+                  'recall': 0.9964,
+                  'f1_score': 0.9970,
+              },
+              'indel_metrics': {
+                  'true_positives': 520000,
+                  'false_positives': 20000,
+                  'false_negatives': 30000,
+                  'precision': 0.963,
+                  'recall': 0.945,
+                  'f1_score': 0.954,
+              },
+              'quality_metrics': {
+                  'ti_tv_ratio': 2.08,
+                  'het_hom_ratio': 1.52,
+                  'mendelian_errors': 0,
+              },
+              'pass_fail': 'PASS',
+          }
+
+          print('### Validation Summary')
+          print('')
+          print(f'**Sample**: {report[\"sample\"]}')
+          print(f'**Reference**: {report[\"reference\"]}')
+          print(f'**Coverage**: {report[\"coverage\"]}')
+          print(f'**Status**: {report[\"pass_fail\"]}')
+          print('')
+
+          print('### SNV Performance')
+          print('')
+          snv = report['snv_metrics']
+          print(f'| Metric | Value |')
+          print(f'|--------|-------|')
+          print(f'| Precision | {snv[\"precision\"]*100:.2f}% |')
+          print(f'| Recall | {snv[\"recall\"]*100:.2f}% |')
+          print(f'| F1 Score | {snv[\"f1_score\"]*100:.2f}% |')
+          print('')
+
+          print('### Indel Performance')
+          print('')
+          indel = report['indel_metrics']
+          print(f'| Metric | Value |')
+          print(f'|--------|-------|')
+          print(f'| Precision | {indel[\"precision\"]*100:.1f}% |')
+          print(f'| Recall | {indel[\"recall\"]*100:.1f}% |')
+          print(f'| F1 Score | {indel[\"f1_score\"]*100:.1f}% |')
+
+          Path('outputs').mkdir(exist_ok=True)
+          Path('outputs/validation_report.json').write_text(json.dumps(report, indent=2))
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: validation-output-${{ inputs.task }}
+          path: outputs/
+          if-no-files-found: ignore

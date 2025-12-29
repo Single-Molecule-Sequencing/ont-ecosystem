@@ -1,0 +1,375 @@
+name: ONT Methylation Tasks
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Methylation task'
+        required: true
+        type: choice
+        options:
+          - overview
+          - modification-types
+          - tools-comparison
+          - bedmethyl-format
+          - dmr-analysis
+          - visualization-demo
+          - benchmark-accuracy
+          - clinical-applications
+      modification:
+        description: 'Modification type'
+        required: false
+        type: choice
+        default: '5mCG'
+        options:
+          - 5mCG
+          - 5mC
+          - 6mA
+          - 4mC
+
+env:
+  PYTHONPATH: ${{ github.workspace }}/bin:${{ github.workspace }}
+
+jobs:
+  methylation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install numpy pandas matplotlib
+          mkdir -p outputs
+
+      - name: Methylation Overview
+        if: inputs.task == 'overview'
+        run: |
+          echo "## ONT Methylation Calling Overview" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### How It Works')
+          print('')
+          print('1. **Signal Detection**: Modified bases cause subtle changes in ionic current')
+          print('2. **Model Training**: Neural networks trained on synthetic modified DNA')
+          print('3. **Probability Output**: Per-base modification probability (0-255)')
+          print('4. **Thresholding**: Convert probabilities to calls')
+          print('')
+
+          print('### Workflow')
+          print('')
+          print('\`\`\`')
+          print('POD5 → Dorado (mod model) → BAM (MM/ML tags) → modkit → bedMethyl')
+          print('\`\`\`')
+          print('')
+
+          print('### Key Advantages over Bisulfite')
+          print('')
+          print('| Feature | ONT | Bisulfite |')
+          print('|---------|-----|-----------|')
+          print('| DNA damage | None | Severe |')
+          print('| Distinguish 5mC/5hmC | Yes | No |')
+          print('| Long reads | Yes | No |')
+          print('| Phasing | Yes | Limited |')
+          print('| Input DNA | 1 ug | 0.5-1 ug |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Modification Types
+        if: inputs.task == 'modification-types'
+        run: |
+          echo "## Base Modification Types" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          mods = [
+              {'name': '5-methylcytosine', 'code': '5mC', 'context': 'CpG (mammals)', 'function': 'Gene silencing, X-inactivation'},
+              {'name': '5-hydroxymethylcytosine', 'code': '5hmC', 'context': 'CpG (brain)', 'function': 'Active demethylation, enhancers'},
+              {'name': 'N6-methyladenine', 'code': '6mA', 'context': 'Bacteria, some eukaryotes', 'function': 'Restriction-modification'},
+              {'name': 'N4-methylcytosine', 'code': '4mC', 'context': 'Bacteria', 'function': 'Restriction-modification'},
+          ]
+
+          print('### Detectable Modifications')
+          print('')
+          print('| Modification | Code | Primary Context | Biological Function |')
+          print('|--------------|------|-----------------|---------------------|')
+          for m in mods:
+              print(f'| {m[\"name\"]} | {m[\"code\"]} | {m[\"context\"]} | {m[\"function\"]} |')
+          print('')
+
+          print('### Dorado Model Suffixes')
+          print('')
+          print('| Suffix | Detects | Best For |')
+          print('|--------|---------|----------|')
+          print('| \`5mCG_5hmCG\` | 5mC and 5hmC in CpG | Human/mammalian |')
+          print('| \`5mC\` | 5mC in all contexts | Plants, non-CpG |')
+          print('| \`6mA\` | N6-methyladenine | Bacteria |')
+          print('| \`4mC_5mC\` | 4mC and 5mC | Bacteria |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Tools Comparison
+        if: inputs.task == 'tools-comparison'
+        run: |
+          echo "## Methylation Tools Comparison" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          tools = [
+              {'name': 'Dorado', 'type': 'Basecaller', 'speed': 'Fast', 'output': 'BAM with MM/ML'},
+              {'name': 'modkit', 'type': 'Analysis', 'speed': 'Fast', 'output': 'bedMethyl, summary'},
+              {'name': 'modbam2bed', 'type': 'Converter', 'speed': 'Fast', 'output': 'bedMethyl'},
+              {'name': 'Nanopolish', 'type': 'Caller (legacy)', 'speed': 'Slow', 'output': 'TSV'},
+              {'name': 'DeepSignal', 'type': 'Caller', 'speed': 'Medium', 'output': 'TSV'},
+          ]
+
+          print('### Tool Overview')
+          print('')
+          print('| Tool | Type | Speed | Output |')
+          print('|------|------|-------|--------|')
+          for t in tools:
+              print(f'| {t[\"name\"]} | {t[\"type\"]} | {t[\"speed\"]} | {t[\"output\"]} |')
+          print('')
+
+          print('### Recommended Pipeline')
+          print('')
+          print('\`\`\`bash')
+          print('# 1. Basecall with modifications')
+          print('dorado basecaller sup,5mCG_5hmCG pod5/ > calls.bam')
+          print('')
+          print('# 2. Align')
+          print('dorado aligner reference.fa calls.bam > aligned.bam')
+          print('')
+          print('# 3. Extract methylation')
+          print('modkit pileup aligned.bam methylation.bed --ref reference.fa')
+          print('')
+          print('# 4. Summary statistics')
+          print('modkit summary aligned.bam')
+          print('\`\`\`')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: bedMethyl Format
+        if: inputs.task == 'bedmethyl-format'
+        run: |
+          echo "## bedMethyl Format Reference" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Column Definitions')
+          print('')
+          print('| Column | Name | Description |')
+          print('|--------|------|-------------|')
+          print('| 1 | chrom | Chromosome |')
+          print('| 2 | start | 0-based start |')
+          print('| 3 | end | End position |')
+          print('| 4 | name | Modification code |')
+          print('| 5 | score | Score (0-1000) |')
+          print('| 6 | strand | + or - |')
+          print('| 7 | start | Thick start |')
+          print('| 8 | end | Thick end |')
+          print('| 9 | color | RGB color |')
+          print('| 10 | coverage | Read coverage |')
+          print('| 11 | frequency | Methylation % |')
+          print('')
+
+          print('### Example')
+          print('')
+          print('\`\`\`')
+          print('chr1\\t10000\\t10001\\t5mC\\t850\\t+\\t10000\\t10001\\t255,0,0\\t25\\t85.0')
+          print('chr1\\t10050\\t10051\\t5mC\\t920\\t+\\t10050\\t10051\\t255,0,0\\t30\\t92.0')
+          print('\`\`\`')
+          print('')
+
+          print('### Filter by Coverage')
+          print('')
+          print('\`\`\`bash')
+          print('# Keep sites with >= 10x coverage')
+          print('awk \"\\$10 >= 10\" methylation.bed > filtered.bed')
+          print('\`\`\`')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: DMR Analysis
+        if: inputs.task == 'dmr-analysis'
+        run: |
+          echo "## Differential Methylation Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### DMR Detection Workflow')
+          print('')
+          print('1. **Generate bedMethyl** for each sample')
+          print('2. **Merge samples** into matrix')
+          print('3. **Statistical testing** (Fisher, beta regression)')
+          print('4. **Segment into regions** (DMRs)')
+          print('5. **Annotate** with genomic features')
+          print('')
+
+          print('### Tools for DMR Analysis')
+          print('')
+          print('| Tool | Method | Input |')
+          print('|------|--------|-------|')
+          print('| DSS | Beta-binomial | bedMethyl |')
+          print('| methylKit | Fisher/regression | bedMethyl |')
+          print('| dmrseq | Regression | bedMethyl |')
+          print('| modkit diff | Built-in | BAM |')
+          print('')
+
+          print('### Example with modkit')
+          print('')
+          print('\`\`\`bash')
+          print('modkit diff \\\\')
+          print('  --a sample1.bam \\\\')
+          print('  --b sample2.bam \\\\')
+          print('  --ref reference.fa \\\\')
+          print('  --out dmr_results.bed')
+          print('\`\`\`')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Visualization Demo
+        if: inputs.task == 'visualization-demo'
+        run: |
+          echo "## Methylation Visualization" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import numpy as np
+          import matplotlib.pyplot as plt
+          from pathlib import Path
+
+          np.random.seed(42)
+
+          # Generate demo methylation data
+          positions = np.arange(0, 10000, 100)
+          meth_tumor = np.clip(np.random.beta(2, 8, len(positions)) * 100, 0, 100)
+          meth_normal = np.clip(np.random.beta(8, 2, len(positions)) * 100, 0, 100)
+
+          # CpG island (higher in normal)
+          island_mask = (positions > 3000) & (positions < 5000)
+          meth_tumor[island_mask] = np.clip(np.random.beta(8, 2, island_mask.sum()) * 100, 0, 100)
+          meth_normal[island_mask] = np.clip(np.random.beta(9, 1, island_mask.sum()) * 100, 0, 100)
+
+          fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+
+          # Track plot
+          ax = axes[0, 0]
+          ax.fill_between(positions, 0, meth_normal, alpha=0.5, label='Normal', color='blue')
+          ax.fill_between(positions, 0, meth_tumor, alpha=0.5, label='Tumor', color='red')
+          ax.axvspan(3000, 5000, alpha=0.2, color='green', label='CpG Island')
+          ax.set_xlabel('Position (bp)')
+          ax.set_ylabel('Methylation %')
+          ax.set_title('Methylation Track')
+          ax.legend()
+
+          # Distribution
+          ax = axes[0, 1]
+          ax.hist(meth_normal, bins=20, alpha=0.5, label='Normal', color='blue')
+          ax.hist(meth_tumor, bins=20, alpha=0.5, label='Tumor', color='red')
+          ax.set_xlabel('Methylation %')
+          ax.set_ylabel('Count')
+          ax.set_title('Methylation Distribution')
+          ax.legend()
+
+          # Scatter comparison
+          ax = axes[1, 0]
+          ax.scatter(meth_normal, meth_tumor, alpha=0.5, c=positions, cmap='viridis')
+          ax.plot([0, 100], [0, 100], 'k--', alpha=0.5)
+          ax.set_xlabel('Normal Methylation %')
+          ax.set_ylabel('Tumor Methylation %')
+          ax.set_title('Sample Comparison')
+
+          # Delta
+          ax = axes[1, 1]
+          delta = meth_tumor - meth_normal
+          colors = ['red' if d > 0 else 'blue' for d in delta]
+          ax.bar(positions, delta, width=80, color=colors, alpha=0.7)
+          ax.axhline(0, color='black', linewidth=0.5)
+          ax.set_xlabel('Position (bp)')
+          ax.set_ylabel('Delta Methylation %')
+          ax.set_title('Differential Methylation')
+
+          plt.tight_layout()
+          Path('outputs').mkdir(exist_ok=True)
+          plt.savefig('outputs/methylation_demo.png', dpi=150)
+          print('Generated: outputs/methylation_demo.png')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Benchmark Accuracy
+        if: inputs.task == 'benchmark-accuracy'
+        run: |
+          echo "## Methylation Calling Accuracy" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Dorado 5mCG Performance')
+          print('')
+          print('| Metric | Value |')
+          print('|--------|-------|')
+          print('| Per-read accuracy | 95-98% |')
+          print('| Per-site accuracy (10x) | 98-99% |')
+          print('| Per-site accuracy (30x) | 99%+ |')
+          print('| Correlation with bisulfite | r=0.95+ |')
+          print('')
+
+          print('### Factors Affecting Accuracy')
+          print('')
+          print('| Factor | Impact |')
+          print('|--------|--------|')
+          print('| Coverage | Higher = better |')
+          print('| Basecall model | SUP >> HAC |')
+          print('| Read quality | Q15+ recommended |')
+          print('| Context | CpG most accurate |')
+          print('')
+
+          print('### Recommended Coverage')
+          print('')
+          print('| Application | Min Coverage | Recommended |')
+          print('|-------------|--------------|-------------|')
+          print('| Global methylation | 5x | 10x |')
+          print('| DMR detection | 15x | 30x |')
+          print('| Single-site | 20x | 50x |')
+          print('| Phased methylation | 30x | 50x |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Clinical Applications
+        if: inputs.task == 'clinical-applications'
+        run: |
+          echo "## Clinical Methylation Applications" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Cancer Diagnostics')
+          print('')
+          print('| Application | Regions | Method |')
+          print('|-------------|---------|--------|')
+          print('| Tumor classification | Global profile | Machine learning |')
+          print('| Minimal residual disease | ctDNA methylation | Targeted panels |')
+          print('| Prognosis | MGMT, BRCA1 | Single gene |')
+          print('')
+
+          print('### Neurological')
+          print('')
+          print('| Application | Marker | Status |')
+          print('|-------------|--------|--------|')
+          print('| Fragile X | FMR1 CGG expansion | Clinical |')
+          print('| Imprinting disorders | 15q11-13 | Clinical |')
+          print('| Brain tumors | Global profile | Research |')
+          print('')
+
+          print('### Emerging Applications')
+          print('')
+          print('- Biological age estimation (epigenetic clocks)')
+          print('- Tissue-of-origin testing')
+          print('- Prenatal screening')
+          print('- Pharmacoepigenomics')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: methylation-output-${{ inputs.task }}
+          path: outputs/
+          if-no-files-found: ignore

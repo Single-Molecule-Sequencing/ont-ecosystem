@@ -70,6 +70,7 @@ class Doctor:
 
         if not quick:
             self.check_optional_packages()
+            self.check_numpy_matplotlib_compat()
             self.check_external_tools()
             self.check_registry()
             self.check_skills()
@@ -154,20 +155,29 @@ class Doctor:
         ]
 
         missing = []
+        incompatible = []
         for package, module in required:
             try:
                 __import__(module)
             except ImportError:
                 missing.append(package)
+            except TypeError as e:
+                # jsonschema/referencing version incompatibility on Python <3.13
+                if "TypeVar" in str(e) and "default" in str(e):
+                    incompatible.append(f"{package} (version incompatible)")
+                else:
+                    raise
 
-        if missing:
+        if missing or incompatible:
+            issues = missing + incompatible
+            fix_cmd = "pip install 'jsonschema>=4.0,<4.18' 'referencing<0.30'" if incompatible else f"pip install {' '.join(missing)}"
             self.add_result(DiagnosticResult(
                 name="Required Packages",
                 status="error",
-                message=f"Missing: {', '.join(missing)}",
+                message=f"Issues: {', '.join(issues)}",
                 fix_available=True,
-                fix_command=f"pip install {' '.join(missing)}",
-                fix_description="Install missing packages"
+                fix_command=fix_cmd,
+                fix_description="Install/fix packages"
             ))
         else:
             self.add_result(DiagnosticResult(
@@ -192,23 +202,85 @@ class Doctor:
             try:
                 __import__(module)
                 installed.append(package)
-            except ImportError:
-                missing.append(f"{package} ({purpose})")
+            except ImportError as e:
+                # Check if it's a numpy version conflict
+                err_msg = str(e).lower()
+                if 'numpy' in err_msg and ('multiarray' in err_msg or 'failed to import' in err_msg):
+                    missing.append(f"{package} (numpy version conflict)")
+                else:
+                    missing.append(f"{package} ({purpose})")
+            except AttributeError as e:
+                # numpy version mismatch causes _ARRAY_API not found
+                if '_ARRAY_API' in str(e):
+                    missing.append(f"{package} (numpy version conflict)")
+                else:
+                    raise
 
         if missing:
+            # Check if it's a numpy version conflict
+            has_numpy_conflict = any("numpy version conflict" in m for m in missing)
+            if has_numpy_conflict:
+                fix_cmd = "pip install 'numpy>=1.20,<2'"
+                fix_desc = "Downgrade numpy to fix version conflicts"
+            else:
+                fix_cmd = "pip install " + " ".join([m.split()[0] for m in missing])
+                fix_desc = "Install for full functionality"
             self.add_result(DiagnosticResult(
                 name="Optional Packages",
                 status="warning",
-                message=f"Not installed: {', '.join(missing)}",
+                message=f"Issues: {', '.join(missing)}",
                 fix_available=True,
-                fix_command="pip install " + " ".join([m.split()[0] for m in missing]),
-                fix_description="Install for full functionality"
+                fix_command=fix_cmd,
+                fix_description=fix_desc
             ))
         else:
             self.add_result(DiagnosticResult(
                 name="Optional Packages",
                 status="ok",
                 message=f"All optional packages installed ({len(installed)})"
+            ))
+
+    def check_numpy_matplotlib_compat(self):
+        """Check numpy/matplotlib version compatibility"""
+        try:
+            import numpy as np
+            np_version = tuple(int(x) for x in np.__version__.split('.')[:2])
+        except ImportError:
+            return  # numpy not installed, skip check
+
+        try:
+            import matplotlib
+            mpl_version = tuple(int(x) for x in matplotlib.__version__.split('.')[:2])
+        except ImportError:
+            return  # matplotlib not installed, skip check
+        except AttributeError as e:
+            if '_ARRAY_API' in str(e):
+                self.add_result(DiagnosticResult(
+                    name="numpy/matplotlib Compatibility",
+                    status="error",
+                    message=f"Version mismatch: numpy {np.__version__} incompatible with system matplotlib",
+                    fix_available=True,
+                    fix_command="pip install 'numpy>=1.20,<2'",
+                    fix_description="Downgrade numpy for matplotlib compatibility"
+                ))
+                return
+            raise
+
+        # numpy 2.x requires matplotlib 3.9+
+        if np_version[0] >= 2 and mpl_version < (3, 9):
+            self.add_result(DiagnosticResult(
+                name="numpy/matplotlib Compatibility",
+                status="error",
+                message=f"numpy {np.__version__} requires matplotlib 3.9+ (found {matplotlib.__version__})",
+                fix_available=True,
+                fix_command="pip install 'numpy>=1.20,<2'",
+                fix_description="Downgrade numpy or upgrade matplotlib (pip install matplotlib>=3.9)"
+            ))
+        else:
+            self.add_result(DiagnosticResult(
+                name="numpy/matplotlib Compatibility",
+                status="ok",
+                message=f"numpy {np.__version__} compatible with matplotlib {matplotlib.__version__}"
             ))
 
     def check_external_tools(self):

@@ -39,7 +39,7 @@ from typing import Dict, List, Optional, Any, Union
 try:
     import yaml
     HAS_YAML = True
-except ImportError:
+except (ImportError, AttributeError):  # AttributeError for numpy compatibility
     HAS_YAML = False
 
 # Try to import context module
@@ -50,7 +50,7 @@ try:
         ARTIFACTS_DIR, MANUSCRIPT_DIR
     )
     HAS_CONTEXT = True
-except ImportError:
+except (ImportError, AttributeError):  # AttributeError for numpy compatibility
     HAS_CONTEXT = False
     ARTIFACTS_DIR = Path.home() / ".ont-manuscript" / "artifacts"
     MANUSCRIPT_DIR = Path.home() / ".ont-manuscript"
@@ -422,7 +422,7 @@ def _generate_figure_inline(fig_id: str, exp_id: str, format: str,
         import matplotlib
         matplotlib.use('Agg')
         import matplotlib.pyplot as plt
-    except ImportError:
+    except (ImportError, AttributeError):  # AttributeError for numpy compatibility
         print("Error: matplotlib required for figure generation")
         return None
 

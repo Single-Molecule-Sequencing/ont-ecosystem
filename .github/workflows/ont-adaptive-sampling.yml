@@ -1,0 +1,448 @@
+name: ONT Adaptive Sampling Tasks
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Adaptive sampling task'
+        required: true
+        type: choice
+        options:
+          - overview
+          - readuntil-setup
+          - target-regions
+          - enrichment-stats
+          - depletion-strategies
+          - real-time-metrics
+          - bed-file-design
+          - troubleshooting
+      mode:
+        description: 'Sampling mode'
+        required: false
+        type: choice
+        default: 'enrich'
+        options:
+          - enrich
+          - deplete
+          - balance
+
+env:
+  PYTHONPATH: ${{ github.workspace }}/bin:${{ github.workspace }}
+
+jobs:
+  adaptive-sampling:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install numpy pandas matplotlib
+          mkdir -p outputs
+
+      - name: Adaptive Sampling Overview
+        if: inputs.task == 'overview'
+        run: |
+          echo "## Adaptive Sampling Overview" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### What is Adaptive Sampling?')
+          print('')
+          print('Real-time selective sequencing that accepts or rejects reads')
+          print('based on alignment to a reference during sequencing.')
+          print('')
+
+          print('### How It Works')
+          print('')
+          print('\`\`\`')
+          print('1. Read starts → Signal captured')
+          print('2. ~0.4s of signal → Basecall first ~400bp')
+          print('3. Align to reference → Decision made')
+          print('4. Accept (sequence) or Reject (reverse voltage)')
+          print('\`\`\`')
+          print('')
+
+          print('### Modes')
+          print('')
+          print('| Mode | Action | Use Case |')
+          print('|------|--------|----------|')
+          print('| Enrich | Keep on-target | Target panels, genes |')
+          print('| Deplete | Reject on-target | Remove host DNA |')
+          print('| Balance | Normalize coverage | Uniform WGS |')
+          print('')
+
+          print('### Requirements')
+          print('')
+          print('| Component | Requirement |')
+          print('|-----------|-------------|')
+          print('| MinKNOW | v22.05+ |')
+          print('| GPU | Required for real-time basecalling |')
+          print('| Reference | Pre-indexed (.mmi) |')
+          print('| Compute | Low latency critical |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: ReadUntil Setup
+        if: inputs.task == 'readuntil-setup'
+        run: |
+          echo "## ReadUntil/Adaptive Sampling Setup" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### MinKNOW Configuration')
+          print('')
+          print('\`\`\`toml')
+          print('# In sequencing run configuration')
+          print('[adaptive_sampling]')
+          print('enabled = true')
+          print('mode = \"enrich\"  # or \"deplete\"')
+          print('reference = \"/path/to/reference.mmi\"')
+          print('bed_file = \"/path/to/targets.bed\"')
+          print('\`\`\`')
+          print('')
+
+          print('### Reference Preparation')
+          print('')
+          print('\`\`\`bash')
+          print('# Index reference for adaptive sampling')
+          print('minimap2 -d reference.mmi reference.fa')
+          print('')
+          print('# For human genome, use split index')
+          print('minimap2 -x map-ont -d GRCh38.mmi GRCh38.fa')
+          print('\`\`\`')
+          print('')
+
+          print('### Dorado Adaptive Sampling')
+          print('')
+          print('\`\`\`bash')
+          print('# With Dorado (MinKNOW 23.04+)')
+          print('dorado basecaller sup pod5/ \\\\')
+          print('  --reference GRCh38.mmi \\\\')
+          print('  --bed-file targets.bed \\\\')
+          print('  --emit-fastq')
+          print('\`\`\`')
+          print('')
+
+          print('### GPU Requirements')
+          print('')
+          print('| Device | Min GPU | Recommended |')
+          print('|--------|---------|-------------|')
+          print('| MinION | GTX 1080 | RTX 3080 |')
+          print('| PromethION | A100 | Multiple A100 |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Target Regions
+        if: inputs.task == 'target-regions'
+        run: |
+          echo "## Target Region Design" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### BED File Format')
+          print('')
+          print('\`\`\`')
+          print('# chrom  start    end      name')
+          print('chr1    11869    14409    DDX11L1')
+          print('chr1    14404    29570    WASH7P')
+          print('chr22   42126499 42130799 CYP2D6')
+          print('\`\`\`')
+          print('')
+
+          print('### Target Size Recommendations')
+          print('')
+          print('| Panel Size | Enrichment | Recommended |')
+          print('|------------|------------|-------------|')
+          print('| < 100 kb | 5-20x | Small gene panels |')
+          print('| 100 kb - 1 Mb | 3-10x | Medium panels |')
+          print('| 1-10 Mb | 2-5x | Large panels |')
+          print('| > 10 Mb | 1.5-3x | Exome-scale |')
+          print('')
+
+          print('### Common Target Panels')
+          print('')
+          print('| Panel | Size | Genes | Use |')
+          print('|-------|------|-------|-----|')
+          print('| PGx | ~500 kb | 12 | Pharmacogenomics |')
+          print('| Cancer hotspots | ~200 kb | 50 | Oncology |')
+          print('| Inherited disease | ~2 Mb | 200 | Clinical |')
+          print('| Exome | ~35 Mb | 20,000 | Research |')
+          print('')
+
+          print('### Padding Recommendations')
+          print('')
+          print('\`\`\`bash')
+          print('# Add 2kb padding to targets')
+          print('bedtools slop -i targets.bed -g genome.txt -b 2000 > padded.bed')
+          print('')
+          print('# Merge overlapping regions')
+          print('bedtools merge -i padded.bed > merged.bed')
+          print('\`\`\`')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Enrichment Stats
+        if: inputs.task == 'enrichment-stats'
+        run: |
+          echo "## Enrichment Statistics" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import json
+          from pathlib import Path
+
+          print('### Calculating Enrichment')
+          print('')
+          print('\`\`\`python')
+          print('# Enrichment factor')
+          print('enrichment = (on_target_reads / total_reads) / (target_size / genome_size)')
+          print('')
+          print('# Example: 50% on-target, 1Mb targets, 3Gb genome')
+          print('enrichment = (0.50) / (1e6 / 3e9) = 1500x')
+          print('\`\`\`')
+          print('')
+
+          print('### Expected Performance')
+          print('')
+          print('| Target Size | Expected On-Target | Enrichment |')
+          print('|-------------|-------------------|------------|')
+          print('| 100 kb | 30-50% | 1000-5000x |')
+          print('| 1 Mb | 40-60% | 100-500x |')
+          print('| 10 Mb | 50-70% | 15-70x |')
+          print('| 100 Mb | 60-80% | 2-8x |')
+          print('')
+
+          print('### Metrics to Track')
+          print('')
+          print('| Metric | Description | Target |')
+          print('|--------|-------------|--------|')
+          print('| On-target % | Reads in target regions | >40% |')
+          print('| Enrichment factor | Fold enrichment | >10x |')
+          print('| Mean coverage | Coverage in targets | >30x |')
+          print('| Uniformity | CV of coverage | <0.5 |')
+          print('| Reject rate | Reads rejected | 50-90% |')
+          print('')
+
+          stats = {
+              'total_reads': 1000000,
+              'on_target_reads': 450000,
+              'off_target_reads': 550000,
+              'rejected_reads': 800000,
+              'target_size_bp': 1000000,
+              'genome_size_bp': 3000000000,
+              'mean_target_coverage': 45.2,
+              'enrichment_factor': 1350,
+          }
+
+          Path('outputs').mkdir(exist_ok=True)
+          Path('outputs/enrichment_stats.json').write_text(json.dumps(stats, indent=2))
+          print('Saved demo stats to outputs/enrichment_stats.json')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Depletion Strategies
+        if: inputs.task == 'depletion-strategies'
+        run: |
+          echo "## Host Depletion Strategies" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Use Cases for Depletion')
+          print('')
+          print('1. **Metagenomics**: Remove human DNA from clinical samples')
+          print('2. **Pathogen detection**: Enrich microbial reads')
+          print('3. **Circulating tumor DNA**: Deplete normal cell DNA')
+          print('4. **Environmental samples**: Remove dominant species')
+          print('')
+
+          print('### Human DNA Depletion')
+          print('')
+          print('\`\`\`bash')
+          print('# Create human depletion reference')
+          print('minimap2 -d GRCh38.mmi GRCh38.fa')
+          print('')
+          print('# Configure for depletion')
+          print('# In MinKNOW: mode = \"deplete\"')
+          print('# Reference = GRCh38.mmi')
+          print('# No BED file needed (deplete all human)')
+          print('\`\`\`')
+          print('')
+
+          print('### Performance Expectations')
+          print('')
+          print('| Sample Type | Human % Before | Human % After |')
+          print('|-------------|----------------|---------------|')
+          print('| Respiratory | 90-99% | 10-30% |')
+          print('| Stool | 50-80% | 5-20% |')
+          print('| Blood | 99%+ | 20-50% |')
+          print('| CSF | 95-99% | 10-40% |')
+          print('')
+
+          print('### Combined Strategies')
+          print('')
+          print('\`\`\`')
+          print('Sample prep    →  Adaptive sampling  →  Analysis')
+          print('(saponin/DNase)   (computational)      (metagenomics)')
+          print('\`\`\`')
+          print('')
+          print('Best results combine wet lab and computational depletion.')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Real-Time Metrics
+        if: inputs.task == 'real-time-metrics'
+        run: |
+          echo "## Real-Time Monitoring" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Key Real-Time Metrics')
+          print('')
+          print('| Metric | Good | Warning | Action |')
+          print('|--------|------|---------|--------|')
+          print('| Decision latency | <400ms | >500ms | Check GPU |')
+          print('| Reject rate | 50-90% | <30% | Check targets |')
+          print('| On-target % | >40% | <20% | Adjust BED |')
+          print('| Pore availability | >70% | <50% | Check flowcell |')
+          print('')
+
+          print('### MinKNOW Dashboard')
+          print('')
+          print('Monitor in real-time:')
+          print('- Adaptive sampling decision histogram')
+          print('- Read length distribution (accepted vs rejected)')
+          print('- Target region coverage accumulation')
+          print('- Rejection reason breakdown')
+          print('')
+
+          print('### API Monitoring')
+          print('')
+          print('\`\`\`python')
+          print('# Using MinKNOW API')
+          print('from minknow_api import Connection')
+          print('')
+          print('conn = Connection(\"localhost:9501\")')
+          print('device = conn.device')
+          print('')
+          print('# Get adaptive sampling stats')
+          print('stats = device.get_adaptive_sampling_stats()')
+          print('print(f\"Accepted: {stats.accepted}\")')
+          print('print(f\"Rejected: {stats.rejected}\")')
+          print('print(f\"No decision: {stats.no_decision}\")')
+          print('\`\`\`')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: BED File Design
+        if: inputs.task == 'bed-file-design'
+        run: |
+          echo "## BED File Design Guide" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          from pathlib import Path
+
+          print('### BED File Best Practices')
+          print('')
+          print('| Aspect | Recommendation |')
+          print('|--------|----------------|')
+          print('| Minimum region size | 1 kb |')
+          print('| Padding | 1-5 kb each side |')
+          print('| Maximum regions | <10,000 |')
+          print('| Merge overlapping | Yes |')
+          print('| Sort by chromosome | Yes |')
+          print('')
+
+          print('### Creating Target BED')
+          print('')
+          print('\`\`\`bash')
+          print('# From gene list')
+          print('grep -f genes.txt gencode.gtf | \\\\')
+          print('  awk \\'$3==\"gene\"{print $1,$4,$5,$14}\\' | \\\\')
+          print('  tr -d \\'\";\\'| \\\\')
+          print('  sort -k1,1 -k2,2n > targets.bed')
+          print('')
+          print('# Add padding and merge')
+          print('bedtools slop -i targets.bed -g genome.txt -b 2000 | \\\\')
+          print('  bedtools sort | \\\\')
+          print('  bedtools merge > final_targets.bed')
+          print('\`\`\`')
+          print('')
+
+          print('### Example: PGx Panel')
+          print('')
+          bed_content = '''chr1\t97543299\t97617412\tDPYD
+chr7\t117465784\t117715971\tCFTR
+chr10\t94761899\t94855547\tCYP2C19
+chr10\t94916388\t94989830\tCYP2C9
+chr10\t133433265\t133460095\tCYP2E1
+chr19\t38924339\t38943738\tCYP2A6
+chr22\t42126499\t42130881\tCYP2D6'''
+
+          print('\`\`\`')
+          print(bed_content)
+          print('\`\`\`')
+
+          Path('outputs').mkdir(exist_ok=True)
+          Path('outputs/pgx_targets.bed').write_text(bed_content)
+          print('')
+          print('Saved example to outputs/pgx_targets.bed')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Troubleshooting
+        if: inputs.task == 'troubleshooting'
+        run: |
+          echo "## Adaptive Sampling Troubleshooting" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Common Issues')
+          print('')
+          print('| Issue | Symptom | Solution |')
+          print('|-------|---------|----------|')
+          print('| No enrichment | On-target same as expected | Check BED coordinates |')
+          print('| High latency | Slow decisions | Upgrade GPU, reduce basecall model |')
+          print('| Low reject rate | <30% rejected | Verify reference index |')
+          print('| Pore death | Rapid pore loss | Reduce voltage, check chemistry |')
+          print('')
+
+          print('### GPU Troubleshooting')
+          print('')
+          print('\`\`\`bash')
+          print('# Check GPU status')
+          print('nvidia-smi')
+          print('')
+          print('# Check CUDA version')
+          print('nvcc --version')
+          print('')
+          print('# Monitor GPU during run')
+          print('watch -n 1 nvidia-smi')
+          print('\`\`\`')
+          print('')
+
+          print('### Reference Issues')
+          print('')
+          print('| Problem | Check |')
+          print('|---------|-------|')
+          print('| Wrong genome build | GRCh38 vs GRCh37 |')
+          print('| Chromosome naming | chr1 vs 1 |')
+          print('| Index corrupted | Rebuild .mmi |')
+          print('| BED coordinates | 0-based vs 1-based |')
+          print('')
+
+          print('### Performance Optimization')
+          print('')
+          print('1. Use HAC instead of SUP for real-time basecalling')
+          print('2. Pre-load reference into GPU memory')
+          print('3. Reduce number of target regions if possible')
+          print('4. Use SSD for temporary files')
+          print('5. Ensure adequate cooling for GPU')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: adaptive-sampling-output-${{ inputs.task }}
+          path: outputs/
+          if-no-files-found: ignore

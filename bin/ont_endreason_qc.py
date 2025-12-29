@@ -31,7 +31,7 @@ try:
     import numpy as np
     from scipy.ndimage import gaussian_filter1d
     HAS_SCIPY = True
-except ImportError:
+except (ImportError, AttributeError):  # AttributeError for numpy compatibility
     HAS_SCIPY = False
     import numpy as np
 
@@ -40,7 +40,7 @@ try:
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
     HAS_MATPLOTLIB = True
-except ImportError:
+except (ImportError, AttributeError):  # AttributeError for numpy compatibility
     HAS_MATPLOTLIB = False
 
 # ============================================================================

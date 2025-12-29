@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(/mnt/c/Users/farnu/Downloads/ont-ecosystem/**)",
+      "Read(/mnt/c/Users/farnu/**)",
+      "Bash(python:*)",
+      "Bash(python3:*)",
+      "Bash(pip:*)",
+      "Bash(pytest:*)",
+      "Bash(git:*)",
+      "Bash(make:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "WebSearch"
+    ]
+  },
+  "contextFiles": [
+    ".claude/skills.md",
+    "CLAUDE.md"
+  ]
+}
