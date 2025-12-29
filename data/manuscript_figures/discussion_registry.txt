@@ -1,0 +1,64 @@
+DISCUSSION
+
+Registry Value and Applications
+
+The ONT experiment registry presented here represents a systematic approach to managing and characterizing nanopore sequencing experiments within an institutional research environment. By achieving 100% metadata completeness across 165 experiments, the registry demonstrates that comprehensive provenance tracking is achievable through a combination of automated extraction, pattern-based inference, and systematic validation protocols.
+
+The predominance of plasmid sequencing applications (48.5%) reflects a common use case for long-read sequencing technology, where the ability to span entire constructs in single reads provides significant advantages over short-read approaches for assembly verification, insert characterization, and detection of structural rearrangements.
+
+Technology Adoption Patterns
+
+The registry captures a critical transition period in nanopore sequencing technology. The near-complete adoption of R10.4.1 chemistry (95.2%) and dorado basecaller (82.4%) reflects the rapid pace of technological improvement in the field. Notably, experiments from 2021-2022 predominantly utilized R10.4 chemistry and guppy basecaller, while 2023 onwards shows universal adoption of current-generation technology.
+
+The device-model relationship suggests rational resource allocation: computationally intensive super-accuracy models are preferentially deployed on PromethION experiments where the investment in accuracy is justified by sample value (human genomics, pharmacogenomics), while routine applications on MinION devices utilize high-accuracy models that balance quality with throughput.
+
+Quality Metric Insights
+
+The observed Q-score distribution (median 14.0, range 2.9-26.4) aligns with published performance metrics for R10.4.1 chemistry, which typically achieves Q15-Q20 under optimal conditions. The bimodal distribution likely reflects the mixture of basecalling models in the registry, with sup-model experiments contributing to the higher-quality tail.
+
+The N50 distribution provides insight into library preparation practices across the registry. The median N50 of 4,828 bp is consistent with standard ligation-based library preparations, while outliers exceeding 50,000 bp indicate successful implementation of ultra-long read protocols for whole-genome applications.
+
+Implications for Pharmacogenomics
+
+The emergence of pharmacogenomics as a distinct application category (n=13, 7.9%) represents an important expansion of nanopore sequencing into clinical applications. These experiments, characterized by clinical sample identifiers and exclusive use of the P2 Solo platform with sup-model basecalling, demonstrate the technology's readiness for precision medicine applications requiring accurate variant calling in pharmacologically relevant genes.
+
+Registry Design Considerations
+
+Metadata Schema
+The hierarchical extraction approach—prioritizing MinKNOW-generated metadata, followed by BAM headers, then pattern-based inference—proved effective for achieving high completeness while maintaining data quality. Critical fields (sample, chemistry, basecall model) achieved >97% population.
+
+Completeness Scoring
+The weighted scoring system (critical fields: 2 points; important fields: 1 point; QC metrics: 1 point) provided an intuitive framework for prioritizing enrichment efforts. The threshold of 8 points for "good" status ensured sufficient metadata for meaningful analysis.
+
+Provenance Tracking
+Event-sourced logging of all registry modifications enabled full audit trails, supporting reproducibility and enabling identification of enrichment patterns that could inform future automation.
+
+Limitations
+
+Institutional scope: The registry primarily reflects experiments from a single research institution, potentially limiting generalizability of application distributions and technology adoption patterns.
+
+Incomplete HPC access: Fifteen experiments (9.1%) lack QC metrics due to data residing on high-performance computing infrastructure not accessible during registry construction.
+
+Inference uncertainty: Pattern-based inference for missing metadata, while achieving high accuracy for well-characterized naming conventions, may introduce errors for experiments with non-standard nomenclature.
+
+Temporal bias: The exponential growth in experiment count during 2025 means that recent technology is overrepresented relative to historical platforms.
+
+Public data limitations: ONT Open Data experiments (12.7%) were characterized primarily through BAM header streaming, which may capture less comprehensive metadata than locally generated experiments.
+
+Future Directions
+
+Automated discovery: Integration with MinKNOW's reporting API could enable real-time experiment registration as sequencing runs complete.
+
+Quality prediction: Machine learning models trained on registry metadata could predict expected quality metrics for new experiments.
+
+Cross-institutional federation: Standardized metadata schemas could enable registry federation across institutions, supporting meta-analyses of technology performance.
+
+Clinical integration: For pharmacogenomics and other clinical applications, integration with laboratory information management systems (LIMS) could link sequencing metadata to patient outcomes.
+
+Automated QC pipelines: Coupling the registry with automated analysis pipelines would enable standardized QC metric computation for all experiments.
+
+Conclusions
+
+We present a comprehensive registry of 165 Oxford Nanopore sequencing experiments achieving 100% metadata completeness through systematic extraction, inference, and validation protocols. The registry captures technology transitions (R10.4 to R10.4.1, guppy to dorado), application diversification (research to plasmid to pharmacogenomics), and quality benchmarks (median Q14.0, N50 4,828 bp) that inform ongoing sequencing operations.
+
+The registry framework—combining YAML-based storage, event-sourced provenance, and Git versioning—provides a template for institutional management of long-read sequencing experiments. As nanopore technology continues to evolve and clinical applications expand, systematic metadata tracking becomes increasingly critical for quality assurance, protocol optimization, and regulatory compliance.
