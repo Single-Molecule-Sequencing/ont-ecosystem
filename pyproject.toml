@@ -62,6 +62,8 @@ ont-context = "bin.ont_context:main"
 ont-stats = "bin.ont_stats:main"
 ont-check = "bin.ont_check:main"
 ont-help = "bin.ont_help:main"
+ont-update = "bin.ont_update:main"
+ont-backup = "bin.ont_backup:main"
 end-reason = "bin.end_reason:main"
 dorado-basecall = "bin.dorado_basecall:main"
 

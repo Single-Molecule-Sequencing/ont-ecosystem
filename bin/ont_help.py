@@ -99,6 +99,22 @@ COMMANDS = {
                 "ont_check.py --json",
             ]
         },
+        "ont_update.py": {
+            "description": "Check for and apply updates",
+            "examples": [
+                "ont_update.py",
+                "ont_update.py --apply",
+                "ont_update.py --status",
+            ]
+        },
+        "ont_backup.py": {
+            "description": "Backup and restore registry data",
+            "examples": [
+                "ont_backup.py create",
+                "ont_backup.py list",
+                "ont_backup.py restore backup.tar.gz",
+            ]
+        },
         "ont_context.py": {
             "description": "Unified experiment context and equation execution",
             "examples": [

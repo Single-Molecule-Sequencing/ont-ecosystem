@@ -525,3 +525,98 @@ def test_lib_exports_timing():
     assert hasattr(lib, 'timed')
     assert callable(lib.Timer)
     assert callable(lib.timed)
+
+
+# =============================================================================
+# ont_update.py Tests
+# =============================================================================
+
+def test_update_imports():
+    """Test that ont_update.py can be imported"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_update",
+        bin_dir / "ont_update.py"
+    )
+    ont_update = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_update)
+
+    assert hasattr(ont_update, 'get_current_version')
+    assert hasattr(ont_update, 'get_source_repo')
+    assert hasattr(ont_update, 'check_for_updates')
+    assert hasattr(ont_update, 'get_git_status')
+
+
+def test_update_current_version():
+    """Test get_current_version returns version string"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_update",
+        bin_dir / "ont_update.py"
+    )
+    ont_update = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_update)
+
+    version = ont_update.get_current_version()
+    assert version is not None
+    assert isinstance(version, str)
+    assert "." in version  # Version should have dots
+
+
+# =============================================================================
+# ont_backup.py Tests
+# =============================================================================
+
+def test_backup_imports():
+    """Test that ont_backup.py can be imported"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_backup",
+        bin_dir / "ont_backup.py"
+    )
+    ont_backup = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_backup)
+
+    assert hasattr(ont_backup, 'get_backup_dirs')
+    assert hasattr(ont_backup, 'get_backup_metadata')
+    assert hasattr(ont_backup, 'create_backup')
+    assert hasattr(ont_backup, 'list_backups')
+    assert hasattr(ont_backup, 'format_size')
+
+
+def test_backup_format_size():
+    """Test format_size function"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_backup",
+        bin_dir / "ont_backup.py"
+    )
+    ont_backup = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_backup)
+
+    assert "B" in ont_backup.format_size(500)
+    assert "KB" in ont_backup.format_size(1500)
+    assert "MB" in ont_backup.format_size(1500000)
+    assert "GB" in ont_backup.format_size(1500000000)
+
+
+def test_backup_metadata():
+    """Test get_backup_metadata returns proper structure"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_backup",
+        bin_dir / "ont_backup.py"
+    )
+    ont_backup = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_backup)
+
+    metadata = ont_backup.get_backup_metadata()
+    assert 'version' in metadata
+    assert 'created_at' in metadata
+    assert 'hostname' in metadata
+    assert 'user' in metadata

@@ -153,7 +153,7 @@ _ont_help() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    commands="ont_experiments ont_pipeline ont_manuscript end_reason ont_align dorado_basecall ont_monitor ont_stats ont_check ont_context experiment_db calculate_resources make_sbatch_from_cmdtxt"
+    commands="ont_experiments ont_pipeline ont_manuscript end_reason ont_align dorado_basecall ont_monitor ont_stats ont_check ont_update ont_backup ont_context experiment_db calculate_resources make_sbatch_from_cmdtxt"
 
     case "${prev}" in
         ont_help.py|ont-help)
@@ -169,6 +169,56 @@ _ont_help() {
 }
 complete -F _ont_help ont_help.py
 complete -F _ont_help ont-help
+
+# ont_update.py completion
+_ont_update() {
+    local cur
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+
+    if [[ ${cur} == -* ]]; then
+        COMPREPLY=( $(compgen -W "--help --apply --status --json" -- ${cur}) )
+        return 0
+    fi
+}
+complete -F _ont_update ont_update.py
+complete -F _ont_update ont-update
+
+# ont_backup.py completion
+_ont_backup() {
+    local cur prev commands
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    commands="create list restore info"
+
+    case "${prev}" in
+        ont_backup.py|ont-backup)
+            COMPREPLY=( $(compgen -W "${commands}" -- ${cur}) )
+            return 0
+            ;;
+        create)
+            COMPREPLY=( $(compgen -W "--output --quiet" -- ${cur}) )
+            return 0
+            ;;
+        restore)
+            COMPREPLY=( $(compgen -f -X '!*.tar.gz' -- ${cur}) )
+            return 0
+            ;;
+        info)
+            COMPREPLY=( $(compgen -f -X '!*.tar.gz' -- ${cur}) )
+            return 0
+            ;;
+    esac
+
+    if [[ ${cur} == -* ]]; then
+        COMPREPLY=( $(compgen -W "--help" -- ${cur}) )
+        return 0
+    fi
+}
+complete -F _ont_backup ont_backup.py
+complete -F _ont_backup ont-backup
 
 # make completion for ont-ecosystem targets
 _ont_make() {
