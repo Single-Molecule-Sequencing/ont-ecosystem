@@ -1,0 +1,96 @@
+\section{Methods}
+
+\subsection{Experiment Registry Construction}
+
+\subsubsection{Data Sources}
+The ONT experiment registry was constructed from two primary data sources: (1) local sequencing experiments performed on institutional computing infrastructure, and (2) publicly available datasets from the Oxford Nanopore Technologies Open Data repository (ont-open-data S3 bucket). Local experiments were discovered through systematic traversal of designated sequencing data directories on high-performance computing (HPC) clusters and local storage systems. Public datasets were identified and catalogued through programmatic queries to the ONT Open Data registry.
+
+\subsubsection{Metadata Extraction}
+Experiment metadata was extracted from multiple source files using a hierarchical approach:
+
+\begin{enumerate}
+    \item \textbf{Primary sources:} MinKNOW-generated \texttt{final\_summary.txt} files containing run parameters including flow cell ID, protocol configuration, sample identification, and sequencing timestamps.
+    
+    \item \textbf{Secondary sources:} BAM file headers parsed using \texttt{samtools view -H}, extracting read group (@RG) information including platform model, basecalling configuration, and run identifiers.
+    
+    \item \textbf{Tertiary inference:} Pattern-based extraction from file paths and experiment names using regular expressions to identify sample types, clinical identifiers, and experimental conditions when primary metadata was unavailable.
+\end{enumerate}
+
+\subsubsection{Metadata Schema}
+Each experiment record contains the following standardized fields:
+
+\begin{itemize}
+    \item \textbf{Identification:} Unique experiment ID (UUID-based), human-readable name, run ID
+    \item \textbf{Sample information:} Sample name, sample category (Plasmid, Human, Research, Pharmacogenomics, Microbial, CRISPR, Cancer, Lab Run, Multiplex), clinical sample ID where applicable
+    \item \textbf{Technical parameters:} Chemistry version (R10.4.1, R10.4), basecaller software (dorado, guppy), basecalling model (hac, sup, fast), device type (MinION Mk1D, MinION, PromethION, P2 Solo, Flongle), flow cell type and ID
+    \item \textbf{Quality metrics:} Mean Q-score, N50 read length, total reads, total bases
+    \item \textbf{Provenance:} Registration timestamp, last update, data source, validation status
+\end{itemize}
+
+\subsubsection{Quality Score Computation}
+Mean quality scores were computed using probability-space averaging to correctly handle the logarithmic Phred scale:
+
+\begin{equation}
+    \bar{Q} = -10 \log_{10}\left(\frac{1}{n}\sum_{i=1}^{n} 10^{-Q_i/10}\right)
+\end{equation}
+
+where $Q_i$ represents individual read quality scores. This approach prevents underestimation of error rates that would result from direct arithmetic averaging of Q-scores.
+
+\subsubsection{N50 Calculation}
+The N50 metric was calculated as the read length at which 50\% of the total sequenced bases are contained in reads of that length or longer. For each experiment:
+
+\begin{equation}
+    N50 = L_k \text{ where } \sum_{i=1}^{k} L_i \geq \frac{1}{2}\sum_{j=1}^{n} L_j
+\end{equation}
+
+with reads sorted by length in descending order ($L_1 \geq L_2 \geq ... \geq L_n$).
+
+\subsection{Registry Validation and Enrichment}
+
+\subsubsection{Completeness Assessment}
+Registry completeness was assessed using a weighted scoring system:
+
+\begin{itemize}
+    \item \textbf{Critical fields} (2 points each): sample, chemistry, basecall\_model
+    \item \textbf{Important fields} (1 point each): basecaller, flowcell\_type, device\_type, run\_date
+    \item \textbf{QC metrics} (1 point each): mean\_qscore, n50
+\end{itemize}
+
+Experiments were classified as: \textit{good} ($\geq$8 points), \textit{warning} (5--7 points), or \textit{poor} ($<$5 points).
+
+\subsubsection{Automated Enrichment}
+Missing metadata fields were inferred using the following rules:
+
+\begin{enumerate}
+    \item \textbf{Chemistry inference:} R10.4.1 assigned for experiments dated 2023 or later; R10.4 for 2022; R9.4.1 for earlier experiments.
+    
+    \item \textbf{Basecaller inference:} Dorado assigned for experiments dated September 2022 or later; guppy for earlier experiments, based on the official deprecation timeline.
+    
+    \item \textbf{Device inference:} Derived from flow cell type (FLO-PRO114M $\rightarrow$ PromethION; FLO-MIN114 $\rightarrow$ MinION; FLO-FLG114 $\rightarrow$ Flongle).
+    
+    \item \textbf{Sample category inference:} Pattern matching against 30+ regular expressions identifying sample types from experiment names (e.g., ``HG00[1-7]'' $\rightarrow$ Human/GIAB; ``pCYP'' $\rightarrow$ Plasmid).
+\end{enumerate}
+
+\subsubsection{Deep Scrutiny Protocol}
+A comprehensive validation pass was performed on all registry entries:
+
+\begin{enumerate}
+    \item \textbf{Local experiments (n=11):} Source files re-analyzed, BAM headers re-extracted, QC metrics recomputed from read data.
+    
+    \item \textbf{Public datasets (n=21):} BAM headers streamed from S3 URLs using range requests to minimize bandwidth while extracting metadata.
+    
+    \item \textbf{HPC experiments (n=134):} Metadata inferred from paths and naming conventions; flagged for future QC analysis when HPC access is available.
+\end{enumerate}
+
+\subsection{Data Storage and Versioning}
+
+The registry is maintained as a YAML-formatted file (\texttt{experiments.yaml}) with event-sourced provenance tracking. Each modification is logged with timestamps, enabling full audit trails. The registry is synchronized to a Git repository for version control, with automated validation on each commit.
+
+\subsection{Software and Dependencies}
+
+Registry construction and analysis utilized Python 3.9+ with the following key libraries: PyYAML for registry serialization, pysam for BAM file parsing, matplotlib for visualization, and NumPy for statistical computations. Basecalling information was extracted from dorado (v7.x) and guppy (v6.x) output files.
+
+\subsection{Data Availability}
+
+The complete experiment registry is available at \url{https://github.com/Single-Molecule-Sequencing/ont-ecosystem} in the \texttt{data/} directory. Registry statistics and manuscript figures are provided in \texttt{data/manuscript\_figures/}.
+
