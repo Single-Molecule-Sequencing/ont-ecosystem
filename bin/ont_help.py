@@ -133,6 +133,15 @@ COMMANDS = {
                 "ont_report.py --output report.md",
             ]
         },
+        "ont_hooks.py": {
+            "description": "Manage git hooks for development",
+            "examples": [
+                "ont_hooks.py install",
+                "ont_hooks.py status",
+                "ont_hooks.py list",
+                "ont_hooks.py run pre-commit",
+            ]
+        },
         "ont_context.py": {
             "description": "Unified experiment context and equation execution",
             "examples": [

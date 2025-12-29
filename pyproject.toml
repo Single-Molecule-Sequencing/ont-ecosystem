@@ -66,6 +66,7 @@ ont-update = "bin.ont_update:main"
 ont-backup = "bin.ont_backup:main"
 ont-doctor = "bin.ont_doctor:main"
 ont-report = "bin.ont_report:main"
+ont-hooks = "bin.ont_hooks:main"
 end-reason = "bin.end_reason:main"
 dorado-basecall = "bin.dorado_basecall:main"
 

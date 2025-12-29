@@ -153,7 +153,7 @@ _ont_help() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    commands="ont_experiments ont_pipeline ont_manuscript end_reason ont_align dorado_basecall ont_monitor ont_stats ont_check ont_update ont_backup ont_doctor ont_report ont_context experiment_db calculate_resources make_sbatch_from_cmdtxt"
+    commands="ont_experiments ont_pipeline ont_manuscript end_reason ont_align dorado_basecall ont_monitor ont_stats ont_check ont_update ont_backup ont_doctor ont_report ont_hooks ont_context experiment_db calculate_resources make_sbatch_from_cmdtxt"
 
     case "${prev}" in
         ont_help.py|ont-help)
@@ -255,6 +255,35 @@ _ont_report() {
 }
 complete -F _ont_report ont_report.py
 complete -F _ont_report ont-report
+
+# ont_hooks.py completion
+_ont_hooks() {
+    local cur prev commands hooks
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    commands="install uninstall list status run"
+    hooks="pre-commit pre-push commit-msg post-checkout post-merge"
+
+    case "${prev}" in
+        ont_hooks.py|ont-hooks)
+            COMPREPLY=( $(compgen -W "${commands}" -- ${cur}) )
+            return 0
+            ;;
+        install|uninstall|run)
+            COMPREPLY=( $(compgen -W "${hooks}" -- ${cur}) )
+            return 0
+            ;;
+    esac
+
+    if [[ ${cur} == -* ]]; then
+        COMPREPLY=( $(compgen -W "--help --force" -- ${cur}) )
+        return 0
+    fi
+}
+complete -F _ont_hooks ont_hooks.py
+complete -F _ont_hooks ont-hooks
 
 # make completion for ont-ecosystem targets
 _ont_make() {

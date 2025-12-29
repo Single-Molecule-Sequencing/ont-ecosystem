@@ -870,3 +870,86 @@ def test_report_format_markdown():
     assert "# ONT Ecosystem Project Report" in md
     assert "## " in md  # Has section headers
     assert "|" in md  # Has tables
+
+
+# =============================================================================
+# ont_hooks.py Tests
+# =============================================================================
+
+def test_hooks_imports():
+    """Test that ont_hooks.py can be imported"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_hooks",
+        bin_dir / "ont_hooks.py"
+    )
+    ont_hooks = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_hooks)
+
+    assert hasattr(ont_hooks, 'HOOKS')
+    assert hasattr(ont_hooks, 'get_git_hooks_dir')
+    assert hasattr(ont_hooks, 'get_installed_hooks')
+    assert hasattr(ont_hooks, 'install_hook')
+    assert hasattr(ont_hooks, 'uninstall_hook')
+
+
+def test_hooks_registry():
+    """Test HOOKS registry structure"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_hooks",
+        bin_dir / "ont_hooks.py"
+    )
+    ont_hooks = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_hooks)
+
+    # Should have standard git hooks
+    assert "pre-commit" in ont_hooks.HOOKS
+    assert "pre-push" in ont_hooks.HOOKS
+    assert "commit-msg" in ont_hooks.HOOKS
+
+    # Each hook should have required fields
+    for hook_name, hook_info in ont_hooks.HOOKS.items():
+        assert "description" in hook_info
+        assert "checks" in hook_info
+        assert "script" in hook_info
+        assert isinstance(hook_info["checks"], list)
+
+
+def test_hooks_get_git_hooks_dir():
+    """Test get_git_hooks_dir function"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_hooks",
+        bin_dir / "ont_hooks.py"
+    )
+    ont_hooks = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_hooks)
+
+    hooks_dir = ont_hooks.get_git_hooks_dir()
+    # Should return a path (we're in a git repo)
+    assert hooks_dir is not None
+    assert "hooks" in str(hooks_dir)
+
+
+def test_hooks_get_installed_hooks():
+    """Test get_installed_hooks function"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_hooks",
+        bin_dir / "ont_hooks.py"
+    )
+    ont_hooks = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_hooks)
+
+    installed = ont_hooks.get_installed_hooks()
+    # Should return a dict
+    assert isinstance(installed, dict)
+    # Should have entries for each hook
+    for hook_name in ont_hooks.HOOKS:
+        assert hook_name in installed
+        assert isinstance(installed[hook_name], bool)
