@@ -19,7 +19,14 @@ mkdir -p "${COMMANDS_DIR}"
 # List of skills to install
 SKILLS=(
     "comprehensive-analysis"
+    "dorado-bench-v2"
     "end-reason"
+    "experiment-db"
+    "manuscript"
+    "ont-align"
+    "ont-experiments-v2"
+    "ont-monitor"
+    "ont-pipeline"
 )
 
 # Install each skill
@@ -48,6 +55,9 @@ check_dep matplotlib
 check_dep scipy
 check_dep pod5
 check_dep pysam
+check_dep edlib
+check_dep yaml
+check_dep jinja2
 
 echo ""
 echo "=============================================="
@@ -60,6 +70,8 @@ for skill in "${SKILLS[@]}"; do
 done
 echo ""
 echo "To install missing dependencies:"
-echo "  pip install numpy pandas matplotlib scipy pod5 pysam"
+echo "  pip install numpy pandas matplotlib scipy pod5 pysam edlib pyyaml jinja2"
 echo ""
 echo "Skills installed to: ${COMMANDS_DIR}/"
+echo ""
+echo "Usage: Type /<skill-name> in Claude to invoke a skill"
