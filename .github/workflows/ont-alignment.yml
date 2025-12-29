@@ -1,0 +1,477 @@
+name: ONT Alignment Tasks
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Alignment task to run'
+        required: true
+        type: choice
+        options:
+          - list-references
+          - compare-aligners
+          - show-presets
+          - benchmark-speed
+          - validate-bam-tags
+          - coverage-analysis
+          - edit-distance-demo
+          - alignment-stats-demo
+      reference:
+        description: 'Reference genome'
+        required: false
+        type: choice
+        default: 'GRCh38'
+        options:
+          - GRCh38
+          - T2T-CHM13
+          - GRCh37
+          - custom
+      preset:
+        description: 'Alignment preset'
+        required: false
+        type: choice
+        default: 'map-ont'
+        options:
+          - map-ont
+          - lr:hq
+          - splice
+          - asm5
+          - asm20
+
+env:
+  PYTHONPATH: ${{ github.workspace }}/bin:${{ github.workspace }}
+
+jobs:
+  alignment:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml numpy pandas matplotlib
+          pip install edlib || true
+          mkdir -p outputs
+
+      - name: List Reference Genomes
+        if: inputs.task == 'list-references'
+        run: |
+          echo "## Available Reference Genomes" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          references = {
+              'Human': [
+                  {'name': 'GRCh38', 'alias': 'hg38', 'size': '3.1 Gb', 'contigs': 195, 'recommended': True},
+                  {'name': 'T2T-CHM13', 'alias': 'hs1', 'size': '3.1 Gb', 'contigs': 24, 'recommended': True},
+                  {'name': 'GRCh37', 'alias': 'hg19', 'size': '3.1 Gb', 'contigs': 93, 'recommended': False},
+              ],
+              'Model Organisms': [
+                  {'name': 'GRCm39', 'alias': 'mm39', 'size': '2.7 Gb', 'contigs': 61},
+                  {'name': 'TAIR10', 'alias': 'arabidopsis', 'size': '120 Mb', 'contigs': 7},
+                  {'name': 'WBcel235', 'alias': 'c_elegans', 'size': '100 Mb', 'contigs': 7},
+              ],
+              'Microbial': [
+                  {'name': 'ASM584v2', 'alias': 'ecoli_k12', 'size': '4.6 Mb', 'contigs': 1},
+                  {'name': 'Lambda', 'alias': 'phage_lambda', 'size': '48 kb', 'contigs': 1},
+              ],
+          }
+
+          for category, refs in references.items():
+              print(f'### {category}')
+              print('')
+              print('| Name | Alias | Size | Contigs | Notes |')
+              print('|------|-------|------|---------|-------|')
+
+              for ref in refs:
+                  rec = '⭐ Recommended' if ref.get('recommended') else ''
+                  print(f'| {ref[\"name\"]} | {ref[\"alias\"]} | {ref[\"size\"]} | {ref[\"contigs\"]} | {rec} |')
+
+              print('')
+
+          print('### Download Sources')
+          print('')
+          print('- **NCBI**: https://www.ncbi.nlm.nih.gov/datasets/genome/')
+          print('- **Ensembl**: https://www.ensembl.org/info/data/ftp/')
+          print('- **T2T**: https://github.com/marbl/CHM13')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Compare Aligners
+        if: inputs.task == 'compare-aligners'
+        run: |
+          echo "## Aligner Comparison" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          aligners = {
+              'minimap2': {
+                  'type': 'Long-read',
+                  'speed': 'Very fast',
+                  'accuracy': 'High',
+                  'memory': 'Low-Medium',
+                  'use_case': 'Default for ONT',
+              },
+              'dorado aligner': {
+                  'type': 'Long-read',
+                  'speed': 'Fast',
+                  'accuracy': 'High',
+                  'memory': 'Medium',
+                  'use_case': 'Integrated basecall+align',
+              },
+              'winnowmap2': {
+                  'type': 'Long-read',
+                  'speed': 'Medium',
+                  'accuracy': 'Very High',
+                  'memory': 'High',
+                  'use_case': 'Repetitive regions',
+              },
+              'LRA': {
+                  'type': 'Long-read',
+                  'speed': 'Medium',
+                  'accuracy': 'High',
+                  'memory': 'Medium',
+                  'use_case': 'SV detection',
+              },
+          }
+
+          print('### Aligner Comparison')
+          print('')
+          print('| Aligner | Speed | Accuracy | Memory | Best For |')
+          print('|---------|-------|----------|--------|----------|')
+
+          for name, specs in aligners.items():
+              print(f'| {name} | {specs[\"speed\"]} | {specs[\"accuracy\"]} | {specs[\"memory\"]} | {specs[\"use_case\"]} |')
+
+          print('')
+          print('### Recommendations')
+          print('')
+          print('- **General alignment**: minimap2 with \`map-ont\` preset')
+          print('- **High accuracy**: minimap2 with \`lr:hq\` preset')
+          print('- **Splice-aware**: minimap2 with \`splice\` preset')
+          print('- **Integrated workflow**: dorado aligner (direct from pod5)')
+          print('- **Repetitive regions**: winnowmap2')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Show Presets
+        if: inputs.task == 'show-presets'
+        run: |
+          echo "## Minimap2 Presets for ONT" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          presets = {
+              'map-ont': {
+                  'k': 15, 'w': 10,
+                  'description': 'Standard ONT reads',
+                  'use_case': 'General purpose, default choice',
+              },
+              'lr:hq': {
+                  'k': 17, 'w': 10,
+                  'description': 'High-quality long reads (Q20+)',
+                  'use_case': 'SUP basecalled or duplex reads',
+              },
+              'splice': {
+                  'k': 15, 'w': 5,
+                  'description': 'Spliced alignment for cDNA/RNA',
+                  'use_case': 'Direct RNA or cDNA sequencing',
+              },
+              'asm5': {
+                  'k': 19, 'w': 19,
+                  'description': 'Assembly to reference (<5% divergence)',
+                  'use_case': 'Same species comparison',
+              },
+              'asm20': {
+                  'k': 19, 'w': 10,
+                  'description': 'Assembly to reference (<20% divergence)',
+                  'use_case': 'Cross-species comparison',
+              },
+          }
+
+          print('### Available Presets')
+          print('')
+          print('| Preset | k-mer | Window | Description | Use Case |')
+          print('|--------|-------|--------|-------------|----------|')
+
+          for name, specs in presets.items():
+              print(f'| \`{name}\` | {specs[\"k\"]} | {specs[\"w\"]} | {specs[\"description\"]} | {specs[\"use_case\"]} |')
+
+          print('')
+          print('### Command Examples')
+          print('')
+          print('\`\`\`bash')
+          print('# Standard ONT alignment')
+          print('minimap2 -ax map-ont ref.fa reads.fastq > aligned.sam')
+          print('')
+          print('# High-quality reads')
+          print('minimap2 -ax lr:hq ref.fa hq_reads.fastq > aligned.sam')
+          print('')
+          print('# RNA-seq')
+          print('minimap2 -ax splice ref.fa rna_reads.fastq > aligned.sam')
+          print('\`\`\`')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Benchmark Speed
+        if: inputs.task == 'benchmark-speed'
+        run: |
+          echo "## Alignment Speed Benchmarks" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Minimap2 Performance (Human Genome)')
+          print('')
+          print('| Data Size | Threads | Time | Throughput |')
+          print('|-----------|---------|------|------------|')
+          print('| 1 Gb | 8 | ~2 min | 500 Mb/min |')
+          print('| 10 Gb | 8 | ~20 min | 500 Mb/min |')
+          print('| 10 Gb | 32 | ~6 min | 1.7 Gb/min |')
+          print('| 50 Gb | 32 | ~30 min | 1.7 Gb/min |')
+          print('')
+
+          print('### Memory Usage')
+          print('')
+          print('| Reference | Index Size | RAM Required |')
+          print('|-----------|------------|--------------|')
+          print('| E. coli | 10 MB | 1 GB |')
+          print('| Human (GRCh38) | 6 GB | 12 GB |')
+          print('| Human (T2T) | 6 GB | 12 GB |')
+          print('| Pan-genome | 20+ GB | 40+ GB |')
+          print('')
+
+          print('### Optimization Tips')
+          print('')
+          print('1. Pre-build index: \`minimap2 -d ref.mmi ref.fa\`')
+          print('2. Use appropriate thread count (usually cores/2)')
+          print('3. For large datasets, split and parallelize')
+          print('4. Use SSD for reference and temp files')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Validate BAM Tags
+        if: inputs.task == 'validate-bam-tags'
+        run: |
+          echo "## ONT BAM Tag Reference" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          tags = {
+              'Core Tags': [
+                  ('RG', 'Read group', 'Standard'),
+                  ('NM', 'Edit distance', 'Standard'),
+                  ('MD', 'Mismatching positions', 'Standard'),
+                  ('AS', 'Alignment score', 'Standard'),
+              ],
+              'ONT-Specific Tags': [
+                  ('qs', 'Mean Q-score', 'Dorado'),
+                  ('ns', 'Number of samples', 'Dorado'),
+                  ('ts', 'Trimmed samples start', 'Dorado'),
+                  ('mx', 'Mux scan info', 'Dorado'),
+                  ('ch', 'Channel number', 'Dorado'),
+                  ('st', 'Start time', 'Dorado'),
+                  ('du', 'Duration', 'Dorado'),
+                  ('fn', 'Filename', 'Dorado'),
+                  ('sm', 'Scaling midpoint', 'Dorado'),
+                  ('sd', 'Scaling dispersion', 'Dorado'),
+                  ('sv', 'Signal vector', 'Dorado'),
+              ],
+              'Modification Tags': [
+                  ('MM', 'Base modifications', 'SAM spec'),
+                  ('ML', 'Modification probabilities', 'SAM spec'),
+                  ('MN', 'Sequence length for MM/ML', 'SAM spec'),
+              ],
+              'End Reason Tags': [
+                  ('er', 'End reason', 'Custom'),
+                  ('pt', 'Parent read ID (split)', 'Dorado'),
+                  ('pi', 'Parent read index', 'Dorado'),
+              ],
+          }
+
+          for category, tag_list in tags.items():
+              print(f'### {category}')
+              print('')
+              print('| Tag | Description | Source |')
+              print('|-----|-------------|--------|')
+
+              for tag, desc, source in tag_list:
+                  print(f'| \`{tag}\` | {desc} | {source} |')
+
+              print('')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Coverage Analysis Demo
+        if: inputs.task == 'coverage-analysis'
+        run: |
+          echo "## Coverage Analysis Demo" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import numpy as np
+          np.random.seed(42)
+
+          # Simulate coverage data
+          genome_size = 3_000_000_000  # 3 Gb
+          read_count = 5_000_000
+          mean_length = 5000
+          total_bases = read_count * mean_length
+
+          mean_coverage = total_bases / genome_size
+
+          print('### Coverage Calculation')
+          print('')
+          print(f'- **Genome Size**: {genome_size/1e9:.1f} Gb')
+          print(f'- **Total Reads**: {read_count:,}')
+          print(f'- **Mean Read Length**: {mean_length:,} bp')
+          print(f'- **Total Bases**: {total_bases/1e9:.1f} Gb')
+          print(f'- **Mean Coverage**: {mean_coverage:.1f}x')
+          print('')
+
+          print('### Coverage Requirements by Application')
+          print('')
+          print('| Application | Min Coverage | Recommended |')
+          print('|-------------|--------------|-------------|')
+          print('| SNV calling | 15x | 30x |')
+          print('| SV calling | 10x | 20x |')
+          print('| Assembly | 30x | 50x |')
+          print('| Methylation | 20x | 40x |')
+          print('| Pharmacogenomics | 30x | 50x |')
+          print('')
+
+          # Poisson distribution of coverage
+          print('### Coverage Distribution (Poisson)')
+          print('')
+          print('At mean 30x coverage:')
+          print('- P(coverage >= 20x): 97%')
+          print('- P(coverage >= 25x): 86%')
+          print('- P(coverage >= 30x): 53%')
+          print('- P(coverage >= 40x): 7%')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Edit Distance Demo
+        if: inputs.task == 'edit-distance-demo'
+        run: |
+          echo "## Edit Distance Computation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          try:
+              import edlib
+
+              print('### Levenshtein Edit Distance')
+              print('')
+              print('Using edlib for fast edit distance computation.')
+              print('')
+
+              # Example sequences
+              examples = [
+                  ('ACGTACGTACGT', 'ACGTACGTACGT', 'Identical'),
+                  ('ACGTACGTACGT', 'ACGTTCGTACGT', 'Substitution'),
+                  ('ACGTACGTACGT', 'ACGTACGTACGTA', 'Insertion'),
+                  ('ACGTACGTACGT', 'ACGTACGACGT', 'Deletion'),
+                  ('GATTACA', 'GCATGCU', 'Multiple'),
+              ]
+
+              print('### Examples')
+              print('')
+              print('| Seq1 | Seq2 | Type | Distance | CIGAR |')
+              print('|------|------|------|----------|-------|')
+
+              for s1, s2, desc in examples:
+                  result = edlib.align(s1, s2, task='path')
+                  dist = result['editDistance']
+                  cigar = result.get('cigar', 'N/A')
+                  print(f'| \`{s1[:10]}...\` | \`{s2[:10]}...\` | {desc} | {dist} | \`{cigar}\` |')
+
+              print('')
+              print('### Alignment Modes')
+              print('')
+              print('| Mode | Description |')
+              print('|------|-------------|')
+              print('| NW (global) | Align full sequences |')
+              print('| HW (semi-global) | Query fully aligned |')
+              print('| SHW (infix) | Find query in target |')
+
+          except ImportError:
+              print('edlib not installed - showing example output')
+              print('')
+              print('Install with: \`pip install edlib\`')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Alignment Stats Demo
+        if: inputs.task == 'alignment-stats-demo'
+        run: |
+          echo "## Alignment Statistics Demo" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import numpy as np
+          import json
+          from pathlib import Path
+
+          np.random.seed(42)
+
+          # Generate demo stats
+          stats = {
+              'total_reads': 5_000_000,
+              'mapped_reads': 4_850_000,
+              'unmapped_reads': 150_000,
+              'primary_alignments': 4_850_000,
+              'secondary_alignments': 120_000,
+              'supplementary_alignments': 250_000,
+              'mapping_quality': {
+                  'mean': 45.2,
+                  'median': 60,
+                  'mapq_0': 50_000,
+                  'mapq_60': 4_500_000,
+              },
+              'alignment_stats': {
+                  'mean_aligned_length': 4500,
+                  'mean_identity': 98.5,
+                  'mean_coverage': 32.5,
+              },
+          }
+
+          print('### Mapping Summary')
+          print('')
+          print('| Metric | Value | Percentage |')
+          print('|--------|-------|------------|')
+          print(f'| Total reads | {stats[\"total_reads\"]:,} | 100% |')
+          print(f'| Mapped | {stats[\"mapped_reads\"]:,} | {stats[\"mapped_reads\"]/stats[\"total_reads\"]*100:.1f}% |')
+          print(f'| Unmapped | {stats[\"unmapped_reads\"]:,} | {stats[\"unmapped_reads\"]/stats[\"total_reads\"]*100:.1f}% |')
+          print('')
+
+          print('### Alignment Types')
+          print('')
+          print('| Type | Count |')
+          print('|------|-------|')
+          print(f'| Primary | {stats[\"primary_alignments\"]:,} |')
+          print(f'| Secondary | {stats[\"secondary_alignments\"]:,} |')
+          print(f'| Supplementary | {stats[\"supplementary_alignments\"]:,} |')
+          print('')
+
+          print('### Quality Metrics')
+          print('')
+          print(f'- **Mean MAPQ**: {stats[\"mapping_quality\"][\"mean\"]:.1f}')
+          print(f'- **Mean Identity**: {stats[\"alignment_stats\"][\"mean_identity\"]:.1f}%')
+          print(f'- **Mean Coverage**: {stats[\"alignment_stats\"][\"mean_coverage\"]:.1f}x')
+          print('')
+
+          # Save JSON
+          Path('outputs').mkdir(exist_ok=True)
+          Path('outputs/alignment_stats.json').write_text(json.dumps(stats, indent=2))
+          print('Saved: outputs/alignment_stats.json')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: alignment-output-${{ inputs.task }}
+          path: outputs/
+          if-no-files-found: ignore
