@@ -1,0 +1,562 @@
+name: ONT File Formats Tasks
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'File format task'
+        required: true
+        type: choice
+        options:
+          - overview
+          - pod5-reference
+          - bam-tags
+          - fastq-format
+          - bedmethyl-spec
+          - vcf-fields
+          - conversion-tools
+          - compression
+      format:
+        description: 'Focus format'
+        required: false
+        type: choice
+        default: 'all'
+        options:
+          - all
+          - pod5
+          - bam
+          - fastq
+          - vcf
+
+env:
+  PYTHONPATH: ${{ github.workspace }}/bin:${{ github.workspace }}
+
+jobs:
+  file-formats:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install numpy pandas
+          mkdir -p outputs
+
+      - name: Formats Overview
+        if: inputs.task == 'overview'
+        run: |
+          echo "## ONT File Formats Overview" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### File Format Pipeline')
+          print('')
+          print('\`\`\`')
+          print('POD5 (raw signal)')
+          print('    ↓ basecalling')
+          print('BAM (unaligned, with mods)')
+          print('    ↓ alignment')
+          print('BAM (aligned)')
+          print('    ↓ analysis')
+          print('VCF / bedMethyl / etc.')
+          print('\`\`\`')
+          print('')
+
+          print('### Primary Formats')
+          print('')
+          print('| Format | Extension | Content | Stage |')
+          print('|--------|-----------|---------|-------|')
+          print('| POD5 | .pod5 | Raw signal | Sequencing |')
+          print('| FAST5 | .fast5 | Raw signal (legacy) | Sequencing |')
+          print('| BAM | .bam | Sequences + mods | Basecalling |')
+          print('| FASTQ | .fastq | Sequences only | Basecalling |')
+          print('| CRAM | .cram | Compressed BAM | Storage |')
+          print('')
+
+          print('### Analysis Outputs')
+          print('')
+          print('| Format | Extension | Content |')
+          print('|--------|-----------|---------|')
+          print('| VCF | .vcf | Variants |')
+          print('| bedMethyl | .bed | Methylation |')
+          print('| GFF/GTF | .gff/.gtf | Annotations |')
+          print('| BED | .bed | Regions |')
+          print('| FASTA | .fa | Sequences |')
+          print('')
+
+          print('### Size Estimates')
+          print('')
+          print('| Format | Per 10 Gb Reads |')
+          print('|--------|-----------------|')
+          print('| POD5 | 15-20 GB |')
+          print('| BAM (unaligned) | 8-12 GB |')
+          print('| BAM (aligned) | 12-18 GB |')
+          print('| FASTQ.gz | 3-5 GB |')
+          print('| CRAM | 5-8 GB |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: POD5 Reference
+        if: inputs.task == 'pod5-reference'
+        run: |
+          echo "## POD5 Format Reference" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### What is POD5?')
+          print('')
+          print('Arrow/Apache-based format for raw nanopore signal data.')
+          print('Replaces FAST5 (HDF5-based) for better performance.')
+          print('')
+
+          print('### POD5 Structure')
+          print('')
+          print('| Component | Content |')
+          print('|-----------|---------|')
+          print('| Run info | Flow cell, kit, protocol |')
+          print('| Read table | Read IDs, metadata |')
+          print('| Signal | Raw electrical signal |')
+          print('| Pore data | Channel, well, pore type |')
+          print('')
+
+          print('### POD5 Tools')
+          print('')
+          print('\`\`\`bash')
+          print('# Install')
+          print('pip install pod5')
+          print('')
+          print('# View contents')
+          print('pod5 view file.pod5 | head')
+          print('')
+          print('# Get summary')
+          print('pod5 inspect summary file.pod5')
+          print('')
+          print('# Convert from FAST5')
+          print('pod5 convert fast5 input.fast5 -o output.pod5')
+          print('')
+          print('# Merge files')
+          print('pod5 merge input1.pod5 input2.pod5 -o merged.pod5')
+          print('')
+          print('# Filter by read IDs')
+          print('pod5 filter file.pod5 --ids read_ids.txt -o filtered.pod5')
+          print('')
+          print('# Subset (first N reads)')
+          print('pod5 subset file.pod5 --limit 1000 -o subset.pod5')
+          print('\`\`\`')
+          print('')
+
+          print('### Python API')
+          print('')
+          print('\`\`\`python')
+          print('import pod5')
+          print('')
+          print('with pod5.Reader(\"file.pod5\") as reader:')
+          print('    for read in reader.reads():')
+          print('        print(read.read_id)')
+          print('        print(read.signal)')  # Raw signal array')
+          print('        print(read.pore)')
+          print('        print(read.end_reason)')
+          print('\`\`\`')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: BAM Tags
+        if: inputs.task == 'bam-tags'
+        run: |
+          echo "## ONT BAM Tags Reference" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Standard SAM Tags')
+          print('')
+          print('| Tag | Type | Description |')
+          print('|-----|------|-------------|')
+          print('| RG | Z | Read group |')
+          print('| NM | i | Edit distance |')
+          print('| MD | Z | Mismatching positions |')
+          print('| AS | i | Alignment score |')
+          print('| XS | i | Suboptimal alignment score |')
+          print('')
+
+          print('### ONT-Specific Tags')
+          print('')
+          print('| Tag | Type | Description |')
+          print('|-----|------|-------------|')
+          print('| qs | i | Mean Q-score |')
+          print('| ns | i | Number of samples |')
+          print('| ts | i | Trimmed samples |')
+          print('| mx | i | Mux ID |')
+          print('| ch | i | Channel |')
+          print('| rn | i | Read number |')
+          print('| st | Z | Start time |')
+          print('| du | f | Duration |')
+          print('| sm | f | Scaling median |')
+          print('| sd | f | Scaling MAD |')
+          print('')
+
+          print('### Modification Tags (SAM spec)')
+          print('')
+          print('| Tag | Type | Description |')
+          print('|-----|------|-------------|')
+          print('| MM | Z | Base modification type |')
+          print('| ML | B:C | Modification likelihood |')
+          print('| MN | i | Number of modifications |')
+          print('')
+
+          print('### MM Tag Format')
+          print('')
+          print('\`\`\`')
+          print('MM:Z:C+m,0,1,0;  # 5mC modifications')
+          print('     ^  ^')
+          print('     |  +----- positions (0-indexed from C)')
+          print('     +-------- modification type')
+          print('\`\`\`')
+          print('')
+
+          print('### Extracting Tags')
+          print('')
+          print('\`\`\`bash')
+          print('# Get all tags for a read')
+          print('samtools view file.bam | head -1 | tr \"\\\\t\" \"\\\\n\" | tail -n +12')
+          print('')
+          print('# Extract specific tag')
+          print('samtools view file.bam | awk \\'{for(i=12;i<=NF;i++) if($i~/^qs:/) print $i}\\'')
+          print('\`\`\`')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: FASTQ Format
+        if: inputs.task == 'fastq-format'
+        run: |
+          echo "## FASTQ Format Reference" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Standard FASTQ')
+          print('')
+          print('\`\`\`')
+          print('@read_id runid=xxx sampleid=xxx ... ')
+          print('ACGTACGTACGT...')
+          print('+')
+          print('IIIIIIIIIII...')
+          print('\`\`\`')
+          print('')
+
+          print('### ONT FASTQ Header Fields')
+          print('')
+          print('| Field | Description | Example |')
+          print('|-------|-------------|---------|')
+          print('| read | Read ID | read=abc123 |')
+          print('| runid | Run identifier | runid=xyz |')
+          print('| sampleid | Sample name | sampleid=HG002 |')
+          print('| ch | Channel number | ch=42 |')
+          print('| start_time | ISO timestamp | start_time=2024-01-01T... |')
+          print('| model_version_id | Basecall model | model_version_id=... |')
+          print('')
+
+          print('### Quality Encoding')
+          print('')
+          print('Phred+33 (standard):')
+          print('\`\`\`')
+          print('Q = -10 * log10(error_probability)')
+          print('ASCII = Q + 33')
+          print('')
+          print('! = Q0 (100% error)')
+          print('I = Q40 (0.01% error)')
+          print('\`\`\`')
+          print('')
+
+          print('### Compression')
+          print('')
+          print('\`\`\`bash')
+          print('# Standard gzip')
+          print('gzip reads.fastq')
+          print('')
+          print('# Faster with pigz')
+          print('pigz -p 8 reads.fastq')
+          print('')
+          print('# Better compression with bgzip')
+          print('bgzip reads.fastq')
+          print('')
+          print('# Best compression (slow)')
+          print('zstd -19 reads.fastq')
+          print('\`\`\`')
+          print('')
+
+          print('### Conversion')
+          print('')
+          print('\`\`\`bash')
+          print('# BAM to FASTQ')
+          print('samtools fastq input.bam > output.fastq')
+          print('')
+          print('# Keep read IDs with header')
+          print('samtools fastq -T qs,ns input.bam > output.fastq')
+          print('\`\`\`')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: bedMethyl Spec
+        if: inputs.task == 'bedmethyl-spec'
+        run: |
+          echo "## bedMethyl Format Specification" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          from pathlib import Path
+
+          print('### Column Definitions')
+          print('')
+          print('| # | Name | Description | Example |')
+          print('|---|------|-------------|---------|')
+          print('| 1 | chrom | Chromosome | chr1 |')
+          print('| 2 | start | 0-based start | 10000 |')
+          print('| 3 | end | End position | 10001 |')
+          print('| 4 | name | Modification code | m (5mC) |')
+          print('| 5 | score | Methylation * 10 | 850 |')
+          print('| 6 | strand | + or - | + |')
+          print('| 7 | thickStart | Same as start | 10000 |')
+          print('| 8 | thickEnd | Same as end | 10001 |')
+          print('| 9 | itemRgb | Color | 255,0,0 |')
+          print('| 10 | coverage | Read depth | 25 |')
+          print('| 11 | frequency | Meth % | 85.0 |')
+          print('')
+
+          print('### Modification Codes')
+          print('')
+          print('| Code | Modification | ChEBI |')
+          print('|------|--------------|-------|')
+          print('| m | 5-methylcytosine | 27551 |')
+          print('| h | 5-hydroxymethylC | 76792 |')
+          print('| a | N6-methyladenine | 28871 |')
+          print('| c | N4-methylcytosine | 21839 |')
+          print('')
+
+          print('### Example')
+          print('')
+          example = '''chr1\t10000\t10001\tm\t850\t+\t10000\t10001\t255,0,0\t25\t85.0
+chr1\t10050\t10051\tm\t920\t+\t10050\t10051\t255,0,0\t30\t92.0
+chr1\t10100\t10101\tm\t100\t+\t10100\t10101\t0,0,255\t28\t10.0'''
+          print('\`\`\`')
+          print(example)
+          print('\`\`\`')
+          print('')
+
+          print('### modkit Commands')
+          print('')
+          print('\`\`\`bash')
+          print('# Generate bedMethyl')
+          print('modkit pileup aligned.bam methylation.bed --ref reference.fa')
+          print('')
+          print('# Filter by coverage')
+          print('awk \"\\$10 >= 10\" methylation.bed > filtered.bed')
+          print('')
+          print('# Sort and index')
+          print('sort -k1,1 -k2,2n methylation.bed | bgzip > methylation.bed.gz')
+          print('tabix -p bed methylation.bed.gz')
+          print('\`\`\`')
+
+          Path('outputs').mkdir(exist_ok=True)
+          Path('outputs/bedmethyl_example.bed').write_text(example)
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: VCF Fields
+        if: inputs.task == 'vcf-fields'
+        run: |
+          echo "## VCF Fields for ONT" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Standard VCF Fields')
+          print('')
+          print('| Field | Description |')
+          print('|-------|-------------|')
+          print('| CHROM | Chromosome |')
+          print('| POS | 1-based position |')
+          print('| ID | Variant ID |')
+          print('| REF | Reference allele |')
+          print('| ALT | Alternate allele |')
+          print('| QUAL | Phred quality |')
+          print('| FILTER | PASS or filter |')
+          print('| INFO | Annotations |')
+          print('| FORMAT | Sample format |')
+          print('')
+
+          print('### Clair3 INFO Fields')
+          print('')
+          print('| Field | Description |')
+          print('|-------|-------------|')
+          print('| P | Predicted probability |')
+          print('| F | Filter info |')
+          print('')
+
+          print('### FORMAT Fields')
+          print('')
+          print('| Field | Description |')
+          print('|-------|-------------|')
+          print('| GT | Genotype (0/1, 1/1) |')
+          print('| GQ | Genotype quality |')
+          print('| DP | Read depth |')
+          print('| AD | Allelic depth |')
+          print('| AF | Allele frequency |')
+          print('| PL | Phred likelihoods |')
+          print('| PS | Phase set |')
+          print('')
+
+          print('### Phasing Tags')
+          print('')
+          print('\`\`\`')
+          print('Unphased: GT = 0/1')
+          print('Phased:   GT = 0|1  (ref on hap1, alt on hap2)')
+          print('          GT = 1|0  (alt on hap1, ref on hap2)')
+          print('          PS = 12345  (phase set identifier)')
+          print('\`\`\`')
+          print('')
+
+          print('### SV VCF Fields')
+          print('')
+          print('| Field | Description | Example |')
+          print('|-------|-------------|---------|')
+          print('| SVTYPE | SV type | DEL, INS, DUP |')
+          print('| SVLEN | SV length | -5000 |')
+          print('| END | End position | 15000 |')
+          print('| CIPOS | Position uncertainty | -10,10 |')
+          print('| CIEND | End uncertainty | -5,5 |')
+          print('| SUPPORT | Supporting reads | 15 |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Conversion Tools
+        if: inputs.task == 'conversion-tools'
+        run: |
+          echo "## File Conversion Tools" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Common Conversions')
+          print('')
+          print('| From | To | Tool |')
+          print('|------|-----|------|')
+          print('| FAST5 | POD5 | pod5 convert |')
+          print('| POD5 | BAM | dorado |')
+          print('| BAM | FASTQ | samtools fastq |')
+          print('| BAM | CRAM | samtools view |')
+          print('| VCF | TSV | bcftools query |')
+          print('')
+
+          print('### Signal Conversions')
+          print('')
+          print('\`\`\`bash')
+          print('# FAST5 to POD5')
+          print('pod5 convert fast5 input/ -o output.pod5')
+          print('')
+          print('# POD5 to FAST5 (if needed)')
+          print('pod5 convert to_fast5 input.pod5 -o output_dir/')
+          print('')
+          print('# Merge POD5 files')
+          print('pod5 merge *.pod5 -o merged.pod5')
+          print('\`\`\`')
+          print('')
+
+          print('### Sequence Conversions')
+          print('')
+          print('\`\`\`bash')
+          print('# BAM to FASTQ')
+          print('samtools fastq input.bam > output.fastq')
+          print('')
+          print('# BAM to FASTQ (paired-like output)')
+          print('samtools fastq -1 r1.fq -2 r2.fq -0 /dev/null input.bam')
+          print('')
+          print('# BAM to CRAM')
+          print('samtools view -C -T reference.fa input.bam > output.cram')
+          print('')
+          print('# CRAM to BAM')
+          print('samtools view -b -T reference.fa input.cram > output.bam')
+          print('')
+          print('# FASTQ to FASTA')
+          print('seqtk seq -a input.fastq > output.fasta')
+          print('\`\`\`')
+          print('')
+
+          print('### VCF Conversions')
+          print('')
+          print('\`\`\`bash')
+          print('# VCF to TSV')
+          print('bcftools query -f \"%CHROM\\\\t%POS\\\\t%REF\\\\t%ALT\\\\t%QUAL\\\\n\" input.vcf > output.tsv')
+          print('')
+          print('# VCF to BCF')
+          print('bcftools view -Ob input.vcf > output.bcf')
+          print('')
+          print('# Normalize VCF')
+          print('bcftools norm -f reference.fa input.vcf > normalized.vcf')
+          print('\`\`\`')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Compression
+        if: inputs.task == 'compression'
+        run: |
+          echo "## File Compression Options" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Compression Comparison')
+          print('')
+          print('| Format | Ratio | Speed | Random Access |')
+          print('|--------|-------|-------|---------------|')
+          print('| gzip | 3-4x | Medium | No |')
+          print('| bgzip | 3-4x | Medium | Yes (tabix) |')
+          print('| zstd | 4-5x | Fast | No |')
+          print('| xz | 5-6x | Slow | No |')
+          print('| BAM | 3-4x | Fast | Yes |')
+          print('| CRAM | 5-8x | Medium | Yes |')
+          print('')
+
+          print('### Best Practices')
+          print('')
+          print('| File Type | Recommended |')
+          print('|-----------|-------------|')
+          print('| FASTQ | gzip or bgzip |')
+          print('| BAM | Keep as BAM |')
+          print('| Long-term BAM | Convert to CRAM |')
+          print('| BED files | bgzip + tabix |')
+          print('| VCF | bgzip + tabix |')
+          print('')
+
+          print('### Commands')
+          print('')
+          print('\`\`\`bash')
+          print('# gzip (standard)')
+          print('gzip file.fastq')
+          print('')
+          print('# pigz (parallel gzip)')
+          print('pigz -p 8 file.fastq')
+          print('')
+          print('# bgzip (indexed)')
+          print('bgzip file.fastq')
+          print('tabix -p bed file.bed.gz  # if BED')
+          print('')
+          print('# zstd (fast, good ratio)')
+          print('zstd -T8 file.fastq')
+          print('')
+          print('# BAM to CRAM')
+          print('samtools view -C -T ref.fa file.bam > file.cram')
+          print('samtools index file.cram')
+          print('\`\`\`')
+          print('')
+
+          print('### Storage Estimates (per 30x Human)')
+          print('')
+          print('| Format | Size |')
+          print('|--------|------|')
+          print('| POD5 | 150 GB |')
+          print('| BAM | 100 GB |')
+          print('| CRAM | 50 GB |')
+          print('| FASTQ.gz | 30 GB |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: file-formats-output-${{ inputs.task }}
+          path: outputs/
+          if-no-files-found: ignore

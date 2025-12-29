@@ -1,0 +1,515 @@
+name: ONT Metagenomics Tasks
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Metagenomics task'
+        required: true
+        type: choice
+        options:
+          - overview
+          - taxonomic-classification
+          - kraken-workflow
+          - assembly-based
+          - amr-detection
+          - species-abundance
+          - functional-annotation
+          - clinical-diagnostics
+      database:
+        description: 'Reference database'
+        required: false
+        type: choice
+        default: 'standard'
+        options:
+          - standard
+          - pluspf
+          - viral
+          - bacteria
+          - custom
+
+env:
+  PYTHONPATH: ${{ github.workspace }}/bin:${{ github.workspace }}
+
+jobs:
+  metagenomics:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install numpy pandas matplotlib
+          mkdir -p outputs
+
+      - name: Metagenomics Overview
+        if: inputs.task == 'overview'
+        run: |
+          echo "## ONT Metagenomics Overview" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Advantages of Long-Read Metagenomics')
+          print('')
+          print('| Feature | Benefit |')
+          print('|---------|---------|')
+          print('| Full-length 16S/18S | Species-level resolution |')
+          print('| Long contigs | Better MAGs |')
+          print('| Plasmid recovery | Complete mobile elements |')
+          print('| Real-time | Rapid pathogen ID |')
+          print('')
+
+          print('### Workflow Options')
+          print('')
+          print('\`\`\`')
+          print('Option 1: Read-based (fast)')
+          print('Reads → Kraken2/Centrifuge → Taxonomy → Visualization')
+          print('')
+          print('Option 2: Assembly-based (comprehensive)')
+          print('Reads → Assembly → Binning → MAG analysis → Annotation')
+          print('\`\`\`')
+          print('')
+
+          print('### Sample Types')
+          print('')
+          print('| Sample | Expected Diversity | Typical Depth |')
+          print('|--------|-------------------|---------------|')
+          print('| Gut | High | 1-5 Gb |')
+          print('| Soil | Very high | 5-20 Gb |')
+          print('| Water | Variable | 2-10 Gb |')
+          print('| Clinical | Low-medium | 0.5-2 Gb |')
+          print('')
+
+          print('### Key Considerations')
+          print('')
+          print('- Host depletion for clinical samples')
+          print('- Appropriate database selection')
+          print('- Coverage needed for assembly')
+          print('- Mock community for validation')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Taxonomic Classification
+        if: inputs.task == 'taxonomic-classification'
+        run: |
+          echo "## Taxonomic Classification" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Classification Tools')
+          print('')
+          print('| Tool | Method | Speed | Sensitivity |')
+          print('|------|--------|-------|-------------|')
+          print('| Kraken2 | k-mer | Very fast | High |')
+          print('| Centrifuge | FM-index | Fast | Very high |')
+          print('| Minimap2 + LCA | Alignment | Medium | Very high |')
+          print('| MetaMaps | EM + alignment | Slow | Highest |')
+          print('| Emu | EM | Medium | High (16S) |')
+          print('')
+
+          print('### Tool Selection Guide')
+          print('')
+          print('| Use Case | Recommended |')
+          print('|----------|-------------|')
+          print('| Real-time clinical | Kraken2 |')
+          print('| Comprehensive | Centrifuge |')
+          print('| 16S/ITS | Emu |')
+          print('| Strain-level | MetaMaps |')
+          print('')
+
+          print('### Full-Length 16S')
+          print('')
+          print('\`\`\`bash')
+          print('# Using Emu for 16S')
+          print('emu abundance reads.fastq \\\\')
+          print('    --db /path/to/emu_database \\\\')
+          print('    --output-dir emu_output \\\\')
+          print('    --threads 16')
+          print('')
+          print('# Using minimap2 + SILVA')
+          print('minimap2 -ax map-ont SILVA_138.fa reads.fastq | \\\\')
+          print('  samtools view -F 4 > aligned.bam')
+          print('\`\`\`')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Kraken Workflow
+        if: inputs.task == 'kraken-workflow'
+        run: |
+          echo "## Kraken2 Workflow" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Database Options')
+          print('')
+          print('| Database | Size | Contents |')
+          print('|----------|------|----------|')
+          print('| Standard | 50 GB | RefSeq bacteria/archaea/viral |')
+          print('| PlusPF | 70 GB | + protozoa, fungi |')
+          print('| Standard-16 | 16 GB | Smaller k-mer |')
+          print('| Viral | 2 GB | RefSeq viral |')
+          print('')
+
+          print('### Installation')
+          print('')
+          print('\`\`\`bash')
+          print('# Install Kraken2')
+          print('conda install -c bioconda kraken2 bracken')
+          print('')
+          print('# Download database')
+          print('kraken2-build --download-library bacteria --db kraken_db')
+          print('kraken2-build --download-taxonomy --db kraken_db')
+          print('kraken2-build --build --db kraken_db --threads 16')
+          print('\`\`\`')
+          print('')
+
+          print('### Running Kraken2')
+          print('')
+          print('\`\`\`bash')
+          print('# Classify reads')
+          print('kraken2 --db kraken_db \\\\')
+          print('        --threads 16 \\\\')
+          print('        --output kraken_output.txt \\\\')
+          print('        --report kraken_report.txt \\\\')
+          print('        reads.fastq')
+          print('')
+          print('# Abundance estimation with Bracken')
+          print('bracken -d kraken_db \\\\')
+          print('        -i kraken_report.txt \\\\')
+          print('        -o bracken_output.txt \\\\')
+          print('        -r 1000 \\\\')
+          print('        -l S  # Species level')
+          print('\`\`\`')
+          print('')
+
+          print('### Visualization')
+          print('')
+          print('\`\`\`bash')
+          print('# Krona plot')
+          print('ktImportTaxonomy -o krona.html kraken_output.txt')
+          print('')
+          print('# Pavian (R/Shiny)')
+          print('# Upload kraken_report.txt to Pavian web interface')
+          print('\`\`\`')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Assembly-Based
+        if: inputs.task == 'assembly-based'
+        run: |
+          echo "## Assembly-Based Metagenomics" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Workflow')
+          print('')
+          print('\`\`\`')
+          print('Reads → Assembly → Binning → QC → Annotation')
+          print('         (Flye)    (MetaBAT) (CheckM) (Prokka)')
+          print('\`\`\`')
+          print('')
+
+          print('### Metagenomic Assembly')
+          print('')
+          print('\`\`\`bash')
+          print('# Flye metagenome mode')
+          print('flye --nano-raw reads.fastq \\\\')
+          print('     --meta \\\\')
+          print('     --out-dir assembly \\\\')
+          print('     --threads 32')
+          print('')
+          print('# MetaFlye for complex communities')
+          print('flye --nano-hq reads.fastq \\\\')
+          print('     --meta \\\\')
+          print('     --keep-haplotypes \\\\')
+          print('     --out-dir assembly')
+          print('\`\`\`')
+          print('')
+
+          print('### Binning')
+          print('')
+          print('\`\`\`bash')
+          print('# Map reads to assembly')
+          print('minimap2 -ax map-ont assembly/assembly.fasta reads.fastq | \\\\')
+          print('  samtools sort -o mapped.bam')
+          print('')
+          print('# Generate depth')
+          print('jgi_summarize_bam_contig_depths --outputDepth depth.txt mapped.bam')
+          print('')
+          print('# Bin with MetaBAT2')
+          print('metabat2 -i assembly/assembly.fasta \\\\')
+          print('         -a depth.txt \\\\')
+          print('         -o bins/bin')
+          print('\`\`\`')
+          print('')
+
+          print('### MAG Quality (CheckM)')
+          print('')
+          print('\`\`\`bash')
+          print('checkm lineage_wf bins/ checkm_output -x fa -t 16')
+          print('\`\`\`')
+          print('')
+
+          print('### Quality Standards')
+          print('')
+          print('| Quality | Completeness | Contamination |')
+          print('|---------|--------------|---------------|')
+          print('| High | >90% | <5% |')
+          print('| Medium | >50% | <10% |')
+          print('| Low | <50% | >10% |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: AMR Detection
+        if: inputs.task == 'amr-detection'
+        run: |
+          echo "## Antimicrobial Resistance Detection" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### AMR Detection Tools')
+          print('')
+          print('| Tool | Database | Method |')
+          print('|------|----------|--------|')
+          print('| Abricate | Multiple | BLAST |')
+          print('| AMRFinderPlus | NCBI AMR | HMM + BLAST |')
+          print('| ResFinder | ResFinder | BLAST |')
+          print('| RGI | CARD | BLAST + HMM |')
+          print('')
+
+          print('### Abricate Workflow')
+          print('')
+          print('\`\`\`bash')
+          print('# Screen against multiple databases')
+          print('abricate --db resfinder reads.fasta > resfinder_results.tsv')
+          print('abricate --db card reads.fasta > card_results.tsv')
+          print('abricate --db ncbi reads.fasta > ncbi_results.tsv')
+          print('')
+          print('# Summary across databases')
+          print('abricate --summary *_results.tsv > summary.tsv')
+          print('\`\`\`')
+          print('')
+
+          print('### AMRFinderPlus')
+          print('')
+          print('\`\`\`bash')
+          print('# Update database')
+          print('amrfinder --update')
+          print('')
+          print('# Run on contigs')
+          print('amrfinder -n contigs.fasta \\\\')
+          print('          -o amrfinder_results.tsv \\\\')
+          print('          --threads 8')
+          print('')
+          print('# With organism-specific options')
+          print('amrfinder -n contigs.fasta \\\\')
+          print('          --organism Escherichia \\\\')
+          print('          -o results.tsv')
+          print('\`\`\`')
+          print('')
+
+          print('### Clinical Reporting')
+          print('')
+          print('| Element | Include |')
+          print('|---------|---------|')
+          print('| Gene name | e.g., blaNDM-1 |')
+          print('| Drug class | e.g., Carbapenem |')
+          print('| Identity % | >90% reliable |')
+          print('| Coverage % | >80% reliable |')
+          print('| Location | Chromosome/plasmid |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Species Abundance
+        if: inputs.task == 'species-abundance'
+        run: |
+          echo "## Species Abundance Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import json
+          from pathlib import Path
+
+          print('### Abundance Estimation')
+          print('')
+          print('| Method | Basis | Normalization |')
+          print('|--------|-------|---------------|')
+          print('| Read count | Classified reads | TPM, RPKM |')
+          print('| Bracken | Bayesian | Genome size |')
+          print('| Coverage | Mapped depth | None needed |')
+          print('')
+
+          print('### Bracken Workflow')
+          print('')
+          print('\`\`\`bash')
+          print('# Build Bracken database (once)')
+          print('bracken-build -d kraken_db -t 16 -k 35 -l 1000')
+          print('')
+          print('# Run Bracken')
+          print('bracken -d kraken_db \\\\')
+          print('        -i kraken_report.txt \\\\')
+          print('        -o species_abundance.txt \\\\')
+          print('        -r 1000 \\\\')
+          print('        -l S')
+          print('')
+          print('# Multiple taxonomic levels')
+          print('for level in P C O F G S; do')
+          print('  bracken -d kraken_db -i report.txt -o ${level}_abundance.txt -l $level')
+          print('done')
+          print('\`\`\`')
+          print('')
+
+          print('### Diversity Metrics')
+          print('')
+          print('| Metric | Type | Meaning |')
+          print('|--------|------|---------|')
+          print('| Shannon | Alpha | Evenness |')
+          print('| Simpson | Alpha | Dominance |')
+          print('| Chao1 | Alpha | Richness |')
+          print('| Bray-Curtis | Beta | Dissimilarity |')
+          print('')
+
+          # Demo abundance data
+          abundance = {
+              'Escherichia coli': 25.5,
+              'Klebsiella pneumoniae': 18.2,
+              'Bacteroides fragilis': 12.8,
+              'Staphylococcus aureus': 8.5,
+              'Other': 35.0
+          }
+
+          Path('outputs').mkdir(exist_ok=True)
+          Path('outputs/abundance_demo.json').write_text(json.dumps(abundance, indent=2))
+          print('Demo abundance saved to outputs/abundance_demo.json')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Functional Annotation
+        if: inputs.task == 'functional-annotation'
+        run: |
+          echo "## Functional Annotation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Annotation Tools')
+          print('')
+          print('| Tool | Database | Speed |')
+          print('|------|----------|-------|')
+          print('| Prokka | Built-in | Fast |')
+          print('| eggNOG-mapper | eggNOG | Medium |')
+          print('| InterProScan | InterPro | Slow |')
+          print('| KEGG | KEGG | Medium |')
+          print('')
+
+          print('### Prokka Annotation')
+          print('')
+          print('\`\`\`bash')
+          print('# Annotate MAG')
+          print('prokka bin.fasta \\\\')
+          print('       --outdir annotation \\\\')
+          print('       --prefix sample \\\\')
+          print('       --cpus 16')
+          print('')
+          print('# Metagenome mode')
+          print('prokka contigs.fasta \\\\')
+          print('       --metagenome \\\\')
+          print('       --outdir annotation')
+          print('\`\`\`')
+          print('')
+
+          print('### eggNOG-mapper')
+          print('')
+          print('\`\`\`bash')
+          print('# Download database')
+          print('download_eggnog_data.py --data_dir eggnog_data')
+          print('')
+          print('# Run annotation')
+          print('emapper.py -i proteins.faa \\\\')
+          print('           --output eggnog_results \\\\')
+          print('           --data_dir eggnog_data \\\\')
+          print('           --cpu 16')
+          print('\`\`\`')
+          print('')
+
+          print('### Pathway Analysis')
+          print('')
+          print('\`\`\`bash')
+          print('# HUMAnN for pathway abundance')
+          print('humann --input reads.fastq \\\\')
+          print('       --output humann_output \\\\')
+          print('       --threads 16')
+          print('')
+          print('# Outputs')
+          print('# - genefamilies.tsv')
+          print('# - pathabundance.tsv')
+          print('# - pathcoverage.tsv')
+          print('\`\`\`')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Clinical Diagnostics
+        if: inputs.task == 'clinical-diagnostics'
+        run: |
+          echo "## Clinical Metagenomics" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Clinical Workflow')
+          print('')
+          print('\`\`\`')
+          print('Sample → DNA extraction → Host depletion → Sequencing → Analysis')
+          print('                                              ↓')
+          print('                                    Pathogen ID + AMR')
+          print('                                              ↓')
+          print('                                        Clinical report')
+          print('\`\`\`')
+          print('')
+
+          print('### Sample Types')
+          print('')
+          print('| Sample | Prep | Expected Pathogens |')
+          print('|--------|------|-------------------|')
+          print('| Respiratory | Saponin | Bacteria, viruses |')
+          print('| CSF | Direct | Bacteria, viruses, fungi |')
+          print('| Blood | Lysis | Sepsis pathogens |')
+          print('| Stool | None | Enteric pathogens |')
+          print('')
+
+          print('### Real-Time Analysis')
+          print('')
+          print('\`\`\`bash')
+          print('# Stream classification with What\\'s In My Pot (WIMP)')
+          print('# MinKNOW integrated workflow')
+          print('')
+          print('# Or use EPI2ME')
+          print('# - WIMP workflow for bacterial ID')
+          print('# - AMR workflow for resistance genes')
+          print('\`\`\`')
+          print('')
+
+          print('### Turnaround Times')
+          print('')
+          print('| Stage | Time |')
+          print('|-------|------|')
+          print('| DNA extraction | 1-2 h |')
+          print('| Library prep | 30 min |')
+          print('| Sequencing | 2-6 h |')
+          print('| Analysis | 10-30 min |')
+          print('| **Total** | **4-10 h** |')
+          print('')
+
+          print('### Reporting Thresholds')
+          print('')
+          print('| Metric | Threshold | Action |')
+          print('|--------|-----------|--------|')
+          print('| Reads | >100 | Report species |')
+          print('| Coverage | >1x | High confidence |')
+          print('| Identity | >95% | Species level |')
+          print('| AMR genes | Any | Report + confirm |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: metagenomics-output-${{ inputs.task }}
+          path: outputs/
+          if-no-files-found: ignore

@@ -1,0 +1,439 @@
+name: ONT Benchmark Tasks
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Benchmark task'
+        required: true
+        type: choice
+        options:
+          - overview
+          - basecalling-speed
+          - alignment-speed
+          - gpu-comparison
+          - accuracy-metrics
+          - resource-estimation
+          - throughput-analysis
+          - cost-analysis
+      platform:
+        description: 'Platform'
+        required: false
+        type: choice
+        default: 'promethion'
+        options:
+          - minion
+          - promethion
+          - gridion
+
+env:
+  PYTHONPATH: ${{ github.workspace }}/bin:${{ github.workspace }}
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install numpy pandas matplotlib
+          mkdir -p outputs
+
+      - name: Benchmark Overview
+        if: inputs.task == 'overview'
+        run: |
+          echo "## ONT Benchmarking Overview" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Key Metrics to Benchmark')
+          print('')
+          print('| Category | Metrics |')
+          print('|----------|---------|')
+          print('| Speed | Reads/sec, Bases/sec, Wall time |')
+          print('| Accuracy | Q-score, Identity %, Mismatch rate |')
+          print('| Resources | GPU util, RAM, CPU, Disk I/O |')
+          print('| Cost | $/Gb, $/sample |')
+          print('')
+
+          print('### Standard Datasets')
+          print('')
+          print('| Dataset | Size | Purpose |')
+          print('|---------|------|---------|')
+          print('| GIAB HG002 | 30-60x | Accuracy benchmarking |')
+          print('| E. coli | ~400x | Speed benchmarking |')
+          print('| Zymo mock | 10 species | Metagenomics |')
+          print('| NA12878 | Variable | General reference |')
+          print('')
+
+          print('### Benchmark Design')
+          print('')
+          print('\`\`\`')
+          print('1. Use consistent hardware')
+          print('2. Warm up GPU before timing')
+          print('3. Run 3+ replicates')
+          print('4. Report median + IQR')
+          print('5. Document all versions')
+          print('\`\`\`')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Basecalling Speed
+        if: inputs.task == 'basecalling-speed'
+        run: |
+          echo "## Basecalling Speed Benchmarks" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Dorado Speed by Model (A100 80GB)')
+          print('')
+          print('| Model | Reads/sec | Bases/sec | Relative |')
+          print('|-------|-----------|-----------|----------|')
+          print('| fast | 8,000 | 40M | 4x |')
+          print('| hac | 3,500 | 18M | 1.8x |')
+          print('| sup | 2,000 | 10M | 1x |')
+          print('')
+
+          print('### GPU Comparison (SUP model)')
+          print('')
+          print('| GPU | VRAM | Reads/sec | Relative |')
+          print('|-----|------|-----------|----------|')
+          print('| RTX 3060 | 12 GB | 600 | 0.3x |')
+          print('| RTX 3080 | 10 GB | 1,200 | 0.6x |')
+          print('| RTX 3090 | 24 GB | 1,500 | 0.75x |')
+          print('| RTX 4090 | 24 GB | 2,200 | 1.1x |')
+          print('| A100 40GB | 40 GB | 2,000 | 1x |')
+          print('| A100 80GB | 80 GB | 2,500 | 1.25x |')
+          print('| H100 | 80 GB | 3,500 | 1.75x |')
+          print('')
+
+          print('### Batch Size Impact')
+          print('')
+          print('\`\`\`bash')
+          print('# Benchmark script')
+          print('for bs in 16 32 64 128 256; do')
+          print('  echo \"Batch size: $bs\"')
+          print('  time dorado basecaller sup test.pod5 --batchsize $bs > /dev/null')
+          print('done')
+          print('\`\`\`')
+          print('')
+
+          print('### Real-Time Threshold')
+          print('')
+          print('| Device | Throughput | Need for Real-Time |')
+          print('|--------|------------|-------------------|')
+          print('| MinION | ~450 bp/s/pore | 2,500 reads/sec |')
+          print('| PromethION | ~450 bp/s/pore | 12,000 reads/sec |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Alignment Speed
+        if: inputs.task == 'alignment-speed'
+        run: |
+          echo "## Alignment Speed Benchmarks" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Minimap2 Performance')
+          print('')
+          print('| Threads | Human WGS 30x | Time |')
+          print('|---------|---------------|------|')
+          print('| 8 | 100 Gb | 4h |')
+          print('| 16 | 100 Gb | 2.5h |')
+          print('| 32 | 100 Gb | 1.5h |')
+          print('| 64 | 100 Gb | 1h |')
+          print('')
+
+          print('### Dorado Aligner Performance')
+          print('')
+          print('\`\`\`bash')
+          print('# Integrated basecall + align')
+          print('time dorado basecaller sup pod5/ \\\\')
+          print('    --reference GRCh38.fa > aligned.bam')
+          print('')
+          print('# Separate alignment')
+          print('time dorado aligner GRCh38.fa calls.bam > aligned.bam')
+          print('\`\`\`')
+          print('')
+
+          print('### Aligner Comparison')
+          print('')
+          print('| Aligner | 10 Gb ONT | Accuracy |')
+          print('|---------|-----------|----------|')
+          print('| Minimap2 | 10 min | 99.9% |')
+          print('| Dorado aligner | 12 min | 99.9% |')
+          print('| Winnowmap2 | 15 min | 99.9% |')
+          print('| LRA | 20 min | 99.8% |')
+          print('')
+
+          print('### Memory Usage')
+          print('')
+          print('| Reference | Index | Alignment RAM |')
+          print('|-----------|-------|---------------|')
+          print('| Human | 8 GB | 16 GB |')
+          print('| Mouse | 6 GB | 12 GB |')
+          print('| Bacteria | 100 MB | 2 GB |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: GPU Comparison
+        if: inputs.task == 'gpu-comparison'
+        run: |
+          echo "## GPU Performance Comparison" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import json
+          from pathlib import Path
+
+          gpus = [
+              {'name': 'RTX 3060', 'vram': 12, 'price': 300, 'sup_speed': 600, 'cost_eff': 2.0},
+              {'name': 'RTX 3070', 'vram': 8, 'price': 400, 'sup_speed': 900, 'cost_eff': 2.25},
+              {'name': 'RTX 3080', 'vram': 10, 'price': 600, 'sup_speed': 1200, 'cost_eff': 2.0},
+              {'name': 'RTX 3090', 'vram': 24, 'price': 1200, 'sup_speed': 1500, 'cost_eff': 1.25},
+              {'name': 'RTX 4080', 'vram': 16, 'price': 1000, 'sup_speed': 1800, 'cost_eff': 1.8},
+              {'name': 'RTX 4090', 'vram': 24, 'price': 1600, 'sup_speed': 2200, 'cost_eff': 1.4},
+              {'name': 'A100 40GB', 'vram': 40, 'price': 10000, 'sup_speed': 2000, 'cost_eff': 0.2},
+              {'name': 'A100 80GB', 'vram': 80, 'price': 15000, 'sup_speed': 2500, 'cost_eff': 0.17},
+              {'name': 'H100', 'vram': 80, 'price': 25000, 'sup_speed': 3500, 'cost_eff': 0.14},
+          ]
+
+          print('### Consumer GPUs')
+          print('')
+          print('| GPU | VRAM | SUP Speed | Price | Cost/Performance |')
+          print('|-----|------|-----------|-------|------------------|')
+          for g in gpus[:6]:
+              print(f'| {g[\"name\"]} | {g[\"vram\"]} GB | {g[\"sup_speed\"]} r/s | ${g[\"price\"]} | {g[\"cost_eff\"]:.2f} |')
+          print('')
+
+          print('### Data Center GPUs')
+          print('')
+          print('| GPU | VRAM | SUP Speed | Price | Best For |')
+          print('|-----|------|-----------|-------|----------|')
+          for g in gpus[6:]:
+              print(f'| {g[\"name\"]} | {g[\"vram\"]} GB | {g[\"sup_speed\"]} r/s | ${g[\"price\"]:,} | Production |')
+          print('')
+
+          print('### Recommendations')
+          print('')
+          print('| Use Case | Recommended GPU |')
+          print('|----------|----------------|')
+          print('| Budget | RTX 3060 12GB |')
+          print('| Best value | RTX 4080 16GB |')
+          print('| Maximum speed | RTX 4090 |')
+          print('| Production | A100 80GB |')
+          print('| HPC cluster | H100 |')
+
+          Path('outputs').mkdir(exist_ok=True)
+          Path('outputs/gpu_benchmarks.json').write_text(json.dumps(gpus, indent=2))
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Accuracy Metrics
+        if: inputs.task == 'accuracy-metrics'
+        run: |
+          echo "## Accuracy Benchmarks" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Basecalling Accuracy (R10.4.1)')
+          print('')
+          print('| Model | Median Q | Modal Accuracy | Consensus |')
+          print('|-------|----------|----------------|-----------|')
+          print('| fast@v5 | Q12 | 93% | 99% |')
+          print('| hac@v5 | Q18 | 98% | 99.5% |')
+          print('| sup@v5 | Q23 | 99.5% | 99.9% |')
+          print('')
+
+          print('### Variant Calling Accuracy (HG002, 30x)')
+          print('')
+          print('| Caller | SNV F1 | Indel F1 |')
+          print('|--------|--------|----------|')
+          print('| Clair3 (SUP) | 99.72% | 95.3% |')
+          print('| DeepVariant | 99.78% | 96.1% |')
+          print('| Medaka | 98.5% | 88.0% |')
+          print('')
+
+          print('### Duplex vs Simplex')
+          print('')
+          print('| Metric | Simplex | Duplex |')
+          print('|--------|---------|--------|')
+          print('| Raw accuracy | 99.5% | 99.9% |')
+          print('| Q-score | Q23 | Q30+ |')
+          print('| Yield | 100% | 10-30% |')
+          print('')
+
+          print('### Coverage Impact on Accuracy')
+          print('')
+          print('| Coverage | SNV Recall | Indel Recall |')
+          print('|----------|------------|--------------|')
+          print('| 10x | 95% | 80% |')
+          print('| 20x | 98% | 90% |')
+          print('| 30x | 99% | 95% |')
+          print('| 50x | 99.5% | 97% |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Resource Estimation
+        if: inputs.task == 'resource-estimation'
+        run: |
+          echo "## Resource Estimation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Compute Requirements by Task')
+          print('')
+          print('| Task | CPU | RAM | GPU | Storage |')
+          print('|------|-----|-----|-----|---------|')
+          print('| Basecalling 100Gb | 8 | 16 GB | Required | 200 GB |')
+          print('| Alignment | 32 | 32 GB | Optional | 300 GB |')
+          print('| Variant calling | 32 | 64 GB | Required | 100 GB |')
+          print('| Assembly | 32 | 128 GB | No | 500 GB |')
+          print('| Methylation | 16 | 32 GB | Optional | 200 GB |')
+          print('')
+
+          print('### Time Estimates (Human 30x, 100Gb)')
+          print('')
+          print('| Task | A100 | RTX 3090 | CPU only |')
+          print('|------|------|----------|----------|')
+          print('| Basecall SUP | 12h | 20h | N/A |')
+          print('| Alignment | 1h | 1h | 2h |')
+          print('| Variant call | 3h | 5h | 24h |')
+          print('| Total | 16h | 26h | 48h+ |')
+          print('')
+
+          print('### Storage Estimates')
+          print('')
+          print('| Data Type | Size/Sample | Notes |')
+          print('|-----------|-------------|-------|')
+          print('| POD5 raw | 100-200 GB | Keep for reanalysis |')
+          print('| BAM unaligned | 50-100 GB | Can delete |')
+          print('| BAM aligned | 80-150 GB | Primary output |')
+          print('| VCF | 100 MB | Variants |')
+          print('| bedMethyl | 500 MB | Methylation |')
+          print('')
+
+          print('### Estimation Calculator')
+          print('')
+          print('\`\`\`python')
+          print('def estimate_resources(coverage, genome_size_gb=3):')
+          print('    data_gb = coverage * genome_size_gb')
+          print('    storage = data_gb * 3  # POD5 + BAM + temp')
+          print('    basecall_hours = data_gb / 8  # A100 SUP')
+          print('    align_hours = data_gb / 100')
+          print('    return {\"storage_gb\": storage, \"hours\": basecall_hours + align_hours}')
+          print('\`\`\`')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Throughput Analysis
+        if: inputs.task == 'throughput-analysis'
+        run: |
+          echo "## Throughput Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Sequencing Throughput by Device')
+          print('')
+          print('| Device | Max Pores | Throughput/24h | Coverage (Human) |')
+          print('|--------|-----------|----------------|------------------|')
+          print('| Flongle | 126 | 2 Gb | 0.7x |')
+          print('| MinION | 512 | 15-25 Gb | 5-8x |')
+          print('| GridION | 5x512 | 75-125 Gb | 25-40x |')
+          print('| PromethION 24 | 24x3000 | 300-500 Gb | 100-170x |')
+          print('| PromethION 48 | 48x3000 | 600-1000 Gb | 200-340x |')
+          print('')
+
+          print('### Read Length Impact')
+          print('')
+          print('| N50 | Throughput Factor | Best For |')
+          print('|-----|-------------------|----------|')
+          print('| 5 kb | 1.0x | Standard |')
+          print('| 10 kb | 0.9x | WGS |')
+          print('| 20 kb | 0.7x | Assembly |')
+          print('| 50 kb | 0.5x | Ultra-long |')
+          print('')
+
+          print('### Factors Affecting Throughput')
+          print('')
+          print('| Factor | Impact |')
+          print('|--------|--------|')
+          print('| Library quality | Up to 2x |')
+          print('| Loading concentration | Up to 1.5x |')
+          print('| Flowcell quality | Up to 2x |')
+          print('| Temperature | 5-10% |')
+          print('| Nuclease flushes | +20-50% |')
+          print('')
+
+          print('### Throughput Optimization')
+          print('')
+          print('1. Use optimal loading (50-100 fmol)')
+          print('2. Nuclease flush at 24-48h')
+          print('3. Reload library if yield drops')
+          print('4. Monitor pore occupancy')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Cost Analysis
+        if: inputs.task == 'cost-analysis'
+        run: |
+          echo "## Cost Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import json
+          from pathlib import Path
+
+          print('### Consumable Costs')
+          print('')
+          print('| Item | Cost | Output | $/Gb |')
+          print('|------|------|--------|------|')
+          print('| Flongle | $90 | 2 Gb | $45 |')
+          print('| MinION R10 | $500 | 20 Gb | $25 |')
+          print('| PromethION R10 | $1,200 | 100 Gb | $12 |')
+          print('| Library kit | $400 | 12 samples | $33/sample |')
+          print('')
+
+          print('### Human WGS 30x Cost Breakdown')
+          print('')
+          print('| Component | Cost |')
+          print('|-----------|------|')
+          print('| Flowcell (PromethION) | $1,200 |')
+          print('| Library prep | $100 |')
+          print('| Compute (cloud) | $50 |')
+          print('| Storage (1 year) | $20 |')
+          print('| **Total** | **$1,370** |')
+          print('')
+
+          print('### Platform Comparison')
+          print('')
+          print('| Platform | Human 30x | Cost/Sample |')
+          print('|----------|-----------|-------------|')
+          print('| MinION (3 FC) | $1,500 + $100 | $1,600 |')
+          print('| PromethION | $1,200 + $100 | $1,300 |')
+          print('| GridION | $500 + $100 | $600 (shared) |')
+          print('')
+
+          print('### Bulk Pricing Impact')
+          print('')
+          print('| Volume | Discount | Effective $/Gb |')
+          print('|--------|----------|----------------|')
+          print('| 1-10 FC | 0% | $12 |')
+          print('| 10-50 FC | 10% | $11 |')
+          print('| 50+ FC | 20% | $10 |')
+
+          costs = {
+              'flongle': {'price': 90, 'output_gb': 2},
+              'minion': {'price': 500, 'output_gb': 20},
+              'promethion': {'price': 1200, 'output_gb': 100},
+          }
+          Path('outputs').mkdir(exist_ok=True)
+          Path('outputs/cost_analysis.json').write_text(json.dumps(costs, indent=2))
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: benchmark-output-${{ inputs.task }}
+          path: outputs/
+          if-no-files-found: ignore
