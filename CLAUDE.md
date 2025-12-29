@@ -4,40 +4,41 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-ONT Ecosystem (v3.0) is a consolidated monorepo for Oxford Nanopore sequencing experiment management with provenance tracking, event-sourced registry, integrated analysis workflows, and publication-quality figure generation. Designed for bioinformatics researchers working with nanopore sequencing data.
+ONT Ecosystem (v3.0) is a consolidated monorepo for Oxford Nanopore sequencing experiment management with provenance tracking, event-sourced registry, integrated analysis workflows, and publication-quality figure generation.
 
 ## Skills (Slash Commands)
 
-Skills are automatically available via slash commands. Use these for common ONT analysis tasks:
+Skills are automatically installed to `~/.claude/commands/`. Invoke with `/<skill-name>`:
 
-| Skill | Command | Purpose |
-|-------|---------|---------|
-| End Reason QC | `/end-reason` | Analyze read end reasons, check adaptive sampling |
-| End Reason v2 | `/end-reason-v2` | Advanced analysis with parallel processing |
-| Experiments | `/ont-experiments` | Create/manage experiments with provenance |
-| Alignment | `/ont-align` | Align reads to reference genome |
-| Pipeline | `/ont-pipeline` | Run multi-step analysis pipelines |
-| Monitor | `/ont-monitor` | Real-time sequencing run monitoring |
-| Dorado Bench | `/dorado-bench` | Basecalling benchmarks and optimization |
-| Experiment DB | `/experiment-db` | SQLite database queries and exports |
-| Manuscript | `/manuscript` | Generate figures and tables for papers |
-| Full Analysis | `/comprehensive-analysis` | Complete analysis workflow |
+| Command | Purpose |
+|---------|---------|
+| `/comprehensive-analysis` | 9 publication figures, KDE, data sampling with runtime estimation |
+| `/end-reason` | End reason QC for adaptive sampling |
+| `/ont-experiments-v2` | Experiment registry with provenance tracking |
+| `/ont-align` | Alignment, reference management, edit distance |
+| `/ont-pipeline` | Multi-step workflow orchestration |
+| `/ont-monitor` | Real-time sequencing run monitoring |
+| `/dorado-bench-v2` | Dorado basecalling on UM HPC |
+| `/experiment-db` | SQLite database for experiments |
+| `/manuscript` | Publication figures and tables |
 
 ### Quick Examples
 
 ```bash
-# Analyze end reasons for a POD5 directory
+# Quick analysis with sampling (30s)
+/comprehensive-analysis /path/to/experiment -o output/
+
+# Full publication analysis
+/comprehensive-analysis /path/to/experiment -o output/ --full --dpi 600
+
+# End reason QC
 /end-reason /path/to/pod5 --json results.json --plot qc.png
 
-# Create and track an experiment
-/ont-experiments create exp-001 --sample HG002 --flowcell PAM12345
-/ont-experiments run end_reasons exp-001 --json qc.json
-
-# Generate manuscript figures
-/manuscript figure fig_end_reason_kde exp-001 --format pdf
+# Run with provenance tracking
+ont_experiments.py run end_reasons exp-001 --json qc.json
 ```
 
-See `.claude/skills.md` for complete skill documentation.
+See `.claude/skills.md` for complete documentation. Skills auto-sync from `installable-skills/`.
 
 ## Common Commands
 
@@ -187,6 +188,14 @@ P(h,g,u,d,l,σ,r) = P(h)·P(g|h)·P(u|g)·P(d|u)·P(l|d)·P(σ|l)·P(r|σ)
 ```
 
 Nine pipeline stages: h (Haplotype), g (Standard), u (Guide), d (Fragmentation), ℓ (Library), σ (Signal), r (Basecalling), C (Cas9 toggle), A (Adaptive toggle)
+
+## Skill Installation
+
+Skills auto-install when entering the project. Manual install:
+
+```bash
+cd installable-skills && ./install-all.sh
+```
 
 ## Private Repository Installation
 
