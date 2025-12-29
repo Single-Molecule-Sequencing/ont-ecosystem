@@ -72,13 +72,22 @@ def format_bp(bp):
         return f"{bp:.0f}"
 
 
-def load_lengths_from_summary(summary_path: Path) -> np.ndarray:
-    """Load read lengths from sequencing summary file."""
+def load_lengths_from_summary(summary_path: Path, max_reads: int = 50000) -> np.ndarray:
+    """Load read lengths from sequencing summary file with optional sampling.
+
+    Args:
+        summary_path: Path to sequencing_summary.txt
+        max_reads: Maximum reads to load (default 50000 for speed)
+
+    Returns:
+        Array of read lengths
+    """
     if not HAS_PANDAS:
         return None
 
     try:
-        df = pd.read_csv(summary_path, sep='\t')
+        # Sample for speed if file is large
+        df = pd.read_csv(summary_path, sep='\t', nrows=max_reads)
         length_col = None
         for col in ['sequence_length_template', 'sequence_length', 'read_length', 'length']:
             if col in df.columns:
@@ -494,6 +503,8 @@ Examples:
     parser.add_argument("--format", default="png", choices=["pdf", "png"], help="Output format")
     parser.add_argument("--dpi", type=int, default=300, help="DPI for output")
     parser.add_argument("--summary", help="Path to sequencing_summary.txt file")
+    parser.add_argument("--max-reads", type=int, default=50000,
+                        help="Max reads to sample (default: 50000 for speed)")
     parser.add_argument("--publication", action="store_true", help="Generate publication-ready figure")
     parser.add_argument("--peaks", action="store_true", help="Generate peak analysis figure")
     parser.add_argument("--title", help="Custom title")
@@ -510,12 +521,12 @@ Examples:
         if not summary_path.exists():
             print(f"Error: Summary file not found: {args.summary}")
             sys.exit(1)
-        lengths = load_lengths_from_summary(summary_path)
+        lengths = load_lengths_from_summary(summary_path, max_reads=args.max_reads)
         if lengths is None:
             print("Error: Could not load read lengths from summary")
             sys.exit(1)
         title = title or summary_path.parent.name
-        print(f"Loaded {len(lengths):,} read lengths from summary")
+        print(f"Loaded {len(lengths):,} read lengths from summary (sampled from max {args.max_reads:,})")
 
     # Load from experiment context
     elif args.experiment_id:

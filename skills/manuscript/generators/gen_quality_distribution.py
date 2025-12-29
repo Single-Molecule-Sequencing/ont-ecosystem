@@ -72,13 +72,22 @@ def q_to_accuracy(q):
     return (1 - q_to_error(q)) * 100
 
 
-def load_qscores_from_summary(summary_path: Path) -> np.ndarray:
-    """Load quality scores from sequencing summary file."""
+def load_qscores_from_summary(summary_path: Path, max_reads: int = 50000) -> np.ndarray:
+    """Load quality scores from sequencing summary file with optional sampling.
+
+    Args:
+        summary_path: Path to sequencing_summary.txt
+        max_reads: Maximum reads to load (default 50000 for speed)
+
+    Returns:
+        Array of quality scores
+    """
     if not HAS_PANDAS:
         return None
 
     try:
-        df = pd.read_csv(summary_path, sep='\t')
+        # Sample for speed if file is large
+        df = pd.read_csv(summary_path, sep='\t', nrows=max_reads)
         qscore_col = None
         for col in ['mean_qscore_template', 'mean_qscore', 'qscore']:
             if col in df.columns:
@@ -392,6 +401,8 @@ Examples:
     parser.add_argument("--format", default="png", choices=["pdf", "png"], help="Output format")
     parser.add_argument("--dpi", type=int, default=300, help="DPI for output")
     parser.add_argument("--summary", help="Path to sequencing_summary.txt file")
+    parser.add_argument("--max-reads", type=int, default=50000,
+                        help="Max reads to sample (default: 50000 for speed)")
     parser.add_argument("--publication", action="store_true", help="Generate publication-ready figure")
     parser.add_argument("--title", help="Custom title")
 
@@ -407,7 +418,7 @@ Examples:
         if not summary_path.exists():
             print(f"Error: Summary file not found: {args.summary}")
             sys.exit(1)
-        qscores = load_qscores_from_summary(summary_path)
+        qscores = load_qscores_from_summary(summary_path, max_reads=args.max_reads)
         if qscores is None:
             print("Error: Could not load quality scores from summary")
             sys.exit(1)
