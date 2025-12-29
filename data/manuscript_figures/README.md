@@ -55,6 +55,8 @@ pdflatex main_manuscript
 - `cover_letter.tex` / `.pdf` - Journal cover letter template
 - `highlights.txt` - 5 key highlights for journal submission
 - `graphical_abstract.pdf` / `.png` - Visual summary for TOC
+- `supplementary_materials.tex` / `.pdf` - Supplementary methods, tables, figures (7 pages)
+- `reviewer_response_template.tex` - Template for responding to peer review
 
 ## Key Statistics
 
