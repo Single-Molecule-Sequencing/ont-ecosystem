@@ -182,8 +182,8 @@ def test_version():
     lib = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(lib)
 
-    assert lib.__version__ == "2.3.0"
-    assert len(lib.SKILL_VERSIONS) == 7  # Added experiment-db
+    assert lib.__version__ == "3.0.0"
+    assert len(lib.SKILL_VERSIONS) == 8  # Added manuscript skill
 
 
 def test_dashboards_exist():
