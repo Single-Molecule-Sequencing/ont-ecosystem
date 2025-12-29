@@ -44,29 +44,45 @@ if [ -f "bin/ont_experiments.py" ]; then
     # Store source repo path for updates
     REPO_PATH="$(pwd)"
     echo "REPO_SOURCE=$REPO_PATH" > "$INSTALL_DIR/config/source.conf"
-elif [ "$FORCE_CURL" = true ]; then
-    echo "📥 Downloading from GitHub (public repo mode)..."
-    echo "   Note: This requires the repository to be public."
-    for script in ont_experiments.py ont_align.py ont_pipeline.py end_reason.py ont_monitor.py dorado_basecall.py calculate_resources.py ont_endreason_qc.py experiment_db.py ont_config.py ont_context.py ont_manuscript.py ont_stats.py ont_check.py ont_help.py ont_update.py ont_backup.py ont_doctor.py ont_report.py ont_hooks.py ont_version.py; do
-        curl -sSL "$REPO_URL/raw/main/bin/$script" -o "$INSTALL_DIR/bin/$script" 2>/dev/null || true
-    done
 else
-    # Private repo mode - provide SSH clone instructions
-    echo ""
-    echo "❌ Remote installation requires the repository to be public."
-    echo ""
-    echo "For private repository access, clone via SSH first:"
-    echo ""
-    echo "   git clone $SSH_URL"
-    echo "   cd ont-ecosystem"
-    echo "   ./install.sh"
-    echo ""
-    echo "If you have a GitHub Personal Access Token, you can also use:"
-    echo "   git clone https://<TOKEN>@github.com/Single-Molecule-Sequencing/ont-ecosystem.git"
-    echo ""
-    echo "Or if the repo is public, use: ./install.sh --curl"
-    echo ""
-    exit 1
+    # Remote install - download from GitHub
+    echo "📥 Downloading from GitHub..."
+    
+    SCRIPTS="ont_experiments.py ont_align.py ont_pipeline.py end_reason.py ont_monitor.py dorado_basecall.py calculate_resources.py ont_endreason_qc.py experiment_db.py ont_config.py ont_context.py ont_manuscript.py ont_stats.py ont_check.py ont_help.py ont_update.py ont_backup.py ont_doctor.py ont_report.py ont_hooks.py ont_version.py ont_init.py ont_changelog.py ont_dashboard.py ont_integrate.py ont_registry.py ont_textbook_export.py make_sbatch_from_cmdtxt.py"
+    
+    DOWNLOAD_COUNT=0
+    for script in $SCRIPTS; do
+        if curl -sSL "$REPO_URL/raw/main/bin/$script" -o "$INSTALL_DIR/bin/$script" 2>/dev/null; then
+            DOWNLOAD_COUNT=$((DOWNLOAD_COUNT + 1))
+        fi
+    done
+    
+    # Download lib files
+    for libfile in __init__.py cache.py cli.py config.py errors.py io.py logging_config.py parallel.py timing.py validation.py; do
+        curl -sSL "$REPO_URL/raw/main/lib/$libfile" -o "$INSTALL_DIR/lib/$libfile" 2>/dev/null || true
+    done
+    
+    # Download completion script
+    mkdir -p "$INSTALL_DIR/completions"
+    curl -sSL "$REPO_URL/raw/main/completions/ont-completion.bash" -o "$INSTALL_DIR/completions/ont-completion.bash" 2>/dev/null || true
+    
+    if [ "$DOWNLOAD_COUNT" -eq 0 ]; then
+        echo ""
+        echo "❌ Failed to download files. The repository may be private."
+        echo ""
+        echo "For private repository access, clone via SSH first:"
+        echo ""
+        echo "   git clone $SSH_URL"
+        echo "   cd ont-ecosystem"
+        echo "   ./install.sh"
+        echo ""
+        echo "If you have a GitHub Personal Access Token, you can also use:"
+        echo "   git clone https://<TOKEN>@github.com/Single-Molecule-Sequencing/ont-ecosystem.git"
+        echo ""
+        exit 1
+    fi
+    
+    echo "   Downloaded $DOWNLOAD_COUNT scripts"
 fi
 
 # Make scripts executable
