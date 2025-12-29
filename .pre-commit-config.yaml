@@ -1,0 +1,112 @@
+# Pre-commit hooks for ONT Ecosystem
+# Install: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # Standard pre-commit hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ^(textbook/|data/math/)
+      - id: end-of-file-fixer
+        exclude: ^(textbook/|data/math/)
+      - id: check-yaml
+        args: [--unsafe]  # Allow custom YAML tags
+      - id: check-json
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+      - id: debug-statements
+
+  # Python syntax check
+  - repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.10.0
+    hooks:
+      - id: python-check-blanket-noqa
+      - id: python-check-blanket-type-ignore
+      - id: python-no-eval
+        exclude: ^bin/ont_context\.py$  # Safe eval is intentional here
+
+  # Python import sorting
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: ["--profile", "black", "--line-length", "100"]
+        exclude: ^(textbook/|skills/manuscript/generators/)
+
+  # Python linting with ruff (fast)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.9
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        exclude: ^(textbook/|data/)
+
+  # YAML linting
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.33.0
+    hooks:
+      - id: yamllint
+        args: [-d, "{extends: relaxed, rules: {line-length: {max: 150}}}"]
+        exclude: ^(textbook/|registry/schemas/)
+
+  # Shell script linting
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.9.0.6
+    hooks:
+      - id: shellcheck
+        args: ["-e", "SC1091"]  # Ignore sourcing issues
+
+# Local hooks for project-specific checks
+  - repo: local
+    hooks:
+      - id: check-skill-frontmatter
+        name: Check skill frontmatter
+        entry: python -c "
+import re, sys
+from pathlib import Path
+errors = []
+for skill_dir in Path('skills').iterdir():
+    if skill_dir.is_dir():
+        skill_md = skill_dir / 'SKILL.md'
+        if skill_md.exists():
+            content = skill_md.read_text()
+            match = re.match(r'^---\\n(.*?)\\n---', content, re.DOTALL)
+            if not match:
+                errors.append(f'{skill_dir.name}: No frontmatter')
+if errors:
+    for e in errors: print(f'ERROR: {e}')
+    sys.exit(1)
+"
+        language: python
+        files: ^skills/.*SKILL\.md$
+        pass_filenames: false
+
+      - id: check-python-syntax
+        name: Check Python syntax
+        entry: python -m py_compile
+        language: python
+        types: [python]
+        exclude: ^(textbook/|\.git/)
+
+      - id: validate-equations-yaml
+        name: Validate equations.yaml
+        entry: python -c "
+import yaml, sys
+try:
+    with open('textbook/equations.yaml') as f:
+        data = yaml.safe_load(f)
+    if 'equations' not in data:
+        print('ERROR: equations key missing')
+        sys.exit(1)
+    print(f'OK: {len(data[\"equations\"])} equations')
+except Exception as e:
+    print(f'ERROR: {e}')
+    sys.exit(1)
+"
+        language: python
+        files: ^textbook/equations\.yaml$
+        pass_filenames: false
+        additional_dependencies: [pyyaml]

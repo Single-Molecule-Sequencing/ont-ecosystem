@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ont-ecosystem"
-version = "2.1.0"
-description = "Oxford Nanopore experiment management with provenance tracking"
+version = "3.0.0"
+description = "Oxford Nanopore experiment management with provenance tracking and manuscript generation"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
@@ -56,6 +56,8 @@ ont-experiments = "bin.ont_experiments:main"
 ont-align = "bin.ont_align:main"
 ont-pipeline = "bin.ont_pipeline:main"
 ont-monitor = "bin.ont_monitor:main"
+ont-manuscript = "bin.ont_manuscript:main"
+ont-context = "bin.ont_context:main"
 end-reason = "bin.end_reason:main"
 dorado-basecall = "bin.dorado_basecall:main"
 
