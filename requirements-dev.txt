@@ -9,7 +9,16 @@ pytest>=7.0
 pytest-cov>=4.0
 
 # Analysis (optional but recommended)
-numpy>=1.20
+# NOTE: matplotlib must be compatible with numpy version
+# Option 1 (recommended): Use numpy 1.x with any matplotlib
+#   numpy>=1.20,<2
+#   matplotlib>=3.5
+# Option 2: Use numpy 2.x with matplotlib 3.9+
+#   numpy>=2.0
+#   matplotlib>=3.9
+#
+# Default: numpy 1.x for broader compatibility with system packages
+numpy>=1.20,<2
 pandas>=1.5
 matplotlib>=3.5
 

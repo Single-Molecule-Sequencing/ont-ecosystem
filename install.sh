@@ -132,6 +132,65 @@ fi
 echo "📦 Checking Python dependencies..."
 pip install --quiet pyyaml 2>/dev/null || echo "   Note: Install pyyaml manually if needed"
 
+# Check and fix numpy/matplotlib compatibility
+echo "🔧 Checking numpy/matplotlib compatibility..."
+check_numpy_matplotlib() {
+    python3 -c "
+import sys
+try:
+    import numpy as np
+    np_version = tuple(int(x) for x in np.__version__.split('.')[:2])
+except ImportError:
+    print('numpy_missing')
+    sys.exit(0)
+
+try:
+    import matplotlib
+    mpl_version = tuple(int(x) for x in matplotlib.__version__.split('.')[:2])
+except ImportError:
+    print('matplotlib_missing')
+    sys.exit(0)
+except AttributeError as e:
+    if '_ARRAY_API' in str(e):
+        print('incompatible')
+        sys.exit(1)
+    raise
+
+# numpy 2.x requires matplotlib 3.9+
+if np_version[0] >= 2 and mpl_version < (3, 9):
+    print('incompatible')
+    sys.exit(1)
+print('compatible')
+" 2>/dev/null
+}
+
+COMPAT_STATUS=$(check_numpy_matplotlib)
+
+if [ "$COMPAT_STATUS" = "incompatible" ]; then
+    echo "   ⚠️  numpy/matplotlib version mismatch detected"
+    echo ""
+    echo "   Your numpy version (2.x) is incompatible with system matplotlib."
+    echo "   To fix, run one of:"
+    echo "     pip install 'numpy>=1.20,<2'    # Downgrade numpy (recommended)"
+    echo "     pip install matplotlib>=3.9     # Upgrade matplotlib"
+    echo ""
+    echo "   Or use a virtual environment:"
+    echo "     python3 -m venv ~/.ont-venv"
+    echo "     source ~/.ont-venv/bin/activate"
+    echo "     pip install numpy matplotlib pandas"
+    echo ""
+    # Try to fix automatically
+    pip install --quiet 'numpy>=1.20,<2' 2>/dev/null && echo "   ✓ Installed numpy 1.x for compatibility" || true
+elif [ "$COMPAT_STATUS" = "numpy_missing" ]; then
+    echo "   Installing numpy..."
+    pip install --quiet 'numpy>=1.20,<2' 2>/dev/null || echo "   Note: Install numpy manually"
+elif [ "$COMPAT_STATUS" = "matplotlib_missing" ]; then
+    echo "   Note: matplotlib not installed (optional for figure generation)"
+    echo "   Install with: pip install matplotlib"
+else
+    echo "   ✓ numpy/matplotlib versions compatible"
+fi
+
 # Add to shell profile
 SHELL_RC="$HOME/.bashrc"
 [ -f "$HOME/.zshrc" ] && SHELL_RC="$HOME/.zshrc"
