@@ -1,0 +1,7 @@
+HIGHLIGHTS
+
+- Comprehensive registry framework for Oxford Nanopore sequencing experiment metadata
+- 165 experiments catalogued with 100% metadata completeness achieved
+- Standardized schema captures sample, chemistry, basecalling, and QC metrics
+- Documents R10.4.1 chemistry adoption (95%) and Dorado basecaller transition (82%)
+- Median quality scores of Q14.0 and N50 of 4,828 bp across institutional experiments

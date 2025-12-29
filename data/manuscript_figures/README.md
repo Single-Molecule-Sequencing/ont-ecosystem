@@ -51,6 +51,11 @@ pdflatex main_manuscript
 ### References
 - `references_registry.bib` - BibTeX database (13 references)
 
+### Submission Materials
+- `cover_letter.tex` / `.pdf` - Journal cover letter template
+- `highlights.txt` - 5 key highlights for journal submission
+- `graphical_abstract.pdf` / `.png` - Visual summary for TOC
+
 ## Key Statistics
 
 - **165 experiments** with 100% completeness
