@@ -4085,3 +4085,136 @@ equations:
     - information-theory
     latex_full: N > \frac{(z_{\alpha} + z_{\beta})^2}{4\lambda_{\text{min}}(1-\lambda_{\text{min}})}
       \cdot \frac{1}{D_{KL}(h_{\text{minor}}||h_{\text{major}})}
+
+  # =============================================================================
+  # QC Equations with Python Implementations
+  # =============================================================================
+
+  'QC.1':
+    id: 'QC.1'
+    chapter: qc
+    index: 1
+    title: Pass rate calculation
+    latex: R_{\text{pass}} = \frac{N_{\text{pass}}}{N_{\text{total}}} \times 100\%
+    type: metric
+    category: quality-control
+    description: Percentage of reads passing quality thresholds
+    physical_meaning: Higher pass rate indicates better sequencing quality
+    variables:
+      - pass_reads
+      - total_reads
+    python: "(pass_reads / total_reads * 100) if total_reads > 0 else 0"
+    pipeline_stage: basecalling
+    importance: high
+    difficulty: easy
+    tags:
+      - qc
+      - pass-rate
+      - computable
+
+  'QC.2':
+    id: 'QC.2'
+    chapter: qc
+    index: 2
+    title: Signal positive fraction
+    latex: f_{\text{signal+}} = \frac{N_{\text{signal+}}}{N_{\text{total}}}
+    type: metric
+    category: quality-control
+    description: Fraction of reads with signal_positive end reason
+    physical_meaning: High signal_positive indicates natural read completion vs forced ejection
+    variables:
+      - signal_positive_pct
+    python: "signal_positive_pct"
+    pipeline_stage: end_reasons
+    importance: high
+    difficulty: easy
+    tags:
+      - qc
+      - end-reason
+      - computable
+
+  'QC.3':
+    id: 'QC.3'
+    chapter: qc
+    index: 3
+    title: Quality score to error probability
+    latex: P_{\text{error}} = 10^{-Q/10}
+    type: conversion
+    category: quality-control
+    description: Convert Phred quality score to error probability
+    physical_meaning: Q20 = 1% error, Q30 = 0.1% error
+    variables:
+      - mean_qscore
+    python: "10 ** (-mean_qscore / 10)"
+    pipeline_stage: basecalling
+    importance: foundational
+    difficulty: easy
+    tags:
+      - qc
+      - quality-score
+      - phred
+      - computable
+
+  'QC.4':
+    id: 'QC.4'
+    chapter: qc
+    index: 4
+    title: Throughput in gigabases
+    latex: T_{\text{Gb}} = \frac{B_{\text{total}}}{10^9}
+    type: metric
+    category: throughput
+    description: Total sequencing output in gigabases
+    physical_meaning: Higher throughput indicates more sequencing data
+    variables:
+      - total_bases
+    python: "total_bases / 1e9"
+    pipeline_stage: basecalling
+    importance: high
+    difficulty: easy
+    tags:
+      - throughput
+      - gigabases
+      - computable
+
+  'QC.5':
+    id: 'QC.5'
+    chapter: qc
+    index: 5
+    title: Mean read length from totals
+    latex: \bar{L} = \frac{B_{\text{total}}}{N_{\text{total}}}
+    type: metric
+    category: length-statistics
+    description: Average read length from total bases and reads
+    physical_meaning: Longer reads improve assembly and phasing
+    variables:
+      - total_bases
+      - total_reads
+    python: "(total_bases / total_reads) if total_reads > 0 else 0"
+    pipeline_stage: basecalling
+    importance: high
+    difficulty: easy
+    tags:
+      - length
+      - mean
+      - computable
+
+  'QC.6':
+    id: 'QC.6'
+    chapter: qc
+    index: 6
+    title: Accuracy from quality score
+    latex: A = 1 - 10^{-Q/10} = 1 - P_{\text{error}}
+    type: conversion
+    category: quality-control
+    description: Per-base accuracy from mean quality score
+    physical_meaning: Q20 = 99% accuracy, Q30 = 99.9% accuracy
+    variables:
+      - mean_qscore
+    python: "1 - 10 ** (-mean_qscore / 10)"
+    pipeline_stage: basecalling
+    importance: foundational
+    difficulty: easy
+    tags:
+      - accuracy
+      - quality-score
+      - computable

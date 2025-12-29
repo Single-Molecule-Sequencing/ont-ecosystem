@@ -923,6 +923,108 @@ def cmd_list(args):
             print(f"{eid}: {summary['name']} [Grade: {grade}] [{pending} pending]")
 
 
+def cmd_equations(args):
+    """List or compute equations"""
+    equations_db = load_equations()
+    equations = equations_db.get("equations", {})
+
+    if args.json:
+        print(json.dumps({"total": len(equations), "equations": list(equations.keys())}, indent=2))
+    else:
+        print(f"Available Equations: {len(equations)}")
+        print()
+
+        # Group by category/chapter
+        by_chapter = {}
+        for eq_id, eq_data in equations.items():
+            if isinstance(eq_data, dict):
+                chapter = eq_data.get("chapter", "uncategorized")
+                if chapter not in by_chapter:
+                    by_chapter[chapter] = []
+                by_chapter[chapter].append((eq_id, eq_data))
+
+        for chapter in sorted(by_chapter.keys(), key=str):
+            eqs = by_chapter[chapter]
+            print(f"  {chapter}: {len(eqs)} equations")
+
+
+def cmd_compute(args):
+    """Compute equations for an experiment"""
+    ctx = load_experiment_context(args.experiment_id)
+    if ctx is None:
+        print(f"Experiment not found: {args.experiment_id}")
+        sys.exit(1)
+
+    if args.equation_id:
+        # Compute single equation
+        equations_db = load_equations()
+        eq_data = equations_db.get("equations", {}).get(args.equation_id)
+        if not eq_data:
+            print(f"Equation not found: {args.equation_id}")
+            sys.exit(1)
+
+        equation = Equation(
+            id=args.equation_id,
+            name=eq_data.get("name", args.equation_id),
+            latex=eq_data.get("latex", ""),
+            description=eq_data.get("description", ""),
+            variables=eq_data.get("variables", []),
+            python=eq_data.get("python"),
+        )
+
+        result = compute_equation(equation, ctx)
+
+        if args.json:
+            print(json.dumps({
+                "equation_id": result.equation_id,
+                "inputs": result.inputs,
+                "output": result.output,
+                "success": result.success,
+                "error": result.error,
+            }, indent=2))
+        else:
+            print(f"Equation: {equation.name}")
+            print(f"LaTeX: {equation.latex[:60]}..." if len(equation.latex) > 60 else f"LaTeX: {equation.latex}")
+            print(f"Inputs: {result.inputs}")
+            if result.success:
+                print(f"Result: {result.output}")
+            else:
+                print(f"Error: {result.error}")
+    else:
+        # Compute all applicable equations
+        results = compute_all_equations(ctx)
+
+        if args.json:
+            output = {
+                "experiment_id": ctx.id,
+                "computed": len([r for r in results.values() if r.success]),
+                "failed": len([r for r in results.values() if not r.success]),
+                "results": {
+                    eq_id: {
+                        "output": r.output,
+                        "success": r.success,
+                        "error": r.error
+                    } for eq_id, r in results.items()
+                }
+            }
+            print(json.dumps(output, indent=2))
+        else:
+            successful = [r for r in results.values() if r.success]
+            failed = [r for r in results.values() if not r.success]
+
+            print(f"Experiment: {ctx.name}")
+            print(f"Computed: {len(successful)} equations")
+            print(f"Failed: {len(failed)} equations")
+            print()
+
+            if successful:
+                print("Results:")
+                for result in successful[:10]:  # Show first 10
+                    print(f"  {result.equation_id}: {result.output}")
+                if len(successful) > 10:
+                    print(f"  ... and {len(successful) - 10} more")
+
+
 def main():
     import argparse
 
@@ -942,6 +1044,18 @@ def main():
     p_list = subparsers.add_parser("list", help="List all experiments")
     p_list.add_argument("--json", action="store_true", help="Output as JSON")
     p_list.set_defaults(func=cmd_list)
+
+    # equations
+    p_equations = subparsers.add_parser("equations", help="List available equations")
+    p_equations.add_argument("--json", action="store_true", help="Output as JSON")
+    p_equations.set_defaults(func=cmd_equations)
+
+    # compute
+    p_compute = subparsers.add_parser("compute", help="Compute equations for experiment")
+    p_compute.add_argument("experiment_id", help="Experiment ID")
+    p_compute.add_argument("--equation", "-e", dest="equation_id", help="Specific equation ID")
+    p_compute.add_argument("--json", action="store_true", help="Output as JSON")
+    p_compute.set_defaults(func=cmd_compute)
 
     args = parser.parse_args()
 
