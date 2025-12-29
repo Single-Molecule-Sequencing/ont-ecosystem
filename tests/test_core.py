@@ -635,3 +635,97 @@ def test_schemas_directory_exists():
     for schema_name in expected_schemas:
         schema_file = schemas_dir / schema_name
         assert schema_file.exists(), f"Missing schema: {schema_name}"
+
+
+# =============================================================================
+# Equation Execution Tests
+# =============================================================================
+
+def test_load_equations():
+    """Test loading equations from textbook/equations.yaml"""
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    sys.path.insert(0, str(bin_dir))
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "ont_context",
+        bin_dir / "ont_context.py"
+    )
+    ont_context = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_context)
+
+    equations = ont_context.load_equations()
+    assert "equations" in equations, "Should have equations key"
+    assert len(equations["equations"]) > 0, "Should have equations loaded"
+
+
+def test_computable_equations_exist():
+    """Test that QC equations with Python implementations exist"""
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    sys.path.insert(0, str(bin_dir))
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "ont_context",
+        bin_dir / "ont_context.py"
+    )
+    ont_context = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_context)
+
+    equations = ont_context.load_equations()
+    eq_dict = equations.get("equations", {})
+
+    # Check for QC equations with Python implementations
+    qc_equations = [eq_id for eq_id in eq_dict.keys() if eq_id.startswith("QC.")]
+    assert len(qc_equations) >= 6, f"Should have at least 6 QC equations, found {len(qc_equations)}"
+
+    # Check that they have Python implementations
+    for eq_id in qc_equations:
+        eq_data = eq_dict[eq_id]
+        assert "python" in eq_data, f"QC equation {eq_id} should have Python implementation"
+
+
+# =============================================================================
+# Generator Tests
+# =============================================================================
+
+def test_figure_generators_exist():
+    """Test that figure generator scripts exist"""
+    generators_dir = Path(__file__).parent.parent / 'skills' / 'manuscript' / 'generators'
+    assert generators_dir.exists(), "Generators directory should exist"
+
+    expected_generators = [
+        'gen_end_reason_kde.py',
+        'gen_qc_summary_table.py',
+        'gen_quality_distribution.py',
+        'gen_read_length_distribution.py',
+        'gen_comparison_plot.py',
+        'gen_comparison_table.py',
+        'gen_basecalling_table.py',
+    ]
+
+    for gen_name in expected_generators:
+        gen_file = generators_dir / gen_name
+        assert gen_file.exists(), f"Missing generator: {gen_name}"
+
+
+def test_manuscript_registries():
+    """Test that manuscript figure and table registries are populated"""
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    sys.path.insert(0, str(bin_dir))
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "ont_manuscript",
+        bin_dir / "ont_manuscript.py"
+    )
+    ont_manuscript = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_manuscript)
+
+    # Check figure generators registry
+    assert hasattr(ont_manuscript, 'FIGURE_GENERATORS'), "Should have FIGURE_GENERATORS"
+    assert len(ont_manuscript.FIGURE_GENERATORS) >= 5, "Should have at least 5 figure types"
+
+    # Check table generators registry
+    assert hasattr(ont_manuscript, 'TABLE_GENERATORS'), "Should have TABLE_GENERATORS"
+    assert len(ont_manuscript.TABLE_GENERATORS) >= 4, "Should have at least 4 table types"
