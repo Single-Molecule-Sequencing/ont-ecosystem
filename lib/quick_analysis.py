@@ -11,6 +11,7 @@ Sampling Priority:
 """
 
 import gzip
+import math
 import os
 import random
 import time
@@ -22,6 +23,36 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Maximum reads to sample for quick analysis
 MAX_SAMPLE_READS = 50000
+
+
+# =============================================================================
+# Q-score Utilities (Phred scale - must average in probability space)
+# =============================================================================
+
+def _qscore_to_error_prob(q: float) -> float:
+    """Convert Q-score to error probability: P = 10^(-Q/10)"""
+    return 10 ** (-q / 10)
+
+def _error_prob_to_qscore(p: float) -> float:
+    """Convert error probability to Q-score: Q = -10 * log10(P)"""
+    if p <= 0:
+        return 60.0  # Cap at Q60 for zero probability
+    return -10 * math.log10(p)
+
+def _mean_qscore_from_quals(quals: List[int]) -> float:
+    """
+    Calculate mean Q-score correctly via probability space.
+
+    Q-scores are logarithmic (Phred scale), so we must:
+    1. Convert each Q to error probability
+    2. Average the probabilities
+    3. Convert back to Q-score
+    """
+    if not quals:
+        return 0.0
+    probs = [_qscore_to_error_prob(q) for q in quals]
+    mean_prob = sum(probs) / len(probs)
+    return _error_prob_to_qscore(mean_prob)
 
 
 @dataclass
@@ -419,9 +450,10 @@ def sample_fastq_files(
                         lengths.append(length)
 
                         # Convert quality string to Q-scores (Phred+33)
+                        # Must average via probability space since Q-scores are logarithmic
                         if qual:
                             q_vals = [ord(c) - 33 for c in qual]
-                            mean_q = sum(q_vals) / len(q_vals) if q_vals else 0
+                            mean_q = _mean_qscore_from_quals(q_vals)
                             qscores.append(mean_q)
 
                         if is_pass:
@@ -818,8 +850,9 @@ def sample_fast5_files(
                             lengths.append(len(seq))
 
                             if qual:
+                                # Must average via probability space since Q-scores are logarithmic
                                 q_vals = [ord(c) - 33 for c in qual]
-                                mean_q = sum(q_vals) / len(q_vals) if q_vals else 0
+                                mean_q = _mean_qscore_from_quals(q_vals)
                                 qscores.append(mean_q)
 
                             if is_pass:

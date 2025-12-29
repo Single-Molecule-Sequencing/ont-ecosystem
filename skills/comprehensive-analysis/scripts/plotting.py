@@ -64,6 +64,24 @@ def q_to_accuracy(q):
     return (1 - 10 ** (-q / 10)) * 100
 
 
+def mean_qscore(qscores):
+    """
+    Calculate mean Q-score correctly via probability space.
+
+    Q-scores are logarithmic (Phred scale), so we must:
+    1. Convert each Q to error probability: P = 10^(-Q/10)
+    2. Average the probabilities
+    3. Convert back to Q-score: Q = -10 * log10(P_avg)
+    """
+    if len(qscores) == 0:
+        return 0.0
+    probs = np.power(10, -np.asarray(qscores) / 10)
+    mean_prob = np.mean(probs)
+    if mean_prob <= 0:
+        return 60.0  # Cap at Q60
+    return -10 * np.log10(mean_prob)
+
+
 def detect_peaks(y, height_threshold=0.05, distance=50):
     """Detect peaks in array with smoothing."""
     try:
@@ -311,7 +329,7 @@ def plot_quality_kde_by_end_reason(df, output_path, qscore_col, end_reason_col, 
             q15_pct = np.sum(er_qscores >= 15) / len(er_qscores) * 100
             q20_pct = np.sum(er_qscores >= 20) / len(er_qscores) * 100
             stats_text += f"{end_reason}:\n"
-            stats_text += f"  Mean Q: {np.mean(er_qscores):.1f}\n"
+            stats_text += f"  Mean Q: {mean_qscore(er_qscores):.1f}\n"
             stats_text += f"  ≥Q10: {q10_pct:.1f}%\n"
             stats_text += f"  ≥Q15: {q15_pct:.1f}%\n"
             stats_text += f"  ≥Q20: {q20_pct:.1f}%\n\n"
@@ -411,7 +429,7 @@ def plot_quality_kde_by_end_reason(df, output_path, qscore_col, end_reason_col, 
         mask = df[end_reason_col] == end_reason
         er_qscores = df.loc[mask, qscore_col].values
         if len(er_qscores) > 10:
-            mean_q.append(np.mean(er_qscores))
+            mean_q.append(mean_qscore(er_qscores))
             colors_bar.append(END_REASON_COLORS.get(end_reason, COLORS['primary']))
             labels.append(end_reason.replace('_', '\n'))
     bars = ax7.bar(range(len(mean_q)), mean_q, color=colors_bar, alpha=0.7)
@@ -461,7 +479,7 @@ def plot_publication_summary(df, output_path, length_col, qscore_col, end_reason
 
     n50 = calculate_n50(lengths)
     mean_len = np.mean(lengths)
-    mean_q = np.mean(qscores)
+    mean_q = mean_qscore(qscores)
     median_q = np.median(qscores)
     total_bases = np.sum(lengths)
     q10_pct = np.sum(qscores >= 10) / len(qscores) * 100
@@ -566,7 +584,7 @@ def plot_publication_summary(df, output_path, length_col, qscore_col, end_reason
         mask = df[end_reason_col] == er
         er_qscores = df.loc[mask, qscore_col].values
         if len(er_qscores) > 100:
-            mean_q_data.append(np.mean(er_qscores))
+            mean_q_data.append(mean_qscore(er_qscores))
             labels.append(er.replace('_', '\n'))
             colors_bar.append(END_REASON_COLORS.get(er, COLORS['primary']))
     bars = ax_e.bar(range(len(mean_q_data)), mean_q_data, color=colors_bar, alpha=0.8)
@@ -896,7 +914,7 @@ def plot_channel_analysis(df, output_path, length_col, qscore_col, end_reason_co
         for er in end_reasons:
             er_mask = mask & (df[end_reason_col].values == er)
             er_qscores = qscores[er_mask]
-            mean_q[er].append(np.mean(er_qscores) if len(er_qscores) > 0 else 0)
+            mean_q[er].append(mean_qscore(er_qscores) if len(er_qscores) > 0 else 0)
 
     for i, er in enumerate(end_reasons):
         color = END_REASON_COLORS.get(er, COLORS['primary'])
@@ -1116,7 +1134,7 @@ def plot_quality_length_correlation(df, output_path, length_col, qscore_col,
             for i in range(len(length_bins) - 1):
                 bin_mask = (er_lengths >= length_bins[i]) & (er_lengths < length_bins[i+1])
                 if bin_mask.sum() > 10:
-                    binned_q.append(np.mean(er_qscores[bin_mask]))
+                    binned_q.append(mean_qscore(er_qscores[bin_mask]))
                     bin_centers.append((length_bins[i] + length_bins[i+1]) / 2)
 
             color = END_REASON_COLORS.get(er, COLORS['primary'])
@@ -1236,7 +1254,7 @@ def plot_hourly_evolution(df, output_path, length_col, qscore_col, end_reason_co
         for h in range(max_hour):
             h_mask = er_hours == h
             if h_mask.sum() > 10:
-                hourly_q.append(np.mean(er_qscores[h_mask]))
+                hourly_q.append(mean_qscore(er_qscores[h_mask]))
                 valid_hours.append(h)
 
         if valid_hours:
@@ -1404,7 +1422,7 @@ def plot_hourly_evolution(df, output_path, length_col, qscore_col, end_reason_co
     ax9 = fig.add_subplot(gs[2, 2])
     ax9.axis('off')
 
-    best_hour_q = np.argmax([np.mean(qscores[hours == h]) if np.sum(hours == h) > 0 else 0
+    best_hour_q = np.argmax([mean_qscore(qscores[hours == h]) if np.sum(hours == h) > 0 else 0
                             for h in range(max_hour)])
     best_hour_yield = np.argmax([lengths[hours == h].sum() for h in range(max_hour)])
 
@@ -1416,7 +1434,7 @@ Total Reads: {len(df):,}
 Total Yield: {lengths.sum()/1e9:.2f} Gb
 
 Best Quality Hour: Hour {best_hour_q}
-  Mean Q: {np.mean(qscores[hours == best_hour_q]):.1f}
+  Mean Q: {mean_qscore(qscores[hours == best_hour_q]):.1f}
 
 Best Yield Hour: Hour {best_hour_yield}
   Yield: {lengths[hours == best_hour_yield].sum()/1e9:.3f} Gb
@@ -1447,7 +1465,7 @@ def plot_overview_summary(df, output_path, length_col, qscore_col, end_reason_co
 
     n50 = calculate_n50(lengths)
     total_bases = np.sum(lengths)
-    mean_q = np.mean(qscores)
+    mean_q = mean_qscore(qscores)
     sp_pct = end_reasons.get('signal_positive', 0) / len(df) * 100
 
     fig = plt.figure(figsize=(16, 10))

@@ -34,6 +34,24 @@ except ImportError as e:
     HAS_DEPS = False
     MISSING_DEP = str(e)
 
+
+def mean_qscore_from_array(qscores: 'np.ndarray') -> float:
+    """
+    Calculate mean Q-score correctly via probability space.
+
+    Q-scores are logarithmic (Phred scale), so we must:
+    1. Convert each Q to error probability: P = 10^(-Q/10)
+    2. Average the probabilities
+    3. Convert back to Q-score: Q = -10 * log10(P_avg)
+    """
+    if len(qscores) == 0:
+        return 0.0
+    probs = np.power(10, -qscores / 10)
+    mean_prob = np.mean(probs)
+    if mean_prob <= 0:
+        return 60.0  # Cap at Q60
+    return -10 * np.log10(mean_prob)
+
 # Import plotting functions
 try:
     from plotting import (
@@ -180,7 +198,7 @@ class ComprehensiveAnalyzer:
             'mean_length': float(np.mean(lengths)) if len(lengths) > 0 else 0,
             'median_length': float(np.median(lengths)) if len(lengths) > 0 else 0,
             'n50': int(calculate_n50(lengths)) if len(lengths) > 0 else 0,
-            'mean_qscore': float(np.mean(qscores)) if len(qscores) > 0 else 0,
+            'mean_qscore': float(mean_qscore_from_array(qscores)) if len(qscores) > 0 else 0,
             'median_qscore': float(np.median(qscores)) if len(qscores) > 0 else 0,
             'pass_reads': len(self.df),
             'fail_reads': 0,

@@ -72,6 +72,24 @@ def q_to_accuracy(q):
     return (1 - q_to_error(q)) * 100
 
 
+def mean_qscore(qscores):
+    """
+    Calculate mean Q-score correctly via probability space.
+
+    Q-scores are logarithmic (Phred scale), so we must:
+    1. Convert each Q to error probability: P = 10^(-Q/10)
+    2. Average the probabilities
+    3. Convert back to Q-score: Q = -10 * log10(P_avg)
+    """
+    if len(qscores) == 0:
+        return 0.0
+    probs = np.power(10, -np.asarray(qscores) / 10)
+    mean_prob = np.mean(probs)
+    if mean_prob <= 0:
+        return 60.0  # Cap at Q60
+    return -10 * np.log10(mean_prob)
+
+
 def load_qscores_from_summary(summary_path: Path, max_reads: int = 50000) -> np.ndarray:
     """Load quality scores from sequencing summary file with optional sampling.
 
@@ -165,7 +183,7 @@ def generate_quality_plot(ctx=None, output_path: Path = None, format: str = "pdf
         return output_path
 
     # Calculate statistics
-    mean_q = np.mean(qscores)
+    mean_q = mean_qscore(qscores)
     median_q = np.median(qscores)
     std_q = np.std(qscores)
     q10_pct = np.sum(qscores >= 10) / len(qscores) * 100
@@ -326,7 +344,7 @@ def generate_quality_publication(qscores: np.ndarray, output_path: Path,
 
     fig, axes = plt.subplots(1, 2, figsize=(12, 5))
 
-    mean_q = np.mean(qscores)
+    mean_q = mean_qscore(qscores)
     median_q = np.median(qscores)
 
     # Left: KDE with threshold coloring
