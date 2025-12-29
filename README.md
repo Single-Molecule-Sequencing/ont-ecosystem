@@ -14,9 +14,31 @@ A comprehensive **consolidated monorepo** (v3.0) for Oxford Nanopore sequencing 
 
 ## Quick Install
 
+### Linux / macOS
+
 ```bash
 curl -sSL https://raw.githubusercontent.com/Single-Molecule-Sequencing/ont-ecosystem/main/install.sh | bash
 source ~/.ont-ecosystem/env.sh
+```
+
+### Windows (PowerShell)
+
+```powershell
+irm https://raw.githubusercontent.com/Single-Molecule-Sequencing/ont-ecosystem/main/install.ps1 | iex
+. "$env:USERPROFILE\.ont-ecosystem\env.ps1"
+```
+
+### From Cloned Repository (All Platforms)
+
+```bash
+git clone https://github.com/Single-Molecule-Sequencing/ont-ecosystem.git
+cd ont-ecosystem
+
+# Linux/macOS
+./install.sh
+
+# Windows PowerShell
+.\install.ps1
 ```
 
 ## Skills Overview
