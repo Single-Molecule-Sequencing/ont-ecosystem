@@ -1,10 +1,36 @@
-"""Tests for utility scripts: ont_stats.py and ont_check.py"""
+"""Tests for utility scripts: ont_stats.py, ont_check.py, ont_help.py"""
 
 import sys
 from pathlib import Path
 
 # Add bin to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / 'bin'))
+
+
+# =============================================================================
+# VERSION file Tests
+# =============================================================================
+
+def test_version_file_exists():
+    """Test that VERSION file exists"""
+    version_file = Path(__file__).parent.parent / 'VERSION'
+    assert version_file.exists(), "VERSION file should exist"
+
+
+def test_version_file_matches_lib():
+    """Test that VERSION file matches lib/__init__.py version"""
+    version_file = Path(__file__).parent.parent / 'VERSION'
+    version = version_file.read_text().strip()
+
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    sys.path.insert(0, str(lib_dir.parent))
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("lib", lib_dir / "__init__.py")
+    lib = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(lib)
+
+    assert version == lib.__version__, f"VERSION ({version}) should match lib ({lib.__version__})"
 
 
 # =============================================================================
@@ -238,3 +264,74 @@ def test_run_health_check():
         assert 'category' in check
         assert 'status' in check
         assert 'message' in check
+
+
+# =============================================================================
+# ont_help.py Tests
+# =============================================================================
+
+def test_help_imports():
+    """Test that ont_help.py can be imported"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_help",
+        bin_dir / "ont_help.py"
+    )
+    ont_help = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_help)
+
+    assert hasattr(ont_help, 'COMMANDS')
+    assert hasattr(ont_help, 'EXAMPLES')
+    assert hasattr(ont_help, 'print_all_commands')
+    assert hasattr(ont_help, 'print_command_help')
+    assert hasattr(ont_help, 'print_examples')
+
+
+def test_help_commands_registry():
+    """Test that COMMANDS registry is properly structured"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_help",
+        bin_dir / "ont_help.py"
+    )
+    ont_help = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_help)
+
+    # Should have multiple categories
+    assert len(ont_help.COMMANDS) >= 3
+
+    # Each category should have commands
+    for category, commands in ont_help.COMMANDS.items():
+        assert isinstance(category, str)
+        assert len(commands) >= 1
+
+        # Each command should have description and examples
+        for cmd, info in commands.items():
+            assert 'description' in info
+            assert 'examples' in info
+            assert len(info['examples']) >= 1
+
+
+def test_help_core_commands_exist():
+    """Test that core commands are in the registry"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_help",
+        bin_dir / "ont_help.py"
+    )
+    ont_help = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_help)
+
+    # Flatten command names
+    all_commands = []
+    for commands in ont_help.COMMANDS.values():
+        all_commands.extend(commands.keys())
+
+    # Check for essential commands
+    assert 'ont_experiments.py' in all_commands
+    assert 'ont_stats.py' in all_commands
+    assert 'ont_check.py' in all_commands
+    assert 'end_reason.py' in all_commands

@@ -61,9 +61,29 @@ ont-manuscript = "bin.ont_manuscript:main"
 ont-context = "bin.ont_context:main"
 ont-stats = "bin.ont_stats:main"
 ont-check = "bin.ont_check:main"
+ont-help = "bin.ont_help:main"
 end-reason = "bin.end_reason:main"
 dorado-basecall = "bin.dorado_basecall:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = "test_*.py"
+addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["bin"]
+omit = ["*/test_*", "*/__pycache__/*"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+]
+show_missing = true
+skip_covered = false
+
+[tool.coverage.html]
+directory = "htmlcov"

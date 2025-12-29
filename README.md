@@ -182,7 +182,7 @@ ont-ecosystem/                    # Consolidated Monorepo v3.0
 │
 ├── dashboards/                   # React JSX components
 ├── examples/                     # Pipelines + HPC configs
-├── tests/                        # 77 pytest tests
+├── tests/                        # 82 pytest tests
 └── docs/                         # Architecture docs
 ```
 
