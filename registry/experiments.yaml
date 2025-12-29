@@ -1,5 +1,5 @@
 version: '2.0'
-updated: '2025-12-29T16:24:39.630329+00:00'
+updated: '2025-12-29T16:36:49.558641+00:00'
 experiments:
 - id: exp-621da4b6e669
   name: 11242025_IF_Part4_SMA_seq
@@ -4715,5 +4715,403 @@ experiments:
   fastq_files: 2
   bam_files: 2
   discovered: '2025-12-29T16:15:07.287440+00:00'
+- id: pub-giab_202-HG001-PAW79146
+  name: giab_2025.01_HG001_PAW79146
+  location: s3://ont-open-data/giab_2025.01/flowcells/HG001/PAW79146/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: giab_2025.01
+  sample: HG001
+  flowcell_id: PAW79146
+  description: GIAB Reference Samples 2025
+  discovered: '2025-12-29T16:36:35.878909+00:00'
+- id: pub-giab_202-HG001-PAW81754
+  name: giab_2025.01_HG001_PAW81754
+  location: s3://ont-open-data/giab_2025.01/flowcells/HG001/PAW81754/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: giab_2025.01
+  sample: HG001
+  flowcell_id: PAW81754
+  description: GIAB Reference Samples 2025
+  discovered: '2025-12-29T16:36:35.878931+00:00'
+- id: pub-giab_202-HG002-PAW70337
+  name: giab_2025.01_HG002_PAW70337
+  location: s3://ont-open-data/giab_2025.01/flowcells/HG002/PAW70337/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: giab_2025.01
+  sample: HG002
+  flowcell_id: PAW70337
+  description: GIAB Reference Samples 2025
+  discovered: '2025-12-29T16:36:36.255144+00:00'
+- id: pub-giab_202-HG002-PAW71238
+  name: giab_2025.01_HG002_PAW71238
+  location: s3://ont-open-data/giab_2025.01/flowcells/HG002/PAW71238/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: giab_2025.01
+  sample: HG002
+  flowcell_id: PAW71238
+  description: GIAB Reference Samples 2025
+  discovered: '2025-12-29T16:36:36.255163+00:00'
+- id: pub-giab_202-HG003-PAY87794
+  name: giab_2025.01_HG003_PAY87794
+  location: s3://ont-open-data/giab_2025.01/flowcells/HG003/PAY87794/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: giab_2025.01
+  sample: HG003
+  flowcell_id: PAY87794
+  description: GIAB Reference Samples 2025
+  discovered: '2025-12-29T16:36:36.630157+00:00'
+- id: pub-giab_202-HG003-PAY87954
+  name: giab_2025.01_HG003_PAY87954
+  location: s3://ont-open-data/giab_2025.01/flowcells/HG003/PAY87954/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: giab_2025.01
+  sample: HG003
+  flowcell_id: PAY87954
+  description: GIAB Reference Samples 2025
+  discovered: '2025-12-29T16:36:36.630175+00:00'
+- id: pub-giab_202-HG004-PAY87778
+  name: giab_2025.01_HG004_PAY87778
+  location: s3://ont-open-data/giab_2025.01/flowcells/HG004/PAY87778/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: giab_2025.01
+  sample: HG004
+  flowcell_id: PAY87778
+  description: GIAB Reference Samples 2025
+  discovered: '2025-12-29T16:36:37.001887+00:00'
+- id: pub-giab_202-HG004-PAY88428
+  name: giab_2025.01_HG004_PAY88428
+  location: s3://ont-open-data/giab_2025.01/flowcells/HG004/PAY88428/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: giab_2025.01
+  sample: HG004
+  flowcell_id: PAY88428
+  description: GIAB Reference Samples 2025
+  discovered: '2025-12-29T16:36:37.001905+00:00'
+- id: pub-giab_202-HG005-PAW87816
+  name: giab_2025.01_HG005_PAW87816
+  location: s3://ont-open-data/giab_2025.01/flowcells/HG005/PAW87816/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: giab_2025.01
+  sample: HG005
+  flowcell_id: PAW87816
+  description: GIAB Reference Samples 2025
+  discovered: '2025-12-29T16:36:37.373955+00:00'
+- id: pub-giab_202-HG005-PAW88001
+  name: giab_2025.01_HG005_PAW88001
+  location: s3://ont-open-data/giab_2025.01/flowcells/HG005/PAW88001/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: giab_2025.01
+  sample: HG005
+  flowcell_id: PAW88001
+  description: GIAB Reference Samples 2025
+  discovered: '2025-12-29T16:36:37.373987+00:00'
+- id: pub-giab_202-HG006-PAY77227
+  name: giab_2025.01_HG006_PAY77227
+  location: s3://ont-open-data/giab_2025.01/flowcells/HG006/PAY77227/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: giab_2025.01
+  sample: HG006
+  flowcell_id: PAY77227
+  description: GIAB Reference Samples 2025
+  discovered: '2025-12-29T16:36:37.744603+00:00'
+- id: pub-giab_202-HG006-PBA16846
+  name: giab_2025.01_HG006_PBA16846
+  location: s3://ont-open-data/giab_2025.01/flowcells/HG006/PBA16846/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: giab_2025.01
+  sample: HG006
+  flowcell_id: PBA16846
+  description: GIAB Reference Samples 2025
+  discovered: '2025-12-29T16:36:37.744620+00:00'
+- id: pub-giab_202-HG007-PAY12990
+  name: giab_2025.01_HG007_PAY12990
+  location: s3://ont-open-data/giab_2025.01/flowcells/HG007/PAY12990/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: giab_2025.01
+  sample: HG007
+  flowcell_id: PAY12990
+  description: GIAB Reference Samples 2025
+  discovered: '2025-12-29T16:36:38.114929+00:00'
+- id: pub-giab_202-HG007-PBA20413
+  name: giab_2025.01_HG007_PBA20413
+  location: s3://ont-open-data/giab_2025.01/flowcells/HG007/PBA20413/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: giab_2025.01
+  sample: HG007
+  flowcell_id: PBA20413
+  description: GIAB Reference Samples 2025
+  discovered: '2025-12-29T16:36:38.114951+00:00'
+- id: pub-giab_202-hg001-20230505
+  name: giab_2023.05_hg001_20230505_1857_1B_PAO99309_94e07fab
+  location: s3://ont-open-data/giab_2023.05/flowcells/hg001/20230505_1857_1B_PAO99309_94e07fab/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: giab_2023.05
+  sample: hg001
+  flowcell_id: 20230505_1857_1B_PAO99309_94e07fab
+  description: GIAB Reference Samples 2023
+  discovered: '2025-12-29T16:36:39.230240+00:00'
+- id: pub-giab_202-hg001-20230509
+  name: giab_2023.05_hg001_20230509_0956_1B_PAO99309_eece804b
+  location: s3://ont-open-data/giab_2023.05/flowcells/hg001/20230509_0956_1B_PAO99309_eece804b/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: giab_2023.05
+  sample: hg001
+  flowcell_id: 20230509_0956_1B_PAO99309_eece804b
+  description: GIAB Reference Samples 2023
+  discovered: '2025-12-29T16:36:39.230261+00:00'
+- id: pub-giab_202-hg002-20230424
+  name: giab_2023.05_hg002_20230424_1302_3H_PAO89685_2264ba8c
+  location: s3://ont-open-data/giab_2023.05/flowcells/hg002/20230424_1302_3H_PAO89685_2264ba8c/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: giab_2023.05
+  sample: hg002
+  flowcell_id: 20230424_1302_3H_PAO89685_2264ba8c
+  description: GIAB Reference Samples 2023
+  discovered: '2025-12-29T16:36:39.604105+00:00'
+- id: pub-giab_202-hg002-20230428
+  name: giab_2023.05_hg002_20230428_1310_3H_PAO89685_c9d0d53f
+  location: s3://ont-open-data/giab_2023.05/flowcells/hg002/20230428_1310_3H_PAO89685_c9d0d53f/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: giab_2023.05
+  sample: hg002
+  flowcell_id: 20230428_1310_3H_PAO89685_c9d0d53f
+  description: GIAB Reference Samples 2023
+  discovered: '2025-12-29T16:36:39.604130+00:00'
+- id: pub-giab_202-hg002-20230429
+  name: giab_2023.05_hg002_20230429_1600_2E_PAO83395_124388f5
+  location: s3://ont-open-data/giab_2023.05/flowcells/hg002/20230429_1600_2E_PAO83395_124388f5/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: giab_2023.05
+  sample: hg002
+  flowcell_id: 20230429_1600_2E_PAO83395_124388f5
+  description: GIAB Reference Samples 2023
+  discovered: '2025-12-29T16:36:39.604136+00:00'
+- id: pub-giab_202-hg002-20230503
+  name: giab_2023.05_hg002_20230503_1206_2E_PAO83395_ba06e1bb
+  location: s3://ont-open-data/giab_2023.05/flowcells/hg002/20230503_1206_2E_PAO83395_ba06e1bb/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: giab_2023.05
+  sample: hg002
+  flowcell_id: 20230503_1206_2E_PAO83395_ba06e1bb
+  description: GIAB Reference Samples 2023
+  discovered: '2025-12-29T16:36:39.604141+00:00'
+- id: pub-giab_202-hg003-20230504
+  name: giab_2023.05_hg003_20230504_0915_3E_PAO98397_289a47d8
+  location: s3://ont-open-data/giab_2023.05/flowcells/hg003/20230504_0915_3E_PAO98397_289a47d8/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: giab_2023.05
+  sample: hg003
+  flowcell_id: 20230504_0915_3E_PAO98397_289a47d8
+  description: GIAB Reference Samples 2023
+  discovered: '2025-12-29T16:36:39.969351+00:00'
+- id: pub-giab_202-hg003-20230505
+  name: giab_2023.05_hg003_20230505_1609_3E_PAO98397_4e702cd4
+  location: s3://ont-open-data/giab_2023.05/flowcells/hg003/20230505_1609_3E_PAO98397_4e702cd4/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: giab_2023.05
+  sample: hg003
+  flowcell_id: 20230505_1609_3E_PAO98397_4e702cd4
+  description: GIAB Reference Samples 2023
+  discovered: '2025-12-29T16:36:39.969370+00:00'
+- id: pub-giab_202-hg004-20230503
+  name: giab_2023.05_hg004_20230503_2350_2C_PAO98633_064894cd
+  location: s3://ont-open-data/giab_2023.05/flowcells/hg004/20230503_2350_2C_PAO98633_064894cd/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: giab_2023.05
+  sample: hg004
+  flowcell_id: 20230503_2350_2C_PAO98633_064894cd
+  description: GIAB Reference Samples 2023
+  discovered: '2025-12-29T16:36:40.359774+00:00'
+- id: pub-giab_202-hg004-20230505
+  name: giab_2023.05_hg004_20230505_1706_2G_PAO98633_9ddb25e9
+  location: s3://ont-open-data/giab_2023.05/flowcells/hg004/20230505_1706_2G_PAO98633_9ddb25e9/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: giab_2023.05
+  sample: hg004
+  flowcell_id: 20230505_1706_2G_PAO98633_9ddb25e9
+  description: GIAB Reference Samples 2023
+  discovered: '2025-12-29T16:36:40.359804+00:00'
+- id: pub-giab_202-hg004-20230506
+  name: giab_2023.05_hg004_20230506_1221_2G_PAO98633_162f2f43
+  location: s3://ont-open-data/giab_2023.05/flowcells/hg004/20230506_1221_2G_PAO98633_162f2f43/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: giab_2023.05
+  sample: hg004
+  flowcell_id: 20230506_1221_2G_PAO98633_162f2f43
+  description: GIAB Reference Samples 2023
+  discovered: '2025-12-29T16:36:40.359813+00:00'
+- id: pub-pgx_as_2-cohort_1-other_re
+  name: pgx_as_2025.07_cohort_1_other_reports
+  location: s3://ont-open-data/pgx_as_2025.07/flowcells/cohort_1/other_reports/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: pgx_as_2025.07
+  sample: cohort_1
+  flowcell_id: other_reports
+  description: Pharmacogenomics Adaptive Sampling
+  discovered: '2025-12-29T16:36:41.484226+00:00'
+- id: pub-pgx_as_2-cohort_1-pod5
+  name: pgx_as_2025.07_cohort_1_pod5
+  location: s3://ont-open-data/pgx_as_2025.07/flowcells/cohort_1/pod5/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: pgx_as_2025.07
+  sample: cohort_1
+  flowcell_id: pod5
+  description: Pharmacogenomics Adaptive Sampling
+  discovered: '2025-12-29T16:36:41.484273+00:00'
+- id: pub-pgx_as_2-cohort_1-pod5_ski
+  name: pgx_as_2025.07_cohort_1_pod5_skip
+  location: s3://ont-open-data/pgx_as_2025.07/flowcells/cohort_1/pod5_skip/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: pgx_as_2025.07
+  sample: cohort_1
+  flowcell_id: pod5_skip
+  description: Pharmacogenomics Adaptive Sampling
+  discovered: '2025-12-29T16:36:41.484288+00:00'
+- id: pub-colo829_-colo829-20240117
+  name: colo829_2024.03_colo829_20240117_1637_1E_PAU61426_4ddb6960
+  location: s3://ont-open-data/colo829_2024.03/flowcells/colo829/20240117_1637_1E_PAU61426_4ddb6960/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: colo829_2024.03
+  sample: colo829
+  flowcell_id: 20240117_1637_1E_PAU61426_4ddb6960
+  description: COLO829 Cancer Cell Line
+  discovered: '2025-12-29T16:36:43.384482+00:00'
+- id: pub-colo829_-colo829-20240120
+  name: colo829_2024.03_colo829_20240120_1216_1E_PAU61426_7a90e897
+  location: s3://ont-open-data/colo829_2024.03/flowcells/colo829/20240120_1216_1E_PAU61426_7a90e897/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: colo829_2024.03
+  sample: colo829
+  flowcell_id: 20240120_1216_1E_PAU61426_7a90e897
+  description: COLO829 Cancer Cell Line
+  discovered: '2025-12-29T16:36:43.384510+00:00'
+- id: pub-colo829_-colo829b-20240117
+  name: colo829_2024.03_colo829bl_20240117_1637_1G_PAU61427_b6e42f52
+  location: s3://ont-open-data/colo829_2024.03/flowcells/colo829bl/20240117_1637_1G_PAU61427_b6e42f52/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: colo829_2024.03
+  sample: colo829bl
+  flowcell_id: 20240117_1637_1G_PAU61427_b6e42f52
+  description: COLO829 Cancer Cell Line
+  discovered: '2025-12-29T16:36:43.754493+00:00'
+- id: pub-colo829_-colo829b-20240120
+  name: colo829_2024.03_colo829bl_20240120_1216_1G_PAU61427_be427a2e
+  location: s3://ont-open-data/colo829_2024.03/flowcells/colo829bl/20240120_1216_1G_PAU61427_be427a2e/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: colo829_2024.03
+  sample: colo829bl
+  flowcell_id: 20240120_1216_1G_PAU61427_be427a2e
+  description: COLO829 Cancer Cell Line
+  discovered: '2025-12-29T16:36:43.754521+00:00'
+- id: pub-visium_h-PBC44593-pod5
+  name: visium_hd_2025.06_PBC44593_pod5
+  location: s3://ont-open-data/visium_hd_2025.06/flowcells/PBC44593/pod5/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: visium_hd_2025.06
+  sample: PBC44593
+  flowcell_id: pod5
+  description: Visium HD Spatial
+  discovered: '2025-12-29T16:36:46.347710+00:00'
+- id: pub-visium_h-PBC44760-pod5
+  name: visium_hd_2025.06_PBC44760_pod5
+  location: s3://ont-open-data/visium_hd_2025.06/flowcells/PBC44760/pod5/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: visium_hd_2025.06
+  sample: PBC44760
+  flowcell_id: pod5
+  description: Visium HD Spatial
+  discovered: '2025-12-29T16:36:46.719036+00:00'
+- id: pub-visium_h-PBC49262-pod5
+  name: visium_hd_2025.06_PBC49262_pod5
+  location: s3://ont-open-data/visium_hd_2025.06/flowcells/PBC49262/pod5/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: visium_hd_2025.06
+  sample: PBC49262
+  flowcell_id: pod5
+  description: Visium HD Spatial
+  discovered: '2025-12-29T16:36:47.095753+00:00'
+- id: pub-visium_h-PBC52788-pod5
+  name: visium_hd_2025.06_PBC52788_pod5
+  location: s3://ont-open-data/visium_hd_2025.06/flowcells/PBC52788/pod5/
+  status: public
+  source: ont-open-data
+  platform: PromethION
+  dataset: visium_hd_2025.06
+  sample: PBC52788
+  flowcell_id: pod5
+  description: Visium HD Spatial
+  discovered: '2025-12-29T16:36:47.464036+00:00'
 stats:
-  total_experiments: 275
+  total_experiments: 311
+  public_experiments: 36
+  lab_experiments: 275
