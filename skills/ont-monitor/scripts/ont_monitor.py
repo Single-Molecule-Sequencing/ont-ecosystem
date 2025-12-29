@@ -70,6 +70,38 @@ try:
 except ImportError:
     HAS_NUMPY = False
 
+import math
+
+
+# =============================================================================
+# Q-score Utilities (Phred scale - MUST average in probability space)
+# =============================================================================
+# IMPORTANT: Q-scores are logarithmic and cannot be averaged directly.
+# Must convert to probability, average, then convert back.
+
+def _mean_qscore(qscores):
+    """
+    Calculate mean Q-score correctly via probability space.
+
+    Q-scores are logarithmic (Phred scale), so we MUST:
+    1. Convert each Q to error probability: P = 10^(-Q/10)
+    2. Average the probabilities
+    3. Convert back to Q-score: Q = -10 * log10(P_avg)
+
+    Direct averaging of Q-scores is INCORRECT.
+    """
+    if not qscores:
+        return 0.0
+    if HAS_NUMPY:
+        probs = np.power(10, -np.array(qscores) / 10)
+        mean_prob = np.mean(probs)
+    else:
+        probs = [10 ** (-q / 10) for q in qscores]
+        mean_prob = sum(probs) / len(probs)
+    if mean_prob <= 0:
+        return 60.0  # Cap at Q60
+    return -10 * math.log10(mean_prob)
+
 
 # =============================================================================
 # Configuration & Thresholds
@@ -152,7 +184,7 @@ class ReadStats:
                     break
         
         if self.qscores:
-            self.mean_qscore = sum(self.qscores) / len(self.qscores)
+            self.mean_qscore = _mean_qscore(self.qscores)  # Correct: average in probability space
             sorted_qscores = sorted(self.qscores)
             self.median_qscore = sorted_qscores[len(sorted_qscores) // 2]
     
@@ -809,7 +841,7 @@ class RunMonitor:
                 cumulative_bases=cumulative_bases,
                 reads_per_hour=reads_per_hour,
                 bases_per_hour=bases_per_hour,
-                mean_qscore=sum(bucket_qscores) / len(bucket_qscores) if bucket_qscores else 0,
+                mean_qscore=_mean_qscore(bucket_qscores) if bucket_qscores else 0,
                 n50=n50,
             ))
         

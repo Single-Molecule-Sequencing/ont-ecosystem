@@ -44,6 +44,34 @@ except ImportError:
     HAS_PANDAS = False
     logger.debug("pandas not available, using fallback CSV parsing")
 
+import math
+
+
+# =============================================================================
+# Q-score Utilities (Phred scale - MUST average in probability space)
+# =============================================================================
+# IMPORTANT: Q-scores are logarithmic and cannot be averaged directly.
+# Must convert to probability, average, then convert back.
+
+def _mean_qscore(qscores):
+    """
+    Calculate mean Q-score correctly via probability space.
+
+    Q-scores are logarithmic (Phred scale), so we MUST:
+    1. Convert each Q to error probability: P = 10^(-Q/10)
+    2. Average the probabilities
+    3. Convert back to Q-score: Q = -10 * log10(P_avg)
+
+    Direct averaging of Q-scores is INCORRECT.
+    """
+    if not qscores:
+        return 0.0
+    probs = [10 ** (-q / 10) for q in qscores]
+    mean_prob = sum(probs) / len(probs)
+    if mean_prob <= 0:
+        return 60.0  # Cap at Q60
+    return -10 * math.log10(mean_prob)
+
 
 # =============================================================================
 # Database Class
@@ -620,7 +648,7 @@ def parse_sequencing_summary(filepath):
         'max_read_length': max(stats['lengths']) if stats['lengths'] else 0,
         'min_read_length': min(stats['lengths']) if stats['lengths'] else 0,
         'n50': calculate_n50(stats['lengths']),
-        'mean_qscore': sum(stats['qscores']) / len(stats['qscores']) if stats['qscores'] else 0,
+        'mean_qscore': _mean_qscore(stats['qscores']) if stats['qscores'] else 0,
         'median_qscore': sorted(stats['qscores'])[len(stats['qscores'])//2] if stats['qscores'] else 0,
         'mean_duration': sum(stats['durations']) / len(stats['durations']) if stats['durations'] else 0,
         'total_duration_hours': sum(stats['durations']) / 3600 if stats['durations'] else 0,

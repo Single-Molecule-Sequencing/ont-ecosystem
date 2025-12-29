@@ -44,6 +44,38 @@ DEFAULT_OUTPUT_DIR = Path.home() / "ont_public_analysis"
 DEFAULT_MAX_READS = 50000
 
 
+# =============================================================================
+# Q-score Utilities (Phred scale - MUST average in probability space)
+# =============================================================================
+# IMPORTANT: Q-scores are logarithmic and cannot be averaged directly.
+# Must convert to probability, average, then convert back.
+
+import math
+
+def _mean_qscore(qscores):
+    """
+    Calculate mean Q-score correctly via probability space.
+
+    Q-scores are logarithmic (Phred scale), so we MUST:
+    1. Convert each Q to error probability: P = 10^(-Q/10)
+    2. Average the probabilities
+    3. Convert back to Q-score: Q = -10 * log10(P_avg)
+
+    Direct averaging of Q-scores is INCORRECT.
+    """
+    if not qscores:
+        return 0.0
+    if HAS_NUMPY:
+        probs = np.power(10, -np.array(qscores) / 10)
+        mean_prob = np.mean(probs)
+    else:
+        probs = [10 ** (-q / 10) for q in qscores]
+        mean_prob = sum(probs) / len(probs)
+    if mean_prob <= 0:
+        return 60.0  # Cap at Q60
+    return -10 * math.log10(mean_prob)
+
+
 def run_aws_cmd(args, capture=True):
     """Run AWS CLI command with no-sign-request."""
     cmd = [AWS_CMD] + args + ["--no-sign-request"]
@@ -196,7 +228,7 @@ def stream_bam_reads(s3_path, max_reads=DEFAULT_MAX_READS):
 
             if qual != '*':
                 qscores = [ord(c) - 33 for c in qual]
-                mean_q = sum(qscores) / len(qscores)
+                mean_q = _mean_qscore(qscores)  # Correct: average in probability space
                 stats['qscores'].append(mean_q)
 
             if flag & 4:
@@ -236,7 +268,7 @@ def compute_statistics(stats):
 
     if stats.get('qscores'):
         qscores = stats['qscores']
-        result['mean_qscore'] = sum(qscores) / len(qscores)
+        result['mean_qscore'] = _mean_qscore(qscores)  # Correct: average in probability space
         result['median_qscore'] = sorted(qscores)[len(qscores) // 2]
         result['q10_reads'] = sum(1 for q in qscores if q >= 10)
         result['q20_reads'] = sum(1 for q in qscores if q >= 20)
@@ -659,7 +691,7 @@ def cmd_report(args):
         if n50s:
             report.append(f"- Mean N50: {sum(n50s)/len(n50s):,.0f} bp")
         if qscores:
-            report.append(f"- Mean Q-score: {sum(qscores)/len(qscores):.1f}")
+            report.append(f"- Mean Q-score: {_mean_qscore(qscores):.1f}")
 
     report_path = output_dir / "analysis_report.md"
     with open(report_path, 'w') as f:

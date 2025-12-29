@@ -220,6 +220,35 @@ def Config(config=None, defaults=None):
     return _Config(config, defaults)
 
 
+# Q-score utilities - import on demand
+def mean_qscore(qscores, **kwargs):
+    """Calculate mean Q-score via probability space. Lazy import to avoid startup overhead.
+
+    IMPORTANT: Q-scores are logarithmic and MUST NOT be averaged directly.
+    This function correctly converts to probability space first.
+    """
+    from .qscore import mean_qscore as _mean_qscore
+    return _mean_qscore(qscores, **kwargs)
+
+
+def weighted_mean_qscore(qscores, weights, **kwargs):
+    """Calculate weighted mean Q-score via probability space. Lazy import to avoid startup overhead."""
+    from .qscore import weighted_mean_qscore as _weighted_mean_qscore
+    return _weighted_mean_qscore(qscores, weights, **kwargs)
+
+
+def qscore_to_probability(qscore):
+    """Convert Q-score to error probability. Lazy import to avoid startup overhead."""
+    from .qscore import qscore_to_probability as _qscore_to_probability
+    return _qscore_to_probability(qscore)
+
+
+def probability_to_qscore(probability, **kwargs):
+    """Convert error probability to Q-score. Lazy import to avoid startup overhead."""
+    from .qscore import probability_to_qscore as _probability_to_qscore
+    return _probability_to_qscore(probability, **kwargs)
+
+
 # Parallel processing utilities - import on demand
 def parallel_map(func, items, **kwargs):
     """Parallel map function. Lazy import to avoid startup overhead."""

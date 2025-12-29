@@ -127,8 +127,9 @@ Shared utilities with lazy imports to minimize startup overhead:
 | `lib.parallel` | Thread/process pools, parallel_map, TaskQueue, retry wrappers |
 | `lib.discovery_report` | Experiment discovery reporting utilities |
 | `lib.quick_analysis` | Fast analysis helpers for common operations |
+| `lib.qscore` | Q-score utilities (Phred scale averaging in probability space) |
 
-Usage: `from lib import load_json, ProgressBar, ValidationError, Config, parallel_map`
+Usage: `from lib import load_json, ProgressBar, ValidationError, Config, parallel_map, mean_qscore`
 
 ### Key Components
 
@@ -192,6 +193,34 @@ Variables available: `total_reads`, `total_bases`, `mean_qscore`, `median_qscore
 - **Artifact versioning**: Figures/tables stored with version history in `~/.ont-manuscript/artifacts/`
 - **Lazy imports**: Library modules use lazy imports in `lib/__init__.py`
 - **Wrapper pattern**: `bin/` wrappers import from `skills/*/scripts/` to maintain SSOT
+
+## Fundamental Rules
+
+### Q-Score Averaging (CRITICAL)
+
+**Q-scores are logarithmic (Phred scale) and MUST NOT be averaged directly.**
+
+The correct procedure for calculating mean Q-score:
+1. Convert each Q-score to error probability: `P = 10^(-Q/10)`
+2. Average the probabilities: `P_avg = mean(P_i)`
+3. Convert back to Q-score: `Q_avg = -10 * log10(P_avg)`
+
+**Why this matters:** Direct averaging of Q-scores underestimates error rates. For example:
+- Q10 (10% error) + Q30 (0.1% error) averaged directly = Q20
+- Correct probability-space average = Q10.4 (weighted toward higher error)
+
+**Use the canonical implementation:**
+```python
+from lib import mean_qscore
+
+# Correct way to average Q-scores
+avg_q = mean_qscore(qscores)  # Uses probability space internally
+
+# Also available:
+from lib import weighted_mean_qscore, qscore_to_probability, probability_to_qscore
+```
+
+**This rule applies to all current and future code in this project.**
 
 ## Dependencies
 
