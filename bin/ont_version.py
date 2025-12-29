@@ -156,31 +156,37 @@ def get_version_info() -> VersionInfo:
     )
 
 
+def get_package_version(package_name: str) -> Optional[str]:
+    """Get package version using importlib.metadata (future-proof method)"""
+    try:
+        import importlib.metadata
+        return importlib.metadata.version(package_name)
+    except importlib.metadata.PackageNotFoundError:
+        return None
+    except Exception:
+        return None
+
+
 def get_dependency_versions() -> Dict[str, Optional[str]]:
     """Get versions of all dependencies"""
     dependencies = {}
 
     packages = [
-        ("pyyaml", "yaml"),
-        ("jsonschema", "jsonschema"),
-        ("numpy", "numpy"),
-        ("pandas", "pandas"),
-        ("matplotlib", "matplotlib"),
-        ("pysam", "pysam"),
-        ("edlib", "edlib"),
-        ("pod5", "pod5"),
-        ("h5py", "h5py"),
-        ("flask", "flask"),
-        ("pytest", "pytest"),
+        "pyyaml",
+        "jsonschema",
+        "numpy",
+        "pandas",
+        "matplotlib",
+        "pysam",
+        "edlib",
+        "pod5",
+        "h5py",
+        "flask",
+        "pytest",
     ]
 
-    for package, module in packages:
-        try:
-            mod = __import__(module)
-            version = getattr(mod, "__version__", "installed")
-            dependencies[package] = version
-        except ImportError:
-            dependencies[package] = None
+    for package in packages:
+        dependencies[package] = get_package_version(package)
 
     return dependencies
 

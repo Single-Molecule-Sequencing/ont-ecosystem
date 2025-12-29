@@ -609,7 +609,7 @@ pytest tests/test_core.py::test_edit_distance_basic -v
 
 ## Current Status
 
-- **Tests:** 30/30 passing
+- **Tests:** 180/180 passing
 - **GitHub:** https://github.com/Single-Molecule-Sequencing/ont-ecosystem
 - **Modified files:** 72+ files ready to commit
 - **Experiments registered:** 145 (461.4M reads, 828.2 GB bases)

@@ -18,7 +18,7 @@ help:
 	@echo "  install-dev     Install with development dependencies"
 	@echo ""
 	@echo "Testing:"
-	@echo "  test            Run all tests (162 tests)"
+	@echo "  test            Run all tests (180 tests)"
 	@echo "  test-quick      Run core tests only"
 	@echo "  test-lib        Run library module tests"
 	@echo "  test-coverage   Run tests with coverage report"

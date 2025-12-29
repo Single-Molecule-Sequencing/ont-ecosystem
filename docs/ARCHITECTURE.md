@@ -2,7 +2,7 @@
 
 ## Overview
 
-ONT Ecosystem is a consolidated monorepo (v2.0) for Oxford Nanopore sequencing experiment management, providing:
+ONT Ecosystem is a consolidated monorepo (v3.0) for Oxford Nanopore sequencing experiment management, providing:
 - Event-sourced experiment registry with full provenance
 - Analysis skill packages (end-reason, alignment, basecalling, monitoring)
 - Mathematical framework from the SMS Haplotype Textbook
@@ -13,7 +13,7 @@ ONT Ecosystem is a consolidated monorepo (v2.0) for Oxford Nanopore sequencing e
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                           ONT ECOSYSTEM v2.0                                │
+│                           ONT ECOSYSTEM v3.0                                │
 │                         Consolidated Monorepo                               │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
