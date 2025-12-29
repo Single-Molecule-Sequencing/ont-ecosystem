@@ -37,6 +37,9 @@ if [ -f "bin/ont_experiments.py" ]; then
     cp -r lib/* "$INSTALL_DIR/lib/" 2>/dev/null || true
     cp -r skills/* "$INSTALL_DIR/skills/" 2>/dev/null || true
     cp -r registry "$INSTALL_DIR/" 2>/dev/null || true
+    cp -r completions "$INSTALL_DIR/" 2>/dev/null || true
+    cp -r textbook "$INSTALL_DIR/" 2>/dev/null || true
+    cp -r data "$INSTALL_DIR/" 2>/dev/null || true
 
     # Store source repo path for updates
     REPO_PATH="$(pwd)"
@@ -44,7 +47,7 @@ if [ -f "bin/ont_experiments.py" ]; then
 elif [ "$FORCE_CURL" = true ]; then
     echo "📥 Downloading from GitHub (public repo mode)..."
     echo "   Note: This requires the repository to be public."
-    for script in ont_experiments.py ont_align.py ont_pipeline.py end_reason.py ont_monitor.py dorado_basecall.py calculate_resources.py ont_endreason_qc.py experiment_db.py ont_config.py ont_context.py ont_manuscript.py; do
+    for script in ont_experiments.py ont_align.py ont_pipeline.py end_reason.py ont_monitor.py dorado_basecall.py calculate_resources.py ont_endreason_qc.py experiment_db.py ont_config.py ont_context.py ont_manuscript.py ont_stats.py; do
         curl -sSL "$REPO_URL/raw/main/bin/$script" -o "$INSTALL_DIR/bin/$script" 2>/dev/null || true
     done
 else
@@ -74,8 +77,14 @@ cat > "$INSTALL_DIR/env.sh" << EOF
 # ONT Ecosystem Environment
 export ONT_ECOSYSTEM_HOME="$INSTALL_DIR"
 export PATH="\$ONT_ECOSYSTEM_HOME/bin:\$PATH"
+export PYTHONPATH="\$ONT_ECOSYSTEM_HOME:\$PYTHONPATH"
 export ONT_REGISTRY_DIR="\${ONT_REGISTRY_DIR:-\$HOME/.ont-registry}"
 export ONT_REFERENCES_DIR="\${ONT_REFERENCES_DIR:-\$HOME/.ont-references}"
+
+# Shell completion (bash)
+if [ -f "\$ONT_ECOSYSTEM_HOME/completions/ont-completion.bash" ]; then
+    source "\$ONT_ECOSYSTEM_HOME/completions/ont-completion.bash"
+fi
 EOF
 
 # HPC-specific configuration
@@ -119,12 +128,14 @@ if ! grep -q "ont-ecosystem" "$SHELL_RC" 2>/dev/null; then
 fi
 
 echo ""
-echo "✅ ONT Ecosystem installed successfully!"
+echo "✅ ONT Ecosystem v3.0.0 installed successfully!"
 echo ""
 echo "To activate now, run:"
 echo "   source $INSTALL_DIR/env.sh"
 echo ""
 echo "Quick start:"
-echo "   ont_experiments.py init --git"
-echo "   ont_experiments.py discover /path/to/data --register"
+echo "   ont_stats.py --brief                              # View ecosystem stats"
+echo "   ont_experiments.py init --git                     # Initialize registry"
+echo "   ont_experiments.py discover /path/to/data         # Discover experiments"
+echo "   ont_manuscript.py list-figures                    # List figure generators"
 echo ""

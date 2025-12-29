@@ -1,0 +1,5 @@
+# ONT Ecosystem - Core Requirements
+# Install: pip install -r requirements.txt
+
+pyyaml>=6.0
+jsonschema>=4.0
