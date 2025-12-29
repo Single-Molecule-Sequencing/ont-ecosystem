@@ -25,6 +25,7 @@ SKILLS=(
     "manuscript"
     "ont-align"
     "ont-experiments-v2"
+    "ont-metadata"
     "ont-monitor"
     "ont-pipeline"
     "skill-maker"

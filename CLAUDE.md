@@ -18,6 +18,7 @@ Skills are automatically installed to `~/.claude/commands/`. Invoke with `/<skil
 | `/ont-align` | Alignment, reference management, edit distance |
 | `/ont-pipeline` | Multi-step workflow orchestration |
 | `/ont-monitor` | Real-time sequencing run monitoring |
+| `/ont-metadata` | Extract metadata from POD5/Fast5 raw data files |
 | `/dorado-bench-v2` | Dorado basecalling on UM HPC |
 | `/experiment-db` | SQLite database for experiments |
 | `/manuscript` | Publication figures and tables |
