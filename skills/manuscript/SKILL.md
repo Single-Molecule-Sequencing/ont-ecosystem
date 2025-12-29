@@ -47,8 +47,12 @@ ont_manuscript.py compare exp1 exp2 exp3
 | ID | Description | Formats | Script |
 |----|-------------|---------|--------|
 | fig_end_reason_kde | KDE plot by end reason | pdf, png | gen_end_reason_kde.py |
+| fig_end_reason_pie | End reason pie/donut chart | pdf, png | gen_end_reason_pie.py |
 | fig_quality_dist | Q-score distribution | pdf, png | gen_quality_distribution.py |
 | fig_read_length | Read length distribution | pdf, png | gen_read_length_distribution.py |
+| fig_yield_timeline | Cumulative yield over time | pdf, png | gen_yield_timeline.py |
+| fig_n50_barplot | N50 comparison bar chart | pdf, png | gen_n50_barplot.py |
+| fig_metrics_heatmap | QC metrics heatmap | pdf, png | gen_metrics_heatmap.py |
 | fig_coverage | Coverage depth plot | pdf, png | gen_coverage_plot.py |
 | fig_alignment_stats | Alignment statistics | pdf, png | gen_alignment_stats.py |
 | fig_comparison | Multi-experiment comparison | pdf, png | gen_comparison_plot.py |

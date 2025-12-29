@@ -152,6 +152,36 @@ FIGURE_GENERATORS = {
         "multi_experiment": True,
         "caption": "Experiment comparison",
     },
+    "fig_yield_timeline": {
+        "generator": "gen_yield_timeline.py",
+        "description": "Cumulative yield over time",
+        "formats": ["pdf", "png"],
+        "requires": [],
+        "caption": "Cumulative sequencing yield over time",
+    },
+    "fig_end_reason_pie": {
+        "generator": "gen_end_reason_pie.py",
+        "description": "End reason distribution pie/donut chart",
+        "formats": ["pdf", "png"],
+        "requires": ["end_reasons"],
+        "caption": "Read end reason distribution",
+    },
+    "fig_metrics_heatmap": {
+        "generator": "gen_metrics_heatmap.py",
+        "description": "Heatmap of QC metrics across experiments",
+        "formats": ["pdf", "png"],
+        "requires": [],
+        "multi_experiment": True,
+        "caption": "QC metrics comparison heatmap",
+    },
+    "fig_n50_barplot": {
+        "generator": "gen_n50_barplot.py",
+        "description": "N50 bar chart comparison",
+        "formats": ["pdf", "png"],
+        "requires": [],
+        "multi_experiment": True,
+        "caption": "N50 comparison across experiments",
+    },
 }
 
 

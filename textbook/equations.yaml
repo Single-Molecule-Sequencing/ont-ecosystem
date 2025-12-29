@@ -4218,3 +4218,178 @@ equations:
       - accuracy
       - quality-score
       - computable
+
+  'QC.7':
+    id: 'QC.7'
+    chapter: qc
+    index: 7
+    title: Reads per gigabase
+    latex: R_{\text{Gb}} = \frac{N_{\text{total}} \times 10^9}{B_{\text{total}}}
+    type: metric
+    category: throughput
+    description: Average number of reads per gigabase of output
+    physical_meaning: Lower values indicate longer average read lengths
+    variables:
+      - total_reads
+      - total_bases
+    python: "(total_reads * 1e9 / total_bases) if total_bases > 0 else 0"
+    pipeline_stage: basecalling
+    importance: medium
+    difficulty: easy
+    tags:
+      - throughput
+      - density
+      - computable
+
+  'QC.8':
+    id: 'QC.8'
+    chapter: qc
+    index: 8
+    title: Expected errors per read
+    latex: E_{\text{errors}} = \bar{L} \times 10^{-\bar{Q}/10}
+    type: metric
+    category: quality-control
+    description: Expected number of errors per read based on mean length and quality
+    physical_meaning: Combines length and quality into single error metric
+    variables:
+      - mean_qscore
+      - total_bases
+      - total_reads
+    python: "((total_bases / total_reads) * (10 ** (-mean_qscore / 10))) if total_reads > 0 else 0"
+    pipeline_stage: basecalling
+    importance: high
+    difficulty: medium
+    tags:
+      - errors
+      - quality
+      - computable
+
+  'QC.9':
+    id: 'QC.9'
+    chapter: qc
+    index: 9
+    title: Unblock ratio
+    latex: R_{\text{unblock}} = \frac{P_{\text{unblock}}}{P_{\text{signal+}}}
+    type: metric
+    category: quality-control
+    description: Ratio of unblocked reads to signal positive reads
+    physical_meaning: Lower is better - indicates less adaptive sampling rejection
+    variables:
+      - signal_positive_pct
+      - unblock_pct
+    python: "(unblock_pct / signal_positive_pct) if signal_positive_pct > 0 else 0"
+    pipeline_stage: end_reasons
+    importance: medium
+    difficulty: easy
+    tags:
+      - end-reason
+      - ratio
+      - computable
+
+  'QC.10':
+    id: 'QC.10'
+    chapter: qc
+    index: 10
+    title: Q20 equivalent bases
+    latex: B_{Q20} = B_{\text{total}} \times \frac{1 - 10^{-\bar{Q}/10}}{0.99}
+    type: metric
+    category: quality-control
+    description: Total bases normalized to Q20 equivalent quality
+    physical_meaning: Standardizes output to Q20 reference for comparison
+    variables:
+      - total_bases
+      - mean_qscore
+    python: "(total_bases * (1 - 10**(-mean_qscore/10)) / 0.99) if mean_qscore > 0 else 0"
+    pipeline_stage: basecalling
+    importance: medium
+    difficulty: medium
+    tags:
+      - quality
+      - normalization
+      - computable
+
+  'QC.11':
+    id: 'QC.11'
+    chapter: qc
+    index: 11
+    title: Fail rate percentage
+    latex: R_{\text{fail}} = 100 - R_{\text{pass}}
+    type: metric
+    category: quality-control
+    description: Percentage of reads failing quality thresholds
+    physical_meaning: Complement of pass rate
+    variables:
+      - pass_reads
+      - total_reads
+    python: "(100 - (pass_reads / total_reads * 100)) if total_reads > 0 else 100"
+    pipeline_stage: basecalling
+    importance: medium
+    difficulty: easy
+    tags:
+      - fail-rate
+      - computable
+
+  'QC.12':
+    id: 'QC.12'
+    chapter: qc
+    index: 12
+    title: Log10 total reads
+    latex: \log_{10}(N) = \log_{10}(N_{\text{total}})
+    type: metric
+    category: scale
+    description: Log10 of total read count for scale comparison
+    physical_meaning: Useful for comparing experiments of different sizes
+    variables:
+      - total_reads
+    python: "log10(total_reads) if total_reads > 0 else 0"
+    pipeline_stage: basecalling
+    importance: low
+    difficulty: easy
+    tags:
+      - scale
+      - logarithm
+      - computable
+
+  'STAT.1':
+    id: 'STAT.1'
+    chapter: statistics
+    index: 1
+    title: Binomial standard error for proportion
+    latex: SE_p = \sqrt{\frac{p(1-p)}{N}}
+    type: statistical
+    category: uncertainty
+    description: Standard error for estimated proportion from N observations
+    physical_meaning: Uncertainty decreases as 1/sqrt(N)
+    variables:
+      - signal_positive_pct
+      - total_reads
+    python: "((signal_positive_pct/100 * (1 - signal_positive_pct/100) / total_reads) ** 0.5 * 100) if total_reads > 0 else 0"
+    pipeline_stage: end_reasons
+    importance: high
+    difficulty: medium
+    tags:
+      - statistics
+      - uncertainty
+      - binomial
+      - computable
+
+  'STAT.2':
+    id: 'STAT.2'
+    chapter: statistics
+    index: 2
+    title: Coefficient of variation estimate
+    latex: CV \approx \frac{1}{\sqrt{N}}
+    type: statistical
+    category: uncertainty
+    description: Approximate CV for count-based measurements
+    physical_meaning: Relative uncertainty for Poisson-like counts
+    variables:
+      - total_reads
+    python: "(1 / (total_reads ** 0.5)) if total_reads > 0 else 1"
+    pipeline_stage: basecalling
+    importance: medium
+    difficulty: easy
+    tags:
+      - statistics
+      - cv
+      - computable

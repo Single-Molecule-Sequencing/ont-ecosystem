@@ -196,3 +196,108 @@ jobs:
                   exit(1)
               print(f'✅ {t}/ template complete')
           "
+
+  test-equations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Test equation loading
+        run: |
+          python -c "
+          import sys
+          sys.path.insert(0, 'bin')
+          from ont_context import load_equations
+
+          eqs = load_equations()
+          total = len(eqs.get('equations', {}))
+          print(f'Total equations: {total}')
+
+          # Count computable equations
+          computable = [eq_id for eq_id, eq in eqs.get('equations', {}).items()
+                        if isinstance(eq, dict) and eq.get('python')]
+          print(f'Computable equations: {len(computable)}')
+
+          # Verify QC equations exist
+          qc_eqs = [eq_id for eq_id in computable if eq_id.startswith('QC.')]
+          print(f'QC equations: {len(qc_eqs)}')
+
+          if len(qc_eqs) < 6:
+              print('❌ Expected at least 6 QC equations')
+              exit(1)
+
+          print('✅ Equation system validated')
+          "
+
+  test-generators:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pyyaml matplotlib numpy
+
+      - name: Validate generator scripts
+        run: |
+          python -c "
+          from pathlib import Path
+          import ast
+
+          generators_dir = Path('skills/manuscript/generators')
+          if not generators_dir.exists():
+              print('❌ Generators directory missing')
+              exit(1)
+
+          generators = list(generators_dir.glob('gen_*.py'))
+          print(f'Found {len(generators)} generators')
+
+          for gen in generators:
+              try:
+                  ast.parse(gen.read_text())
+                  print(f'✅ {gen.name}')
+              except SyntaxError as e:
+                  print(f'❌ {gen.name}: {e}')
+                  exit(1)
+
+          if len(generators) < 5:
+              print('❌ Expected at least 5 generators')
+              exit(1)
+
+          print('✅ All generators valid')
+          "
+
+      - name: Test generator imports
+        run: |
+          python -c "
+          import sys
+          sys.path.insert(0, 'skills/manuscript/generators')
+          sys.path.insert(0, 'bin')
+
+          # Test that generators can be imported
+          from gen_end_reason_kde import generate_kde_plot
+          from gen_qc_summary_table import generate_qc_table
+          from gen_quality_distribution import generate_quality_plot
+          from gen_read_length_distribution import generate_length_plot
+          from gen_comparison_plot import generate_comparison_plot
+          from gen_comparison_table import generate_comparison_table
+          from gen_basecalling_table import generate_basecalling_table
+          from gen_yield_timeline import generate_yield_timeline
+          from gen_end_reason_pie import generate_end_reason_pie
+          from gen_metrics_heatmap import generate_metrics_heatmap
+          from gen_n50_barplot import generate_n50_barplot
+
+          print('✅ All 11 generators import successfully')
+          "
