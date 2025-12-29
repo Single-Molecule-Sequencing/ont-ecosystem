@@ -165,8 +165,54 @@ Discovered experiments are exported to `registry/experiments_snapshot.json` for 
 4. User reviews and approves proposed changes
 5. Snapshot exported to GitHub repo
 
+## Raw File Metadata Parsing
+
+The discovery system can now find experiments that don't have `final_summary.txt` files by parsing POD5 and Fast5 files directly.
+
+### Metadata Fields Extracted from POD5
+- `flow_cell_id`, `sample_id`, `acquisition_id`
+- `instrument` (system_name), `system_type`
+- `protocol`, `sequencing_kit`, `flow_cell_product_code`
+- `started` (acquisition_start_time)
+- `experiment_name`, `protocol_run_id`
+- `context_tags` (experiment_type, basecall_model, etc.)
+
+### Metadata Fields Extracted from Fast5
+Uses `ont_fast5_api` (preferred) or `h5py` (fallback) to extract metadata from:
+- **tracking_id**: `flow_cell_id`, `sample_id`, `run_id`, `device_id`, `device_type`, `exp_start_time`
+- **context_tags**: `experiment_type`, `sequencing_kit`, `basecall_model`, `barcoding_enabled`
+- **channel_id**: `sampling_rate`, calibration data
+
+### Fast5 File Types Detected
+- **single-read**: One read per file (legacy format, deprecated)
+- **multi-read**: Multiple reads per file (4000 typical, current standard)
+- **bulk**: Raw channel data stream (special use case, not parsed)
+
+### Usage
+
+```bash
+# Test metadata parser directly
+python3 ont_metadata_parser.py /path/to/experiment
+python3 ont_metadata_parser.py /path/to/file.pod5 --json metadata.json
+
+# Discovery with raw file parsing enabled
+python3 greatlakes_discovery.py scan-local --include-raw-only \
+    --output manifest.json /path/to/data
+
+# Find experiment directories
+python3 ont_metadata_parser.py /path/to/data --find-experiments
+```
+
 ## Dependencies
 
 - Python >= 3.7
 - sqlite3 (standard library)
+- Optional: pod5 (for POD5 metadata parsing)
+- Optional: ont-fast5-api (preferred for Fast5 metadata, uses h5py internally)
+- Optional: h5py (fallback for Fast5 metadata parsing)
 - Optional: pandas (for faster parsing)
+
+Install optional dependencies:
+```bash
+pip install pod5 ont-fast5-api
+```

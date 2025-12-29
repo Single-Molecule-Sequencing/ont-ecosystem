@@ -5,6 +5,10 @@ greatlakes_discovery.py - Experiment Discovery and Database Sync for Great Lakes
 Discovers nanopore experiments on the Athey Lab turbo drive, compares against
 the current database, proposes updates for user approval, and syncs to GitHub.
 
+Enhanced to discover experiments both with and without final_summary.txt files:
+- Primary: Parse final_summary*.txt for complete metadata
+- Fallback: Parse POD5/Fast5 files directly for experiments without summaries
+
 Workflow:
 1. Scan turbo drive for experiments (runs as SLURM job on Great Lakes)
 2. Export findings to JSON manifest
@@ -34,8 +38,32 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Set
 import hashlib
+
+# Import metadata parser (same directory)
+SCRIPT_DIR = Path(__file__).parent
+sys.path.insert(0, str(SCRIPT_DIR))
+
+try:
+    from ont_metadata_parser import (
+        extract_metadata_from_dir,
+        find_experiment_directories,
+        detect_raw_data_type,
+        detect_fast5_type,
+        HAS_POD5,
+        HAS_H5PY,
+        HAS_ONT_FAST5_API,
+        FAST5_SINGLE_READ,
+        FAST5_MULTI_READ,
+        FAST5_BULK,
+    )
+    HAS_METADATA_PARSER = True
+except ImportError:
+    HAS_METADATA_PARSER = False
+    HAS_POD5 = False
+    HAS_H5PY = False
+    HAS_ONT_FAST5_API = False
 
 # Great Lakes Configuration
 GREATLAKES_CONFIG = {
@@ -74,6 +102,7 @@ SLURM_SCAN_TEMPLATE = """#!/bin/bash
 
 # ============================================
 # ONT Experiment Discovery Job - Great Lakes
+# Enhanced with POD5/Fast5 metadata parsing
 # Generated: {timestamp}
 # ============================================
 
@@ -90,11 +119,18 @@ echo ""
 # Load Python if needed
 module load python/3.10 2>/dev/null || true
 
-# Run discovery script
+# Check for optional libraries
+echo "Checking libraries..."
+python3 -c "import pod5; print('  pod5: available')" 2>/dev/null || echo "  pod5: not installed (raw POD5 parsing disabled)"
+python3 -c "import h5py; print('  h5py: available')" 2>/dev/null || echo "  h5py: not installed (raw Fast5 parsing disabled)"
+echo ""
+
+# Run discovery script (enhanced with raw file parsing)
 cd {script_dir}
 python3 {script_path} scan-local \\
     --output {manifest_path} \\
     --db-path {db_path} \\
+    --include-raw-only \\
     {scan_dirs}
 
 echo ""
@@ -121,12 +157,17 @@ def parse_final_summary(filepath: Path) -> Dict[str, Any]:
     return data
 
 
-def find_experiments_local(scan_dirs: List[str]) -> List[Dict[str, Any]]:
+def find_experiments_local(scan_dirs: List[str], include_raw_only: bool = True) -> List[Dict[str, Any]]:
     """
-    Find all nanopore experiment directories by looking for final_summary files.
+    Find all nanopore experiment directories.
+
+    Enhanced discovery with two methods:
+    1. Primary: Find final_summary*.txt files (complete metadata)
+    2. Secondary: Find POD5/Fast5 directories without summaries (parse raw files)
 
     Args:
         scan_dirs: List of directories to scan
+        include_raw_only: If True, also find experiments with only raw data (no summary)
 
     Returns:
         List of experiment metadata dicts
@@ -134,7 +175,7 @@ def find_experiments_local(scan_dirs: List[str]) -> List[Dict[str, Any]]:
     import glob
 
     experiments = []
-    seen_paths = set()
+    seen_paths: Set[str] = set()
 
     for scan_dir in scan_dirs:
         if not os.path.isdir(scan_dir):
@@ -143,7 +184,7 @@ def find_experiments_local(scan_dirs: List[str]) -> List[Dict[str, Any]]:
 
         print(f"Scanning: {scan_dir}")
 
-        # Find all final_summary files
+        # ===== Method 1: Find experiments with final_summary files =====
         pattern = os.path.join(scan_dir, '**', 'final_summary*.txt')
         summary_files = glob.glob(pattern, recursive=True)
 
@@ -155,7 +196,7 @@ def find_experiments_local(scan_dirs: List[str]) -> List[Dict[str, Any]]:
                 continue
             seen_paths.add(exp_dir)
 
-            # Parse metadata
+            # Parse metadata from summary file
             metadata = parse_final_summary(Path(summary_path))
 
             # Count data files
@@ -171,6 +212,7 @@ def find_experiments_local(scan_dirs: List[str]) -> List[Dict[str, Any]]:
                 'id': exp_id,
                 'path': exp_dir,
                 'summary_file': summary_path,
+                'metadata_source': 'final_summary',
                 'instrument': metadata.get('instrument', ''),
                 'flow_cell_id': metadata.get('flow_cell_id', ''),
                 'sample_id': metadata.get('sample_id', ''),
@@ -186,9 +228,123 @@ def find_experiments_local(scan_dirs: List[str]) -> List[Dict[str, Any]]:
             }
 
             experiments.append(experiment)
-            print(f"  Found: {metadata.get('sample_id', 'unknown')} ({exp_dir})")
+            print(f"  [summary] {metadata.get('sample_id', 'unknown')} ({exp_dir})")
+
+        # ===== Method 2: Find experiments with only raw data (no summary) =====
+        if include_raw_only and HAS_METADATA_PARSER:
+            print(f"  Scanning for raw-data-only experiments...")
+
+            # Find POD5 directories
+            for pod5_file in glob.iglob(os.path.join(scan_dir, '**', '*.pod5'), recursive=True):
+                exp_dir = _find_experiment_root(Path(pod5_file))
+                if exp_dir and str(exp_dir) not in seen_paths:
+                    seen_paths.add(str(exp_dir))
+                    exp = _create_experiment_from_raw(exp_dir, 'pod5')
+                    if exp:
+                        experiments.append(exp)
+                        print(f"  [pod5] {exp.get('sample_id', 'unknown')} ({exp_dir})")
+
+            # Find Fast5 directories
+            for fast5_file in glob.iglob(os.path.join(scan_dir, '**', '*.fast5'), recursive=True):
+                exp_dir = _find_experiment_root(Path(fast5_file))
+                if exp_dir and str(exp_dir) not in seen_paths:
+                    seen_paths.add(str(exp_dir))
+                    exp = _create_experiment_from_raw(exp_dir, 'fast5')
+                    if exp:
+                        experiments.append(exp)
+                        print(f"  [fast5] {exp.get('sample_id', 'unknown')} ({exp_dir})")
 
     return experiments
+
+
+def _find_experiment_root(data_file: Path) -> Optional[Path]:
+    """
+    Find the experiment root directory from a data file path.
+
+    ONT directory structure is typically:
+    experiment_root/
+        final_summary_*.txt (may not exist)
+        pod5_pass/*.pod5 or pod5/*.pod5
+        fast5_pass/*.fast5 or fast5/*.fast5
+        fastq_pass/*.fastq.gz
+        bam/*.bam
+    """
+    parent = data_file.parent
+
+    # Check if parent is a known subdirectory name
+    subdir_names = {
+        'pod5', 'pod5_pass', 'pod5_fail', 'pod5_skip',
+        'fast5', 'fast5_pass', 'fast5_fail', 'fast5_skip',
+        'fastq', 'fastq_pass', 'fastq_fail', 'fastq_skip',
+        'bam', 'bam_pass', 'bam_fail',
+    }
+
+    if parent.name.lower() in subdir_names:
+        return parent.parent
+    return parent
+
+
+def _create_experiment_from_raw(exp_dir: Path, data_type: str) -> Optional[Dict[str, Any]]:
+    """
+    Create experiment entry by parsing raw data files.
+
+    Args:
+        exp_dir: Experiment directory path
+        data_type: Primary data type ('pod5' or 'fast5')
+
+    Returns:
+        Experiment dict or None if parsing fails
+    """
+    import glob
+
+    # Check if we already have a summary file
+    summary_files = list(exp_dir.glob('final_summary*.txt'))
+    if summary_files:
+        return None  # Will be handled by Method 1
+
+    # Extract metadata from raw files
+    try:
+        metadata = extract_metadata_from_dir(exp_dir)
+    except Exception as e:
+        print(f"    Warning: Failed to parse {exp_dir}: {e}")
+        return None
+
+    if metadata.get('error'):
+        print(f"    Warning: {metadata['error']}")
+        return None
+
+    # Count data files
+    pod5_count = len(list(exp_dir.rglob('*.pod5')))
+    fast5_count = len(list(exp_dir.rglob('*.fast5')))
+    fastq_count = len(list(exp_dir.rglob('*.fastq*')))
+    bam_count = len(list(exp_dir.rglob('*.bam')))
+
+    # Generate experiment ID from path
+    exp_id = hashlib.md5(str(exp_dir).encode()).hexdigest()[:12]
+
+    experiment = {
+        'id': exp_id,
+        'path': str(exp_dir),
+        'summary_file': None,
+        'metadata_source': f'{data_type}_raw',
+        'instrument': metadata.get('instrument', '') or metadata.get('system_type', ''),
+        'flow_cell_id': metadata.get('flow_cell_id', ''),
+        'sample_id': metadata.get('sample_id', ''),
+        'protocol_group_id': metadata.get('protocol_group_id', ''),
+        'protocol': metadata.get('protocol', '') or metadata.get('protocol_name', ''),
+        'started': metadata.get('started', '') or metadata.get('exp_start_time', ''),
+        'acquisition_stopped': '',  # Not available in raw files
+        'sequencing_kit': metadata.get('sequencing_kit', ''),
+        'experiment_name': metadata.get('experiment_name', ''),
+        'acquisition_id': metadata.get('acquisition_id', ''),
+        'pod5_files': pod5_count,
+        'fast5_files': fast5_count,
+        'fastq_files': fastq_count,
+        'bam_files': bam_count,
+        'discovered_at': datetime.now(timezone.utc).isoformat(),
+    }
+
+    return experiment
 
 
 def load_current_database(db_path: str) -> Dict[str, Dict]:
@@ -295,23 +451,39 @@ def format_diff_report(comparison: Dict[str, Any]) -> str:
     lines.append(f"  New experiments:  {summary['new_count']}")
     lines.append(f"  Updated:          {summary['updated_count']}")
     lines.append(f"  Unchanged:        {summary['unchanged_count']}")
+
+    # Count by metadata source
+    sources = {}
+    all_exps = comparison['new'] + comparison['updated'] + comparison['unchanged']
+    for exp in all_exps:
+        src = exp.get('metadata_source', 'unknown')
+        sources[src] = sources.get(src, 0) + 1
+    if sources:
+        lines.append("")
+        lines.append("  By metadata source:")
+        for src, count in sorted(sources.items()):
+            lines.append(f"    {src}: {count}")
     lines.append("")
 
     if comparison['new']:
         lines.append("NEW EXPERIMENTS")
         lines.append("-" * 40)
         for exp in comparison['new']:
-            lines.append(f"  + {exp['sample_id'] or 'unknown'}")
+            source_tag = f"[{exp.get('metadata_source', 'unknown')}]"
+            lines.append(f"  + {exp['sample_id'] or 'unknown'} {source_tag}")
             lines.append(f"    Path: {exp['path']}")
             lines.append(f"    Flow Cell: {exp['flow_cell_id']}")
-            lines.append(f"    POD5: {exp['pod5_files']}, FASTQ: {exp['fastq_files']}, BAM: {exp['bam_files']}")
+            if exp.get('sequencing_kit'):
+                lines.append(f"    Kit: {exp['sequencing_kit']}")
+            lines.append(f"    POD5: {exp['pod5_files']}, Fast5: {exp.get('fast5_files', 0)}, FASTQ: {exp['fastq_files']}, BAM: {exp['bam_files']}")
             lines.append("")
 
     if comparison['updated']:
         lines.append("UPDATED EXPERIMENTS")
         lines.append("-" * 40)
         for exp in comparison['updated']:
-            lines.append(f"  ~ {exp['sample_id'] or 'unknown'}")
+            source_tag = f"[{exp.get('metadata_source', 'unknown')}]"
+            lines.append(f"  ~ {exp['sample_id'] or 'unknown'} {source_tag}")
             lines.append(f"    Path: {exp['path']}")
             for change in exp.get('changes', []):
                 lines.append(f"    {change}")
@@ -421,8 +593,13 @@ def cmd_scan(args):
 def cmd_scan_local(args):
     """Run discovery locally (called from SLURM job)."""
     print("Starting local experiment discovery...")
+    print(f"  POD5 parser: {'available' if HAS_POD5 else 'not available'}")
+    print(f"  Fast5 parser (ont_fast5_api): {'available' if HAS_ONT_FAST5_API else 'not available'}")
+    print(f"  Fast5 parser (h5py fallback): {'available' if HAS_H5PY else 'not available'}")
+    print(f"  Include raw-only: {args.include_raw_only}")
+    print()
 
-    experiments = find_experiments_local(args.scan_dirs)
+    experiments = find_experiments_local(args.scan_dirs, include_raw_only=args.include_raw_only)
     print(f"\nFound {len(experiments)} experiments")
 
     # Export manifest
@@ -532,6 +709,8 @@ def main():
     local_parser.add_argument('--output', '-o', required=True,
                              help='Output manifest JSON path')
     local_parser.add_argument('--db-path', help='Current database path for comparison')
+    local_parser.add_argument('--include-raw-only', action='store_true',
+                             help='Also find experiments with only raw data (no summary files)')
 
     # compare command
     compare_parser = subparsers.add_parser('compare', help='Compare manifest to database')
