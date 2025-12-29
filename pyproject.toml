@@ -43,6 +43,7 @@ full = [
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
+    "pre-commit>=3.0",
 ]
 
 [project.urls]
@@ -58,6 +59,8 @@ ont-pipeline = "bin.ont_pipeline:main"
 ont-monitor = "bin.ont_monitor:main"
 ont-manuscript = "bin.ont_manuscript:main"
 ont-context = "bin.ont_context:main"
+ont-stats = "bin.ont_stats:main"
+ont-check = "bin.ont_check:main"
 end-reason = "bin.end_reason:main"
 dorado-basecall = "bin.dorado_basecall:main"
 
