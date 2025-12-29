@@ -1,0 +1,11 @@
+ABSTRACT
+
+Background: Oxford Nanopore Technologies (ONT) sequencing generates complex metadata across instruments, chemistries, and basecalling configurations. Systematic tracking of experiment provenance and quality metrics is essential for protocol optimization, quality assurance, and reproducibility, yet standardized approaches for institutional registry management remain limited.
+
+Methods: We developed a comprehensive experiment registry framework combining automated metadata extraction from MinKNOW output files and BAM headers, pattern-based inference for missing fields, and systematic validation protocols. Registry completeness was assessed using a weighted scoring system prioritizing critical fields (sample, chemistry, basecall model) and quality metrics (Q-score, N50). Provenance was tracked through event-sourced logging with Git-based versioning.
+
+Results: The registry encompasses 165 validated ONT sequencing experiments spanning August 2020 to December 2025, achieving 100% "good" completeness status. Sample categories included plasmid sequencing (n=80, 48.5%), research projects (n=39, 23.6%), human genomics (n=16, 9.7%), and pharmacogenomics (n=13, 7.9%). Technical characterization revealed near-universal R10.4.1 chemistry adoption (95.2%), dorado basecaller dominance (82.4%), and preferential high-accuracy model usage (89.7%). Quality metrics across 150 experiments showed median Q-score of 14.0 (range: 2.9-26.4) and median N50 of 4,828 bp (range: 110-95,808 bp). Temporal analysis captured exponential growth in 2025, technology transitions from R10.4/guppy to R10.4.1/dorado, and application evolution from research toward plasmid sequencing and clinical pharmacogenomics.
+
+Conclusions: Systematic metadata tracking enables comprehensive characterization of institutional nanopore sequencing operations. The registry framework—combining YAML storage, hierarchical metadata extraction, and event-sourced provenance—provides a template for managing long-read sequencing experiments. As clinical applications expand, such registries become critical infrastructure for quality benchmarking, protocol optimization, and regulatory compliance.
+
+Keywords: Oxford Nanopore, long-read sequencing, metadata registry, quality control, provenance tracking, pharmacogenomics
