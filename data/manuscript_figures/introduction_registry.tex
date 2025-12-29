@@ -1,0 +1,50 @@
+\section{Introduction}
+
+\subsection{The Rise of Long-Read Sequencing}
+
+Oxford Nanopore Technologies (ONT) sequencing has transformed genomics research by enabling real-time, long-read DNA and RNA sequencing without the need for amplification or synthesis \cite{jain2016oxford}. Unlike short-read platforms that generate fragments of 150--300 base pairs, nanopore sequencing routinely produces reads exceeding 10,000 bases, with ultra-long protocols achieving reads surpassing 1 megabase \cite{payne2019bulkvis}. This capability has proven transformative for applications including \textit{de novo} genome assembly, structural variant detection, full-length transcript isoform characterization, and direct detection of base modifications \cite{logsdon2020long}.
+
+The technology has evolved rapidly since its commercial introduction in 2014. Early R7 and R9 pore chemistries have given way to R10.4.1, which achieves modal raw read accuracy exceeding Q20 (99\% accuracy) \cite{ont_r10_2023}. Concurrently, basecalling algorithms have progressed from early hidden Markov models through recurrent neural networks to current transformer-based architectures, with the dorado basecaller replacing the legacy guppy software as of September 2022 \cite{ont_dorado_2022}. Hardware platforms now span portable MinION devices through high-throughput PromethION systems capable of generating terabases of data per run.
+
+\subsection{The Metadata Challenge}
+
+This rapid technological evolution presents significant challenges for experiment management and reproducibility. A single nanopore sequencing experiment generates metadata spanning multiple domains: sample information (identity, preparation method, concentration), instrument parameters (device type, flow cell chemistry, pore version), basecalling configuration (software version, model accuracy tier, modification detection), and quality metrics (yield, read length distribution, accuracy estimates). Unlike mature short-read platforms with standardized metadata schemas, the ONT ecosystem lacks consensus approaches for comprehensive metadata capture and management.
+
+The challenge is compounded by the platform's flexibility. The same MinION device might sequence bacterial isolates for species identification, human samples for clinical diagnostics, or synthetic constructs for biotechnology applications---each with distinct metadata requirements and quality expectations. Without systematic tracking, correlating sequencing outcomes with experimental parameters becomes difficult, hindering protocol optimization and troubleshooting.
+
+\subsection{Provenance and Reproducibility}
+
+Reproducibility in computational biology requires not only methodological transparency but also comprehensive provenance tracking \cite{sandve2013ten}. For sequencing experiments, this encompasses the complete chain from sample preparation through data generation to analysis outputs. The FAIR principles (Findable, Accessible, Interoperable, Reusable) provide a framework for data management \cite{wilkinson2016fair}, yet implementing FAIR-compliant workflows for nanopore sequencing remains challenging given the diversity of experimental contexts and rapidly evolving technology stack.
+
+Institutional sequencing facilities face particular challenges in maintaining experiment registries. High-throughput operations may generate dozens of experiments weekly across multiple instruments, each requiring metadata capture, quality assessment, and long-term archival. Manual curation approaches scale poorly and introduce transcription errors, while fully automated systems must accommodate the heterogeneity of experimental designs and naming conventions employed by diverse research groups.
+
+\subsection{Clinical and Regulatory Considerations}
+
+The expansion of nanopore sequencing into clinical applications---including infectious disease surveillance, pharmacogenomics, and cancer profiling---introduces additional requirements for metadata management \cite{quick2016real, bowden2019sequencing}. Clinical Laboratory Improvement Amendments (CLIA) and equivalent international regulations mandate documented quality control procedures, instrument calibration records, and complete audit trails linking patient samples to reported results. Registries supporting clinical workflows must therefore capture not only technical metadata but also chain-of-custody information and quality benchmarks against validated reference standards.
+
+Pharmacogenomics applications exemplify these requirements. Accurate genotyping of cytochrome P450 enzymes and other pharmacologically relevant genes directly impacts drug dosing decisions, necessitating rigorous quality thresholds and comprehensive documentation \cite{relling2015pharmacogenomics}. As nanopore platforms demonstrate sufficient accuracy for clinical variant calling, institutional frameworks for quality tracking become essential infrastructure rather than optional conveniences.
+
+\subsection{Existing Approaches}
+
+Several tools address aspects of nanopore data management. MinKNOW, ONT's instrument control software, generates run reports and summary statistics but does not provide cross-experiment registry functionality. EPI2ME, ONT's cloud analysis platform, offers workflow execution and result aggregation but focuses on analysis rather than comprehensive metadata management. Third-party tools including NanoPlot \cite{de2018nanoplot} and PycoQC \cite{leger2019pycoqc} provide quality visualization but operate on individual experiments without registry integration.
+
+Laboratory information management systems (LIMS) offer general-purpose sample tracking but typically lack nanopore-specific metadata schemas and quality metrics. Custom database solutions developed by individual laboratories address local requirements but rarely achieve the standardization necessary for cross-institutional comparison or community adoption.
+
+\subsection{Study Objectives}
+
+We present a comprehensive registry framework for Oxford Nanopore sequencing experiments, designed to address the metadata management challenges outlined above. Our objectives were to:
+
+\begin{enumerate}
+    \item Develop a standardized metadata schema capturing instrument, chemistry, basecalling, and quality information across the diversity of nanopore applications.
+    
+    \item Implement automated extraction pipelines leveraging MinKNOW output files, BAM headers, and pattern-based inference to minimize manual curation requirements.
+    
+    \item Establish validation protocols ensuring registry completeness and accuracy, with provenance tracking supporting full audit trails.
+    
+    \item Characterize the resulting registry to identify technology adoption patterns, application distributions, and quality benchmarks informing ongoing sequencing operations.
+    
+    \item Provide an open-source framework adaptable to other institutional contexts, supporting the broader goal of standardized nanopore metadata management.
+\end{enumerate}
+
+The resulting registry encompasses 165 experiments spanning five years of institutional nanopore sequencing, achieving 100\% metadata completeness and capturing the transition from early R10 chemistry and guppy basecalling to current R10.4.1/dorado configurations. We report application distributions, quality benchmarks, and temporal trends that contextualize institutional sequencing operations within the broader evolution of nanopore technology.
+
