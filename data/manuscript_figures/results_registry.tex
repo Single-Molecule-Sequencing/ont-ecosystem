@@ -1,0 +1,65 @@
+\section{Results}
+
+\subsection{Registry Overview and Composition}
+
+We constructed a comprehensive registry of 165 Oxford Nanopore sequencing experiments with standardized metadata and quality metrics. After validation and enrichment, 100\% of experiments achieved ``good'' completeness status (score $\geq$8), with one experiment excluded as invalid (placeholder entry with no associated data).
+
+The registry encompasses experiments from two primary sources: local institutional sequencing (n=144, 87.3\%) and publicly available ONT Open Data (n=21, 12.7\%). Temporal coverage spans from August 2020 to December 2025, with 148 experiments (89.7\%) containing validated run date information (Figure~\ref{fig:temporal_analysis}A).
+
+\subsection{Sample Categories and Applications}
+
+Experiments were classified into nine distinct sample categories based on biological source and experimental purpose (Figure~\ref{fig:registry_overview}A; Table~\ref{tab:registry_stats}). Plasmid sequencing represented the dominant application (n=80, 48.5\%), reflecting the utility of long-read sequencing for construct verification and plasmid assembly. Research projects comprised the second largest category (n=39, 23.6\%), followed by human genomics (n=16, 9.7\%) and pharmacogenomics studies (n=13, 7.9\%).
+
+Specialized applications included microbial sequencing (n=5, 3.0\%), multiplexed experiments (n=4, 2.4\%), CRISPR-related studies (n=3, 1.8\%), cancer research (n=2, 1.2\%), and general laboratory runs (n=3, 1.8\%). The pharmacogenomics category notably included 13 experiments with clinical sample identifiers (14309-CZ, 14400-CZ, 14507-CZ series), representing targeted sequencing of cytochrome P450 genes using the PGx panel.
+
+\subsection{Technical Platform Distribution}
+
+\subsubsection{Sequencing Devices}
+The registry captures experiments across the full spectrum of ONT sequencing platforms (Figure~\ref{fig:registry_overview}C; Figure~\ref{fig:category_by_device}). MinION Mk1D devices dominated the registry (n=81, 49.1\%), serving as the primary workhorse for routine plasmid and research applications. Standard MinION devices contributed 36 experiments (21.8\%), while PromethION high-throughput sequencers accounted for 29 experiments (17.6\%).
+
+The P2 Solo platform (n=9, 5.5\%) was exclusively associated with pharmacogenomics applications, reflecting its deployment for clinical sequencing workflows. Flongle flow cells (n=4, 2.4\%) were utilized for rapid, low-input applications including microbial identification. Six experiments (3.6\%) lacked definitive device type assignment due to incomplete source metadata.
+
+\subsubsection{Chemistry and Basecalling}
+Near-universal adoption of R10.4.1 chemistry was observed (n=157, 95.2\%), with legacy R10.4 chemistry present in only 8 experiments (4.8\%), primarily from 2021--2022 (Figure~\ref{fig:registry_overview}B; Figure~\ref{fig:temporal_analysis}C). This distribution reflects the rapid transition to improved pore chemistry following its commercial release.
+
+Dorado basecaller dominated the registry (n=136, 82.4\%), consistent with its designation as the successor to guppy following ONT's September 2022 announcement. Legacy guppy-basecalled experiments comprised 8.5\% of the registry (n=14), with 15 experiments (9.1\%) lacking basecaller attribution due to incomplete metadata.
+
+\subsubsection{Basecalling Model Selection}
+High-accuracy (hac) models were employed in 89.7\% of experiments (n=148), representing the standard balance between accuracy and computational efficiency (Figure~\ref{fig:registry_overview}D; Figure~\ref{fig:device_model_heatmap}). Super-accuracy (sup) models, which provide maximum basecalling precision at increased computational cost, were used in 12 experiments (7.3\%), predominantly on PromethION platforms for human genomics and pharmacogenomics applications where variant calling accuracy is paramount.
+
+Fast models were limited to 5 experiments (3.0\%), primarily on MinION Mk1D and Flongle devices for applications prioritizing rapid turnaround over maximum accuracy. The device-model relationship revealed that PromethION experiments showed the highest sup model adoption (n=12), while Mk1D devices almost exclusively utilized hac models (n=78) with occasional fast model deployment (n=3).
+
+\subsection{Quality Control Metrics}
+
+Quality metrics were available for 150 experiments (90.9\%), enabling comprehensive characterization of sequencing performance across the registry (Figure~\ref{fig:qc_distributions}; Table~\ref{tab:registry_stats}).
+
+\subsubsection{Base Quality Distribution}
+Mean Q-scores ranged from 2.9 to 26.4, with a median of 14.0 (Figure~\ref{fig:qc_distributions}A). The distribution exhibited slight bimodality, with the primary peak at Q12--Q15 representing typical nanopore sequencing quality and a secondary population at Q18--Q22 corresponding to experiments with optimized library preparation or super-accuracy basecalling. The lower tail (Q$<$10) primarily comprised early-stage experiments or those with suboptimal sample quality.
+
+\subsubsection{Read Length Characteristics}
+N50 values demonstrated substantial variation (range: 110--95,808~bp; median: 4,828~bp), reflecting the diverse applications within the registry (Figure~\ref{fig:qc_distributions}B). The distribution was right-skewed, with the majority of experiments clustering below 10,000~bp N50, consistent with the predominance of plasmid sequencing applications where insert sizes are constrained by vector capacity.
+
+Outliers with N50 $>$50,000~bp corresponded to whole-genome sequencing experiments, particularly human samples where ultra-long read protocols were employed. The relationship between Q-score and N50 revealed application-specific clustering (Figure~\ref{fig:qc_distributions}C): plasmid experiments exhibited shorter N50 with variable quality, while human genomics samples achieved both high quality and long read lengths.
+
+\subsubsection{Sequencing Yield}
+Total read counts varied over six orders of magnitude (range: 1--45,136,865; median: 320,738), reflecting the spectrum from targeted amplicon sequencing to high-depth whole-genome applications. PromethION experiments contributed the highest yields, consistent with their 48-channel flow cell capacity compared to MinION's single flow cell configuration.
+
+\subsection{Temporal Trends}
+
+Analysis of 148 dated experiments revealed distinct temporal patterns in registry composition and technology adoption (Figure~\ref{fig:temporal_analysis}).
+
+\subsubsection{Registry Growth}
+Cumulative experiment count demonstrated exponential growth beginning in early 2025, with the registry expanding from approximately 15 experiments through 2024 to 148 by December 2025 (Figure~\ref{fig:temporal_analysis}A). Monthly experiment rates peaked at 28 experiments in July 2025, with sustained high throughput (15--25 experiments/month) maintained through September 2025 (Figure~\ref{fig:temporal_analysis}B).
+
+\subsubsection{Technology Transitions}
+The temporal analysis captured the complete transition from R10.4 to R10.4.1 chemistry (Figure~\ref{fig:temporal_analysis}C). R10.4 experiments were concentrated in 2021--2022, with R10.4.1 achieving complete dominance by January 2025. Similarly, the dorado basecaller transition from guppy was reflected in post-2022 experiments universally utilizing dorado.
+
+\subsubsection{Application Evolution}
+Sample category distribution evolved over the registry timeframe (Figure~\ref{fig:temporal_analysis}D). Early experiments (2020--2024) were predominantly research-focused, with plasmid sequencing emerging as the dominant application in mid-2025. Pharmacogenomics studies appeared in September 2025, representing the newest application category and reflecting expanding clinical adoption of nanopore sequencing for precision medicine applications.
+
+\subsection{Registry Completeness}
+
+Following automated enrichment and deep scrutiny validation, all 165 valid experiments achieved ``good'' completeness status. Field-level completeness exceeded 95\% for critical metadata including chemistry (97.6\%), basecall model (97.6\%), and flow cell type (94.6\%). Sample information was present for 90.4\% of experiments, with quality metrics available for 90.9\%.
+
+Fifteen experiments (9.1\%) were flagged as requiring HPC access for complete QC metric computation, as their source data resides on institutional high-performance computing infrastructure not accessible during registry construction. These experiments retain complete technical metadata but await N50 and Q-score computation pending data access.
+
