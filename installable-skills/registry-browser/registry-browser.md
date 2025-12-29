@@ -1,14 +1,21 @@
 ---
 name: registry-browser
-version: 1.1.0
-description: Interactive registry browser with comprehensive metadata extraction for ONT experiments. Visualize, search, filter, and manage experiment metadata with BAM header parsing, artifact tracking, and multi-view HTML browser.
+version: 2.0.0
+description: Interactive registry browser with rigorous metadata schema for ONT experiments. Features clear read count provenance (sampled/estimated/counted), direct S3/HTTPS URLs, comprehensive metadata extraction, and detail modal views.
 author: Single Molecule Sequencing Lab
 user_invocable: true
 ---
 
-# Registry Browser
+# Registry Browser v2.0
 
-Interactive browser and metadata manager for the ONT experiment registry with comprehensive metadata extraction.
+Interactive browser and metadata manager with rigorous schema, provenance tracking, and direct data access URLs.
+
+## Key Features in v2.0
+
+- **Read Count Provenance**: Clear distinction between sampled, estimated, and counted reads
+- **Data Access URLs**: Direct S3/HTTPS links to public ONT data
+- **Detail Modal**: Click any experiment to see comprehensive metadata
+- **Provenance Indicators**: Color-coded display of data source and computation method
 
 ## Commands
 

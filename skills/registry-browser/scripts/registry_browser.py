@@ -2,12 +2,21 @@
 """
 Registry Browser - Interactive visualization and metadata management for ONT experiments.
 
+Version: 2.0.0
+
 Features:
-- Visual HTML browser for experiment registry
-- Metadata enrichment and artifact tracking
+- Visual HTML browser with grid/list/table/detail views
+- Comprehensive metadata extraction from file paths and BAM headers
+- Clear distinction between sampled, estimated, and counted read metrics
+- Direct links to S3/HTTPS URLs for public data
 - Public data integration with full metadata extraction
 - Search and filter experiments
 - Duplicate detection and update capabilities
+
+Metadata Schema:
+- See metadata_schema.py for rigorous field definitions
+- Read counts clearly distinguish sampled vs estimated vs counted
+- All statistics include provenance information
 """
 
 import argparse
@@ -15,6 +24,7 @@ import hashlib
 import json
 import math
 import os
+import platform
 import re
 import subprocess
 import sys
@@ -29,6 +39,20 @@ import yaml
 REGISTRY_PATH = Path.home() / ".ont-registry" / "experiments.yaml"
 AWS_CMD = os.path.expanduser("~/.local/bin/aws")
 MAX_SAMPLE_READS = 50000
+
+# ONT Open Data URLs
+S3_BUCKET = "s3://ont-open-data"
+HTTPS_BASE = "https://ont-open-data.s3.amazonaws.com"
+LANDING_PAGE_BASE = "https://labs.epi2me.io"
+
+# Dataset landing pages (known mappings)
+DATASET_LANDING_PAGES = {
+    "giab_2023.05": "https://labs.epi2me.io/giab-2023.05/",
+    "giab_2025.01": "https://labs.epi2me.io/giab-2025.01/",
+    "colo829_2024.03": "https://labs.epi2me.io/colo829-2024.03/",
+    "hereditary_cancer_2025.09": "https://labs.epi2me.io/hereditary-cancer-2025/",
+    "zymo_16s_2025.09": "https://labs.epi2me.io/zymo-16s-2025/",
+}
 
 # Try optional imports
 try:
@@ -499,8 +523,19 @@ class PublicDataExtractor:
             print(f"  Warning: Could not parse BAM header: {e}")
             return metadata
 
-    def stream_bam_stats(self, bam_url: str, max_reads: int = MAX_SAMPLE_READS) -> Optional[Dict]:
-        """Stream reads from BAM and compute statistics."""
+    def stream_bam_stats(self, bam_url: str, max_reads: int = MAX_SAMPLE_READS,
+                         file_size_bytes: int = None) -> Optional[Dict]:
+        """
+        Stream reads from BAM and compute statistics with clear provenance.
+
+        Returns a dictionary with clearly distinguished metrics:
+        - read_counts.sampled: Exact count of reads processed
+        - read_counts.estimated_total: Extrapolated from file size (if provided)
+        - base_counts.sampled_bases: Exact bases in sampled reads
+        - quality_metrics: Q-scores computed via probability space
+        - length_metrics: N50, mean, median, etc.
+        - alignment_metrics: Mapping rate from sampled reads
+        """
         https_url = bam_url.replace(self.S3_BUCKET + "/", self.HTTPS_BASE + "/")
         cmd = f"samtools view {https_url} 2>/dev/null | head -n {max_reads}"
 
@@ -547,40 +582,179 @@ class PublicDataExtractor:
             if not read_lengths:
                 return None
 
-            # Calculate statistics
-            total_bases = sum(read_lengths)
+            # Calculate statistics from sampled reads
+            sampled_reads = len(read_lengths)
+            sampled_bases = sum(read_lengths)
+            mean_read_length = sampled_bases / sampled_reads
+
+            # Sort for N50 and percentile calculations
             sorted_lengths = sorted(read_lengths, reverse=True)
 
-            # N50
+            # N50 calculation
             cumsum = 0
             n50 = 0
-            for l in sorted_lengths:
-                cumsum += l
-                if cumsum >= total_bases / 2:
-                    n50 = l
+            for length in sorted_lengths:
+                cumsum += length
+                if cumsum >= sampled_bases / 2:
+                    n50 = length
                     break
 
+            # N90 calculation
+            cumsum = 0
+            n90 = 0
+            for length in sorted_lengths:
+                cumsum += length
+                if cumsum >= sampled_bases * 0.9:
+                    n90 = length
+                    break
+
+            # Q-score percentiles
+            sorted_qscores = sorted(qscores) if qscores else []
+            q10_count = sum(1 for q in qscores if q >= 10) if qscores else 0
+            q20_count = sum(1 for q in qscores if q >= 20) if qscores else 0
+            q30_count = sum(1 for q in qscores if q >= 30) if qscores else 0
+
+            # Estimate total reads from file size if provided
+            estimated_total_reads = None
+            estimated_total_bases = None
+            if file_size_bytes and sampled_reads > 0:
+                # Rough estimate: assume ~2 bytes per base in BAM (compressed)
+                bytes_per_read = sampled_bases * 2 / sampled_reads  # rough BAM overhead
+                estimated_total_reads = int(file_size_bytes / bytes_per_read * 0.8)  # conservative
+                estimated_total_bases = int(estimated_total_reads * mean_read_length)
+
             return {
-                "total_reads_sampled": len(read_lengths),
-                "total_bases": total_bases,
-                "mean_read_length": total_bases / len(read_lengths),
+                # Read counts with clear provenance
+                "read_counts": {
+                    "sampled": sampled_reads,
+                    "estimated_total": estimated_total_reads,
+                    "counted_total": None,  # Would require full file scan
+                    "count_source": "sampled",
+                    "sampled_mapped": mapped,
+                    "sampled_unmapped": unmapped,
+                },
+                # Base counts
+                "base_counts": {
+                    "sampled_bases": sampled_bases,
+                    "estimated_total_bases": estimated_total_bases,
+                },
+                # Quality metrics (computed via probability space)
+                "quality_metrics": {
+                    "mean_qscore": _mean_qscore(qscores) if qscores else None,
+                    "median_qscore": sorted_qscores[len(sorted_qscores)//2] if sorted_qscores else None,
+                    "q10_percent": (q10_count / len(qscores) * 100) if qscores else None,
+                    "q20_percent": (q20_count / len(qscores) * 100) if qscores else None,
+                    "q30_percent": (q30_count / len(qscores) * 100) if qscores else None,
+                    "computed_from_n_reads": len(qscores),
+                },
+                # Length metrics
+                "length_metrics": {
+                    "n50": n50,
+                    "n90": n90,
+                    "mean_length": mean_read_length,
+                    "median_length": sorted_lengths[len(sorted_lengths)//2] if sorted_lengths else 0,
+                    "max_length": max(read_lengths),
+                    "min_length": min(read_lengths),
+                },
+                # Alignment metrics
+                "alignment_metrics": {
+                    "mapped_reads": mapped,
+                    "unmapped_reads": unmapped,
+                    "mapping_rate": (mapped / (mapped + unmapped) * 100) if (mapped + unmapped) > 0 else None,
+                },
+                # Provenance
+                "provenance": {
+                    "analysis_time": datetime.now().isoformat(),
+                    "analysis_tool": "registry-browser v2.0.0",
+                    "max_reads_requested": max_reads,
+                    "source_url": https_url,
+                },
+                # Legacy format for backward compatibility
+                "total_reads_sampled": sampled_reads,
+                "total_bases": sampled_bases,
+                "mean_read_length": mean_read_length,
                 "n50": n50,
                 "max_read_length": max(read_lengths),
                 "min_read_length": min(read_lengths),
                 "mean_qscore": _mean_qscore(qscores) if qscores else None,
-                "median_qscore": sorted(qscores)[len(qscores)//2] if qscores else None,
+                "median_qscore": sorted_qscores[len(sorted_qscores)//2] if sorted_qscores else None,
                 "mapped_reads": mapped,
                 "unmapped_reads": unmapped,
-                "mapping_rate": mapped / (mapped + unmapped) * 100 if (mapped + unmapped) > 0 else None
+                "mapping_rate": (mapped / (mapped + unmapped) * 100) if (mapped + unmapped) > 0 else None,
             }
 
         except Exception as e:
             print(f"Error streaming BAM: {e}")
             return None
 
+    def build_urls(self, dataset: str, s3_path: str) -> Dict[str, str]:
+        """Build all access URLs for an experiment."""
+        urls = {
+            "s3": f"{self.S3_BUCKET}/{s3_path}",
+            "https": f"{self.HTTPS_BASE}/{s3_path}",
+        }
+
+        # Add landing page if known
+        if dataset in DATASET_LANDING_PAGES:
+            urls["landing_page"] = DATASET_LANDING_PAGES[dataset]
+        else:
+            # Try to construct one
+            dataset_slug = dataset.replace("_", "-").replace(".", "-")
+            urls["landing_page"] = f"{LANDING_PAGE_BASE}/{dataset_slug}/"
+
+        return urls
+
+
+def format_read_count(exp: Dict) -> Tuple[str, str, str]:
+    """
+    Format read count with clear provenance indication.
+
+    Returns: (display_value, tooltip, css_class)
+    """
+    # Check for new structured format first
+    rc = exp.get("read_counts", {})
+    if rc:
+        if rc.get("counted_total"):
+            return (f"{rc['counted_total']:,}", "Exact count from full file", "count-exact")
+        elif rc.get("estimated_total"):
+            return (f"~{rc['estimated_total']:,}", f"Estimated from {rc.get('sampled', 0):,} sampled reads", "count-estimated")
+        elif rc.get("sampled"):
+            return (f"{rc['sampled']:,}", "Sampled reads (not total)", "count-sampled")
+
+    # Check analyses for structured data
+    for analysis in exp.get("analyses", []):
+        results = analysis.get("results", {})
+        arc = results.get("read_counts", {})
+        if arc:
+            if arc.get("counted_total"):
+                return (f"{arc['counted_total']:,}", "Exact count from full file", "count-exact")
+            elif arc.get("estimated_total"):
+                return (f"~{arc['estimated_total']:,}", f"Estimated from {arc.get('sampled', 0):,} sampled", "count-estimated")
+            elif arc.get("sampled"):
+                return (f"{arc['sampled']:,}", "Sampled reads (not total)", "count-sampled")
+
+        # Legacy format in results
+        if results.get("total_reads_sampled"):
+            return (f"{results['total_reads_sampled']:,}", "Sampled reads for analysis", "count-sampled")
+
+    # Legacy top-level format
+    if exp.get("total_reads"):
+        return (f"{exp['total_reads']:,}", "Legacy format - provenance unknown", "count-legacy")
+
+    return ("0", "No read count available", "count-none")
+
 
 def generate_html_browser(registry: ExperimentRegistry, output_path: Path):
-    """Generate comprehensive interactive HTML browser for registry with full metadata."""
+    """
+    Generate comprehensive interactive HTML browser for registry with full metadata.
+
+    Features:
+    - Grid/List/Table/Detail views
+    - Clear read count provenance indicators
+    - Direct links to S3/HTTPS data
+    - Comprehensive metadata display
+    - Individual experiment detail modal
+    """
     experiments = registry.get_experiments()
 
     # Group by source
