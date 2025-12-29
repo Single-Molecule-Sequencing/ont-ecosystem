@@ -1,0 +1,28 @@
+field_path,field_name,data_type,required,description,valid_values,example
+experiment_id,Experiment ID,string,yes,Unique identifier (8-char hex),^exp-[a-f0-9]{8}$,exp-a1b2c3d4
+name,Name,string,yes,Human-readable experiment name,,MinION Plasmid Run 001
+date,Date,date,yes,Experiment date (ISO 8601),YYYY-MM-DD,2024-06-15
+status,Status,enum,no,Experiment status,"active,completed,failed,archived",completed
+sample.category,Sample Category,enum,yes,Sample classification,"plasmid,human,bacterial,research,pharmacogenomics,standard,cell_line,other",plasmid
+sample.name,Sample Name,string,yes,Sample identifier or name,,pUC19
+sample.clinical_id,Clinical ID,string,no,Clinical sample identifier (PGx),,14309-CZ
+chemistry.flowcell_type,Flowcell Type,string,yes,ONT flowcell product code,,FLO-MIN114
+chemistry.kit,Library Kit,string,yes,ONT library prep kit code,,SQK-LSK114
+chemistry.version,Chemistry Version,enum,yes,Pore chemistry version,"R10.4.1,R10.4,R9.4.1",R10.4.1
+basecalling.software,Basecaller Software,enum,yes,Basecalling software,"dorado,guppy,bonito",dorado
+basecalling.version,Basecaller Version,string,no,Software version number,,0.5.3
+basecalling.model,Basecall Model,enum,yes,Model accuracy tier,"fast,hac,sup",hac
+basecalling.model_version,Model Version,string,no,Full model name,,dna_r10.4.1_e8.2_400bps_hac@v4.3.0
+device.type,Device Type,enum,yes,Sequencing device,"MinION,MinION_Mk1D,PromethION,P2_Solo,Flongle",MinION_Mk1D
+device.position,Device Position,string,no,Flow cell position,,MN12345
+qc.total_reads,Total Reads,integer,no,Total number of reads,,500000
+qc.total_bases,Total Bases,integer,no,Total sequenced bases,,2500000000
+qc.mean_qscore,Mean Q-Score,float,no,Mean quality score (Phred),0-50,14.2
+qc.median_qscore,Median Q-Score,float,no,Median quality score (Phred),0-50,14.5
+qc.n50,N50,integer,no,N50 read length (bp),,5200
+qc.mean_length,Mean Length,float,no,Mean read length (bp),,3500.5
+qc.pass_reads,Pass Reads,integer,no,Reads passing QC filter,,450000
+qc.fail_reads,Fail Reads,integer,no,Reads failing QC filter,,50000
+provenance.source_path,Source Path,string,no,Original data location,,/data/sequencing/run_001
+provenance.registered_at,Registered At,datetime,no,Registration timestamp,,2024-06-15T10:30:00Z
+provenance.last_updated,Last Updated,datetime,no,Last modification time,,2024-06-20T14:45:00Z

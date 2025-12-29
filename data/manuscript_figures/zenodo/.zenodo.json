@@ -1,0 +1,54 @@
+{
+  "title": "ONT Experiment Registry: Metadata and Quality Metrics for 165 Oxford Nanopore Sequencing Experiments",
+  "description": "A comprehensive registry of 165 Oxford Nanopore sequencing experiments conducted at the University of Michigan between August 2020 and December 2025. The registry captures standardized metadata including sample information, chemistry versions, basecalling parameters, device specifications, and quality control metrics with 100% completeness for critical fields. This dataset documents the institutional transition from R10.4 to R10.4.1 chemistry (95.2% adoption) and from Guppy to Dorado basecallers (82.4% adoption). The registry is provided in YAML, JSON, and CSV formats with event-sourced provenance tracking.",
+  "upload_type": "dataset",
+  "creators": [
+    {
+      "name": "[Author One]",
+      "affiliation": "University of Michigan",
+      "orcid": "0000-0000-0000-0000"
+    },
+    {
+      "name": "[Author Two]",
+      "affiliation": "University of Michigan",
+      "orcid": "0000-0000-0000-0000"
+    },
+    {
+      "name": "[Author Three]",
+      "affiliation": "University of Michigan",
+      "orcid": "0000-0000-0000-0000"
+    }
+  ],
+  "keywords": [
+    "Oxford Nanopore",
+    "long-read sequencing",
+    "metadata registry",
+    "quality control",
+    "nanopore sequencing",
+    "R10.4.1",
+    "dorado",
+    "pharmacogenomics",
+    "FAIR data",
+    "reproducibility"
+  ],
+  "license": "MIT",
+  "access_right": "open",
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/Single-Molecule-Sequencing/ont-ecosystem",
+      "relation": "isSupplementTo",
+      "resource_type": "software"
+    }
+  ],
+  "communities": [
+    {"identifier": "zenodo"}
+  ],
+  "grants": [],
+  "subjects": [
+    {"term": "Bioinformatics", "identifier": "http://id.loc.gov/authorities/subjects/sh91001954"},
+    {"term": "Genomics", "identifier": "http://id.loc.gov/authorities/subjects/sh2002000809"}
+  ],
+  "version": "1.0.0",
+  "language": "eng",
+  "notes": "This registry accompanies the manuscript 'A Registry Framework for Oxford Nanopore Sequencing Experiment Metadata and Quality Tracking' submitted to Scientific Data."
+}

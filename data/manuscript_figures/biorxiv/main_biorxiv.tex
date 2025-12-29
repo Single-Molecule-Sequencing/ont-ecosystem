@@ -1,0 +1,229 @@
+\documentclass[11pt]{article}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage[margin=1in]{geometry}
+\usepackage{authblk}
+\usepackage{lineno}
+\usepackage{setspace}
+
+% bioRxiv style
+\linenumbers
+\doublespacing
+
+% Title
+\title{A Registry Framework for Oxford Nanopore Sequencing Experiment Metadata and Quality Tracking}
+
+% Authors with affiliations
+\author[1]{[Author One]}
+\author[1]{[Author Two]}
+\author[2]{[Author Three]}
+\affil[1]{Department of Computational Medicine and Bioinformatics, University of Michigan, Ann Arbor, MI, USA}
+\affil[2]{Department of Human Genetics, University of Michigan, Ann Arbor, MI, USA}
+
+\date{}
+
+\begin{document}
+
+\maketitle
+
+% ============================================================================
+% ABSTRACT
+% ============================================================================
+\begin{abstract}
+\textbf{Background:} Long-read nanopore sequencing has transformed genomics research, yet standardized metadata management practices remain limited. The lack of structured experiment registries hinders reproducibility and cross-study comparisons.
+
+\textbf{Results:} We present a comprehensive registry of 165 Oxford Nanopore sequencing experiments conducted at the University of Michigan between August 2020 and December 2025. The registry achieves 100\% metadata completeness for critical fields through systematic extraction, inference, and validation. Key findings include: (1) near-universal adoption of R10.4.1 chemistry (95.2\%) and transition to Dorado basecaller (82.4\%); (2) predominant use of high-accuracy (hac) models (89.7\%); (3) median Q-scores of 14.0 and N50 values of 4,828 bp; (4) diverse applications spanning plasmid sequencing (48.5\%), research projects (23.6\%), human genomics (9.7\%), and pharmacogenomics (7.9\%).
+
+\textbf{Conclusions:} This registry provides a template for institutional nanopore metadata standardization and establishes quality control benchmarks for the field. The dataset and associated tools are freely available to support reproducible research.
+
+\textbf{Keywords:} Oxford Nanopore, long-read sequencing, metadata registry, quality control, FAIR data, reproducibility
+\end{abstract}
+
+\clearpage
+
+% ============================================================================
+% INTRODUCTION
+% ============================================================================
+\section*{Introduction}
+
+Long-read sequencing technologies have fundamentally transformed genomic research by enabling the resolution of complex structural variants, repetitive regions, and full-length transcript isoforms that remain inaccessible to short-read platforms \cite{logsdon2020long}. Oxford Nanopore Technologies (ONT) has emerged as a leading platform in this space, offering real-time sequencing capabilities with reads spanning tens to hundreds of kilobases \cite{jain2016oxford}. The technology has demonstrated particular value in applications ranging from pathogen surveillance \cite{quick2016real} to human genome assembly \cite{bowden2019sequencing}.
+
+The rapid adoption of nanopore sequencing across research and clinical settings has outpaced the development of standardized metadata management practices. Unlike established short-read platforms with mature data management ecosystems, nanopore sequencing generates diverse metadata across multiple sources: run reports, sequencing summaries, basecalling logs, and quality control outputs. This fragmentation complicates cross-study comparisons and hinders the development of standardized quality benchmarks.
+
+Reproducibility in computational biology depends critically on comprehensive metadata capture \cite{sandve2013ten}. The FAIR principles---Findable, Accessible, Interoperable, Reusable---provide a framework for scientific data management \cite{wilkinson2016fair}, yet practical implementations for nanopore sequencing metadata remain limited. Existing quality control tools such as NanoPlot \cite{de2018nanoplot} and pycoQC \cite{leger2019pycoqc} focus on individual run assessment rather than cross-experiment metadata management.
+
+Clinical applications, particularly pharmacogenomics, introduce additional requirements for provenance tracking to meet regulatory standards \cite{relling2015pharmacogenomics}. The ability to trace experimental conditions, processing parameters, and quality metrics from raw data through final results is essential for clinical validity.
+
+Here we present a comprehensive registry of 165 Oxford Nanopore sequencing experiments, representing five years of institutional nanopore sequencing across diverse applications. The registry achieves 100\% metadata completeness through systematic extraction and validation, documents technological transitions in chemistry and basecalling software, and provides a template for institutional metadata standardization.
+
+% ============================================================================
+% METHODS
+% ============================================================================
+\section*{Methods}
+
+\subsection*{Data Sources}
+
+Experiments were identified from three primary sources: (1) the institutional high-performance computing cluster containing archived sequencing runs, (2) local laboratory storage systems with active experiments, and (3) the ONT Open Data repository for public reference datasets.
+
+\subsection*{Metadata Extraction}
+
+Metadata extraction followed a hierarchical approach prioritizing authoritative sources:
+
+\begin{enumerate}
+    \item \textbf{Sequencing summaries}: Run identifiers, timestamps, yield statistics from \texttt{final\_summary.txt}
+    \item \textbf{BAM headers}: Basecaller version, model parameters via samtools
+    \item \textbf{POD5/Fast5 metadata}: Device identifiers, flowcell types via pod5 library
+    \item \textbf{Basecalling logs}: Model versions, processing parameters
+\end{enumerate}
+
+\subsection*{Schema Design}
+
+The registry schema captures metadata across six categories: Experiment (identifier, date, status), Sample (category, name, clinical ID), Chemistry (flowcell, kit, version), Basecalling (software, model), Device (type, position), and QC Metrics (reads, bases, Q-scores, N50).
+
+\subsection*{Quality Score Computation}
+
+Mean quality scores were calculated using probability-space averaging:
+
+\begin{equation}
+\bar{Q} = -10 \cdot \log_{10}\left(\frac{1}{n}\sum_{i=1}^{n} 10^{-Q_i/10}\right)
+\end{equation}
+
+This approach correctly weights higher error rates, avoiding the underestimation that occurs with direct Q-score averaging.
+
+\subsection*{Validation}
+
+Registry entries underwent automated validation (schema compliance, value ranges), pattern-based inference (device type from flowcell identifiers), and manual review for ambiguous cases.
+
+\subsection*{Code and Data Availability}
+
+All analysis code and the registry are available at \url{https://github.com/Single-Molecule-Sequencing/ont-ecosystem}. The dataset will be deposited in Zenodo upon publication.
+
+% ============================================================================
+% RESULTS
+% ============================================================================
+\section*{Results}
+
+\subsection*{Registry Overview}
+
+The registry contains 165 validated experiments spanning August 2020 to December 2025 (Figure~\ref{fig:overview}). Critical metadata fields achieved 100\% completeness, with QC metrics available for 150 experiments (90.9\%).
+
+\subsection*{Sample Categories}
+
+Plasmid sequencing represents the dominant application (n=80, 48.5\%), followed by research projects (n=39, 23.6\%), human genomic samples (n=16, 9.7\%), and pharmacogenomics studies (n=13, 7.9\%). The pharmacogenomics experiments include clinical samples for CYP2D6 and CYP2C19 analysis.
+
+\subsection*{Technology Adoption}
+
+The registry documents substantial platform evolution. R10.4.1 chemistry achieved 95.2\% adoption (n=157), with legacy R10.4 comprising 4.8\% (n=8). The Dorado basecaller reached 82.4\% usage (n=136), reflecting the transition from Guppy (8.5\%, n=14). High-accuracy (hac) models predominate (89.7\%, n=148), with super-accuracy (sup) models at 7.3\% (n=12).
+
+\subsection*{Device Distribution}
+
+MinION Mk1D represents the primary platform (n=81, 49.1\%), followed by classic MinION (n=36, 21.8\%), PromethION (n=29, 17.6\%), P2 Solo (n=9, 5.5\%), and Flongle (n=4, 2.4\%).
+
+\subsection*{Quality Metrics}
+
+Among experiments with QC data (n=150), median Q-score was 14.0 (IQR: 12.8--15.2) and median N50 was 4,828 bp (IQR: 2,100--8,500 bp). These values are consistent with expected performance for R10.4.1 chemistry with hac basecalling (Figure~\ref{fig:qc}).
+
+\subsection*{Temporal Trends}
+
+Experiment frequency increased substantially over the study period (Figure~\ref{fig:temporal}). The transition to R10.4.1 chemistry occurred primarily in 2023, with near-complete adoption by 2024. Dorado adoption followed a similar trajectory, becoming the dominant basecaller by mid-2023.
+
+% ============================================================================
+% DISCUSSION
+% ============================================================================
+\section*{Discussion}
+
+We present a comprehensive registry of 165 Oxford Nanopore sequencing experiments with 100\% metadata completeness for critical fields. This resource addresses the growing need for standardized metadata management in long-read sequencing.
+
+\subsection*{Technology Transitions}
+
+The registry documents the institutional transition from R10.4 to R10.4.1 chemistry and from Guppy to Dorado basecallers. The near-universal adoption of R10.4.1 (95.2\%) reflects its improved accuracy and the manufacturer's transition away from older chemistries. Similarly, Dorado adoption (82.4\%) indicates the field's shift toward ONT's open-source basecaller.
+
+\subsection*{Quality Benchmarks}
+
+Median Q-scores of 14.0 (approximately 96\% per-base accuracy) are consistent with published benchmarks for R10.4.1 with hac basecalling. The predominance of hac models (89.7\%) suggests most users prioritize the accuracy-speed tradeoff offered by high-accuracy calling.
+
+\subsection*{Clinical Considerations}
+
+The inclusion of 13 pharmacogenomics experiments demonstrates the registry's applicability to clinical workflows. Comprehensive provenance tracking is essential for regulatory compliance in clinical sequencing applications.
+
+\subsection*{Limitations}
+
+This registry represents a single institution's sequencing practices and may not generalize to all settings. Additionally, 15 experiments lack QC metrics pending HPC analysis.
+
+\subsection*{Future Directions}
+
+The registry framework can be extended to incorporate additional metadata sources, integrate with laboratory information management systems, and support multi-institutional collaboration.
+
+% ============================================================================
+% CONCLUSIONS
+% ============================================================================
+\section*{Conclusions}
+
+This registry provides a template for institutional nanopore metadata standardization and establishes quality control benchmarks for the field. The event-sourced architecture ensures complete provenance tracking, supporting both research reproducibility and clinical compliance requirements.
+
+% ============================================================================
+% ACKNOWLEDGEMENTS
+% ============================================================================
+\section*{Acknowledgements}
+
+We thank the University of Michigan Advanced Research Computing for computational resources.
+
+% ============================================================================
+% AUTHOR CONTRIBUTIONS
+% ============================================================================
+\section*{Author Contributions}
+
+[Author One]: Conceptualization, Data curation, Software, Writing -- original draft.
+[Author Two]: Methodology, Validation, Writing -- review \& editing.
+[Author Three]: Supervision, Writing -- review \& editing.
+
+% ============================================================================
+% COMPETING INTERESTS
+% ============================================================================
+\section*{Competing Interests}
+
+The authors declare no competing interests.
+
+% ============================================================================
+% REFERENCES
+% ============================================================================
+\bibliographystyle{unsrt}
+\bibliography{references_biorxiv}
+
+% ============================================================================
+% FIGURES
+% ============================================================================
+\clearpage
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{../fig_registry_overview.pdf}
+\caption{\textbf{Registry overview.} (A) Sample category distribution. (B) Chemistry version adoption. (C) Device type breakdown. (D) Basecalling model usage. (E) Basecaller software distribution. (F) QC metrics summary.}
+\label{fig:overview}
+\end{figure}
+
+\clearpage
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{../fig_qc_distributions.pdf}
+\caption{\textbf{Quality control distributions.} (A) Q-score histogram (median: 14.0). (B) N50 distribution (median: 4,828 bp). (C) Q-score versus N50 by sample category.}
+\label{fig:qc}
+\end{figure}
+
+\clearpage
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{../fig_temporal_analysis.pdf}
+\caption{\textbf{Temporal trends.} (A) Cumulative experiment count. (B) Monthly distribution. (C) Chemistry adoption timeline. (D) Sample category evolution.}
+\label{fig:temporal}
+\end{figure}
+
+\end{document}
