@@ -1,0 +1,48 @@
+{
+  "total_experiments": 166,
+  "registry_stats": {
+    "total_experiments": 145,
+    "total_reads": 461421627,
+    "total_bases": 828229898134
+  },
+  "devices": {
+    "MD-101527": {
+      "name": "PromethION",
+      "run_count": 35
+    },
+    "MD-102066": {
+      "name": "PromethION",
+      "run_count": 24
+    },
+    "MN47455": {
+      "name": "MinION",
+      "run_count": 24
+    },
+    "MD-100098": {
+      "name": "PromethION",
+      "run_count": 22
+    },
+    "PCA100175": {
+      "name": "P2 Solo",
+      "run_count": 9
+    },
+    "MN48004": {
+      "name": "MinION",
+      "run_count": 5
+    },
+    "jadep48": {
+      "name": "Unknown",
+      "run_count": 4
+    },
+    "PC48-PROTO01": {
+      "name": "Unknown",
+      "run_count": 4
+    },
+    "MN48328": {
+      "name": "MinION",
+      "run_count": 4
+    }
+  },
+  "version": "3.0",
+  "updated": "2025-12-29T10:47:01.705652"
+}
