@@ -1170,3 +1170,112 @@ def test_init_generate_config():
     assert "project:" in content
     assert "test-project" in content
     assert "paths:" in content
+
+
+# =============================================================================
+# ont_changelog.py Tests
+# =============================================================================
+
+def test_changelog_imports():
+    """Test that ont_changelog.py can be imported"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_changelog",
+        bin_dir / "ont_changelog.py"
+    )
+    ont_changelog = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_changelog)
+
+    assert hasattr(ont_changelog, 'parse_conventional_commit')
+    assert hasattr(ont_changelog, 'generate_changelog_entry')
+    assert hasattr(ont_changelog, 'format_markdown')
+    assert hasattr(ont_changelog, 'COMMIT_TYPES')
+
+
+def test_changelog_parse_conventional():
+    """Test conventional commit parsing"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_changelog",
+        bin_dir / "ont_changelog.py"
+    )
+    ont_changelog = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_changelog)
+
+    # Test basic commit
+    result = ont_changelog.parse_conventional_commit("feat: add new feature")
+    assert result is not None
+    assert result["type"] == "feat"
+    assert result["description"] == "add new feature"
+
+    # Test with scope
+    result = ont_changelog.parse_conventional_commit("fix(cli): resolve crash")
+    assert result["type"] == "fix"
+    assert result["scope"] == "cli"
+    assert result["description"] == "resolve crash"
+
+    # Test breaking change
+    result = ont_changelog.parse_conventional_commit("feat!: breaking change")
+    assert result["breaking"] is True
+
+    # Test non-conventional
+    result = ont_changelog.parse_conventional_commit("Regular commit message")
+    assert result is None
+
+
+def test_changelog_commit_types():
+    """Test that COMMIT_TYPES is defined"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_changelog",
+        bin_dir / "ont_changelog.py"
+    )
+    ont_changelog = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_changelog)
+
+    # Check common types
+    assert "feat" in ont_changelog.COMMIT_TYPES
+    assert "fix" in ont_changelog.COMMIT_TYPES
+    assert "docs" in ont_changelog.COMMIT_TYPES
+    assert "refactor" in ont_changelog.COMMIT_TYPES
+
+
+def test_changelog_formatters():
+    """Test changelog formatters"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_changelog",
+        bin_dir / "ont_changelog.py"
+    )
+    ont_changelog = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_changelog)
+
+    # Create test entry
+    entry = {
+        "version": "1.0.0",
+        "date": "2025-01-01",
+        "breaking_changes": [],
+        "sections": {
+            "feat": [
+                {"hash": "abc1234", "conventional": {"scope": None, "description": "test feature"}}
+            ]
+        },
+        "total_commits": 1,
+    }
+
+    # Test markdown
+    md = ont_changelog.format_markdown(entry)
+    assert "## [1.0.0]" in md
+    assert "test feature" in md
+
+    # Test text
+    txt = ont_changelog.format_text(entry)
+    assert "Version 1.0.0" in txt
+
+    # Test json
+    json_out = ont_changelog.format_json(entry)
+    assert '"version": "1.0.0"' in json_out

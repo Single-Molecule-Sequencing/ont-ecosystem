@@ -161,6 +161,16 @@ COMMANDS = {
                 "ont_init.py templates",
             ]
         },
+        "ont_changelog.py": {
+            "description": "Generate changelog from git commits",
+            "examples": [
+                "ont_changelog.py",
+                "ont_changelog.py --since v2.0.0",
+                "ont_changelog.py unreleased",
+                "ont_changelog.py stats",
+                "ont_changelog.py tags",
+            ]
+        },
         "ont_context.py": {
             "description": "Unified experiment context and equation execution",
             "examples": [

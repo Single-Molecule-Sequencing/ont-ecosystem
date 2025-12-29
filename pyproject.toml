@@ -69,6 +69,7 @@ ont-report = "bin.ont_report:main"
 ont-hooks = "bin.ont_hooks:main"
 ont-version = "bin.ont_version:main"
 ont-init = "bin.ont_init:main"
+ont-changelog = "bin.ont_changelog:main"
 end-reason = "bin.end_reason:main"
 dorado-basecall = "bin.dorado_basecall:main"
 

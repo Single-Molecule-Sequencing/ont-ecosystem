@@ -372,4 +372,45 @@ _ont_init() {
 complete -F _ont_init ont_init.py
 complete -F _ont_init ont-init
 
+# ont_changelog.py completion
+_ont_changelog() {
+    local cur prev commands formats
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    commands="generate tags unreleased stats"
+    formats="markdown md text txt json"
+
+    case "${prev}" in
+        ont_changelog.py|ont-changelog)
+            COMPREPLY=( $(compgen -W "${commands}" -- ${cur}) )
+            return 0
+            ;;
+        --format|-f)
+            COMPREPLY=( $(compgen -W "${formats}" -- ${cur}) )
+            return 0
+            ;;
+        generate)
+            COMPREPLY=( $(compgen -W "--since --range --version --date --format --output --prepend --all --quiet" -- ${cur}) )
+            return 0
+            ;;
+        unreleased)
+            COMPREPLY=( $(compgen -W "--format --all" -- ${cur}) )
+            return 0
+            ;;
+        stats)
+            COMPREPLY=( $(compgen -W "--since --json" -- ${cur}) )
+            return 0
+            ;;
+    esac
+
+    if [[ ${cur} == -* ]]; then
+        COMPREPLY=( $(compgen -W "--help --version" -- ${cur}) )
+        return 0
+    fi
+}
+complete -F _ont_changelog ont_changelog.py
+complete -F _ont_changelog ont-changelog
+
 echo "ONT Ecosystem shell completion loaded"
