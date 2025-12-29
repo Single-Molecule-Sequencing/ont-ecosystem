@@ -1,0 +1,823 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Appendix B: Core Mathematical Models for Single-Molecule Haplotype Classification
+%% Version 6.0 - Unified Mathematical Framework
+%% Derived from All_Math.pdf and harmonized with v6 notation
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{Core Mathematical Models for Single-Molecule Haplotype Classification}
+\label{app:core-math}
+\label{app:core-equations}
+\label{app:appendixb}
+\label{app:calibration-framework}
+\label{app:purity-equations}
+
+This appendix consolidates the mathematical content underlying Parts II--V. It formalizes the sequencing pipeline, empirical error models, classification posteriors, haplotagging, plasmid purity bounds, and dual Cas9 enrichment. This unified treatment provides the complete mathematical foundation for single-molecule sequencing haplotype classification with quantified uncertainty suitable for clinical applications.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Overview}
+\label{sec:math-overview}
+
+This appendix synthesizes and standardizes the mathematical models used throughout the framework:
+\begin{enumerate}
+\item Single-molecule sequencing signal and basecalling
+\item Phred quality and alignment-based quality metrics
+\item Sequence-level confusion matrices and Single Molecule Accuracy (SMA)
+\item Bayesian haplotype and diplotype classification, including cost-based decision rules
+\item Read-level haplotagging given a known haplotype
+\item Plasmid replication models and purity bounds for physical standards
+\item Dual Cas9 cutting and the probability of isolating a target gene
+\end{enumerate}
+
+Notation is chosen to be consistent with Part II and the main text; in particular, we distinguish edit distance $d_{\text{edit}}$ from molecule length $L_{\text{mol}}$ (often abbreviated as $L$ when context is clear).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Single-Molecule Sequencing and Basecalling}
+\label{sec:math-basecalling}
+
+\subsection{Raw Signal and Segmentation}
+\label{subsec:signal-segmentation}
+
+A sequencing run produces a time-indexed signal
+\begin{equation}
+X = (x_1,\dots,x_t),
+\end{equation}
+where $x_j$ is the measurement at time index $j$ and $t$ is the total number of samples. A single binding event corresponds to a contiguous subsequence
+\begin{equation}
+x^{(i)} = (x_{a_i},\dots,x_{b_i}), \quad \ell_i = b_i - a_i + 1.
+\end{equation}
+
+A segmentation model $S$ partitions $X$ into $n$ such events
+\begin{equation}
+X \xrightarrow{S} \{x^{(1)},\dots,x^{(n)}\}.
+\end{equation}
+
+This formalizes the ``signal space'' $\mathcal{S}$ in the state-space hierarchy of Chapter~\ref{chap:classification-model}.
+
+\subsection{Basecalling}
+\label{subsec:basecalling-model}
+
+Let $\mathcal{A}$ be the nucleotide alphabet, typically
+\begin{equation}
+\mathcal{A} = \{A,C,G,T\} \quad \text{or} \quad \mathcal{A} = \{A,C,G,T,N\}.
+\end{equation}
+
+A basecaller $f$ maps each single-molecule signal to a read
+\begin{equation}
+r^{(i)} = f\!\bigl(x^{(i)}\bigr) \in \mathcal{A}^{L_i},
+\end{equation}
+and assigns a Phred quality score $Q^{(i)}_j$ to each base $r^{(i)}_j$. With the usual Phred convention,
+\begin{equation}
+Q^{(i)}_j = -10 \log_{10} p^{(i)}_j,
+\qquad
+p^{(i)}_j = 10^{-Q^{(i)}_j/10},
+\end{equation}
+where $p^{(i)}_j$ is the predicted error probability at position $j$ of read $i$.
+
+Collecting all reads and quality scores from one run gives
+\begin{equation}
+R = \{r^{(1)},\dots,r^{(n)}\}, \qquad Q = \{Q^{(1)},\dots,Q^{(n)}\}.
+\end{equation}
+
+\subsection{Read-Level Predicted and Empirical Accuracy}
+\label{subsec:read-accuracy}
+
+For read $r^{(i)}$ of length $L_i$, a predicted per-read error rate is
+\begin{equation}
+\bar p^{(i)}_{\mathrm{pred}} = \frac{1}{L_i}\sum_{j=1}^{L_i} p^{(i)}_j
+= \frac{1}{L_i}\sum_{j=1}^{L_i} 10^{-Q^{(i)}_j/10},
+\end{equation}
+with corresponding ``mean predicted Phred'':
+\begin{equation}
+\bar Q^{(i)}_{\mathrm{pred}} = -10 \log_{10} \bar p^{(i)}_{\mathrm{pred}}.
+\end{equation}
+
+Given a ground-truth sequence $s^{(i)}$ for read $i$, we define the Levenshtein edit distance $d_{\text{edit}}(r^{(i)}, s^{(i)})$, and the empirical per-read error rate
+\begin{equation}
+\bar p^{(i)}_{\mathrm{emp}} =
+\frac{d_{\text{edit}}(r^{(i)}, s^{(i)})}{\lvert s^{(i)}\rvert},
+\qquad
+\bar Q^{(i)}_{\mathrm{emp}} = -10 \log_{10} \bar p^{(i)}_{\mathrm{emp}}.
+\end{equation}
+
+These quantities drive SEER's quality-overstatement analysis (Part IV).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Sequence Counts, Confusion Matrices, and Single Molecule Accuracy}
+\label{sec:confusion-matrices}
+
+\subsection{Confusion Matrix at Sequence Level}
+\label{subsec:confusion-matrix}
+
+In SEER and SMA-seq experiments we sequence physical standards of known sequence. Let $\mathcal{S} = \{s_1,\dots,s_M\}$ be the set of possible sequences (e.g., plasmid haplotypes). For each true $s_i$ and observed basecalled sequence $\hat s_j$, the confusion matrix element
+\begin{equation}
+C_{ij} = \#\{\text{molecules with true } s_i \text{ classified as } s_j\}
+\end{equation}
+counts classification outcomes. For each true sequence $s_i$,
+\begin{equation}
+N_i = \sum_{j=1}^M C_{ij}
+\end{equation}
+is the total number of molecules of type $s_i$.
+
+The true positive rate (TPR) for $s_i$ is
+\begin{equation}
+\mathrm{TPR}(s_i) = \Prob(\hat s = s_i \mid s_i)
+= \frac{C_{ii}}{N_i},
+\end{equation}
+and the misclassification probability is
+\begin{equation}
+\varepsilon_i = 1 - \mathrm{TPR}(s_i)
+= \sum_{j\neq i}\frac{C_{ij}}{N_i}.
+\end{equation}
+
+\textbf{Explicit index convention:} $C_{ij}$ = count from true class $i$ (row) to predicted class $j$ (column).
+\textbf{Convention:} Rows = true classes, columns = predicted classes.
+
+\textbf{Row sums:} $N_i = \sum_{j=1}^{K} C_{ij}$ = total reads from true class $i$.
+
+\textbf{Row-normalized matrix:} $\Pi_{ij} = C_{ij} / N_i$ gives $\Prob(\hat{s} = j \mid s = i)$.
+
+\textbf{Uncertainty:} Each row follows a multinomial distribution. For Bayesian intervals, use Dirichlet posterior: $(\Pi_{i1}, \ldots, \Pi_{iK}) \sim \text{Dirichlet}(C_{i1} + \alpha, \ldots, C_{iK} + \alpha)$ with $\alpha = 0.5$ (Jeffreys prior) or $\alpha = 1$ (Laplace).
+
+\textbf{Binomial Confidence Intervals:}
+\label{def:binomial-ci}
+For a single proportion $p$ estimated from $k$ successes in $n$ trials, use Wilson score interval or Clopper-Pearson exact interval. Wilson score interval (recommended for $n \geq 30$):
+\begin{equation*}
+\frac{\hat{p} + \frac{z^2}{2n}}{1 + \frac{z^2}{n}} \pm \frac{z}{1 + \frac{z^2}{n}} \sqrt{\frac{\hat{p}(1-\hat{p})}{n} + \frac{z^2}{4n^2}}
+\end{equation*}
+where $\hat{p} = k/n$ and $z$ is the standard normal quantile (e.g., $z = 1.96$ for 95\% confidence).
+
+\textbf{Diagonal elements:} $\Pi_{ii} = \text{TPR}$ for class $i$, subject to purity constraint $\Pi_{ii} \leq \pi_i$ (CE.15).
+
+\textbf{See:} Chapter~\ref{chap:classification-model} for introduction, Chapter~\ref{chap:sma-seq} for empirical construction.
+
+\subsection*{Key Physical Quantities}
+
+\begin{itemize}
+\item $\pi$: Purity (fraction of molecules with intended sequence), $\pi \in [0,1]$
+\item $L$: Sequence length in base pairs
+\item $\ell$: Observed read length (may be truncated if $\ell < L$)
+\item $N$: Number of reads, fragments, or trials
+\item $r$: Per-base replication error rate (typically $\sim 10^{-9}$ for \emph{E. coli})
+\item $k$: Number of replication cycles (e.g., bacterial doublings)
+\item $h$: Haplotype (member of haplotype space $\mathcal{H}$)
+\item $s$: Sequence (true sequence for a molecular class)
+\item $\hat{s}$ or $r$: Observed/basecalled sequence (read)
+\item $\mathbf{R} = \{r_1, \ldots, r_N\}$: Dataset of $N$ reads
+\item $E$: End reason category ($E \in \{\text{SP}, \text{SN}, \text{MC}, \text{UMC}, \text{other}\}$)\\
+\item $h(x)$: Read completion hazard function (survival analysis framework)
+\end{itemize}
+
+\bigskip
+\hrule
+\bigskip
+
+\section*{Group 1: Foundational Concepts}
+\addcontentsline{toc}{section}{Group 1: Foundational Concepts}
+
+The classification framework is fundamentally probabilistic, requiring rigorous mathematical tools for uncertainty quantification and decision-making under incomplete information. This first group presents the core theoretical constructs that appear throughout all subsequent analyses: Bayes' theorem for belief updating, error models for handling imperfect measurements, likelihood ratios for evidence quantification, and entropy for measuring classification confidence.
+
+\bigskip
+
+\noindent\colorbox{eqboxbg}{\parbox{0.98\textwidth}{%
+\vspace{5pt}
+\textbf{\large Group Overview:} These four foundational equations establish the probabilistic and information-theoretic framework underlying all downstream computations. Bayes' rule (CE.1) enables belief updating from evidence, the error model (CE.2) quantifies measurement uncertainty, log-likelihood ratios (CE.3) compare competing hypotheses, and entropy (CE.4) measures classification confidence. Together, they form the mathematical foundation for rigorous haplotype inference.
+\vspace{5pt}
+}}
+
+\bigskip
+
+\begin{eqbox}{\textbf{CE.1} -- Bayes' Rule}
+\CEanchor{1}
+\label{eq:ce1}
+\begin{equation*}
+\Prob(h|r) = \frac{\Prob(h) \cdot \Prob(r|h)}{\Prob(r)} = \frac{\Prob(h) \cdot \Prob(r|h)}{\sum_{h'} \Prob(h') \cdot \Prob(r|h')}
+\end{equation*}
+
+\textbf{Purpose:} Fundamental equation for updating beliefs about haplotype $h$ given observed read $r$.
+
+\textbf{Parameters:}
+\begin{itemize}
+\item $\Prob(h)$: Prior probability of haplotype $h$
+\item $\Prob(r|h)$: Likelihood of observing read $r$ given haplotype $h$
+\item $\Prob(h|r)$: Posterior probability of haplotype $h$ given read $r$
+\end{itemize}
+
+\textbf{Usage:} Applied iteratively across all reads in dataset. See Chapter~\ref{chap:posteriors} for full derivation.
+\end{eqbox}
+
+\begin{eqbox}{\textbf{CE.2} -- Error Model}
+\CEanchor{2}
+\label{eq:ce2}
+\begin{equation*}
+\Prob(\hat{s}|s) = \prod_{i=1}^{L} \Prob(\hat{s}_i|s_i, q_i)
+\end{equation*}
+where $\Prob(\text{error at position } i) = 10^{-q_i/10}$
+
+\textbf{Purpose:} Models sequencing errors as position-independent events with quality-dependent probabilities.
+
+\textbf{Parameters:}
+\begin{itemize}
+\item $s$: True sequence
+\item $\hat{s}$: Observed sequence
+\item $q_i$: Phred quality score at position $i$
+\item $L$: Sequence length
+\end{itemize}
+
+\textbf{Assumptions:} Errors are independent across positions. Quality scores accurately reflect error probabilities.
+
+\textbf{See:} Chapter~\ref{chap:classification} Section 4.3 for basecaller error models.
+\end{eqbox}
+
+\begin{eqbox}{\textbf{CE.3} -- Log-Likelihood Ratio}
+\CEanchor{3}
+\label{eq:ce3}
+\begin{equation*}
+\text{LLR}(r; h_i, h_j) = \log\frac{\Prob(r|h_i)}{\Prob(r|h_j)} = \log\Prob(r|h_i) - \log\Prob(r|h_j)
+\end{equation*}
+
+\textbf{Purpose:} Quantifies relative evidence for haplotype $h_i$ versus $h_j$ from read $r$.
+
+\textbf{Interpretation:}
+\begin{itemize}
+\item LLR $> 0$: Evidence favors $h_i$
+\item LLR $< 0$: Evidence favors $h_j$  
+\item $|\text{LLR}| > 10$: Strong evidence (odds ratio $> e^{10} \approx 22,000:1$)
+\end{itemize}
+
+\textbf{Computational Note:} Always compute in log-space to avoid numerical underflow.
+
+\textbf{See:} Chapter~\ref{chap:posteriors} for aggregation across reads.
+\end{eqbox}
+
+\begin{eqbox}{\textbf{CE.4} -- Entropy}
+\CEanchor{4}
+\label{eq:ce4}
+\begin{equation*}
+H(\mathbf{p}) = -\sum_{i} p_i \log p_i
+\end{equation*}
+
+\textbf{Purpose:} Measures uncertainty in probability distribution over haplotypes.
+
+\textbf{Applications:}
+\begin{itemize}
+\item Maximum entropy $H_{\max} = \log|\mathcal{H}|$ for uniform distribution
+\item Classification confidence: Lower entropy indicates higher confidence
+\item Optimal experimental design: Maximize expected entropy reduction
+\end{itemize}
+
+\textbf{See:} Chapter~\ref{chap:experimental-design} for entropy-based design.
+\end{eqbox}
+
+\section*{Group 2: Fragment Generation and Design}
+\addcontentsline{toc}{section}{Group 2: Fragment Generation and Design}
+
+Having established the probabilistic foundations, we now connect theory to laboratory practice. Single-molecule sequencing begins with physical fragmentation of genomic DNA, a stochastic process that determines which haplotype regions are observable and with what coverage depth. These equations model fragment generation, predict coverage distributions, and establish sequencing depth requirements---bridging the gap between experimental design and downstream inference.
+
+\bigskip
+
+\noindent\colorbox{eqboxbg}{\parbox{0.98\textwidth}{%
+\vspace{5pt}
+\textbf{\large Group Overview:} These four equations model DNA fragmentation as a stochastic process and guide experimental design. The exponential fragment distribution (CE.5) describes random shearing, coverage probability (CE.6) predicts regional observability, expected depth (CE.7) connects fragment count to coverage, and Poisson approximation (CE.8) quantifies coverage variability. Together, they enable principled experimental planning and power analysis.
+\vspace{5pt}
+}}
+
+\bigskip
+
+\begin{eqbox}{\textbf{CE.5} -- Exponential Fragment Distribution}
+\CEanchor{5}
+\label{eq:ce5}
+\begin{equation*}
+f_L(\ell) = \lambda e^{-\lambda \ell}, \quad \mathbb{E}[L] = \frac{1}{\lambda}
+\end{equation*}
+
+\textbf{Purpose:} Models fragment length distribution from random shearing.
+
+\textbf{Parameters:}
+\begin{itemize}
+\item $\lambda$: Rate parameter (typical range: $10^{-4}$ to $10^{-3}$ bp$^{-1}$)
+\item $\mathbb{E}[L] = 1/\lambda$: Mean fragment length
+\end{itemize}
+
+\textbf{Validation:} Compare to empirical distribution using KL divergence (CE.9).
+
+\textbf{See:} Chapter~\ref{chap:sma-seq} Section 11.3 for empirical distributions.
+\end{eqbox}
+
+\begin{eqbox}{\textbf{CE.6} -- Fragment Coverage Probability}
+\CEanchor{6}
+\label{eq:ce6}
+\begin{equation*}
+\Prob(\text{fragment covers } j) = \int_{-\infty}^{j} f_{\text{start}}(x) \cdot \Prob(L > j - x) \, dx
+\end{equation*}
+
+For uniform start positions and exponential lengths:
+\begin{equation*}
+= e^{-\lambda d_j}
+\end{equation*}
+where $d_j$ is distance from $j$ to nearest sequence end.
+
+\textbf{Purpose:} Calculates probability that position $j$ is covered by a random fragment.
+
+\textbf{Applications:} Coverage planning, variant detection power analysis.
+
+\textbf{See:} Chapter~\ref{chap:experimental-design} for coverage calculations.
+\end{eqbox}
+
+\begin{eqbox}{\textbf{CE.7} -- Expected Coverage Depth}
+\CEanchor{7}
+\label{eq:ce7}
+\begin{equation*}
+\mathbb{E}[C_j] = N \cdot \Prob(\text{fragment covers } j)
+\end{equation*}
+
+\textbf{Purpose:} Predicts sequencing depth at position $j$ given $N$ fragments.
+
+\textbf{Design Rule:} For 95\% confidence in variant detection at 1\% frequency:
+\begin{equation*}
+N \geq \frac{300}{e^{-\lambda d_j}}
+\end{equation*}
+
+\textbf{See:} Chapter~\ref{chap:experimental-design} Section 7.3 for power calculations.
+\end{eqbox}
+
+\begin{eqbox}{\textbf{CE.8} -- Poisson Coverage Approximation}
+\CEanchor{8}
+\label{eq:ce8}
+\begin{equation*}
+\Prob(C_j = k) \approx \frac{e^{-\mathbb{E}[C_j]} \cdot \mathbb{E}[C_j]^k}{k!}
+\end{equation*}
+
+\textbf{Purpose:} Models coverage variability for quality control and power analysis.
+
+\textbf{Validity:} Accurate when $N \gg 1$ and fragments are independent.
+
+\textbf{QC Application:} Flag positions where observed coverage deviates $>3\sigma$ from expectation.
+
+\textbf{See:} Chapter~\ref{chap:qc-gates} for coverage adequacy assessment.
+\end{eqbox}
+
+\section*{Group 3: Empirical Quality Assessment}
+\addcontentsline{toc}{section}{Group 3: Empirical Quality Assessment}
+
+Theoretical models are only as reliable as their agreement with empirical reality. Before trusting classification results, we must verify that observed data conform to model assumptions. These quality assessment equations detect systematic deviations---fragmentation anomalies, sequencing artifacts, or library preparation failures---that invalidate theoretical predictions and mandate corrective action or alternative analytical strategies.
+
+\bigskip
+
+\noindent\colorbox{eqboxbg}{\parbox{0.98\textwidth}{%
+\vspace{5pt}
+\textbf{\large Group Overview:} These two equations provide data-driven quality gates that validate model assumptions before classification. Fragmentation KL divergence (CE.9) quantifies agreement between observed and theoretical fragment distributions, while read-length sanity checks (CE.10) detect sequencing artifacts. Failures trigger diagnostic procedures or switch to empirical models, ensuring classification reliability even when library preparation deviates from ideal conditions.
+\vspace{5pt}
+}}
+
+\bigskip
+
+\begin{eqbox}{\textbf{CE.9} -- Fragmentation KL Divergence}
+\CEanchor{9}
+\label{eq:ce9}
+\begin{equation*}
+D_{\text{KL}}(f_{\text{emp}} \| f_{\text{model}}) = \sum_{\ell} f_{\text{emp}}(\ell) \log\frac{f_{\text{emp}}(\ell)}{f_{\text{model}}(\ell)}
+\end{equation*}
+
+\textbf{Purpose:} Quantifies deviation between observed and expected fragment distributions.
+
+\textbf{Quality Gates:}
+\begin{itemize}
+\item $D_{\text{KL}} < 0.05$ bits: PASS (use analytical model)
+\item $0.05 \leq D_{\text{KL}} < 0.10$ bits: WARNING (prefer empirical)
+\item $D_{\text{KL}} \geq 0.10$ bits: FAIL (must use empirical)
+\end{itemize}
+
+\textbf{See:} Chapter~\ref{chap:qc-gates} Gate 3 for diagnostic procedures.
+\end{eqbox}
+
+\begin{eqbox}{\textbf{CE.10} -- Read-Length Sanity Check}
+\CEanchor{10}
+\label{eq:ce10}
+\begin{equation*}
+D_{\text{KL}}(f_{\text{emp}} \| f_{\text{read}}) = \sum_{\ell} f_{\text{emp}}(\ell) \log\frac{f_{\text{emp}}(\ell)}{f_{\text{read}}(\ell)}
+\end{equation*}
+
+\textbf{Purpose:} Detects sequencing artifacts affecting read length distribution.
+
+\textbf{Thresholds:}
+\begin{itemize}
+\item $D_{\text{KL}} < 0.10$ bits: Normal
+\item $0.10 \leq D_{\text{KL}} < 0.30$ bits: Investigate filters/truncation
+\item $D_{\text{KL}} \geq 0.30$ bits: Sequencing failure
+\end{itemize}
+
+\textbf{See:} Chapter~\ref{chap:qc-gates} for troubleshooting procedures.
+\end{eqbox}
+
+\section*{Group 4: Bayesian Inference Pipeline}
+\addcontentsline{toc}{section}{Group 4: Bayesian Inference Pipeline}
+
+With quality-validated data in hand, we now execute the core classification pipeline. These equations transform raw sequencing reads into haplotype classifications with quantified uncertainty. The workflow proceeds hierarchically: individual reads generate likelihoods (CE.11), aggregation across datasets produces overall evidence (CE.12), Bayes' rule yields posterior probabilities (CE.13), and quality metrics guard against systematic errors (CE.14-15). This rigorous framework ensures defensible clinical decisions supported by mathematically principled uncertainty quantification.
+
+\bigskip
+
+\noindent\colorbox{eqboxbg}{\parbox{0.98\textwidth}{%
+\vspace{5pt}
+\textbf{\large Group Overview:} These six equations implement the complete Bayesian inference pipeline for haplotype classification. Per-read likelihoods (CE.11) evaluate fragment-level evidence, dataset likelihoods (CE.12) aggregate across reads, posteriors and Bayes factors (CE.13) deliver final classifications with uncertainty bounds, quality overstatement metrics (CE.14) detect basecaller miscalibration, purity ceilings (CE.15) enforce physical constraints, and mixture models (CE.16) handle diploid samples. This forms a complete, quality-controlled inference system suitable for clinical deployment.
+\vspace{5pt}
+}}
+
+\bigskip
+
+\begin{eqbox}{\textbf{CE.11} -- Per-Read Likelihood}
+\CEanchor{11}
+\begin{equation*}
+\Prob(r_n|h_i) = \sum_{s \in S_i} \Prob(r_n|s; \theta) \cdot \pi_i(s)
+\end{equation*}
+
+\textbf{Purpose:} Computes likelihood of read $r_n$ under haplotype $h_i$ by marginalizing over source fragments.
+
+\textbf{Components:}
+\begin{itemize}
+\item $S_i$: Set of possible source fragments from haplotype $h_i$
+\item $\Prob(r_n|s; \theta)$: Error model with parameters $\theta$
+\item $\pi_i(s)$: Prior probability of fragment $s$ (includes fragmentation model)
+\end{itemize}
+
+\textbf{See:} Chapter~\ref{chap:classification} for implementation details.
+\end{eqbox}
+
+\begin{eqbox}{\textbf{CE.12} -- Dataset Likelihood}
+\CEanchor{12}
+\label{eq:ce12}
+\begin{equation*}
+\Prob(R|h_i) = \prod_{n=1}^{N} \Prob(r_n|h_i)
+\end{equation*}
+
+In log-space (required for numerical stability):
+\begin{equation*}
+\log\Prob(R|h_i) = \sum_{n=1}^{N} \log\Prob(r_n|h_i)
+\end{equation*}
+
+\textbf{Purpose:} Aggregates evidence across all reads assuming conditional independence.
+
+\textbf{Quality Check:} Flag if $\log\Prob(R|h_i) < -10^6$ (indicates model failure).
+
+\textbf{See:} Chapter~\ref{chap:posteriors} for aggregation methods.
+\end{eqbox}
+
+\begin{eqbox}{\textbf{CE.13} -- Posterior and Bayes Factor}
+\CEanchor{13}
+\label{eq:ce13}
+\begin{equation*}
+\Prob(h_i|R) = \frac{\Prob(h_i) \cdot \Prob(R|h_i)}{\sum_{j} \Prob(h_j) \cdot \Prob(R|h_j)}
+\end{equation*}
+
+\begin{equation*}
+\text{BF}_{i:j} = \frac{\Prob(R|h_i)}{\Prob(R|h_j)}, \quad \log_{10}\text{BF}_{i:j} = \frac{\log\Prob(R|h_i) - \log\Prob(R|h_j)}{\log(10)}
+\end{equation*}
+
+\textbf{Purpose:} Final classification via posterior probability; evidence strength via Bayes factor.
+
+\textbf{Evidence Scale:}
+\begin{itemize}
+\item $\log_{10}\text{BF} > 2$: Strong evidence (100:1 odds)
+\item $\log_{10}\text{BF} > 3$: Very strong (1000:1)
+\item $\log_{10}\text{BF} > 4$: Decisive (10000:1)
+\end{itemize}
+
+\textbf{Clinical Threshold:} Report classification if $\max_i \Prob(h_i|R) > 0.95$ AND $\log_{10}\text{BF} > 2$.
+
+These empirically estimated probabilities define the sequence-level error model used in the likelihoods $\Prob(r \mid h)$ and $\Prob(r \mid m_j,h)$ in Chapters~\ref{chap:classification-model}--\ref{chap:posteriors}.
+\end{eqbox}
+
+\begin{eqbox}{\textbf{CE.14} -- Quality Overstatement Metric}
+\CEanchor{14}
+\label{eq:ce14}
+\textbf{Purpose:} Detects systematic overconfidence (positive $\Delta Q$) or underconfidence (negative $\Delta Q$) in basecaller quality scores, enabling quality-aware filtering and downstream error modeling.
+\subsection{Single Molecule Accuracy (SMA)}
+\label{subsec:sma-definition}
+
+We formalize \textbf{Single Molecule Accuracy (SMA)} as the per-sequence true positive rate:
+\begin{equation}
+\boxed{\mathrm{SMA}(s_i) \equiv \mathrm{TPR}(s_i) = \frac{C_{ii}}{N_i}.}
+\end{equation}
+
+Equivalently, SMA is the diagonal of the sequence-level confusion matrix. This definition aligns the name ``SMA-seq'' directly with the primary metric it measures and is directly estimable from SEER experiments.
+
+SMA provides both:
+\begin{itemize}
+\item an interpretable per-standard accuracy metric, and
+\item a physical ceiling: $\mathrm{SMA}(s_i) \leq \pi_i$, the purity of the standard for $s_i$ (see Section~\ref{sec:purity}).
+\end{itemize}
+
+\textbf{See:} Chapter~\ref{chap:qc-gates} Gate 2 for calibration procedures.
+\end{eqbox}
+
+\begin{eqbox}{\textbf{CE.15} -- Purity Ceiling Constraint}
+\CEanchor{15}
+\begin{equation*}
+\pi_{\max} \approx (1-r)^{kL}, \quad Q_{\text{purity}} = -10\log_{10}(1-\pi)
+\end{equation*}
+\end{eqbox}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Phred Mean Inequality}
+\label{sec:phred-mean}
+
+Let $p_1,\dots,p_n$ be error probabilities with Phred scores $Q_i = -10\log_{10} p_i$. Define the arithmetic means
+\begin{equation}
+\bar p = \frac{1}{n}\sum_{i=1}^n p_i,\qquad
+\bar Q = \frac{1}{n}\sum_{i=1}^n Q_i.
+\end{equation}
+
+\begin{proposition}
+\begin{equation}
+\bar Q \;\geq\; -10\log_{10}(\bar p),
+\end{equation}
+with equality if and only if all $p_i$ are equal (or $n=1$).
+\end{proposition}
+
+\begin{proof}[Sketch of proof]
+Since $\log_{10}(\cdot)$ is concave, Jensen's inequality gives
+\begin{equation}
+\log_{10}\bar p \;\geq\; \frac{1}{n}\sum_{i=1}^n \log_{10} p_i.
+\end{equation}
+Multiplying by $-10$ reverses the inequality and yields the claim after substituting $Q_i$.
+\end{proof}
+
+\textbf{Interpretation.} Averaging in log-space (mean Phred) is optimistically biased relative to converting the mean error probability to a single Phred score; this matters when aggregating quality metrics over heterogeneous regions.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Alignment-Based Quality Metric}
+\label{sec:alignment-quality}
+
+Let $G = (g_1,\dots,g_N)$ be a ground-truth sequence and $B = (b_1,\dots,b_N)$ a basecalled sequence aligned to it, with per-base Phred scores $Q_i$ and error probabilities $p_i = 10^{-Q_i/10}$.
+
+Define an alignment column score
+\begin{equation}
+s_i =
+\begin{cases}
+1 - p_i, & g_i = b_i,\\[4pt]
+p_i, & g_i \neq b_i,\\[4pt]
+0, & \text{if } g_i \text{ or } b_i \text{ is a gap}.
+\end{cases}
+\end{equation}
+
+The mean correctness for the alignment is
+\begin{equation}
+M = \frac{1}{N}\sum_{i=1}^N s_i \in [0,1],
+\end{equation}
+and the corresponding alignment-level error probability is $p_{\mathrm{err}} = 1 - M$, giving a Phred-like score
+\begin{equation}
+Q_{\mathrm{align}} = -10\log_{10}(1-M).
+\end{equation}
+
+This provides a single scalar quality metric that blends empirical correctness and basecaller confidence, suitable for run-level QC or validation metrics in Part V.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Per-Base Likelihood for Variants and Haplotype Evidence}
+\label{sec:per-base-likelihood}
+
+For a haplotype (or reference) sequence $g = (g_1,\dots,g_L)$ and an aligned read $r = (r_1,\dots,r_L)$ with base-specific error rates $e_i$:
+\begin{equation}
+\Prob(r_i = g_i \mid g_i, e_i) = 1 - e_i,
+\end{equation}
+\begin{equation}
+\Prob(r_i = b \neq g_i \mid g_i, e_i) = \frac{e_i}{\lvert \mathcal{A}\rvert - 1}.
+\end{equation}
+
+Assuming conditional independence across positions,
+\begin{equation}
+\Prob(r \mid g, e) = \prod_{i=1}^L
+\Bigl[(1-e_i)\mathbb{I}\{r_i = g_i\}
++ \frac{e_i}{\lvert \mathcal{A}\rvert-1}\mathbb{I}\{r_i \neq g_i\}\Bigr].
+\end{equation}
+
+This per-read likelihood is the building block of the haplotype-level likelihoods $\Prob(r\mid h)$ and mixture models $\Prob(r) = \sum_i \alpha_i \Prob(r\mid h_i)$ used in Chapters~\ref{chap:posteriors} and~\ref{chap:mixtures}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Plasmid Replication, Purity Bounds, and Purity Q-Values}
+\label{sec:purity}
+
+\subsection{Replication Model and Purity Ceiling}
+\label{subsec:purity-ceiling}
+
+Consider a plasmid of length $L$ (bp), per-base replication error rate $r$, and $k$ replication cycles. For a single base, the probability of remaining error-free over $k$ cycles is $(1-r)^k$; assuming independence across bases, the probability that the entire plasmid remains unchanged is
+\begin{equation}
+P_{\mathrm{pure}}(k) = (1-r)^{Lk} \approx \exp(-r L k)
+\end{equation}
+for small $r$.
+
+This yields an upper bound on the fraction of perfectly correct molecules after $k$ cycles---the \textbf{purity ceiling}. The fraction of mutated molecules is
+\begin{equation}
+P_{\mathrm{mut}}(k) = 1 - P_{\mathrm{pure}}(k).
+\end{equation}
+
+For any classifier operating on this standard, the measured TPR cannot exceed the underlying purity:
+\begin{equation}
+\boxed{\mathrm{TPR}(s_i) \leq \pi_i \leq P_{\mathrm{pure}}(k),}
+\end{equation}
+which is the \textbf{Purity Constraint} in the SEER framework.
+
+\subsection{Purity Q-Value}
+\label{subsec:purity-q}
+
+Treating $P_{\mathrm{mut}}(k)$ as an ``error probability,'' define a purity Phred score
+\begin{equation}
+Q_{\mathrm{pur}} = -10 \log_{10} \bigl(1 - P_{\mathrm{pure}}(k)\bigr)
+= -10\log_{10} P_{\mathrm{mut}}(k).
+\end{equation}
+
+Higher $Q_{\mathrm{pur}}$ corresponds to higher purity (fewer mutated molecules). This provides a convenient way to compare standards or to set acceptable purity thresholds in Part III.
+
+\subsection{Empirical Purity Estimation}
+\label{subsec:empirical-purity}
+
+\paragraph{Lower bound from capillary electrophoresis.}
+If $C_{\mathrm{major}}$ and $C_{\mathrm{other}}$ denote the concentrations of the main plasmid band and all other bands, then
+\begin{equation}
+P_{\mathrm{low}} = \frac{C_{\mathrm{major}}}{C_{\mathrm{major}} + C_{\mathrm{other}}}
+\end{equation}
+is a lower bound on purity.
+
+\paragraph{Empirical purity from clonal sequencing.}
+For experiment $E$ with $a$ matching and $b$ total colonies:
+\begin{equation}
+\hat P_E = \frac{a}{b}.
+\end{equation}
+Aggregating across experiments for a strain:
+\begin{equation}
+\hat P_{\mathrm{strain}} = \frac{c}{d}
+\end{equation}
+where $c$ of $d$ colonies match the original design sequence.
+
+These estimates are compared to theoretical bounds $P_{\mathrm{pure}}(k)$ to validate assumptions in Chapters~\ref{chap:purity} and~\ref{chap:plasmid-standards}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Haplotype Classification with Unknown Haplotype}
+\label{sec:haplotype-classification}
+
+Let
+\begin{equation}
+\mathcal{H} = \{h_1,\dots,h_P\}
+\end{equation}
+be the set of candidate haplotypes (e.g., star alleles of a pharmacogene). For each haplotype $h_i$, $M(h_i) = \{m_{i1},\dots,m_{i v_i}\}$ denotes its set of molecules (chromosomes, plasmids) and $\Prob(h_i)$ its prior probability.
+
+A read $r$ is generated via mutation, fragmentation, library preparation, and sequencing. Abstractly,
+\begin{equation}
+\Prob(r \mid h_i) =
+\sum_{u\in U(h_i)}\sum_{d\in D(h_i)}\sum_{\ell\in L(h_i)}
+\Prob(r \mid \ell, \theta_{\mathrm{seq}})
+\Prob(\ell \mid d, \theta_{\mathrm{lab}})
+\Prob(d \mid u, \theta_{\mathrm{frag}})
+\Prob(u \mid h_i, \mu, n_{\mathrm{div}}, L),
+\end{equation}
+where $U,D,L$ denote post-mutation sequences, fragments, and library molecules, and $\theta_{\mathrm{seq}},\theta_{\mathrm{lab}},\theta_{\mathrm{frag}}$ capture process-specific parameters.
+
+Assuming conditional independence of reads given $h_i$,
+\begin{equation}
+\Prob(R \mid h_i) = \prod_{r\in R} \Prob(r \mid h_i).
+\end{equation}
+
+By Bayes' theorem, the posterior is
+\begin{equation}
+\Prob(h_i \mid R) =
+\frac{\Prob(R \mid h_i) \Prob(h_i)}
+{\sum_{j=1}^P \Prob(R \mid h_j) \Prob(h_j)}.
+\label{eq:bayes-posterior}
+\end{equation}
+
+A simple MAP classifier selects
+\begin{equation}
+\hat h = \arg\max_i \Prob(h_i \mid R),
+\end{equation}
+optionally subject to a posterior threshold $\Prob(\hat h\mid R) \ge \gamma$ to enforce minimum confidence.
+
+Define the likelihood ratio
+\begin{equation}
+\mathrm{LR}_i(R) =
+\frac{\Prob(h_i \mid R)}{1-\Prob(h_i \mid R)},
+\end{equation}
+which is used for reporting and for cost-based decision rules in clinical contexts.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Diplotypes, Polyploidy, and Cost-Based Decision Rules}
+\label{sec:diplotypes}
+
+Let $\mathcal{D}$ be the set of possible diplotypes (pairs of haplotypes), with priors $\pi_d$ for $d\in \mathcal{D}$. For each diplotype $d$, the posterior given reads $R$ is
+\begin{equation}
+\Prob(d \mid R) =
+\frac{L_d(R)\,\pi_d}{\sum_{d'\in \mathcal{D}} L_{d'}(R)\,\pi_{d'}},
+\end{equation}
+where $L_d(R) = \Prob(R\mid d)$ is the diplotype likelihood, computed via mixture models over the two (or more, in CNVs/polyploidy) constituent haplotypes.
+
+For a policy that either calls a diplotype $d'$, flags for resequencing, or leaves the sample unresolved, define:
+\begin{itemize}
+\item $\varepsilon_{d\to d'}(\gamma,N)$: misclassification rate from true $d$ to called $d'$ when using $N$ reads and posterior threshold $\gamma$.
+\item $\psi_d(\gamma,N)$: probability that a sample with true $d$ is sent for resequencing.
+\end{itemize}
+
+Let $C_{d\to d'}$ be the cost of misclassifying $d$ as $d'$, and $C_{\mathrm{res},d}$ the cost of resequencing when the true diplotype is $d$. Then the expected cost at $(\gamma,N)$ is
+\begin{equation}
+C(\gamma,N) =
+\sum_{d\in \mathcal{D}} \pi_d
+\Biggl[
+\sum_{d'\neq d} C_{d\to d'} \varepsilon_{d\to d'}(\gamma,N)
++ C_{\mathrm{res},d}\,\psi_d(\gamma,N)
+\Biggr].
+\end{equation}
+
+Optimal operating points $(\gamma^*,N^*)$ minimize $C(\gamma,N)$ subject to sensitivity, PPV, and budget constraints, as discussed in Part V.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Read-Level Haplotagging Given a Known Haplotype}
+\label{sec:haplotagging}
+
+When the sample haplotype $h$ is known (e.g., clonal plasmid or fully resolved genome), the problem becomes assigning each read to its most likely molecule of origin $m_j \in M(h)$.
+
+Let $\Prob(m_j\mid h)$ be the prior mole fraction of molecule $m_j$. For a read $r$,
+\begin{equation}
+\Prob(m_j \mid r, h) =
+\frac{\Prob(r\mid m_j, h)\,\Prob(m_j\mid h)}
+{\sum_k \Prob(r\mid m_k, h)\,\Prob(m_k\mid h)}.
+\end{equation}
+
+Define
+\begin{equation}
+\mathrm{LR}_j(r) =
+\frac{\Prob(m_j \mid r, h)}{1-\Prob(m_j\mid r,h)}.
+\end{equation}
+
+Given a threshold $\tau$, the decision rule is
+\begin{itemize}
+\item assign $r$ to $m_j$ if $\mathrm{LR}_j(r)\ge \tau$ for some $j$;
+\item otherwise mark $r$ as unphased.
+\end{itemize}
+
+Let $N$ be the number of reads, and define
+\begin{itemize}
+\item $P_{\mathrm{unph}}(\tau)$: probability a read is unphased;
+\item $P_{\mathrm{mis}}(\tau)$: probability a read is misassigned.
+\end{itemize}
+
+Then the expected number of unphased reads is $U(\tau,N) = N P_{\mathrm{unph}}(\tau)$. A per-read cost formulation
+\begin{equation}
+C(\tau,N) = C_{\mathrm{mis}}\,N P_{\mathrm{mis}}(\tau)
++ C_{\mathrm{unph}}\,U(\tau,N)
+\end{equation}
+permits optimizing $\tau$ analogously to $\gamma$ in the diplotype setting.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Dual Cas9 Cutting and Probability of Isolating a Gene}
+\label{sec:dual-cas9}
+
+Consider dual Cas9 cuts flanking a gene of length $G$ bp. Let $L$ be the fragment length with pdf $f_L(\ell)$, cdf $F_L(\ell)$. The probability a fragment is at least as long as the gene is
+\begin{equation}
+p_{\mathrm{frag}}(G) = \Prob(L \ge G) = 1 - F_L(G^-).
+\end{equation}
+
+Let $e_1,e_2$ be the cutting efficiencies at the two sites, assumed independent. Then
+\begin{equation}
+p_{\mathrm{dual}}(G) = p_{\mathrm{frag}}(G)\,e_1 e_2.
+\end{equation}
+
+\begin{example}[Exponential Fragment Lengths]
+If $L \sim \mathrm{Exp}(\lambda)$, then $p_{\mathrm{frag}}(G) = e^{-\lambda G}$ and
+\begin{equation}
+p_{\mathrm{dual}}(G) = e^{-\lambda G} e_1 e_2,
+\end{equation}
+illustrating the exponential decay of success probability with gene length under random fragmentation.
+\end{example}
+
+This model underpins design of Cas9-enriched workflows in Part III.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Summary of Key Symbols}
+\label{sec:symbols}
+
+This appendix uses the same global notation as the main text; the following is a local reminder of the most frequently used symbols:
+\begin{itemize}
+\item $X$: raw single-molecule signal; $x^{(i)}$: single binding event.
+\item $R$: set of reads; $\mathcal{A}$: nucleotide alphabet.
+\item $Q_i$: base-level Phred score; $p_i$: corresponding error probability.
+\item $d_{\text{edit}}(r,s)$: Levenshtein edit distance; $L$ or $L_{\text{mol}}$: molecule length (bp).
+\item $C_{ij}$: confusion matrix counts (rows=true, columns=predicted); $\mathrm{SMA}(s_i) = C_{ii}/N_i$.
+\item $P_{\mathrm{pure}}(k)$: replication-based purity ceiling; $Q_{\mathrm{pur}}$: purity Phred score; $\pi$: empirical purity.
+\item $\mathcal{H}$: haplotype set; $\mathcal{D}$: diplotype set; $\pi_d$: diplotype prior.
+\item $L_d(R)$: diplotype likelihood; $\gamma$: posterior threshold.
+\item $\Prob(m_j\mid r,h)$: read-level haplotagging posterior; $\tau$: haplotagging LR threshold.
+\item $G$: gene length; $L$: fragment length with pdf $f_L$; $e_1,e_2$: Cas9 efficiencies.
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Conclusion}
+\label{sec:math-conclusion}
+
+This appendix provides a complete, unified mathematical framework for single-molecule haplotype classification. The models span:
+\begin{itemize}
+\item Signal processing and basecalling (Section~\ref{sec:math-basecalling})
+\item Empirical error characterization via confusion matrices and SMA (Section~\ref{sec:confusion-matrices})
+\item Quality metrics and calibration (Sections~\ref{sec:phred-mean}--\ref{sec:alignment-quality})
+\item Physical constraints from plasmid purity (Section~\ref{sec:purity})
+\item Bayesian inference for haplotype and diplotype classification (Sections~\ref{sec:haplotype-classification}--\ref{sec:diplotypes})
+\item Read-level haplotagging (Section~\ref{sec:haplotagging})
+\item Experimental design for enrichment (Section~\ref{sec:dual-cas9})
+\end{itemize}
+
+Together, these models form the foundation for the SEER--SMA-seq framework presented in Parts II--IV, enabling rigorous haplotype classification with quantified uncertainty suitable for clinical deployment. For detailed derivations, computational implementations, and clinical applications, refer to the corresponding chapters as noted throughout this appendix.

@@ -1,0 +1,15 @@
+\begin{table}[!htbp]
+\centering
+\caption{Platform-Specific Basecaller Characteristics}
+\label{tab:platform-characteristics}
+\begin{tabular}{p{3cm}p{5cm}p{4.5cm}}
+\toprule
+\textbf{Platform} & \textbf{Key Characteristics} & \textbf{Fine-Tuning Implications} \\
+\midrule
+ONT R9.4.1 & 5-mer signal context, moderate speed, mature models & Well-suited for fine-tuning; abundant training data available \\
+ONT R10.4.1 & 9-mer signal context, improved accuracy, evolving models & Requires more diverse training data due to longer context \\
+PacBio Sequel II & High per-base accuracy, moderate throughput & Focus on reducing systematic errors in GC-rich regions \\
+PacBio Revio & Ultra-high throughput, HiFi reads & Emphasize homopolymer accuracy and calibration \\
+\bottomrule
+\end{tabular}
+\end{table}

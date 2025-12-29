@@ -1,0 +1,487 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Appendix A: Notation and Conventions
+%% Version 6.1 - NEW (November 2025)
+%% Canonical reference for all mathematical notation used in the framework
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{Notation and Conventions}
+\label{app:notation}
+\label{app:notation-guide}
+
+This appendix provides a comprehensive reference for all mathematical notation, symbols, and conventions used throughout the SMS Haplotype Classification Framework. It serves as the canonical source for resolving ambiguities and ensuring consistent interpretation across all chapters and appendices.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{General Conventions}
+\label{sec:notation-general}
+
+\subsection{Typography}
+
+\begin{itemize}
+\item \textbf{Scalars:} Lowercase italic Latin ($a, b, x, y$) or Greek ($\alpha, \beta, \pi, \mu$)
+\item \textbf{Vectors:} Bold lowercase ($\mathbf{r}, \mathbf{x}, \mathbf{g}$)
+\item \textbf{Matrices:} Bold uppercase ($\mathbf{C}, \mathbf{Q}, \mathbf{X}$)
+\item \textbf{Sets:} Calligraphic uppercase ($\mathcal{H}, \mathcal{R}, \mathcal{A}$)
+\item \textbf{Random variables:} Uppercase Latin ($X, Y, R$)
+\item \textbf{Constants:} Roman font when standard ($\mathrm{e}, \pi$)
+\end{itemize}
+
+\subsection{Indexing Conventions}
+
+\begin{itemize}
+\item \textbf{Superscript $(i)$:} Read index or molecule index (e.g., $r^{(i)}$ = read $i$)
+\item \textbf{Subscript $j$:} Position within a sequence (e.g., $r_j$ = base at position $j$)
+\item \textbf{Combined:} $r^{(i)}_j$ = base $j$ in read $i$
+\item \textbf{Double subscript:} Matrix entry (e.g., $C_{ij}$ = confusion matrix row $i$, column $j$)
+\end{itemize}
+
+\subsection{Probability Notation}
+
+\begin{important}[Canonical Probability Notation]
+\textbf{Always use the \texttt{\textbackslash Prob} macro:}
+\begin{equation}
+\Prob(A), \quad \Prob(A \mid B), \quad \Prob(X = x)
+\end{equation}
+\textbf{Never} use raw $\mathbb{P}$ or $P$ in isolation. The macro ensures visual consistency and enables global formatting changes.
+\end{important}
+
+\begin{itemize}
+\item $\Prob(A)$ — probability of event $A$
+\item $\Prob(A \mid B)$ — conditional probability of $A$ given $B$
+\item $\Prob(X = x)$ — probability that random variable $X$ takes value $x$
+\item $\Prob(\mathbf{r} \mid h)$ — likelihood of reads $\mathbf{r}$ given haplotype $h$
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Core Mathematical Symbols}
+\label{sec:notation-symbols}
+
+\subsection{Sequencing Pipeline Variables}
+
+\begin{longtable}{p{0.20\textwidth}p{0.70\textwidth}}
+\toprule
+\textbf{Symbol} & \textbf{Meaning} \\
+\midrule
+\endhead
+$h$, $h_i$ & Haplotype (candidate sequence); index $i \in \{1, \ldots, P\}$ \\
+$\mathcal{H}$ & Set of candidate haplotypes: $\mathcal{H} = \{h_1, \ldots, h_P\}$ \\
+$g$, $g^{(i)}$ & Genomic molecule (chromosome, plasmid) \\
+$\mathcal{G}_i$ & Set of genomic molecules for haplotype $h_i$ \\
+$u$, $u^{(i)}$ & Post-mutation sequence (after somatic or replication errors) \\
+$\mathcal{U}_i$ & Set of possible mutated sequences from $h_i$ \\
+$d$, $d^{(i)}$ & DNA fragment (after physical shearing or enzymatic cutting) \\
+$\mathcal{D}_i$ & Set of possible fragments from $h_i$ \\
+$\ell$, $\ell^{(i)}$ & Library molecule (after adapter ligation, PCR, enrichment) \\
+$\mathcal{L}_i$ & Set of library molecules derived from $h_i$ \\
+$\sigma$, $\sigma^{(i)}$ & Instrument signal (raw time-series from sequencer) \\
+$\mathcal{S}$ & Signal space \\
+$r$, $r^{(i)}$ & Basecalled read (digital sequence output) \\
+$\mathbf{R}$, $R$ & Set of all reads: $R = \{r^{(1)}, \ldots, r^{(n)}\}$ \\
+$\mathcal{R}$ & Read space (set of all possible reads) \\
+\bottomrule
+\end{longtable}
+
+\subsection{Sequence and Read Properties}
+
+\begin{longtable}{p{0.20\textwidth}p{0.70\textwidth}}
+\toprule
+\textbf{Symbol} & \textbf{Meaning} \\
+\midrule
+\endhead
+$\mathcal{A}$ & Nucleotide alphabet: $\{A, C, G, T\}$ or $\{A, C, G, T, N\}$ \\
+$L$, $L_{\text{mol}}$ & Molecule length (in bases); context usually clarifies \\
+$L_i$ & Length of read $i$: $r^{(i)} \in \mathcal{A}^{L_i}$ \\
+$d_{\text{edit}}(r, s)$ & Levenshtein edit distance between sequences $r$ and $s$ \\
+$s$, $s^{(i)}$ & True (ground-truth) sequence corresponding to read $r^{(i)}$ \\
+$\hat{s}$ & Observed or predicted sequence assignment \\
+\bottomrule
+\end{longtable}
+
+\subsection{Quality Scores and Error Rates}
+
+\begin{longtable}{p{0.20\textwidth}p{0.70\textwidth}}
+\toprule
+\textbf{Symbol} & \textbf{Meaning} \\
+\midrule
+\endhead
+$Q$, $Q_i$ & Phred quality score at base $i$: $Q_i = -10 \log_{10} p_i$ \\
+$Q^{(i)}_j$ & Quality score of base $j$ in read $i$ \\
+$p$, $p_i$ & Error probability: $p_i = 10^{-Q_i/10}$ \\
+$\bar{Q}$ & Mean Phred score (arithmetic mean of $Q_i$) \\
+$Q_{\text{pred}}$ & Predicted quality score (from basecaller) \\
+$Q_{\text{emp}}$ & Empirical quality score (measured from ground truth) \\
+$\bar{Q}^{(i)}_{\text{pred}}$ & Mean predicted quality for read $i$: $-10 \log_{10}(\frac{1}{L_i}\sum_j 10^{-Q^{(i)}_j/10})$ \\
+$\bar{Q}^{(i)}_{\text{emp}}$ & Empirical quality for read $i$: $-10 \log_{10}(d_{\text{edit}}(r^{(i)}, s^{(i)})/|s^{(i)}|)$ \\
+$\bar{p}^{(i)}_{\text{pred}}$ & Mean predicted error rate for read $i$ \\
+$\bar{p}^{(i)}_{\text{emp}}$ & Empirical error rate: $d_{\text{edit}}(r^{(i)}, s^{(i)})/|s^{(i)}|$ \\
+\bottomrule
+\end{longtable}
+
+\subsection{Confusion Matrix and Classification}
+
+\begin{longtable}{p{0.20\textwidth}p{0.70\textwidth}}
+\toprule
+\textbf{Symbol} & \textbf{Meaning} \\
+\midrule
+\endhead
+$\mathbf{C}$ & Confusion matrix \\
+$C_{ij}$ & Entry: count of true class $i$ predicted as class $j$ \\
+$N_i$ & Row sum: $N_i = \sum_j C_{ij}$ (total molecules of type $i$) \\
+$\mathrm{TPR}(s_i)$ & True Positive Rate for sequence $s_i$: $\mathrm{TPR}(s_i) = C_{ii}/N_i$ \\
+$\mathrm{SMA}(s_i)$ & Single Molecule Accuracy: $\mathrm{SMA}(s_i) \equiv \mathrm{TPR}(s_i) = C_{ii}/N_i$ \\
+$\varepsilon_i$ & Misclassification probability: $\varepsilon_i = 1 - \mathrm{TPR}(s_i)$ \\
+\bottomrule
+\end{longtable}
+
+\begin{important}[Confusion Matrix Index Convention]
+\textbf{Rows = TRUE class; Columns = PREDICTED class.}
+$$C_{ij} = \text{count of true sequence } i \text{ predicted as sequence } j$$
+This convention is used consistently across all chapters and appendices. See Chapter~\ref{chap:classification-model}, Definition~\ref{def:confusion-matrix}.
+\end{important}
+
+\subsection{Haplotype Classification and Posteriors}
+
+\begin{longtable}{p{0.20\textwidth}p{0.70\textwidth}}
+\toprule
+\textbf{Symbol} & \textbf{Meaning} \\
+\midrule
+\endhead
+$\Prob(h_i \mid R)$ & Posterior probability of haplotype $h_i$ given reads $R$ \\
+$\Prob(R \mid h_i)$ & Likelihood of reads $R$ given haplotype $h_i$ \\
+$\Prob(h_i)$ & Prior probability of haplotype $h_i$ (population frequency) \\
+$\hat{h}$ & Maximum a posteriori (MAP) haplotype: $\hat{h} = \arg\max_i \Prob(h_i \mid R)$ \\
+$\gamma$ & Posterior confidence threshold (e.g., $\Prob(\hat{h} \mid R) \geq \gamma$) \\
+$\mathrm{LR}_i(R)$ & Likelihood ratio: $\mathrm{LR}_i(R) = \Prob(h_i \mid R) / (1 - \Prob(h_i \mid R))$ \\
+$\log_{10} \mathrm{BF}$ & Log Bayes factor (for evidence strength reporting) \\
+\bottomrule
+\end{longtable}
+
+\subsection{Diplotypes and Polyploidy}
+
+\begin{longtable}{p{0.20\textwidth}p{0.70\textwidth}}
+\toprule
+\textbf{Symbol} & \textbf{Meaning} \\
+\midrule
+\endhead
+$d$, $d_k$ & Diplotype (ordered or unordered pair of haplotypes) \\
+$\mathcal{D}$ & Set of possible diplotypes \\
+$\pi_d$ & Prior probability of diplotype $d$ \\
+$\Prob(d \mid R)$ & Posterior probability of diplotype $d$ given reads $R$ \\
+$L_d(R)$ & Likelihood of diplotype $d$: $L_d(R) = \Prob(R \mid d)$ \\
+$\alpha_i$ & Mixture fraction for haplotype $h_i$ in a diplotype (often $\alpha_i = 0.5$) \\
+\bottomrule
+\end{longtable}
+
+\subsection{Haplotagging (Molecule Assignment)}
+
+\begin{longtable}{p{0.20\textwidth}p{0.70\textwidth}}
+\toprule
+\textbf{Symbol} & \textbf{Meaning} \\
+\midrule
+\endhead
+$m_j$ & Molecule $j$ within a known haplotype \\
+$M(h)$ & Set of molecules for haplotype $h$: $M(h) = \{m_1, \ldots, m_v\}$ \\
+$\Prob(m_j \mid h)$ & Prior mole fraction of molecule $m_j$ \\
+$\Prob(m_j \mid r, h)$ & Posterior probability: read $r$ came from molecule $m_j$ \\
+$\tau$ & Haplotagging likelihood ratio threshold \\
+$\mathrm{LR}_j(r)$ & Molecule likelihood ratio: $\Prob(m_j \mid r, h) / (1 - \Prob(m_j \mid r, h))$ \\
+\bottomrule
+\end{longtable}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Purity and Replication Models}
+\label{sec:notation-purity}
+
+\begin{longtable}{p{0.20\textwidth}p{0.70\textwidth}}
+\toprule
+\textbf{Symbol} & \textbf{Meaning} \\
+\midrule
+\endhead
+$\pi$ & \textbf{Empirical purity} (measured or assumed constant fraction of correct molecules) \\
+$P_{\text{pure}}(k)$ & \textbf{Theoretical purity function} as a function of replication cycles $k$ \\
+$k$ & Number of replication cycles (bacterial growth, plasmid amplification) \\
+$r$ & Per-base replication error rate \\
+$L$ or $L_p$ & Plasmid length (in bp); subscript $p$ clarifies when needed \\
+$P_{\text{pure}}(k)$ & Purity ceiling: $(1 - r)^{Lk} \approx \exp(-rLk)$ \\
+$P_{\text{mut}}(k)$ & Fraction of mutated molecules: $1 - P_{\text{pure}}(k)$ \\
+$Q_{\text{pur}}$ & Purity Phred score: $Q_{\text{pur}} = -10 \log_{10}(P_{\text{mut}}(k))$ \\
+\bottomrule
+\end{longtable}
+
+\begin{important}[Purity Notation: $\pi$ vs $P_{\text{pure}}(k)$]
+These are \textbf{related but distinct} concepts:
+\begin{itemize}
+\item \textbf{$\pi$} — Empirical or assumed purity (constant, measured from experiments)
+\item \textbf{$P_{\text{pure}}(k)$} — Theoretical purity as a function of replication cycles
+\item \textbf{Relationship:} $\pi \leq P_{\text{pure}}(k)$ for $k$ cycles of replication
+\end{itemize}
+See Chapter~\ref{chap:purity}, Section~5.1 and Appendix~\ref{app:core-equations}, Section~\ref{sec:purity}.
+\end{important}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Experimental Design and Dual Cas9}
+\label{sec:notation-experimental}
+
+\begin{longtable}{p{0.20\textwidth}p{0.70\textwidth}}
+\toprule
+\textbf{Symbol} & \textbf{Meaning} \\
+\midrule
+\endhead
+$G$ & Gene length (target region length, in bp) \\
+$L$ & Fragment length (random variable, with pdf $f_L$ and cdf $F_L$) \\
+$f_L(\ell)$ & Probability density function of fragment length \\
+$F_L(\ell)$ & Cumulative distribution function of fragment length \\
+$p_{\text{frag}}(G)$ & Probability a fragment is $\geq$ gene length: $\Prob(L \geq G) = 1 - F_L(G^-)$ \\
+$e_1, e_2$ & Cas9 cutting efficiencies at two sites (flanking a gene) \\
+$p_{\text{dual}}(G)$ & Probability of successful dual Cas9 isolation: $p_{\text{dual}}(G) = p_{\text{frag}}(G) \cdot e_1 e_2$ \\
+\bottomrule
+\end{longtable}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{SMA-seq and SEER Framework}
+\label{sec:notation-sma-seer}
+
+\begin{longtable}{p{0.20\textwidth}p{0.70\textwidth}}
+\toprule
+\textbf{Symbol} & \textbf{Meaning} \\
+\midrule
+\endhead
+SMA-seq & Single Molecule Accuracy sequencing (protocol for ground-truth measurement) \\
+SEER & Sequencing Empirical Error Rate (framework for error characterization) \\
+$\mathrm{SMA}(s_i)$ & Single Molecule Accuracy for sequence $s_i$: $C_{ii}/N_i$ (see primary definition: Appendix~\ref{app:mathematical-models}, Definition~2) \\
+$\mathcal{E}$ & Set of experiments (SMA-seq runs on standards) \\
+$a, b$ & Matching and total colonies (clonal sequencing purity checks) \\
+$C_{\text{major}}$ & Concentration of major plasmid band (capillary electrophoresis) \\
+$C_{\text{other}}$ & Concentration of contaminating bands \\
+\bottomrule
+\end{longtable}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Indicator Functions and Logical Operators}
+\label{sec:notation-indicators}
+
+\begin{longtable}{p{0.20\textwidth}p{0.70\textwidth}}
+\toprule
+\textbf{Symbol} & \textbf{Meaning} \\
+\midrule
+\endhead
+$\mathbb{I}\{A\}$ & Indicator function: 1 if event $A$ is true, 0 otherwise \\
+$\mathbf{1}\{A\}$ & Alternative notation for indicator (used in some chapters) \\
+$\mathbbm{1}\{A\}$ & Another variant (rare, avoid for consistency) \\
+\bottomrule
+\end{longtable}
+
+\textbf{Recommended:} Use $\mathbb{I}\{\cdot\}$ consistently throughout.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Operators and Functions}
+\label{sec:notation-operators}
+
+\begin{longtable}{p{0.20\textwidth}p{0.70\textwidth}}
+\toprule
+\textbf{Symbol} & \textbf{Meaning} \\
+\midrule
+\endhead
+$\arg\max_i f(i)$ & Argument that maximizes $f$: index $i$ where $f(i)$ is largest \\
+$\arg\min_i f(i)$ & Argument that minimizes $f$ \\
+$\sum_{i=1}^n$ & Summation over index $i$ from 1 to $n$ \\
+$\prod_{i=1}^n$ & Product over index $i$ from 1 to $n$ \\
+$\log$ & Natural logarithm (base $e$) unless subscript specifies otherwise \\
+$\log_{10}$ & Base-10 logarithm (used for Phred scores, Bayes factors) \\
+$\ln$ & Natural logarithm (rarely used; prefer $\log$) \\
+$\exp(x)$ & Exponential function: $e^x$ \\
+$|A|$ & Cardinality of set $A$ (number of elements) \\
+$|s|$ & Length of sequence $s$ (number of bases) \\
+$\lvert s \rvert$ & Alternative notation for sequence length \\
+\bottomrule
+\end{longtable}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Abbreviations and Acronyms}
+\label{sec:notation-abbreviations}
+
+\begin{longtable}{p{0.20\textwidth}p{0.70\textwidth}}
+\toprule
+\textbf{Abbreviation} & \textbf{Meaning} \\
+\midrule
+\endhead
+ADR & Adverse Drug Reaction \\
+AS & Activity Score (pharmacogene diplotype) \\
+bp & Base pairs \\
+CPIC & Clinical Pharmacogenetics Implementation Consortium \\
+CDF & Cumulative Distribution Function \\
+CNV & Copy Number Variant \\
+DPWG & Dutch Pharmacogenetics Working Group \\
+ER+ & Estrogen Receptor Positive \\
+FDA & U.S. Food and Drug Administration \\
+FFPE & Formalin-Fixed, Paraffin-Embedded \\
+HLA & Human Leukocyte Antigen \\
+ICU & Intensive Care Unit \\
+IM & Intermediate Metabolizer \\
+kb & Kilobases (1000 bp) \\
+LOC & Lines of Code \\
+MAP & Maximum A Posteriori \\
+MLPA & Multiplex Ligation-dependent Probe Amplification \\
+NM & Normal Metabolizer \\
+PCR & Polymerase Chain Reaction \\
+PDF & Probability Density Function \\
+PM & Poor Metabolizer \\
+PPV & Positive Predictive Value \\
+QC & Quality Control \\
+QALY & Quality-Adjusted Life Year \\
+SEER & Sequencing Empirical Error Rate \\
+SMA & Single Molecule Accuracy \\
+SMA-seq & Single Molecule Accuracy Sequencing \\
+SMS & Single-Molecule Sequencing \\
+SNP & Single Nucleotide Polymorphism \\
+SNV & Single Nucleotide Variant \\
+SOP & Standard Operating Procedure \\
+SV & Structural Variant \\
+TAT & Turnaround Time \\
+TCA & Tricyclic Antidepressant \\
+TDM & Therapeutic Drug Monitoring \\
+TPR & True Positive Rate \\
+UM & Ultrarapid Metabolizer \\
+\bottomrule
+\end{longtable}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Cross-References to Primary Definitions}
+\label{sec:notation-cross-refs}
+
+For complete mathematical treatments and formal definitions, see:
+
+\begin{itemize}
+\item \textbf{Pipeline Factorization Theorem:} Appendix~\ref{app:mathematical-models}, Theorem~1 (primary); also Chapter~\ref{chap:classification-model}, Theorem~\ref{thm:pipeline-factorization}
+
+\item \textbf{Single Molecule Accuracy (SMA):} Appendix~\ref{app:mathematical-models}, Definition~2 (primary); also Appendix~\ref{app:core-equations}, Section~\ref{subsec:sma-definition}; Chapter~\ref{chap:sma-seq}, Remark~11.3
+
+\item \textbf{Confusion Matrix Convention:} Chapter~\ref{chap:classification-model}, Definition~\ref{def:confusion-matrix} with explicit index callout; Appendix~\ref{app:core-equations}, Section~\ref{sec:math-confusion}
+
+\item \textbf{Purity Theory:} Chapter~\ref{chap:purity} (complete treatment); Appendix~\ref{app:core-equations}, Section~\ref{sec:purity} (equations); Appendix~\ref{app:mathematical-models}, Section~7 (formal model)
+
+\item \textbf{Haplotype Classification:} Chapter~\ref{chap:posteriors} (applied); Appendix~\ref{app:mathematical-models}, Section~5 (formal); Appendix~\ref{app:core-equations}, Section~\ref{sec:haplotype-classification} (summary)
+
+\item \textbf{Dual Cas9 Model:} Chapter~\ref{chap:experimental-design}, Section~7.4; Appendix~\ref{app:core-equations}, Section~\ref{sec:dual-cas9}; Appendix~\ref{app:mathematical-models}, Section~7
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Notation Changes from Earlier Drafts}
+\label{sec:notation-changes}
+
+\textbf{Version 6.0--6.1 standardization:}
+
+\begin{longtable}{p{0.20\textwidth}p{0.30\textwidth}p{0.40\textwidth}}
+\toprule
+\textbf{Old Notation} & \textbf{New Notation} & \textbf{Reason} \\
+\midrule
+\endhead
+$L_{\text{edit}}(r, s)$ & $d_{\text{edit}}(r, s)$ & Avoid overloading $L$ (molecule length vs distance) \\
+$\mathbb{P}(\cdot)$ & $\Prob(\cdot)$ & Macro for consistency and visual uniformity \\
+$b$ (quality) & $Q$ (quality) & Standardize to Phred convention \\
+$P(h \mid R)$ & $\Prob(h \mid R)$ & Always use macro \\
+\bottomrule
+\end{longtable}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Summary of Critical Conventions}
+\label{sec:notation-summary}
+
+\begin{enumerate}
+\item \textbf{Probability:} Always use $\Prob(\cdot)$ macro, never raw $\mathbb{P}$ or $P$
+
+\item \textbf{Confusion Matrix Indexing:} $C_{ij}$ = true class $i$ (row) $\to$ predicted class $j$ (column)
+
+\item \textbf{Edit Distance:} $d_{\text{edit}}(r, s)$ (use $d$, not $L$, to avoid overloading molecule length)
+
+\item \textbf{Purity:} $\pi$ (empirical constant) vs $P_{\text{pure}}(k)$ (theoretical function of replication cycles)
+
+\item \textbf{Quality Scores:} $Q$ for Phred, $p$ for error probability; $Q = -10 \log_{10} p$
+
+\item \textbf{SMA Definition:} Canonical definition in Appendix~\ref{app:mathematical-models}, Definition~2; cross-referenced everywhere else
+
+\item \textbf{Indicator Function:} Prefer $\mathbb{I}\{\cdot\}$ over $\mathbf{1}\{\cdot\}$ for consistency
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Quick Navigation Guide}
+\label{sec:navigation-guide}
+
+This table provides a rapid reference to locate key concepts, definitions, and formulas throughout the framework. Use this to quickly find where concepts are introduced (Primary) and where they receive detailed treatment (Key Sections).
+
+\begin{table}[H]
+\centering
+\small
+\caption{Navigation guide to key concepts and their locations}
+\label{tab:navigation-guide}
+\begin{tabular}{lp{3.5cm}p{5.5cm}}
+\toprule
+\textbf{Concept} & \textbf{Primary Definition} & \textbf{Key Sections / Applications} \\
+\midrule
+\multicolumn{3}{l}{\textit{\textbf{Core Mathematical Framework}}} \\
+Pipeline Factorization & Ch.~4, Def.~4.1 & App.~F §\ref{sec:app-f-pipeline-factorization}, Exec. Overview \\
+Posterior Computation & Ch.~6, Eq.~(6.1--6.3) & App.~B §\ref{sec:haplotype-classification}, Ch.~14--15 \\
+Confusion Matrix & Ch.~4, Def.~4.3 & Ch.~11, App.~F §\ref{sec:app-f-confusion}, App.~B \\
+Purity Theory & Ch.~5, Def.~5.1--5.3 & Ch.~8 (plasmids), Ch.~11 (SMA ceiling), App.~F §7 \\
+\midrule
+\multicolumn{3}{l}{\textit{\textbf{Quality Score Framework}}} \\
+Phred Quality & Ch.~4, Def.~4.2 & Ch.~11 (calibration), App.~F §\ref{sec:app-f-quality-scores} \\
+Phred Averaging Ineq. & Ch.~11, Thm.~11.2 & App.~B §\ref{sec:quality-score-theory}, App.~C (QC gates) \\
+Quality Overstatement & Ch.~11, Def.~11.5 & App.~C (QC Gate 8), Ch.~12--13 (calibration) \\
+ECE (Calibration Error) & Ch.~11, Def.~11.6 & Ch.~13 (fine-tuning), App.~C \\
+\midrule
+\multicolumn{3}{l}{\textit{\textbf{SMA-seq and SEER Framework}}} \\
+SMA (Single Mol. Acc.) & App.~F, Def.~2 & Ch.~11 §\ref{sec:sma-definitions}, Ch.~14--15 \\
+SMA-seq Protocol & Ch.~11 §11.1--11.3 & App.~D (computational), Ch.~8 (standards) \\
+SEER Framework & Ch.~11 §11.4--11.6 & Ch.~12--13 (model improvement) \\
+Purity Ceiling & Ch.~5, Thm.~5.2 & Ch.~11 §11.7 (SMA bias), Ch.~8 (design) \\
+\midrule
+\multicolumn{3}{l}{\textit{\textbf{Experimental Design}}} \\
+Coverage Calculation & Ch.~7, Eq.~(7.2--7.4) & App.~F §\ref{sec:app-f-coverage}, Ch.~9--10 \\
+Plasmid Replication & Ch.~5, Eq.~(5.5--5.8) & Ch.~8 §8.2, App.~F §7 (purity models) \\
+Dual Cas9 Cutting & Ch.~9, Def.~9.1 & Ch.~7 (design), App.~D (protocols) \\
+Mixture Design & Ch.~10 & Ch.~14 (validation mixtures) \\
+\midrule
+\multicolumn{3}{l}{\textit{\textbf{Model Improvement}}} \\
+Noisy Label Learning & Ch.~12 & Ch.~13 (fine-tuning), App.~F §10 \\
+Basecaller Fine-Tuning & Ch.~13 & Ch.~11 (SMA feedback), Ch.~15 (validation) \\
+Loss Functions & Ch.~13, Eq.~(13.2--13.5) & App.~F §10, Ch.~12 (robust training) \\
+\midrule
+\multicolumn{3}{l}{\textit{\textbf{Validation and QC}}} \\
+QC Gates (15 gates) & App.~C & Ch.~11 (empirical), Ch.~14--15 (validation) \\
+Ground Truth & Ch.~5 §5.4 & Ch.~14 (mixtures), Ch.~11 (SMA-seq) \\
+Wilson Confidence Int. & Ch.~11, Eq.~(11.8) & Ch.~14 (SMA CI), App.~C (binomial metrics) \\
+Accuracy Propagation & Ch.~14 & Ch.~15 (end-to-end), Ch.~6 (theory) \\
+\midrule
+\multicolumn{3}{l}{\textit{\textbf{Clinical Applications}}} \\
+CYP2D6 Classification & Ch.~18 & Ch.~1 (motivation), Ch.~15 (workflow) \\
+Tamoxifen Case Study & Ch.~18 §18.2--18.4 & Ch.~1 (Clinical Box 1.1) \\
+Endoxifen Prediction & Ch.~18, Eq.~(18.1) & Ch.~18 §18.4 \\
+Two Failures Framework & Ch.~18 §18.1 & Ch.~1 (clinical context) \\
+\midrule
+\multicolumn{3}{l}{\textit{\textbf{Core Equations (CE\#1--15)}}} \\
+CE.1: Posterior Basic & Ch.~4, App.~B §1 & Ch.~6 (applications), Ch.~14--15 \\
+CE.2: Bayes Theorem & App.~B §1 & Throughout (Bayesian inference) \\
+CE.4--5: Likelihood & Ch.~4, App.~B §2 & Ch.~6 (classification), Ch.~11 (empirical) \\
+CE.8--10: Quality Theory & App.~B §3 & Ch.~11 (calibration), Ch.~13 (fine-tuning) \\
+CE.11--12: Purity Bounds & Ch.~5, App.~B §4 & Ch.~8 (plasmids), Ch.~11 (SMA ceiling) \\
+CE.13--15: Coverage & Ch.~7, App.~B §5 & Ch.~9 (enrichment), Ch.~10 (mixtures) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{How to use this guide:}
+\begin{itemize}
+\item \textbf{Learning a new concept:} Start with Primary Definition, then review Key Sections for applications
+\item \textbf{Implementing a method:} Check Primary Definition for formulas, then consult Appendix D for computational protocols
+\item \textbf{Troubleshooting:} Use Key Sections to find related QC gates (Appendix C) and validation procedures (Ch. 14--15)
+\item \textbf{Quick reference:} Use this table with Table~\ref{tab:chapter-dependencies} (Executive Overview) to plan reading path
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Conclusion}
+
+This notation guide serves as the authoritative reference for interpreting all mathematical expressions in the SMS Haplotype Classification Framework. When in doubt, consult this appendix first, then refer to the primary definition locations listed in Section~\ref{sec:notation-cross-refs}.
+
+For questions about notation not covered here, refer to Appendix~\ref{app:core-equations} (mathematical models summary) or Appendix~\ref{app:mathematical-models} (comprehensive formal treatment).
+
+\clearpage

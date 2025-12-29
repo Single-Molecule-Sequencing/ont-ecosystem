@@ -1,0 +1,28 @@
+\begin{table}[!htbp]
+\centering
+\caption{Mapping ONT manifest fields into the signal database}
+\label{tab:signal-db-manifest}
+\begin{tabular}{p{0.3\textwidth}p{0.55\textwidth}}
+\toprule
+\textbf{Manifest fields} & \textbf{Signal database use} \\
+\midrule
+\texttt{run\_id}, \texttt{batch\_id} & Partition raw signals by production run
+and offline re-basecalling batch; enable stratified sampling for drift studies.
+\\
+\texttt{instrument\_serial\_number}, \texttt{asic\_temp}, \texttt{pore\_type} &
+Track instrumentation effects on standards; anomalous instruments can be
+quarantined without deleting valuable signals. \\
+\texttt{flow\_cell\_id}, \texttt{sequencing\_kit}, \texttt{pore\_version} & Link
+consumable lots to training outcomes; regression tests can weight records when
+chemistry transitions occur. \\
+\texttt{filename\_pod5}/\texttt{filename\_fast5} & Persist pointers to the exact
+signal container that produced a database row, enabling byte-for-byte recovery
+years later. \\
+\texttt{mean\_qscore\_template}, \texttt{passes\_filtering} & Store the initial
+model assessment so that label-noise research can correlate downstream
+confidence with basecaller self-reports. \\
+\texttt{barcode\_*}, \texttt{sample\_id} & Automate multiplexed standard curation
+and prevent mis-labelled reads from entering the training split. \\
+\bottomrule
+\end{tabular}
+\end{table}

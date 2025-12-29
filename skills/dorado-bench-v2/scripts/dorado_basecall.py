@@ -17,6 +17,7 @@ Output fields (captured by ont-experiments):
 
 import argparse
 import json
+import math
 import os
 import re
 import subprocess
@@ -25,6 +26,36 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple
+
+
+# =============================================================================
+# Q-score Utilities (Phred scale)
+# =============================================================================
+
+def qscore_to_error_prob(q: float) -> float:
+    """Convert Q-score to error probability: P = 10^(-Q/10)"""
+    return 10 ** (-q / 10)
+
+def error_prob_to_qscore(p: float) -> float:
+    """Convert error probability to Q-score: Q = -10 * log10(P)"""
+    if p <= 0:
+        return 60.0  # Cap at Q60 for zero probability
+    return -10 * math.log10(p)
+
+def mean_qscore_from_quals(quals: List[int]) -> float:
+    """
+    Calculate mean Q-score correctly via probability space.
+
+    Q-scores are logarithmic, so we must:
+    1. Convert each Q to error probability
+    2. Average the probabilities
+    3. Convert back to Q-score
+    """
+    if not quals:
+        return 0.0
+    probs = [qscore_to_error_prob(q) for q in quals]
+    mean_prob = sum(probs) / len(probs)
+    return error_prob_to_qscore(mean_prob)
 
 # Optional imports
 try:
@@ -67,9 +98,9 @@ CLUSTER_CONFIGS = {
         'partition': 'gpu_mig40',
         'account': 'bleu99',
         'gres': 'gpu:nvidia_a100_80gb_pcie_3g.40gb:1',
-        'dorado_path': './dorado-1.1.1-linux-x64/bin/dorado',
-        'model_dir': './Models',
-        'output_dir': './Output',
+        'dorado_path': '/nfs/turbo/umms-atheylab/dorado-bench/dorado-1.1.1-linux-x64/bin/dorado',
+        'model_dir': '/nfs/turbo/umms-atheylab/dorado-bench/Models/Simplex',
+        'output_dir': '/nfs/turbo/umms-atheylab/dorado-bench/Output',
         'gpu_type': 'A100_MIG',
         'gpu_vram_gb': 40,
     },
@@ -513,19 +544,22 @@ def get_bam_stats(bam_path: Path) -> Dict[str, Any]:
                 stats['total_bases'] += read.query_length
                 stats['lengths'].append(read.query_length)
                 
-                # Get mean quality
+                # Get mean quality (via probability space for correct averaging)
                 if read.query_qualities:
-                    mean_qual = sum(read.query_qualities) / len(read.query_qualities)
+                    mean_qual = mean_qscore_from_quals(list(read.query_qualities))
                     stats['qualities'].append(mean_qual)
-                    
+
                     if mean_qual >= 10:  # Q10 pass threshold
                         stats['pass_reads'] += 1
     except Exception:
         pass
     
-    # Calculate summary stats
+    # Calculate summary stats (aggregate via probability space)
     if stats['qualities']:
-        stats['mean_qscore'] = round(sum(stats['qualities']) / len(stats['qualities']), 2)
+        # Convert per-read mean Q-scores to probabilities, average, convert back
+        probs = [qscore_to_error_prob(q) for q in stats['qualities']]
+        mean_prob = sum(probs) / len(probs)
+        stats['mean_qscore'] = round(error_prob_to_qscore(mean_prob), 2)
         sorted_q = sorted(stats['qualities'])
         stats['median_qscore'] = round(sorted_q[len(sorted_q) // 2], 2)
     

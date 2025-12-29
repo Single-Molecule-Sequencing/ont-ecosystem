@@ -1,0 +1,17 @@
+\begin{table}[!htbp]
+\centering
+\caption{Key Fine-Tuning Hyperparameters}
+\label{tab:hyperparameters}
+\begin{tabular}{p{3.5cm}p{3cm}p{5cm}}
+\toprule
+\textbf{Hyperparameter} & \textbf{Typical Range} & \textbf{Selection Guidance} \\
+\midrule
+Learning rate $\eta$ & $10^{-5}$ to $10^{-3}$ & Start with $10^{-4}$; reduce if training unstable \\
+Batch size & 32 to 256 & Larger for more data; GPU memory limited \\
+Regularization $\lambda$ & $10^{-5}$ to $10^{-3}$ & Increase if validation loss > training loss \\
+Dropout rate $p$ & 0.1 to 0.5 & Increase if overfitting observed \\
+Gradient clip threshold & 1.0 to 5.0 & Prevents exploding gradients in RNNs \\
+Early stopping patience & 5 to 20 epochs & More patience for noisy validation metrics \\
+\bottomrule
+\end{tabular}
+\end{table}

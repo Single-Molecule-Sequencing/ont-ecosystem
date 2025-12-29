@@ -1,0 +1,35 @@
+\begin{table}[H]
+\centering
+\caption{Quick Reference: Variables in the Classification Model}
+\label{tab:ch4-variables}
+\small
+\begin{tabular}{clp{5cm}c}
+\toprule
+\textbf{Symbol} & \textbf{Name} & \textbf{Definition} & \textbf{Reference} \\
+\midrule
+$\mathcal{H}$ & Haplotype space & Set of candidate haplotype sequences & Def.~\ref{def:state-space-hierarchy} \\
+$h_i$ & Haplotype $i$ & A specific candidate sequence & -- \\
+$P$ & Haplotype count & Total number of candidates & -- \\
+\midrule
+$\mathcal{R}$ & Read space & Set of all observed sequencing reads & Def.~\ref{def:state-space-hierarchy} \\
+$r_j$ & Read $j$ & A single basecalled sequence & -- \\
+$n$ & Read count & Total number of reads observed & -- \\
+\midrule
+$\sigma$ & Signal & Continuous sensor output (current or fluorescence) & Def.~\ref{def:signal-emission} \\
+$x_t$ & Signal at time $t$ & Measurement at specific timepoint & -- \\
+$T$ & Signal length & Number of timepoints in signal & -- \\
+\midrule
+$Q_j$ & Quality score & Phred-scaled error probability for position $j$ & Def.~\ref{def:quality-score-model} \\
+$\mathbf{Q}$ & Quality vector & Quality scores for all positions in a read & -- \\
+\midrule
+$\mathbf{C}$ & Confusion matrix & Empirical error probabilities $\Prob(\text{obs}|\text{true})$ & Def.~\ref{def:confusion-matrix} \\
+$C_{ij}$ & Confusion entry & Probability of observing $i$ given true $j$ & -- \\
+\midrule
+$d_{\text{edit}}(r,t)$ & Edit distance & Minimum edits to transform $r$ to $t$ & Def.~\ref{def:levenshtein-distance} \\
+$|r|$ & Sequence length & Number of bases in read $r$ & -- \\
+\midrule
+$\mathcal{A}$ & Nucleotide alphabet & $\{A, C, G, T\}$ & -- \\
+$\mathbb{I}[\cdot]$ & Indicator function & 1 if condition true, 0 otherwise & -- \\
+\bottomrule
+\end{tabular}
+\end{table}

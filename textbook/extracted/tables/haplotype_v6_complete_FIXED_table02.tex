@@ -1,0 +1,50 @@
+\begin{table}[H]
+\centering
+\small
+\caption{Chapter dependency map showing prerequisites and suggested reading paths}
+\label{tab:chapter-dependencies}
+\begin{tabular}{clp{6cm}}
+\toprule
+\textbf{Chapter} & \textbf{Title} & \textbf{Prerequisites} \\
+\midrule
+\multicolumn{3}{l}{\textit{\textbf{Part I: Clinical Motivation}}} \\
+1--3 & Clinical/Technical Background & None (entry point) \\
+\midrule
+\multicolumn{3}{l}{\textit{\textbf{Part II: Mathematical Foundations}}} \\
+4 & Classification Model & Ch. 1--3 (recommended) \\
+5 & Purity Theory & Ch. 4 (required) \\
+6 & Posterior Computation & Ch. 4--5 (required) \\
+7 & Experimental Design & Ch. 4--6 (required) \\
+\midrule
+\multicolumn{3}{l}{\textit{\textbf{Part III: Physical Standards}}} \\
+8 & Plasmid Standards & Ch. 5 (purity theory) \\
+9 & Targeted Enrichment & Ch. 8 (recommended) \\
+10 & Haplotype Mixtures & Ch. 8--9 (recommended) \\
+\midrule
+\multicolumn{3}{l}{\textit{\textbf{Part IV: SMA-seq and SEER}}} \\
+11 & SMA-seq Protocol & Ch. 4--5, 8 (required) \\
+12 & Noisy Label Learning & Ch. 11 (required) \\
+13 & Basecaller Fine-Tuning & Ch. 11--12 (required) \\
+\midrule
+\multicolumn{3}{l}{\textit{\textbf{Part V: Validation}}} \\
+14 & Haplotype Mixtures & Ch. 6, 10--11 (required) \\
+15 & End-to-End Workflow & Ch. 1--14 (comprehensive) \\
+\midrule
+\multicolumn{3}{l}{\textit{\textbf{Part VI: Clinical Applications}}} \\
+16 & Bacterial Strain Typing (outline) & Ch. 4--5, 8, 11 (recommended) \\
+17--18 & CYP2D6 Clinical Case Studies & Ch. 4--6, 11, 15 (recommended) \\
+\midrule
+\multicolumn{3}{l}{\textit{\textbf{Part VII: Operational Excellence}}} \\
+19 & SOPs (outline) & Ch. 8--15 (workflow integration) \\
+20 & Economic Analysis (outline) & Ch. 15, 17--18 (use cases) \\
+\midrule
+\multicolumn{3}{l}{\textit{\textbf{Appendices}}} \\
+A & Notation & None (reference) \\
+B & Core Equations & Parallel to Ch. 4--7 \\
+F & Mathematical Models & Parallel to Ch. 4--13 \\
+C & QC Gates & After Ch. 11 \\
+D & Computational Protocols & After Ch. 6, 11 \\
+E & Version History & None (reference) \\
+\bottomrule
+\end{tabular}
+\end{table}

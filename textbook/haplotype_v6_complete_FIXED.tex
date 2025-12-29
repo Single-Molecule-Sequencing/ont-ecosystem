@@ -1,0 +1,1152 @@
+\documentclass[11pt,letterpaper,twoside,openright]{book}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% PREAMBLE - Professional Academic Formatting
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Page geometry and margins
+\usepackage[
+    letterpaper,
+    top=1in,
+    bottom=1in,
+    inner=1.25in,
+    outer=1in,
+    headheight=14.5pt,
+    headsep=0.25in,
+    footskip=0.3in
+]{geometry}
+
+% Essential packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+
+% Note: abstract package removed - not compatible with book class and not used
+% \usepackage{abstract}
+
+% Professional fonts
+\usepackage{lmodern}           % Latin Modern (improved Computer Modern)
+\usepackage{microtype}         % Improved typography and spacing
+
+% Math packages
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{array} % for \arraybackslash in tabular
+\usepackage{mathtools} 
+% Enhanced math features
+\usepackage{bbm}
+
+
+% Graphics and tables
+\usepackage{graphicx}
+\usepackage{array}          % Required for advanced column formatting like >{\raggedright}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{float}
+
+% Colors
+\usepackage{xcolor}
+% \usepackage{colortbl}  % For \rowcolor in tables - TEMPORARILY DISABLED due to compilation issues
+
+% Advanced boxes (for eqboxV5 template)
+\usepackage{tcolorbox}
+\tcbuselibrary{breakable,skins}
+
+% Lists
+\usepackage{enumitem}
+
+% Algorithms
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+% Text symbols
+\usepackage{textcomp}
+
+% Unicode support
+\usepackage{newunicodechar}
+\newunicodechar{⚠}{\ensuremath{\triangle}}
+
+% Headers and footers
+\usepackage{fancyhdr}
+
+% Better captions
+\usepackage[font=small,labelfont=bf,labelsep=period]{caption}
+
+% Section and chapter styling
+\usepackage{titlesec}
+
+% Better spacing
+\usepackage{setspace}
+\setstretch{1.1}
+
+% Page break control
+\usepackage{needspace}
+
+% Margin adjustment (for wide content in eqboxV5)
+\usepackage{changepage}
+
+% Advanced command definitions (for master reference boxes)
+\usepackage{xparse}
+
+% Hyperref must be loaded last
+\usepackage{hyperref}
+
+% SMS Lab figure/table management and math registry integration
+\usepackage{sms}
+\setmanuscriptversion{v1.0.1_20251120}  % Updated to match generated figures
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% CUSTOM COMMANDS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Core equation references
+\newcommand{\CEref}[1]{\hyperref[ce:#1]{CE.#1}}
+\newcommand{\CEanchor}[1]{\label{ce:#1}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% EQUATION AND VARIABLE FRAMEWORK (November 2025)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Equation numbering by chapter: (1.1), (1.2), ..., (2.1), ...
+% This is already enabled by default in amsmath with the book class,
+% but we explicitly ensure it with chngcntr
+\usepackage{chngcntr}
+\counterwithin{equation}{chapter}
+
+% Equation box environment
+% Usage: \begin{eqbox}{Short title} \begin{equation} ... \end{equation} \end{eqbox}
+% Wraps equations/align/etc. in a titled box for emphasis
+% Note: You must include \begin{equation} or \begin{align} explicitly inside eqbox
+% COMMENTED OUT: This definition is superseded by the eqboxV5-based definition at line 625
+% \newtcolorbox{eqbox}[2][]{%
+%   enhanced,
+%   colback=white,
+%   colframe=black,
+%   sharp corners,
+%   title={#2},
+%   fonttitle=\bfseries,
+%   boxrule=1pt,
+%   left=10pt,
+%   right=10pt,
+%   top=10pt,
+%   bottom=10pt,
+%   before skip=12pt,
+%   after skip=12pt,
+%   ams nodisplayskip,
+%   #1
+% }
+
+% Variable summary table environment
+% Usage:
+% \begin{vartable}
+%   \varrow{$\mathcal{H}$}{Haplotype space}{dimensionless set}{Defined by allele catalogue}
+%   ...
+% \end{vartable}
+\newenvironment{vartable}[1][]{%
+  \begin{table}[ht]
+  \centering
+  \caption{Variable summary for Chapter~\thechapter}
+  \begin{tabular}{llll}
+  \toprule
+  Symbol & Physical description & Units & Measurement / determination \\
+  \midrule
+}{%
+  \bottomrule
+  \end{tabular}
+  \end{table}
+}
+
+% Variable row in summary table
+\newcommand{\varrow}[4]{%
+  #1 & #2 & #3 & #4 \\
+}
+
+% Variable box environment at chapter end
+% Usage: \begin{varbox}{$\mathcal{H}$} ... \end{varbox}
+% Creates a detailed box for one variable with description, units, measurement, and example
+% COMMENTED OUT: This definition is superseded by the definition at line 604
+% \newtcolorbox{varbox}[2][]{%
+%   enhanced,
+%   breakable,
+%   colback=blue!3!white,
+%   colframe=blue!60!black,
+%   sharp corners,
+%   title={Variable: #2},
+%   fonttitle=\bfseries,
+%   boxrule=0.8pt,
+%   left=10pt,
+%   right=10pt,
+%   top=10pt,
+%   bottom=10pt,
+%   before skip=10pt,
+%   after skip=10pt,
+%   #1
+% }
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Consistent forthcoming chapter notice
+\newcommand{\ChapterForthcomingNotice}[3]{%
+    \vspace*{1.5cm}%
+    \noindent\fcolorbox{lightgray}{white}{%
+        \begin{minipage}{\dimexpr\textwidth-2\fboxsep-2\fboxrule\relax}%
+            \centering\Large\textbf{Chapter Forthcoming}\par%
+            \vspace{12pt}%
+            \normalsize%
+            \begin{minipage}{0.92\linewidth}%
+                \centering #1%
+            \end{minipage}\par%
+            \vspace{10pt}%
+            {\raggedright\textbf{Planned Content:}%
+            \begin{itemize}[leftmargin=1.9cm]%
+                #2%
+            \end{itemize}}%
+            \vspace{6pt}%
+            \textit{Estimated pages: #3}%
+        \end{minipage}%
+    }%
+    \vspace{1cm}%
+}
+
+% Math operators
+% Note: \Prob is now defined in sms.sty package
+% \newcommand{\Prob}{\mathbb{P}}  % Defined in sms.sty
+\newcommand{\E}{\mathbb{E}}       % Expectation operator (not in sms.sty which uses \Expect)
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{recommendation}[theorem]{Recommendation}
+
+% Important callout box environment
+\newtcolorbox{important}[1][]{%
+    colback=yellow!10!white,
+    colframe=orange!75!black,
+    fonttitle=\bfseries,
+    title=#1,
+    breakable,
+    enhanced,
+    sharp corners,
+    boxrule=0.5pt,
+    left=6pt,
+    right=6pt,
+    top=6pt,
+    bottom=6pt
+}
+
+% Learning objectives box (chapter openings)
+\newtcolorbox{learningobjectives}{%
+    colback=blue!5!white,
+    colframe=primarydark,
+    fonttitle=\bfseries\sffamily,
+    title=Learning Objectives,
+    breakable,
+    enhanced,
+    sharp corners,
+    boxrule=1pt,
+    left=10pt,
+    right=10pt,
+    top=10pt,
+    bottom=10pt,
+    before skip=12pt,
+    after skip=12pt
+}
+
+% Key takeaways box (chapter endings)
+\newtcolorbox{keytakeaways}{%
+    colback=green!5!white,
+    colframe=green!60!black,
+    fonttitle=\bfseries\sffamily\Large,
+    title=Key Takeaways,
+    breakable,
+    enhanced,
+    boxrule=1.5pt,
+    left=12pt,
+    right=12pt,
+    top=12pt,
+    bottom=12pt,
+    before skip=20pt,
+    after skip=20pt,
+    sharp corners
+}
+
+% Practical note box
+\newtcolorbox{practicalnote}[1][Practical Note]{%
+    colback=cyan!5!white,
+    colframe=cyan!75!black,
+    fonttitle=\bfseries\sffamily,
+    title=#1,
+    breakable,
+    enhanced,
+    sharp corners,
+    boxrule=0.8pt,
+    left=8pt,
+    right=8pt,
+    top=8pt,
+    bottom=8pt,
+    before skip=10pt,
+    after skip=10pt
+}
+
+% Warning box
+\newtcolorbox{warningbox}[1][Warning]{%
+    colback=red!5!white,
+    colframe=red!75!black,
+    fonttitle=\bfseries\sffamily,
+    title=\textcolor{red!75!black}{⚠ #1},
+    breakable,
+    enhanced,
+    sharp corners,
+    boxrule=1pt,
+    left=10pt,
+    right=10pt,
+    top=10pt,
+    bottom=10pt,
+    before skip=12pt,
+    after skip=12pt
+}
+
+% Concept highlight box
+\newtcolorbox{conceptbox}[1]{%
+    colback=purple!5!white,
+    colframe=purple!75!black,
+    fonttitle=\bfseries\sffamily,
+    title=Key Concept: #1,
+    breakable,
+    enhanced,
+    sharp corners,
+    boxrule=0.8pt,
+    left=10pt,
+    right=10pt,
+    top=10pt,
+    bottom=10pt,
+    before skip=10pt,
+    after skip=10pt
+}
+
+% Worked example box
+\newtcolorbox{workedexample}[1][]{
+  enhanced,
+  breakable,
+  colback=blue!5,
+  colframe=blue!75!black,
+  coltitle=white,
+  fonttitle=\bfseries\large,
+  title={#1},
+  attach boxed title to top left={
+    yshift=-2mm,
+    xshift=5mm
+  },
+  boxed title style={
+    colback=blue!75!black,
+    sharp corners
+  },
+  top=10mm,
+  bottom=5mm,
+  left=5mm,
+  right=5mm,
+  arc=2mm,
+  boxrule=1pt,
+  shadow={2mm}{-1mm}{0mm}{black!30}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% HEADERS AND FOOTERS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\pagestyle{fancy}
+\fancyhf{} % Clear all headers and footers
+
+% Headers
+\fancyhead[L]{\small\slshape\nouppercase{\leftmark}}  % Chapter on left
+\fancyhead[R]{\small\slshape\nouppercase{\rightmark}} % Section on right
+
+% Page numbers - ALWAYS bottom right corner
+\fancyfoot[R]{\small\thepage}
+
+% Plain style for chapter pages - same page number position
+\fancypagestyle{plain}{%
+    \fancyhf{}
+    \fancyfoot[R]{\small\thepage}
+    \renewcommand{\headrulewidth}{0pt}
+}
+
+% Header rule
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% CHAPTER AND SECTION STYLING
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Chapter formatting
+\titleformat{\chapter}[display]
+    {\normalfont\huge\bfseries\sffamily}
+    {\chaptertitlename\ \thechapter}
+    {20pt}
+    {\Huge}
+\titlespacing*{\chapter}{0pt}{-20pt}{30pt}
+
+% Section formatting
+\titleformat{\section}
+    {\normalfont\Large\bfseries\sffamily}
+    {\thesection}
+    {1em}
+    {}
+\titlespacing*{\section}{0pt}{3.5ex plus 1ex minus .2ex}{2.3ex plus .2ex}
+
+% Subsection formatting
+\titleformat{\subsection}
+    {\normalfont\large\bfseries\sffamily}
+    {\thesubsection}
+    {1em}
+    {}
+\titlespacing*{\subsection}{0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+
+% Subsubsection formatting
+\titleformat{\subsubsection}
+    {\normalfont\normalsize\bfseries\sffamily}
+    {\thesubsubsection}
+    {1em}
+    {}
+\titlespacing*{\subsubsection}{0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% COLOR DEFINITIONS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Professional dark tone palette - sophisticated charcoal and slate
+\definecolor{primarydark}{RGB}{45,45,48}       % Deep charcoal (primary dark tone)
+\definecolor{secondarydark}{RGB}{65,65,70}     % Slightly lighter charcoal for accents
+\definecolor{slateaccent}{RGB}{85,90,95}       % Warm slate gray for emphasis
+\definecolor{darkgray}{RGB}{89,89,89}          % Dark gray for text
+\definecolor{mediumgray}{RGB}{127,127,127}     % Medium gray
+\definecolor{lightgray}{RGB}{217,217,217}      % Light gray for borders
+
+% Equation box colors - professional dark theme
+\definecolor{eqboxbg}{RGB}{250,250,251}        % Warm off-white background
+\definecolor{eqboxborder}{RGB}{45,45,48}       % Deep charcoal border
+\definecolor{eqboxaccent}{RGB}{180,180,185}    % Soft gray accent line
+
+% Legacy blue names remapped to dark tones for compatibility
+\definecolor{primaryblue}{RGB}{45,45,48}       % Remapped to primarydark
+\definecolor{secondaryblue}{RGB}{65,65,70}     % Remapped to secondarydark
+\definecolor{lightblue}{RGB}{230,230,232}      % Remapped to light gray tone
+
+% Configure hyperlink colors using named palette entries
+\hypersetup{
+    colorlinks=true,
+    linkcolor=primarydark,
+    citecolor=secondarydark,
+    urlcolor=primarydark,
+    bookmarksnumbered=true,
+    bookmarksopen=true,
+    pdftitle={Haplotype Framework v6.0 - Complete Edition},
+    pdfauthor={Framework Development Team},
+    pdfsubject={Single-Molecule Sequencing Haplotype Classification},
+    pdfkeywords={haplotype, sequencing, Bayesian inference, genomics}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% UNICODE CHARACTER MAPPINGS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newunicodechar{≥}{\ensuremath{\geq}}
+\newunicodechar{≤}{\ensuremath{\leq}}
+\newunicodechar{µ}{\textmu}
+\newunicodechar{°}{\textdegree}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% CUSTOM ENVIRONMENTS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Helper for optional headings
+\newcommand{\frameworkHeading}[2]{%
+    \textbf{#1\if\relax\detokenize{#2}\relax\else\ (#2)\fi}%
+}
+
+% Protocol environment
+\newenvironment{protocol}[1][]{%
+    \par\medskip
+    \noindent\textcolor{primaryblue}{\rule{\linewidth}{1pt}}
+    \par\smallskip
+    \noindent{\sffamily\bfseries\color{primaryblue}\frameworkHeading{Protocol}{#1}}
+    \par\smallskip
+}{%
+    \par\smallskip
+    \noindent\textcolor{lightgray}{\rule{\linewidth}{0.5pt}}
+    \par\medskip
+}
+
+% Strategy environment
+\newenvironment{strategy}[1][]{%
+    \par\medskip
+    \noindent\textcolor{primaryblue}{\rule{\linewidth}{1pt}}
+    \par\smallskip
+    \noindent{\sffamily\bfseries\color{primaryblue}\frameworkHeading{Strategy}{#1}}
+    \par\smallskip
+}{%
+    \par\smallskip
+    \noindent\textcolor{lightgray}{\rule{\linewidth}{0.5pt}}
+    \par\medskip
+}
+
+% Criteria environment
+\newenvironment{criteria}[1][]{%
+    \par\medskip
+    \noindent\textcolor{primaryblue}{\rule{\linewidth}{1pt}}
+    \par\smallskip
+    \noindent{\sffamily\bfseries\color{primaryblue}\frameworkHeading{Criteria}{#1}}
+    \par\smallskip
+}{%
+    \par\smallskip
+    \noindent\textcolor{lightgray}{\rule{\linewidth}{0.5pt}}
+    \par\medskip
+}
+
+% Recommendation environment - Using \newtheorem (line 134) instead of tcolorbox
+% because recommendation environments contain verbatim blocks which don't work in tcolorbox
+% \newtcolorbox{recommendation}[1][]{%
+%     colback=yellow!5!white,
+%     colframe=yellow!80!black,
+%     boxrule=0.8pt,
+%     arc=2mm,
+%     title={\sffamily\bfseries Recommendation\if\relax\detokenize{#1}\relax\else: #1\fi},
+%     fonttitle=\bfseries\sffamily,
+%     coltitle=black,
+%     attach boxed title to top left={yshift=-2mm,xshift=5mm},
+%     boxed title style={%
+%         colback=yellow!80!black,
+%         colframe=yellow!80!black,
+%         boxrule=0.8pt,
+%         arc=1mm
+%     },
+%     top=10pt,
+%     bottom=10pt,
+%     left=12pt,
+%     right=12pt,
+%     before skip=12pt plus 4pt minus 2pt,
+%     after skip=12pt plus 4pt minus 2pt,
+%     breakable=true
+% }
+
+% REMOVED: Old eqbox environment definition (superseded by eqboxV5 mapping below)
+% This definition was causing "Command \eqbox already defined" errors
+% The eqbox environment is now defined below (line 551) as a wrapper to eqboxV5
+% which is loaded from templates/eqbox_improved_v5style.tex
+%
+% \newsavebox{\eqboxbox}
+% \newenvironment{eqbox}[1]{%
+%     \par\bigskip\nopagebreak
+%     \begin{lrbox}{\eqboxbox}%
+%     \begin{minipage}{0.92\linewidth}
+%         ... (old implementation removed)
+%     \end{minipage}%
+%     \end{lrbox}%
+%     ...
+% }
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% TABLE AND LIST IMPROVEMENTS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Better table row spacing
+\renewcommand{\arraystretch}{1.2}
+
+% List spacing
+\setlist{nosep, itemsep=2pt, parsep=2pt}
+\setlist[enumerate]{leftmargin=*, labelsep=5pt}
+\setlist[itemize]{leftmargin=*, labelsep=5pt}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% MATH DISPLAY IMPROVEMENTS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Better math spacing
+\AtBeginDocument{%
+    \setlength{\abovedisplayskip}{12pt plus 3pt minus 3pt}%
+    \setlength{\belowdisplayskip}{12pt plus 3pt minus 3pt}%
+    \setlength{\abovedisplayshortskip}{6pt plus 3pt}%
+    \setlength{\belowdisplayshortskip}{6pt plus 3pt}%
+}
+
+% Improved fraction display
+\newcommand{\dfr}[2]{\displaystyle\frac{#1}{#2}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% PART PAGE STYLING
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\titleformat{\part}[display]
+    {\centering\normalfont\Huge\bfseries\sffamily}
+    {\textcolor{primaryblue}{\partname\ \thepart}}
+    {20pt}
+    {\textcolor{primaryblue}}
+\titlespacing*{\part}{0pt}{0pt}{30pt}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% EQBOX V5-STYLE TEMPLATE INTEGRATION
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Load enhanced eqbox environment with v5 stylistic baseline
+% Provides: eqboxV5 environment and helper commands
+% Documentation: See docs/EQBOX_AUTHORING_INSTRUCTIONS_V5.md
+\input{templates/eqbox_improved_v5style.tex}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% VARBOX ENVIRONMENT - Variable Reference Boxes
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Similar to eqbox but styled for variable definitions
+% Used for detailed variable descriptions at end of chapters
+\newtcolorbox{varbox}[1]{
+    colback=blue!5!white,
+    colframe=blue!75!black,
+    fonttitle=\bfseries\sffamily,
+    title=#1,
+    breakable,
+    enhanced,
+    sharp corners,
+    boxrule=0.5pt,
+    width=0.96\textwidth,
+    center,
+    left=10pt,
+    right=10pt,
+    top=10pt,
+    bottom=10pt,
+    before skip=12pt,
+    after skip=12pt
+}
+
+% Helper command for eqbox environment (legacy compatibility)
+% Maps to eqboxV5 for cleaner chapter code
+\newenvironment{eqbox}[1]{\begin{eqboxV5}{#1}}{\end{eqboxV5}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% MASTER REFERENCE BOX STYLES (Appendices G & H)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Boxed card-style references for master variable and equation tables
+% Replaces longtable format with individual boxed entries
+
+% Base style for master reference cards
+\tcbset{
+  masterbox/.style={
+    enhanced,
+    breakable,
+    colback=gray!2,
+    colframe=gray!40,
+    boxrule=0.5pt,
+    arc=1.5mm,
+    left=3mm,
+    right=3mm,
+    top=2mm,
+    bottom=2mm,
+    before skip=8pt plus 4pt minus 2pt,
+    after skip=8pt plus 4pt minus 2pt,
+    fonttitle=\bfseries,
+    title filled=false
+  }
+}
+
+% Master Variable Box: one variable per card
+% Arguments:
+% 1 = Unique ID       (e.g. V-Q, V-π, V-001)
+% 2 = Symbol          (math mode, e.g. Q, \pi, \mathbf{C})
+% 3 = Name            (plain text, e.g. Phred quality score)
+% 4 = Definition      (full sentence definition)
+% 5 = Type            (Scalar, Vector, Matrix, Set, etc.)
+% 6 = Domain/Range    (e.g. [0,1], \mathbb{N}, \mathbb{R}_{\ge 0})
+% 7 = Units           (e.g. Phred units, bases, dimensionless)
+% 8 = First defined   (e.g. Ch.~4.2, Sec.~A.2.3, p.~\pageref{...})
+% 9 = Key uses        (e.g. Ch.~4, 7, 11)
+% Reserved space for variable box to avoid awkward page breaks.
+% Default is 12\baselineskip to match equation boxes; adjust as needed.
+\newcommand{\MasterVarBoxNeedspace}{12\baselineskip}
+\NewDocumentCommand{\MasterVarBox}{m m m m m m m m m}{%
+  \needspace{\MasterVarBoxNeedspace}%
+  \begin{tcolorbox}[masterbox,title={Variable \,#1}]%
+    % Header row: symbol and name
+    \noindent
+    \textbf{Symbol:} $\displaystyle #2$ \hfill
+    \textbf{Name:} #3
+
+    \medskip
+    % Main definition text
+    \noindent
+    \textbf{Definition.} #4
+
+    \medskip
+    % Compact metadata footer
+    \small
+    \noindent
+    \textbf{Type:} #5 \quad
+    \textbf{Domain:} $#6$ \quad
+    \textbf{Units:} #7
+
+    \par\smallskip
+    \noindent
+    \textbf{First defined:} #8 \quad
+    \textbf{Key uses:} #9
+  \end{tcolorbox}%
+}
+
+% Master Equation Box: one equation per card
+% Arguments:
+% 1 = Unique ID          (e.g. CE-05, EQ-POSTERIOR-BAYES)
+% 2 = Equation label     (e.g. \texttt{eq:ce5})
+% 3 = Name               (e.g. Predicted quality score)
+% 4 = Equation body      (math to be typeset inside \[ \])
+% 5 = Short definition/role
+% 6 = Category           (e.g. Core Eq., Pipeline, Experimental Design)
+% 7 = First defined      (e.g. App.~B.5, Ch.~6.3)
+% 8 = Key variables      (comma-separated, e.g. $Q$, $p$, $\pi$)
+\NewDocumentCommand{\MasterEqBox}{m m m m m m m m}{%
+  \needspace{12\baselineskip}%
+  \begin{tcolorbox}[masterbox,title={Equation \,#1}]%
+    % Header row
+    \noindent
+    \textbf{Label:} \texttt{#2} \hfill
+    \textbf{Name:} #3
+
+    \medskip
+    % Optional one-sentence context above the equation
+    \noindent
+    \textbf{Definition/Role.} #5
+
+    \medskip
+    % The equation itself, guaranteed on its own line
+    \[
+      #4
+    \]
+
+    \medskip
+    % Metadata footer
+    \small
+    \noindent
+    \textbf{Category:} #6 \quad
+    \textbf{First defined:} #7
+
+    \par\smallskip
+    \noindent
+    \textbf{Key variables:} #8
+  \end{tcolorbox}%
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% FIGURE COMMANDS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Graceful fallback for pipeline classification figure
+\newcommand{\pipelineClassificationFigure}{%
+    \IfFileExists{haplotype_classification_pipeline66666.pdf}{%
+        \includegraphics[width=0.95\textwidth]{haplotype_classification_pipeline66666.pdf}%
+    }{%
+        \IfFileExists{haplotype_classification_pipeline66666.png}{%
+            \includegraphics[width=0.95\textwidth]{haplotype_classification_pipeline66666.png}%
+        }{%
+            \fbox{\parbox[c][0.25\textheight][c]{0.8\textwidth}{\centering Missing figure: haplotype\_classification\_pipeline66666}}%
+        }%
+    }%
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% DOCUMENT
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% FRONT MATTER
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\frontmatter
+
+% Title Page
+\begin{titlepage}
+\centering
+\vspace*{2cm}
+
+{\Huge\bfseries Single-Molecule Sequencing\\Haplotype Classification\par}
+\vspace{1cm}
+{\LARGE Mathematical Framework and Clinical Applications\par}
+\vspace{2cm}
+{\Large Version 6.0 - Complete Edition\par}
+\vspace{0.3cm}
+{\large Release Date: October 2025\par}
+\vspace{0.2cm}
+{\large Last Updated: November 2025\par}
+
+\vspace{3cm}
+
+\begin{minipage}{0.8\textwidth}
+\centering
+\textbf{Document Completion Status:}\\
+\vspace{0.5cm}
+\begin{tabular}{ll}
+Completed Chapters: & 14 of 20 (70\%) \\
+Completed Appendices: & 5 of 5 (100\%) \\
+\textbf{Overall Completion:} & \textbf{75\%} \\
+\end{tabular}
+
+\vspace{1cm}
+
+{\footnotesize
+\textit{This edition contains complete methodological content (Parts II--V)\\
+with professional placeholders indicating planned content for Parts I, VI, and VII.}
+}
+\end{minipage}
+
+\vfill
+
+{\large Framework Development Team\par}
+{\small Comprehensive Methods and Applications Guide\par}
+\end{titlepage}
+
+% Executive Overview
+\chapter*{Executive Overview}
+\addcontentsline{toc}{chapter}{Executive Overview}
+
+This document presents a comprehensive, error-aware framework for the classification of genomic haplotypes from single-molecule DNA sequencing (SMS) data. Version 6.0 organizes the framework as an integrated system that spans mathematical modelling, experimental design, empirical error characterization, and clinical validation. The central problem is to transform noisy single-molecule signals into clinically defensible haplotype and diplotype calls with explicit, quantitative uncertainty.
+
+At the mathematical core lies the \textbf{Pipeline Factorization Theorem}, which decomposes the full generative process into a sequence of conditional distributions $\Prob(h,g,u,d,l,\sigma,r) = \Prob(h)\,\Prob(g\mid h)\cdots\Prob(r\mid\sigma)$ linking haplotypes $h$ to basecalled reads $r$ via genomic molecules, mutations, fragmentation, library preparation, instrument signals, and basecalling. This factorization provides the state-space architecture used throughout Parts II--V (formalized in Appendix~\ref{app:mathematical-models}, Section~\ref{sec:app-f-pipeline-factorization}).
+
+Among these terms, $\Prob(r\mid\sigma)$---the probability of a read given an instrument signal---is the most complex and opaque. In practice it is implemented by a deep neural network basecaller running in different accuracy/performance modes. The \textbf{SEER} (Sequencing Empirical Error Rate) framework and the \textbf{SMA-seq} (Single Molecule Accuracy sequencing) protocol are designed to make this abstract term empirically visible and auditable. SMA-seq establishes physical ground truth by sequencing plasmid standards whose sequences are known with high confidence; SEER converts the resulting data into confusion matrices, per-base error profiles, and calibrated quality scores that parameterize the likelihood functions used for haplotype classification.
+
+The framework is therefore best understood not as a one-way pipeline, but as a \textbf{cyclical SMA-SEER system} for continuous improvement. In the \textit{Measure} phase, SMA-seq is used to generate reads from high-purity plasmid standards representing clinically relevant haplotypes. In the \textit{Model} phase, SEER constructs empirical confusion matrices and per-base error models, defines Single Molecule Accuracy (SMA), and quantifies basecaller miscalibration using metrics such as the quality overstatement fraction and expected calibration error. In the \textit{Improve} phase, these empirical models drive basecaller fine-tuning and recalibration, directly modifying $\Prob(r\mid\sigma)$. Finally, in the \textit{Deploy} phase, the improved models and validated error parameters are used to classify patient samples and to design next-generation standards, closing the loop.
+
+\textbf{SMA-SEER as a Learning System for Clinical Genomics.} Viewed at the highest level, the SMA-SEER architecture functions as a \textit{learning system} for single-molecule sequencing technologies. Each iteration of the loop takes empirical observations from physical reference standards and clinical samples, updates the statistical model $\Prob(r\mid\sigma)$ and its derived likelihoods, and pushes improved basecallers and classification rules back into production. Over time, the framework converges toward higher Single Molecule Accuracy (SMA), better-calibrated quality scores, and sharper posterior distributions over haplotypes. This closed-loop behaviour is particularly important for complex loci such as \textit{CYP2D6}, where structural variants and hybrid alleles routinely defeat conventional assays. In Part~VI, the Singapore cohort case study demonstrates how this learning system transforms an initially unreliable pharmacogenomic test into a high-resolution, clinically defensible genotyping solution for Tamoxifen therapy.
+
+A key theme running through the framework is the distinction between predicted and empirical quality. Modern basecallers output Phred-scaled quality scores $Q_i$ which, in principle, encode basewise error probabilities $p_i = 10^{-Q_i/10}$. SEER uses SMA-seq data to compute empirical read-level and per-base error rates, and to construct formal inequalities---such as the Phred averaging inequality---that clarify the relationship between the mean of Phred scores and the Phred of the mean error probability. These constructions underpin quality gates and calibration procedures throughout Parts IV and V and are collected in Appendices~\ref{app:core-equations} and \ref{app:mathematical-models}.
+
+The framework is tightly coupled to physical constraints on experimental systems. Plasmid replication models establish a \textbf{Purity Constraint}: the true positive rate measured on a standard cannot exceed the fraction of molecules that are actually correct. Purity bounds, together with dual Cas9 cutting models and coverage calculations, provide quantitative guidance for experimental design, ensuring that observed accuracies and depth are physically attainable and that validation experiments have sufficient statistical power.
+
+Finally, the framework is anchored in real clinical applications. In particular, the \textbf{Singapore CYP2D6 Tamoxifen cohort} provides a flagship demonstration of why long-read, haplotype-resolved genotyping is necessary and how the SMS framework solves a previously intractable problem. In this 75-patient cohort (42 sequenced), 19\% of patients receive ambiguous diplotype calls under conventional genotyping, and 36\% carry complex \textit{CYP2D6-CYP2D7} fusion alleles such as \textit{*36+*10} that are invisible to standard assays. Application of the SMS Haplotype Classification framework resolves these ambiguities with high posterior confidence, enabling the construction of a Precision Endoxifen Prediction Algorithm that integrates \textit{CYP2D6} diplotypes with additional genetic and clinical covariates.
+
+\section*{Document Organization}
+
+The remainder of the document is organized into seven parts that reflect this integrated perspective:
+
+\begin{itemize}
+\item \textbf{Part I: Clinical Motivation and Technical Background} -- Establishes the clinical need for accurate haplotype classification and the limitations of current testing modalities (Chapters 1--3)
+\item \textbf{Part II: Mathematical Foundations} -- Develops measurable spaces and probability models for each stage of the sequencing pipeline, including the factorization above (Chapters 4--7)
+\item \textbf{Part III: Physical Standards and Workflows} -- Documents the laboratory workflows for constructing standards and clinical libraries (Chapters 8--10)
+\item \textbf{Part IV: SMA-seq and Model Improvement} -- Formalizes SMA-seq and the SEER framework as the empirical core of the system (Chapters 11--13)
+\item \textbf{Part V: Validation} -- Uses these tools to define rigorous validation gates (Chapters 14--15)
+\item \textbf{Part VI: Clinical Applications} -- Applies the framework to use cases such as bacterial strain typing and \textit{CYP2D6} pharmacogenomics (Chapters 16--18)
+\item \textbf{Part VII: Operational Excellence} -- Addresses operationalization and economic considerations (Chapters 19--20, \textit{forthcoming})
+\end{itemize}
+
+Five appendices provide reference materials including notation, core equations, laboratory protocols, software tools, and version history.
+
+\section*{Usage Guide}
+
+This document serves multiple audiences:
+\begin{itemize}
+\item \textbf{Clinical practitioners}: Focus on Parts I, VI, and VII for applications and implementation
+\item \textbf{Laboratory scientists}: Emphasis on Part III for protocols and Appendix C for QC procedures
+\item \textbf{Computational researchers}: Deep dive into Parts II, IV, and V for mathematical methods
+\item \textbf{Software developers}: Appendix D provides implementation guidance
+\end{itemize}
+
+\section*{Chapter Dependencies and Reading Paths}
+
+The textbook is designed to support multiple reading paths depending on reader expertise and goals. The dependency map below identifies prerequisite chapters (solid arrows indicate strong dependencies, dashed arrows indicate helpful background):
+
+\begin{table}[H]
+\centering
+\small
+\caption{Chapter dependency map showing prerequisites and suggested reading paths}
+\label{tab:chapter-dependencies}
+\begin{tabular}{clp{6cm}}
+\toprule
+\textbf{Chapter} & \textbf{Title} & \textbf{Prerequisites} \\
+\midrule
+\multicolumn{3}{l}{\textit{\textbf{Part I: Clinical Motivation}}} \\
+1--3 & Clinical/Technical Background & None (entry point) \\
+\midrule
+\multicolumn{3}{l}{\textit{\textbf{Part II: Mathematical Foundations}}} \\
+4 & Classification Model & Ch. 1--3 (recommended) \\
+5 & Purity Theory & Ch. 4 (required) \\
+6 & Posterior Computation & Ch. 4--5 (required) \\
+7 & Experimental Design & Ch. 4--6 (required) \\
+\midrule
+\multicolumn{3}{l}{\textit{\textbf{Part III: Physical Standards}}} \\
+8 & Plasmid Standards & Ch. 5 (purity theory) \\
+9 & Targeted Enrichment & Ch. 8 (recommended) \\
+10 & Haplotype Mixtures & Ch. 8--9 (recommended) \\
+\midrule
+\multicolumn{3}{l}{\textit{\textbf{Part IV: SMA-seq and SEER}}} \\
+11 & SMA-seq Protocol & Ch. 4--5, 8 (required) \\
+12 & Noisy Label Learning & Ch. 11 (required) \\
+13 & Basecaller Fine-Tuning & Ch. 11--12 (required) \\
+\midrule
+\multicolumn{3}{l}{\textit{\textbf{Part V: Validation}}} \\
+14 & Haplotype Mixtures & Ch. 6, 10--11 (required) \\
+15 & End-to-End Workflow & Ch. 1--14 (comprehensive) \\
+\midrule
+\multicolumn{3}{l}{\textit{\textbf{Part VI: Clinical Applications}}} \\
+16 & Bacterial Strain Typing (outline) & Ch. 4--5, 8, 11 (recommended) \\
+17--18 & CYP2D6 Clinical Case Studies & Ch. 4--6, 11, 15 (recommended) \\
+\midrule
+\multicolumn{3}{l}{\textit{\textbf{Part VII: Operational Excellence}}} \\
+19 & SOPs (outline) & Ch. 8--15 (workflow integration) \\
+20 & Economic Analysis (outline) & Ch. 15, 17--18 (use cases) \\
+\midrule
+\multicolumn{3}{l}{\textit{\textbf{Appendices}}} \\
+A & Notation & None (reference) \\
+B & Core Equations & Parallel to Ch. 4--7 \\
+F & Mathematical Models & Parallel to Ch. 4--13 \\
+C & QC Gates & After Ch. 11 \\
+D & Computational Protocols & After Ch. 6, 11 \\
+E & Version History & None (reference) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Suggested Reading Paths:}
+\begin{itemize}
+\item \textbf{Quick clinical overview:} Ch. 1, 17--18 (CYP2D6 case studies), Appendix C
+\item \textbf{Mathematical foundations:} Ch. 4--7, Appendix B, Appendix F, Appendices G--H (reference tables)
+\item \textbf{Laboratory implementation:} Ch. 3, 8--10, 19 (SOPs), Appendix C, Appendix D
+\item \textbf{SMA-seq specialist:} Ch. 4--5, 8, 11--13, Appendix F, Appendices G--H
+\item \textbf{Comprehensive mastery:} Linear progression Ch. 1--20, consult Appendices G--H for cross-references
+\item \textbf{Business planning:} Ch. 1, 15, 17--18, 20 (economic analysis)
+\end{itemize}
+
+\section*{Completion Status}
+
+As of November 2025, the framework comprises all 20 planned chapters across 7 parts:
+
+\begin{itemize}
+\item \textbf{Complete (15 chapters):} Chapters 1--15 provide comprehensive coverage of clinical motivation, mathematical foundations, experimental methods, SMA-seq framework, and validation strategies
+\item \textbf{Complete (3 chapters):} Chapters 17--18 present detailed CYP2D6 clinical validation studies across oncology, pain management, and psychiatric applications
+\item \textbf{Outline (3 chapters):} Chapters 16, 19--20 provide structured outlines for bacterial genomics applications, standard operating procedures, and economic analysis to guide future work
+\item \textbf{Appendices (8 complete):} All appendices provide comprehensive reference materials including notation (Appendix A), core equations (Appendix B), QC gates (Appendix C), computational protocols (Appendix D), version history (Appendix E), mathematical models (Appendix F), master variable reference (Appendix G), and master equation reference (Appendix H)
+\end{itemize}
+
+The framework's mathematical foundations (Parts II, IV), laboratory protocols (Part III), validation infrastructure (Part V), and flagship clinical demonstrations (Part VI) are production-ready. Operational chapters (Part VII) and bacterial genomics (Chapter 16) are outlined to establish scope and structure for implementation planning.
+
+% Table of Contents
+\tableofcontents
+\listoffigures
+\listoftables
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% MAIN MATTER
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\mainmatter
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% PART I: Clinical Motivation (PLACEHOLDERS)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\part{Clinical Motivation and Technical Background}
+\label{part:clinical-motivation}
+
+\textit{This part establishes the clinical need for accurate haplotype classification and provides technical background on single-molecule sequencing. \textbf{Status: Complete Outlines}. Chapters 1--3 contain comprehensive content establishing clinical and technical foundations.}
+
+\input{src/chapters/chapter1_expanded.tex}
+\input{src/chapters/chapter2_expanded.tex}
+\input{src/chapters/chapter3_expanded.tex}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% PART II: Mathematical Foundations (COMPLETE - using notes for now)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\part{Mathematical Foundations}
+\label{part:mathematical-foundations}
+
+\textit{This part develops the core mathematical framework for haplotype classification from single-molecule sequencing data. \textbf{Status: Complete}. Chapters 4--7 contain the full mathematical models and algorithms.}
+
+\vspace{1cm}
+
+\noindent The framework's mathematical foundation rests on Bayesian inference, information theory, and stochastic modeling of DNA fragmentation. Chapter~\ref{chap:classification} establishes the core likelihood calculations that transform noisy sequencing reads into evidence for competing haplotypes. Chapter~\ref{chap:posteriors} develops posterior probability computation and decision rules for classification with quantified uncertainty. Chapter~\ref{chap:purity} addresses the fundamental physical constraint that molecular purity imposes an accuracy ceiling. Chapter~\ref{chap:experimental-design} completes the theoretical framework with information-theoretic principles for optimal experimental design. Together, these chapters provide a complete, rigorous mathematical basis for all subsequent laboratory methods and clinical applications.
+
+\input{src/chapters/chapter4_populated_REORGANIZED.tex}
+\input{src/chapters/chapter5_populated_REORGANIZED.tex}
+\input{src/chapters/chapter6_populated_REORGANIZED.tex}
+\input{src/chapters/chapter7_populated_REORGANIZED.tex}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% PART III: Physical Standards (COMPLETE - using notes for now)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\part{Physical Standards, Library Preparation, and Workflows}
+\label{part:standards-workflows}
+
+\textit{This part covers laboratory protocols, quality control procedures, and the complete workflow from sample to analyzed data. \textbf{Status: Complete}. Chapters 8--10 provide detailed protocols and procedures.}
+
+\vspace{1cm}
+
+\noindent Mathematical rigor means nothing without experimental precision. This part translates theoretical models into reproducible laboratory practice. Chapter~\ref{chap:standards} establishes physical reference materials that enable empirical validation of computational methods. Chapter~\ref{chap:library-prep} details sample preparation protocols that preserve molecular fidelity while generating high-quality sequencing libraries. Chapter~\ref{chap:workflow} presents the end-to-end computational pipeline that transforms raw sequencing signals into validated haplotype classifications. These chapters ensure that theoretical accuracy translates into reliable clinical results through standardized, quality-controlled laboratory and computational workflows.
+
+\input{src/chapters/chapter8_populated_REORGANIZED.tex}
+\input{src/chapters/chapter9_populated_REORGANIZED.tex}
+\input{src/chapters/chapter10_populated_REORGANIZED.tex}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% PART IV: Model Improvement (COMPLETE - using notes for now)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\part{Model Improvement: Advanced Techniques}
+\label{part:model-improvement}
+\label{part:sma-seq}
+
+\textit{This part presents advanced techniques for improving classification accuracy. \textbf{Status: Complete}. Chapters 11--13 cover SMA-seq, noisy labels, and basecaller tuning.}
+
+\vspace{1cm}
+
+\noindent Standard methods establish a performance baseline, but clinical applications demand maximum possible accuracy. This part presents three orthogonal strategies for pushing beyond baseline performance. Chapter~\ref{chap:sma-seq} introduces SMA-seq, an adaptive sequencing approach that concentrates depth on informative genomic regions. Chapter~\ref{chap:noisy-labels} develops robust machine learning techniques that extract accurate models from imperfect training data. Chapter~\ref{chap:basecaller-tuning} optimizes the fundamental error model by fine-tuning basecaller neural networks for haplotype-specific contexts. These advanced techniques combine to deliver classification accuracy approaching the fundamental purity ceiling established in Part~II.
+
+\input{src/chapters/chapter11_populated_REORGANIZED.tex}
+\input{src/chapters/chapter12_populated_REORGANIZED.tex}
+\input{src/chapters/chapter13_populated_REORGANIZED.tex}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% PART V: Validation (COMPLETE - using notes for now)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\part{Validation and Quality Control}
+\label{part:validation}
+
+\textit{This part establishes validation methods and quality control procedures. \textbf{Status: Complete}. Chapters 14--15 provide comprehensive validation strategies.}
+
+\vspace{1cm}
+
+\noindent Clinical deployment requires not just accurate methods, but demonstrable proof of accuracy through rigorous validation. This part establishes the validation infrastructure that transforms experimental techniques into defensible clinical assays. Chapter~\ref{chap:diplotype-validation} presents controlled mixture experiments using characterized reference materials to empirically measure classification accuracy across the diplotype space. Chapter~\ref{chap:release-management} operationalizes these validation results into quality gates and release criteria that ensure every clinical report meets pre-specified performance standards. Together, these chapters provide the evidentiary foundation required for regulatory approval and clinical adoption.
+
+\input{src/chapters/chapter14_populated_REORGANIZED.tex}
+\input{src/chapters/chapter15_populated_REORGANIZED.tex}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% PART VI: Clinical Applications (PLACEHOLDERS)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\part{Clinical Applications and Case Studies}
+\label{part:clinical-applications}
+
+\textit{This part demonstrates real-world applications of the framework across multiple clinical domains. \textbf{Status: Chapters 17--18 Complete, Chapter 16 Outline}. Two comprehensive CYP2D6 case studies validate the SMS framework for pharmacogenomic haplotype classification in oncology (Tamoxifen), pain management (codeine/tramadol), and psychiatry (antidepressants). Chapter 16 outlines planned bacterial genomics applications.}
+
+\vspace{1cm}
+
+\noindent Chapters~\ref{chap:cyp2d6-pain-psychiatry} and \ref{chap:singapore-cohort} demonstrate that structural variants and phasing ambiguities in CYP2D6---which affect 15--35\% of patients in conventional genotyping across therapeutic areas---can be systematically resolved using single-molecule sequencing with quantified Bayesian posterior confidence. These clinical validations span oncology, pain management, and psychiatric pharmacotherapy, establishing that the SMS framework (Parts~II--V) is broadly applicable wherever accurate genotyping is essential for precision dosing and adverse event prevention. Chapter~\ref{chap:bacterial} outlines the extension of these methods to microbial genomics for strain typing and antimicrobial resistance profiling.
+
+% Chapter 16: Bacterial Strain Typing (Outline)
+\input{src/chapters/chapter16_placeholder.tex}
+
+% Chapter 17: CYP2D6 for Pain and Psychiatry - NOW COMPLETE (v6.1)
+\input{src/chapters/chapter17_populated.tex}
+
+% Chapter 18: Singapore CYP2D6 Cohort - NOW COMPLETE (v6.1)
+\input{src/chapters/chapter18_populated.tex}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% PART VII: Operational Excellence (PLACEHOLDERS)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\part{Operational Excellence and Resource Planning}
+\label{part:operations}
+
+\textit{This part provides SOPs and economic analysis for clinical implementation. \textbf{Status: Outline}. Chapters 19--20 provide structured outlines for standard operating procedures and economic modeling to support clinical laboratory deployment.}
+
+\vspace{1cm}
+
+\noindent Successful clinical implementation requires not just validated methods (Parts II--V) and compelling use cases (Part VI), but also practical guidance for laboratory operations and business planning. Chapter~\ref{chap:sops} outlines the complete standard operating procedure framework needed for CLIA/CAP-compliant deployment, while Chapter~\ref{chap:economic} provides economic modeling templates for cost-effectiveness analysis and resource planning. These chapters establish the operational foundation required to translate research-grade methods into routine clinical practice.
+
+% Chapter 19: Standard Operating Procedures (Outline)
+\input{src/chapters/chapter19_placeholder.tex}
+
+% Chapter 20: Economic Analysis (Outline)
+\input{src/chapters/chapter20_placeholder.tex}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% APPENDICES (COMPLETE - using notes for now)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\appendix
+
+% Appendix A: Notation and Conventions (NEW - v6.1)
+% Canonical reference for all mathematical notation
+\input{src/appendices/appendixA_notation.tex}
+
+\input{src/appendices/appendix_appendix.tex}
+\input{src/appendices/appendixB_populated.tex}
+\input{src/appendices/appendixC_populated.tex}
+\input{src/appendices/appendixD_populated.tex}
+\input{src/appendices/appendixE_populated.tex}
+\input{src/appendices/appendixF_populated.tex}
+
+% Appendix G: Master Variable Reference Table (NEW - v6.2)
+% Comprehensive catalog of all variables with definitions and cross-references
+\input{src/appendices/appendixG_variable_master.tex}
+
+% Appendix H: Master Equation Reference Table (NEW - v6.2)
+% Comprehensive catalog of all numbered equations with cross-references
+\input{src/appendices/appendixH_equation_master.tex}
+
+% Appendix I: Chapter-by-Chapter Mathematical Reference (NEW - v6.3)
+% Database-generated comprehensive reference with all equations and variables by chapter
+% Auto-generated from equations.yaml and variables.yaml (87 equations, 67 variables)
+\input{src/appendices/appendixI_database_generated.tex}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% DEMONSTRATION APPENDICES (Optional - can be commented out)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% The following appendices demonstrate the eqboxV5 template system.
+% These can be commented out after reviewing the examples.
+
+\chapter{eqboxV5 Template Demonstration}
+\label{app:eqbox-demo}
+
+This appendix demonstrates the eqboxV5 template system integrated in this document. The examples below show the v5-style aesthetic and comprehensive documentation structure.
+
+\section*{About These Examples}
+
+The following examples are production-ready equation boxes that demonstrate:
+\begin{itemize}
+\item Clean gray aesthetic matching the v5 baseline style
+\item Comprehensive mathematical exposition with all helper sections
+\item Proper use of the \texttt{\textbackslash CEanchor} system for cross-referencing
+\item Page break control using \texttt{\textbackslash needspace}
+\item Professional formatting suitable for clinical documentation
+\end{itemize}
+
+For authoring instructions, see \texttt{docs/EQBOX\_AUTHORING\_INSTRUCTIONS\_V5.md}.
+
+% TEMPORARILY COMMENTED OUT - causes TeX capacity exceeded error due to tcolorbox nesting
+% \input{templates/eqbox_example_rigorous.tex}
+
+\chapter{Table Template Demonstration}
+\label{app:table-demo}
+
+This appendix demonstrates the companion table templates matching the eqboxV5 style. These tables provide professional formatting for summary data, parameters, and experimental specifications.
+
+\section*{About These Tables}
+
+The tables demonstrate:
+\begin{itemize}
+\item Consistent gray color scheme matching eqboxV5
+\item Professional formatting using booktabs
+\item Alternating row colors for readability
+\item Realistic data appropriate for haplotype classification
+\item Reusable templates for custom tables
+\end{itemize}
+
+\input{templates/table_example_realistic.tex}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% BACK MATTER
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\backmatter
+
+% Bibliography
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}

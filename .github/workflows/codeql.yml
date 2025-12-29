@@ -1,0 +1,121 @@
+name: CodeQL Security Analysis
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 6 * * 1'  # Weekly on Mondays at 6am UTC
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [python]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-and-quality
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install security tools
+        run: |
+          pip install bandit safety pip-audit
+
+      - name: Run Bandit security linter
+        run: |
+          bandit -r bin/ lib/ -f json -o bandit-report.json || true
+          bandit -r bin/ lib/ -f txt
+
+      - name: Check for known vulnerabilities
+        run: |
+          pip install pyyaml pytest pysam edlib numpy pandas matplotlib || true
+          pip-audit --format json --output pip-audit.json || true
+          pip-audit || true
+
+      - name: Upload security reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-reports
+          path: |
+            bandit-report.json
+            pip-audit.json
+
+      - name: Check for secrets
+        run: |
+          python -c "
+          import re
+          from pathlib import Path
+
+          patterns = [
+              (r'(?i)(api[_-]?key|apikey)\s*[=:]\s*['\"]?[\w-]{20,}', 'API key'),
+              (r'(?i)(secret|password|passwd|pwd)\s*[=:]\s*['\"]?[\w-]{8,}', 'Secret/Password'),
+              (r'ghp_[a-zA-Z0-9]{36}', 'GitHub PAT'),
+              (r'sk-[a-zA-Z0-9]{48}', 'OpenAI API key'),
+              (r'AKIA[0-9A-Z]{16}', 'AWS Access Key'),
+          ]
+
+          issues = []
+          for py_file in Path('.').rglob('*.py'):
+              if '.git' in str(py_file):
+                  continue
+              content = py_file.read_text()
+              for pattern, name in patterns:
+                  if re.search(pattern, content):
+                      issues.append(f'{py_file}: Potential {name} found')
+
+          if issues:
+              print('Potential secrets found:')
+              for issue in issues:
+                  print(f'  - {issue}')
+              exit(1)
+          print('No secrets detected')
+          "
+
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          allow-licenses: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, Python-2.0

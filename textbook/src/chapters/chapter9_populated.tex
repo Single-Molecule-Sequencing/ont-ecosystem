@@ -1,0 +1,675 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Chapter 9: Targeted Enrichment via Cas9-Guided Methods
+%% Part III: Physical Standards, Library Preparation, and Workflows
+%% Version 6.0 - Migrated from v5 Ch7 + NEW expansions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{Targeted Enrichment: Cas9-Guided Methods}
+\label{chap:targeted-enrichment}
+\label{chap:library-prep}
+
+Whole-genome sequencing provides comprehensive variant information but incurs substantial cost when deep coverage is required for accurate haplotype classification. Targeted enrichment enables cost-effective focus on specific genomic loci while maintaining the single-molecule resolution necessary for phasing. This chapter develops the Cas9-guided fragmentation methodology, where programmable nucleases create precisely positioned double-strand breaks that define fragment boundaries.
+
+The CRISPR-Cas9 system offers several advantages over traditional enrichment methods: (1) single-tube reaction compatible with nanogram DNA inputs, (2) programmable targeting through guide RNA design, (3) clean fragmentation without amplification bias, and (4) compatibility with both short and long-read sequencing platforms. By flanking a target region with two guide RNAs, we generate fragments that span the region of interest with high specificity.
+
+\begin{learningobjectives}
+By the end of this chapter, you will be able to:
+\begin{itemize}
+\item Design dual-guide RNA strategies for CRISPR-Cas9 targeted fragmentation
+\item Calculate capture probability $P_{\text{capture}} = e_1 \times e_2 \times P(\ell < L_g)$ from cutting efficiencies
+\item Optimize guide RNA design for high cutting efficiency ($e > 0.8$) using empirical validation
+\item Compute enrichment metrics: on-target fraction (Equation~\ref{eq_9_12}), enrichment fold (Equation~\ref{eq_9_5})
+\item Execute complete laboratory protocol from DNA extraction to adapter-ligated library
+\item Troubleshoot common enrichment failures (low on-target, high nonspecific, cutting efficiency issues)
+\item Integrate Cas9 enrichment with standards construction (Chapter~\ref{chap:plasmid-standards}) and coverage requirements (Chapter~\ref{chap:design})
+\item Achieve 5-10× cost reduction compared to whole-genome sequencing for targeted applications
+\end{itemize}
+\end{learningobjectives}
+
+\section{CRISPR-Cas9 Target Capture Strategy}
+
+\subsection{Dual-Guide RNA Design Principle}
+
+The dual-cut capture strategy employs two guide RNAs (gRNAs) targeting sequences flanking the region of interest. Successful capture requires:
+
+\begin{enumerate}
+\item \textbf{Guide RNA 1 cuts:} Cas9 complexed with gRNA1 creates a double-strand break at position $p_1$
+\item \textbf{Guide RNA 2 cuts:} Cas9 complexed with gRNA2 creates a double-strand break at position $p_2$
+\item \textbf{Fragment spans target:} The resulting fragment must be shorter than $L_g = p_2 - p_1$ to be captured by both cuts
+\end{enumerate}
+
+If either cut fails or the genomic DNA fragment is longer than $L_g$, the molecule escapes capture.
+
+\subsection{Probability Model for Dual-Cut Capture}
+
+\begin{eqbox}{Dual Cas9 Cutting Probability}
+\label{thm:dual-cas9-probability}
+For a target of length $L_g$ with cutting efficiencies $e_1$ and $e_2$:
+\begin{equation}
+P_{\text{capture}} = e_1 \cdot e_2 \cdot \Prob(\text{Fragment length} < L_g)
+\label{eq_9_1}
+\end{equation}
+where:
+\begin{equation}
+\Prob(\text{Fragment length} < L_g) = \int_{0}^{L_g} f_{\text{emp}}(\ell) \, d\ell
+\label{eq_9_2}
+\end{equation}
+and $f_{\text{emp}}(\ell)$ is the empirical fragment length distribution.
+
+\textbf{Derivation.} The capture event requires three independent conditions:
+\begin{align}
+P_{\text{capture}} &= P(\text{gRNA1 cuts}) \times P(\text{gRNA2 cuts}) \times P(\text{fragment fits}) \notag\\
+&= e_1 \times e_2 \times \int_{0}^{L_g} f_{\text{emp}}(\ell) \, d\ell \notag
+\end{align}
+Independence holds because: (1) Guide RNAs bind and cut independently at different loci, (2) Fragmentation occurs prior to Cas9 treatment, creating a population with defined length distribution. The integral represents the cumulative distribution function (CDF) of fragment lengths evaluated at $L_g$.
+\end{eqbox}
+
+\textbf{Connection to Core Equations:} This dual-cut probability model relates to the enrichment framework discussed in Appendix~\ref{app:core-equations}.
+
+\begin{example}[Cas9 Capture Calculation]
+\label{ex:cas9-calculation}
+Consider targeting a 5 kb region with the following parameters:
+
+\textbf{Given:}
+\begin{itemize}
+\item Target gene length: $L_g = 5000$ bp
+\item Cutting efficiencies: $e_1 = 0.9$, $e_2 = 0.8$ (measured by T7E1 assay)
+\item Fragment distribution: Exponential with mean $\lambda = 2000$ bp (from mechanical shearing)
+\end{itemize}
+
+\textbf{Calculation:}
+\begin{align}
+\Prob(\text{Fragment} < 5000) &= 1 - e^{-5000/2000} = 1 - e^{-2.5} \\
+&= 1 - 0.082 = 0.918 \\
+P_{\text{capture}} &= 0.9 \times 0.8 \times 0.918 \\
+&\approx 0.661 \text{ or } 66.1\%
+\end{align}
+
+\textbf{Interpretation:} Approximately two-thirds of molecules will be successfully captured. If we sequence 10,000 total reads, we expect $\sim$6,600 on-target reads. Remaining reads will be off-target (one cut only) or nonspecific (no cuts).
+\end{example}
+
+\section{Guide RNA Design and Optimization}
+
+\subsection{On-Target Efficiency Criteria}
+
+High cutting efficiency requires careful gRNA design considering multiple factors:
+
+\begin{enumerate}
+\item \textbf{Target sequence characteristics:}
+\begin{itemize}
+\item PAM sequence: NGG for SpCas9 (N = any nucleotide)
+\item GC content: 40-60\% optimal
+\item Avoid poly-T stretches ($\geq$4 consecutive T's)
+\item Avoid high secondary structure in gRNA
+\end{itemize}
+
+\item \textbf{Genomic context:}
+\begin{itemize}
+\item Chromatin accessibility at target site
+\item Distance from promoters or enhancers (can affect accessibility)
+\item Absence of nearby repetitive elements
+\end{itemize}
+
+\item \textbf{Predicted scores:}
+\begin{itemize}
+\item Use CRISPOR, Benchling, or Cas-OFFinder for predictions
+\item On-target score $>$ 0.5 (scale 0-1)
+\item Off-target score indicating minimal genome-wide sites
+\end{itemize}
+\end{enumerate}
+
+\textbf{Recommended workflow:}
+\begin{enumerate}
+\item Identify all PAM sites (NGG) in 200 bp flanking desired cut positions
+\item Score all potential gRNAs using prediction tools
+\item Select top 3-5 candidates per cut site
+\item Synthesize and test empirically via T7 endonuclease I (T7E1) assay or NGS
+\item Choose the pair with highest combined efficiency $e_1 \times e_2$
+\end{enumerate}
+
+\subsection{Cut-Site Redundancy Strategy}
+
+For critical applications requiring high sensitivity, employ redundant gRNAs:
+
+\begin{strategy}[Redundant gRNA Design]
+Instead of single gRNAs at each flank:
+\begin{itemize}
+\item Design 2-3 gRNAs per cut site, separated by 50-200 bp
+\item Use gRNA pools in capture reaction
+\item Effective cutting efficiency becomes: $e_{\text{eff}} = 1 - (1-e_1)(1-e_2)(1-e_3)$
+\end{itemize}
+
+\textbf{Example:} Three gRNAs with individual efficiencies 0.7, 0.75, 0.8:
+\begin{equation}
+e_{\text{eff}} = 1 - (1-0.7)(1-0.75)(1-0.8) = 1 - (0.3)(0.25)(0.2) = 1 - 0.015 = 0.985
+\end{equation}
+
+This dramatically improves capture probability at the cost of modest additional reagent expense.
+\end{strategy}
+
+\subsection{Empirical Validation of Cutting Efficiency}
+
+\begin{protocol}[T7 Endonuclease I (T7E1) Assay]
+\textbf{Purpose:} Measure cutting efficiency $e$ for each guide RNA
+
+\textbf{Protocol:}
+\begin{enumerate}
+\item Treat genomic DNA with Cas9 + gRNA in vitro
+\item PCR-amplify the target region (~500 bp around cut site)
+\item Denature and reanneal PCR products
+\begin{itemize}
+\item Heteroduplex forms between cut and uncut strands
+\item Creates mismatch at cut site
+\end{itemize}
+\item Digest with T7E1 (recognizes heteroduplex mismatches)
+\item Run on agarose gel or fragment analyzer
+\item Quantify band intensities
+\end{enumerate}
+
+\begin{eqbox}{T7 Endonuclease I Cutting Efficiency}
+\begin{equation}
+e = 1 - \sqrt{1 - \frac{I_{\text{digested}}}{I_{\text{total}}}}
+\label{eq_9_4}
+\end{equation}
+where $I_{\text{digested}}$ is intensity of cleaved bands and $I_{\text{total}}$ is sum of all bands.
+
+This formula accounts for the fact that T7E1 cleaves heteroduplex DNA formed between cut and uncut strands. The square root arises from the quadratic relationship between cutting efficiency and heteroduplex formation probability.
+\end{eqbox}
+
+\textbf{Quality criteria:}
+\begin{itemize}
+\item $e \geq 0.70$: Acceptable for research
+\item $e \geq 0.80$: Good for most applications
+\item $e \geq 0.90$: Excellent; suitable for clinical use
+\item $e < 0.50$: Poor; redesign guide RNA
+\end{itemize}
+\end{protocol}
+
+\section{Fragmentation-Ligation Workflow}
+
+\subsection{Sample Preparation}
+
+\textbf{Input requirements:}
+\begin{itemize}
+\item High molecular weight genomic DNA
+\item Concentration: 20-50 ng/µL
+\item Amount: 100-500 ng total input
+\item Purity: A260/A280 = 1.8-2.0; A260/A230 $>$ 2.0
+\end{itemize}
+
+\textbf{Fragmentation (if needed):}
+\begin{itemize}
+\item For long-read sequencing (ONT, PacBio): Avoid mechanical shearing; use enzymatic fragmentation (e.g., DNaseI, NEBNext dsDNA fragmentase) if DNA is $>$50 kb
+\item For short-read sequencing (Illumina): Mechanical shearing (Covaris) or enzymatic fragmentation to target size
+\item Goal: Match fragmentation distribution to dual-cut capture design ($L_g$ selection)
+\end{itemize}
+
+\subsection{Cas9 Cutting Reaction}
+
+\textbf{Reaction setup (50 µL):}
+\begin{table}[!htbp]
+\centering
+\caption{Cas9 Cutting Reaction Components}
+\begin{tabular}{ll}
+\toprule
+\textbf{Component} & \textbf{Amount} \\
+\midrule
+Genomic DNA (fragmented) & 100-500 ng \\
+Cas9 protein & 150-300 nM final \\
+Guide RNA 1 (crRNA + tracrRNA or sgRNA) & 200-400 nM final \\
+Guide RNA 2 & 200-400 nM final \\
+Cas9 reaction buffer (10×) & 5 µL \\
+Nuclease-free water & to 50 µL \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Incubation:}
+\begin{enumerate}
+\item 37°C for 15-30 minutes (cutting reaction)
+\item 80°C for 10 minutes (enzyme inactivation)
+\item Optional: Add 1 µL Proteinase K; incubate 37°C for 15 min
+\item Purify with 1.8× SPRI beads to remove enzymes
+\end{enumerate}
+
+\subsection{End Repair and Adapter Ligation}
+
+Post-Cas9 cutting, fragments have blunt ends that require processing for sequencing library preparation:
+
+\begin{enumerate}
+\item \textbf{End repair:} Fill in any 5' overhangs; phosphorylate 5' ends
+\item \textbf{A-tailing:} Add adenine overhang for T-overhang adapter ligation (Illumina) or skip for blunt ligation (ONT, PacBio)
+\item \textbf{Adapter ligation:} Ligate platform-specific sequencing adapters
+\item \textbf{Clean-up:} 1.0× SPRI beads to remove unligated adapters
+\item \textbf{Amplification (if needed):} Limited PCR cycles (3-8) to enrich ligated products
+\end{enumerate}
+
+Follow manufacturer protocols for the specific sequencing platform (NEBNext for Illumina; Ligation Sequencing Kit for ONT; SMRTbell for PacBio).
+
+\section{Enrichment Metrics and Validation}
+
+\subsection{Defining Enrichment Categories}
+
+After sequencing, classify reads into three categories:
+
+\begin{eqbox}{Target Enrichment Metrics}
+\label{def:enrichment-metrics}
+Given a target region at genomic coordinates $[p_1, p_2]$:
+
+\begin{align}
+\text{On-target fraction} &= \frac{\text{Reads mapping to } [p_1 - 100, p_2 + 100]}{\text{Total reads}} \label{eq_9_12} \\
+\text{Off-target fraction} &= \frac{\text{Reads mapping elsewhere in genome}}{\text{Total reads}} \label{eq:off-target} \\
+\text{Nonspecific fraction} &= \frac{\text{Unmapped or low-quality reads}}{\text{Total reads}} \label{eq:nonspecific}
+\end{align}
+
+The 100 bp flanking regions account for reads starting slightly outside the exact cut sites. These three fractions partition the read space and must sum to 1.
+\end{eqbox}
+
+\textbf{Quality criteria:}
+\begin{itemize}
+\item On-target fraction $\geq$ 50\%: Acceptable enrichment
+\item On-target fraction $\geq$ 70\%: Good enrichment
+\item On-target fraction $\geq$ 90\%: Excellent enrichment
+\item Off-target fraction $<$ 20\%: Minimal genomic background
+\end{itemize}
+
+\subsection{Enrichment Fold-Change}
+
+\begin{eqbox}{Enrichment Fold-Change}
+\label{def:enrichment-fold}
+The enrichment factor quantifies the fold-increase in target coverage:
+\begin{equation}
+\text{Enrichment fold} = \frac{(\text{On-target reads} / \text{Target size})}{(\text{Total reads} / \text{Genome size})}
+\label{eq_9_5}
+\end{equation}
+
+This metric normalizes for the different sizes of the target region versus the whole genome, quantifying how much more efficiently the target is sequenced compared to random genomic sampling. An enrichment fold of $10^5$ means the target receives 100,000 times more coverage per base than it would under whole-genome sequencing.
+\end{eqbox}
+
+\begin{example}[Enrichment Calculation]
+\label{ex:enrichment-calc}
+\textbf{Given:}
+\begin{itemize}
+\item Target size: 5,000 bp
+\item Human genome size: 3 $\times$ 10$^9$ bp
+\item Total reads: 1,000,000
+\item On-target reads: 700,000
+\end{itemize}
+
+\textbf{Without enrichment:}
+\begin{equation}
+\text{Expected on-target} = 1{,}000{,}000 \times \frac{5{,}000}{3 \times 10^9} = 1.67 \text{ reads}
+\end{equation}
+
+\textbf{With enrichment:}
+\begin{align}
+\text{Enrichment fold} &= \frac{700{,}000 / 5{,}000}{1{,}000{,}000 / 3 \times 10^9} \\
+&= \frac{140}{3.33 \times 10^{-4}} \approx 420{,}000\times
+\end{align}
+
+This 420,000-fold enrichment enables cost-effective deep sequencing of the target region.
+\end{example}
+
+\subsection{Validation with Internal Spike-In Standards}
+
+For absolute quantification of enrichment efficiency, include internal spike-in control:
+
+\begin{protocol}[Spike-In Validation Protocol]
+\textbf{Design:}
+\begin{enumerate}
+\item Prepare a non-target control sequence (e.g., \textit{E. coli} genomic DNA or synthetic construct)
+\item Add spike-in at known molar ratio to genomic DNA (e.g., 1:100)
+\item Process through entire workflow including Cas9 capture
+\item Sequence and map reads
+\end{enumerate}
+
+\textbf{Analysis:}
+\begin{equation}
+\text{Enrichment efficiency} = \frac{(\text{Target read ratio})}{(\text{Spike-in read ratio})} \times \frac{1}{\text{Input molar ratio}}
+\label{eq_9_7}
+\end{equation}
+
+\textbf{Expected result:} If Cas9 capture works perfectly, spike-in reads should decrease proportionally to genome size reduction. For a 5 kb target in 3 Gb genome:
+\begin{equation}
+\text{Theoretical max enrichment} = \frac{3 \times 10^9}{5 \times 10^3} = 600{,}000\times
+\end{equation}
+
+Observed enrichment of 300,000-500,000× indicates high-efficiency capture ($e_1 \times e_2 \approx 0.5$-0.8).
+\end{protocol}
+
+\section{Troubleshooting Low Enrichment}
+
+\begin{table}[!htbp]
+\centering
+\caption{Troubleshooting Cas9 Enrichment Issues}
+\label{tab:cas9-troubleshooting}
+\small
+\begin{tabular}{p{3.5cm}p{4.5cm}p{5.5cm}}
+\toprule
+\textbf{Problem} & \textbf{Likely Cause} & \textbf{Solution} \\
+\midrule
+Low on-target fraction ($<$30\%) & Poor guide RNA cutting efficiency; Incorrect fragment size distribution & Validate gRNAs with T7E1 assay; Optimize fragmentation to match $L_g$; Consider redesigning gRNAs \\
+\midrule
+High off-target fraction ($>$30\%) & Guide RNA off-target activity; DNA contamination & Check off-target predictions (use CRISPOR); Increase gRNA specificity; Validate DNA purity \\
+\midrule
+High nonspecific fraction ($>$20\%) & Library preparation failure; Adapter ligation issues & Check adapter concentrations; Increase ligation time/temp; Use fresh reagents \\
+\midrule
+Bimodal fragment distribution & Incomplete Cas9 cutting; Mixed populations & Increase Cas9 concentration; Extend incubation time; Validate gRNA activity \\
+\midrule
+No enrichment observed & Cas9 inactive; Wrong target coordinates; gRNA degradation & Use fresh Cas9 protein; Verify target coordinates; Synthesize new gRNAs; Check reaction conditions \\
+\midrule
+Variable enrichment across replicates & Pipetting errors; DNA quality variation; Cas9 batch effects & Use calibrated pipettes; Standardize DNA QC; Include positive controls \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Cost-Benefit Analysis}
+
+The decision to use targeted enrichment depends on balancing reagent costs, sequencing costs, and required coverage:
+
+\begin{table}[!htbp]
+\centering
+\caption{Cost Comparison: Whole-Genome vs. Targeted Sequencing}
+\label{tab:cost-comparison}
+\begin{tabular}{lrr}
+\toprule
+& \textbf{Whole-Genome} & \textbf{Cas9-Targeted} \\
+\midrule
+\textbf{Target region} & 3 Gb & 5 kb \\
+\textbf{Desired coverage} & 100× & 10,000× \\
+\textbf{Total bases needed} & 300 Gb & 50 Mb \\
+\textbf{Sequencing cost} (\$0.01/Mb) & \$3,000 & \$500 \\
+\textbf{Cas9 enrichment cost} & - & \$100 \\
+\textbf{Total cost} & \$3,000 & \$600 \\
+\midrule
+\textbf{Cost per target} & \$3,000 & \$600 \\
+\textbf{Savings} & - & \textbf{80\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Break-even analysis:} Targeted enrichment becomes cost-effective when:
+\begin{equation}
+\frac{\text{Target size}}{\text{Genome size}} < \frac{\text{WGS cost} - \text{Enrichment cost}}{\text{WGS cost}}
+\end{equation}
+
+For most pharmacogenes (2-10 kb) in human genome (3 Gb), targeted enrichment provides 5-10× cost savings at high coverage depths.
+
+\section{Variable Summary and Reference}
+\label{sec:variable-summary-ch9}
+
+This section provides a comprehensive summary of key variables used in the Cas9-guided targeted enrichment methodology, including physical descriptions, units, and measurement methods. These variables are essential for designing, executing, and validating enrichment experiments.
+
+\subsection{Variable Summary Table}
+
+\begin{vartable}
+\varrow{$e_1, e_2$}{Cutting efficiency of guide RNA 1 and guide RNA 2 (fraction of molecules successfully cut at each site).}
+       {fraction (0--1)}
+       {Measured empirically via T7E1 assay (Eq.~\ref{eq:t7e1-efficiency}) or NGS validation on control DNA.}
+
+\varrow{$P_{\text{capture}}$}{Probability that a DNA molecule is successfully captured by dual Cas9 cutting.}
+       {probability (0--1)}
+       {Computed from $e_1 \times e_2 \times P(\ell < L_g)$ using Eq.~\ref{eq:dual-cut-prob}.}
+
+\varrow{$L_g$}{Length of target genomic region between guide RNA cut sites.}
+       {base pairs (bp)}
+       {Determined by guide RNA design; distance $p_2 - p_1$ between cut positions.}
+
+\varrow{$f_{\text{emp}}(\ell)$}{Empirical fragment length distribution after mechanical or enzymatic fragmentation.}
+       {probability density (bp$^{-1}$)}
+       {Measured via fragment analyzer (e.g., Agilent Bioanalyzer, TapeStation) or inferred from sequencing data.}
+
+\varrow{$p_1, p_2$}{Genomic coordinates of Cas9 cut sites for guide RNA 1 and 2.}
+       {base pair position}
+       {Designed from reference genome coordinates; flanking the target region of interest.}
+
+\varrow{$I_{\text{digested}}$}{Total band intensity of cleaved products in T7E1 gel assay.}
+       {arbitrary units (AU)}
+       {Measured from gel/capillary electrophoresis imaging; sum of cleaved band intensities.}
+
+\varrow{$I_{\text{total}}$}{Total band intensity of all products in T7E1 gel assay (digested + undigested).}
+       {arbitrary units (AU)}
+       {Sum of all band intensities in T7E1 assay; denominator for efficiency calculation.}
+
+\varrow{$N_{\text{on-target}}$}{Number of sequencing reads mapping to target region $[p_1-100, p_2+100]$.}
+       {read count}
+       {Counted from alignment of sequencing reads to reference genome.}
+
+\varrow{$N_{\text{total}}$}{Total number of sequencing reads in dataset.}
+       {read count}
+       {Reported by sequencing platform after QC filtering.}
+
+\varrow{$\text{Enrichment fold}$}{Fold-increase in coverage of target region compared to whole-genome baseline.}
+       {dimensionless fold-change}
+       {Computed from Eq.~\ref{eq:enrichment-fold} using on-target reads, target size, and genome size.}
+\end{vartable}
+
+\subsection{Detailed Variable Reference Boxes}
+
+This section provides in-depth reference information for the most critical variables in Cas9-guided enrichment, including physical interpretation, measurement protocols, and practical examples.
+
+\begin{varbox}{$e_1$, $e_2$}
+\textbf{Physical description.}
+Cutting efficiency is the fraction of DNA molecules that are successfully cleaved by Cas9 at a specific guide RNA target site. $e_1$ and $e_2$ represent the efficiencies for the two guide RNAs flanking the target region. High cutting efficiency ($e > 0.8$) is essential for effective enrichment.
+
+\textbf{Units.}
+Dimensionless fraction in $[0,1]$; $e=1$ means 100\% of molecules are cut.
+
+\textbf{Measurement / determination.}
+Cutting efficiency is measured via the T7 Endonuclease I (T7E1) assay (Equation~\ref{eq:t7e1-efficiency}):
+\begin{enumerate}
+\item Treat genomic DNA with Cas9 + guide RNA
+\item PCR-amplify the target region
+\item Denature and reanneal to form heteroduplexes
+\item Digest with T7E1 enzyme (cleaves mismatches)
+\item Quantify band intensities on gel or fragment analyzer
+\item Calculate: $e = 1 - \sqrt{1 - I_{\text{digested}}/I_{\text{total}}}$
+\end{enumerate}
+
+Alternatively, validate by NGS: sequence control DNA before and after Cas9 treatment and count reads with clean breaks at expected cut sites.
+
+\textbf{Example.}
+For a CYP2D6 enrichment assay, guide RNA 1 targeting the 5' flank shows $I_{\text{digested}} = 7200$ AU and $I_{\text{total}} = 8000$ AU:
+\[
+e_1 = 1 - \sqrt{1 - 7200/8000} = 1 - \sqrt{0.1} = 1 - 0.316 = 0.684 \text{ or } 68.4\%.
+\]
+This efficiency is marginal; redesigning the guide RNA or optimizing Cas9 concentration could improve it to $e_1 > 0.8$.
+\end{varbox}
+
+\begin{varbox}{$P_{\text{capture}}$}
+\textbf{Physical description.}
+Capture probability is the fraction of DNA molecules that are successfully isolated by the dual Cas9 cutting strategy. A molecule is captured only if: (1) guide RNA 1 cuts at position $p_1$, (2) guide RNA 2 cuts at position $p_2$, and (3) the original fragment length is shorter than $L_g = p_2 - p_1$ so both cuts occur on the same molecule.
+
+\textbf{Units.}
+Dimensionless probability in $[0,1]$.
+
+\textbf{Measurement / determination.}
+Computed via Equation~\ref{eq:dual-cut-prob}:
+\[
+P_{\text{capture}} = e_1 \times e_2 \times \int_0^{L_g} f_{\text{emp}}(\ell)\,d\ell,
+\]
+where $e_1$ and $e_2$ are measured via T7E1, and the integral is the CDF of the fragment length distribution evaluated at $L_g$. The fragment distribution $f_{\text{emp}}(\ell)$ is measured by running DNA samples on a fragment analyzer before Cas9 treatment.
+
+\textbf{Example.}
+For a 5 kb target region with $e_1 = 0.9$, $e_2 = 0.8$, and exponential fragment distribution with mean 2 kb:
+\[
+P(\ell < 5000) = 1 - e^{-5000/2000} \approx 0.918,
+\]
+thus
+\[
+P_{\text{capture}} = 0.9 \times 0.8 \times 0.918 \approx 0.661.
+\]
+Approximately 66\% of molecules are successfully captured; the remaining 34\% either escape one cut or are too long to span both cuts.
+\end{varbox}
+
+\begin{varbox}{$L_g$}
+\textbf{Physical description.}
+Target genomic length: the distance (in base pairs) between the two Cas9 cut sites flanking the region of interest. This parameter determines the size of captured fragments and influences capture probability through the fragment length distribution.
+
+\textbf{Units.}
+Base pairs (bp).
+
+\textbf{Measurement / determination.}
+Determined by guide RNA design. For a gene or locus of interest, identify the gene boundaries, then design guide RNAs at positions $p_1$ (upstream) and $p_2$ (downstream). The target length is:
+\[
+L_g = p_2 - p_1.
+\]
+Typical values: 2--10 kb for single genes, 10--50 kb for multi-gene panels or complex loci.
+
+\textbf{Example.}
+For CYP2D6 enrichment, the reference gene spans approximately 4.4 kb. Designing guide RNAs at positions $p_1 = \text{chr22:42,126,500}$ and $p_2 = \text{chr22:42,130,900}$ (GRCh38 coordinates) yields:
+\[
+L_g = 42{,}130{,}900 - 42{,}126{,}500 = 4{,}400 \text{ bp}.
+\]
+This length is compatible with both short-read (Illumina) and long-read (ONT, PacBio) platforms and captures the full coding region plus flanking regulatory elements.
+\end{varbox}
+
+\begin{varbox}{$f_{\text{emp}}(\ell)$}
+\textbf{Physical description.}
+Empirical fragment length distribution: the probability density function describing the distribution of DNA fragment lengths after mechanical shearing (e.g., Covaris) or enzymatic fragmentation (e.g., NEBNext dsDNA fragmentase). This distribution determines the fraction of molecules short enough to be captured by dual Cas9 cutting.
+
+\textbf{Units.}
+Probability density in bp$^{-1}$; $\int_0^\infty f_{\text{emp}}(\ell)\,d\ell = 1$.
+
+\textbf{Measurement / determination.}
+Measured using a fragment analyzer before Cas9 treatment:
+\begin{enumerate}
+\item Fragment genomic DNA using chosen protocol
+\item Run sample on Agilent Bioanalyzer, TapeStation, or Fragment Analyzer
+\item Export fragment size distribution (histogram or trace)
+\item Fit to parametric model (e.g., exponential, gamma, log-normal) or use empirical CDF directly
+\end{enumerate}
+
+Alternatively, infer from sequencing data by examining aligned read lengths.
+
+\textbf{Example.}
+After Covaris shearing targeting 2 kb mean, a fragment analyzer shows:
+\begin{itemize}
+\item Peak at 1.8 kb
+\item Mean: 2.1 kb
+\item Standard deviation: 0.7 kb
+\end{itemize}
+Fitting an exponential model: $f_{\text{emp}}(\ell) = \lambda e^{-\lambda \ell}$ with $\lambda = 1/2100 \approx 0.000476$ bp$^{-1}$.
+
+For a target region $L_g = 5000$ bp:
+\[
+P(\ell < 5000) = 1 - e^{-0.000476 \times 5000} \approx 1 - e^{-2.38} \approx 0.908.
+\]
+This means 90.8\% of fragments will be short enough to be captured by dual cuts at 5 kb spacing.
+\end{varbox}
+
+\begin{varbox}{$\text{Enrichment fold}$}
+\textbf{Physical description.}
+Enrichment fold quantifies the fold-increase in sequencing coverage of the target region compared to what would be expected from random whole-genome sequencing with the same number of total reads. It measures the efficiency of the capture method.
+
+\textbf{Units.}
+Dimensionless fold-change; values range from 1 (no enrichment) to $10^6$ (million-fold enrichment).
+
+\textbf{Measurement / determination.}
+Computed from sequencing data via Equation~\ref{eq:enrichment-fold}:
+\[
+\text{Enrichment fold} = \frac{N_{\text{on-target}} / L_g}{N_{\text{total}} / G},
+\]
+where $N_{\text{on-target}}$ is the number of reads mapping to the target, $L_g$ is the target size in bp, $N_{\text{total}}$ is total reads, and $G$ is the genome size (e.g., $3 \times 10^9$ bp for human).
+
+This can be rewritten as:
+\[
+\text{Enrichment fold} = \frac{N_{\text{on-target}}}{N_{\text{total}}} \times \frac{G}{L_g} = f_{\text{on-target}} \times \frac{G}{L_g},
+\]
+where $f_{\text{on-target}}$ is the on-target fraction (Eq.~\ref{eq:on-target}).
+
+\textbf{Example.}
+For a CYP2D6 capture experiment:
+\begin{itemize}
+\item Target size: $L_g = 5{,}000$ bp
+\item Human genome size: $G = 3 \times 10^9$ bp
+\item Total reads: $N_{\text{total}} = 1{,}000{,}000$
+\item On-target reads: $N_{\text{on-target}} = 700{,}000$
+\end{itemize}
+
+On-target fraction: $f_{\text{on-target}} = 700{,}000 / 1{,}000{,}000 = 0.70$ (70\%).
+
+Enrichment fold:
+\[
+\text{Enrichment fold} = 0.70 \times \frac{3 \times 10^9}{5{,}000} = 0.70 \times 600{,}000 = 420{,}000\times.
+\]
+
+Without enrichment, only $1{,}000{,}000 \times (5{,}000 / 3 \times 10^9) \approx 1.67$ reads would map to the target. With enrichment, we achieve 700,000 reads—a 420,000-fold improvement.
+\end{varbox}
+
+\section{Integration with Framework}
+
+Cas9 enrichment integrates seamlessly with the haplotype classification framework:
+
+\begin{enumerate}
+\item \textbf{Standards:} Apply identical Cas9 capture to plasmid standards (Chapter~\ref{chap:plasmid-standards}) and clinical samples to ensure matched error profiles
+
+\item \textbf{Coverage requirements:} Enrichment enables achieving coverage specified in experimental design (Chapter~\ref{chap:design}) without excessive sequencing costs
+
+\item \textbf{Quality control:} On-target fraction and enrichment fold are QC metrics (Chapter~\ref{chap:qc-gates}, Gate 2: Library Quality)
+
+\item \textbf{Likelihood computation:} Fragment length distribution $f_{\text{emp}}(\ell)$ after Cas9 cutting may differ from genomic distribution; use empirical measurements from standards
+
+\item \textbf{Validation:} Enriched sequencing enables high-confidence diplotype validation (Chapter~\ref{chap:mixtures}) through deep coverage
+\end{enumerate}
+
+\section{Chapter Summary}
+
+\begin{keytakeaways}
+This chapter established the CRISPR-Cas9 targeted enrichment methodology for cost-effective haplotype sequencing:
+
+\textbf{Core Methodology:}
+\begin{itemize}
+\item \textbf{Dual-Cut Capture Model} (Equation~\ref{eq_9_1}): $P_{\text{capture}} = e_1 \times e_2 \times P(\ell < L_g)$ quantifies success rate from cutting efficiencies $e_1, e_2$ and fragment length distribution
+
+\item \textbf{Guide RNA Design Principles:} Target 20-bp sequences flanking region of interest, optimize PAM compatibility (NGG for SpCas9), avoid off-target binding via BLAST screening, validate empirically on control DNA
+
+\item \textbf{Cutting Efficiency Optimization:} High-quality Cas9 protein + optimized guide RNA design achieves $e > 0.8$ cutting efficiency; T7 endonuclease I assay validates efficiency $\eta_{\text{T7E1}} = N_{\text{cleaved}}/N_{\text{heteroduplex}}$ (Equation~\ref{eq_9_4})
+\end{itemize}
+
+\textbf{Enrichment Metrics:}
+\begin{itemize}
+\item \textbf{On-Target Fraction} (Equation~\ref{eq_9_12}): $f_{\text{on}} = \text{(reads in [p$_1$-100, p$_2$+100])}/\text{(total reads)}$ quantifies capture specificity
+
+\item \textbf{Off-Target Fraction} (Equation~\ref{eq:off-target}): $f_{\text{off}}$ measures unintended Cas9 cuts elsewhere in genome
+
+\item \textbf{Nonspecific Fraction} (Equation~\ref{eq:nonspecific}): $f_{\text{nonspecific}}$ quantifies unmapped/low-quality reads indicating library quality issues
+
+\item \textbf{Enrichment Fold} (Equation~\ref{eq_9_5}): $\text{Enrichment} = f_{\text{on}}/f_{\text{genomic}}$ measures fold-enrichment over genomic baseline
+\end{itemize}
+
+\textbf{Laboratory Protocol:}
+\begin{itemize}
+\item \textbf{Input Requirements:} 100-500 ng genomic DNA (clinical samples) or plasmid standards
+
+\item \textbf{Cas9 Reaction:} Ribonucleoprotein complex formation (10 minutes), DNA cleavage (1-2 hours at 37°C), heat inactivation (65°C, 10 minutes)
+
+\item \textbf{Library Preparation:} End repair, dA-tailing, adapter ligation (ONT or PacBio), size selection (optional), bead purification
+
+\item \textbf{Quality Checkpoints:} Fragment analyzer confirms size distribution, qPCR quantifies adapter-ligated molecules, test sequencing validates on-target fraction
+\end{itemize}
+
+\textbf{Cost-Benefit Analysis:}
+\begin{itemize}
+\item \textbf{Cost Reduction:} 5-10× savings compared to whole-genome sequencing for targeted applications (e.g., CYP2D6: \$50 enriched vs. \$500 WGS)
+
+\item \textbf{Coverage Optimization:} Enrichment enables achieving coverage requirements from Chapter~\ref{chap:design} (e.g., $N \geq 2.22$ reads for CYP2D6 *1 vs *2) without excessive sequencing
+
+\item \textbf{Scalability:} 96-well plate format enables high-throughput processing for clinical cohorts
+\end{itemize}
+
+\textbf{Framework Integration:}
+\begin{itemize}
+\item \textbf{Standards Matching:} Apply identical Cas9 capture to plasmid standards (Chapter~\ref{chap:plasmid-standards}) and clinical samples for matched error profiles
+
+\item \textbf{QC Gates:} On-target fraction and enrichment fold are Gate 2 metrics (Chapter~\ref{chap:qc-gates})
+
+\item \textbf{Likelihood Computation:} Empirical fragment length distribution $f_{\text{emp}}(\ell)$ from Cas9 cutting may differ from genomic; use measurements from standards
+
+\item \textbf{Validation Applications:} Deep coverage enables high-confidence diplotype validation (Chapter~\ref{chap:mixtures})
+\end{itemize}
+
+\textbf{Troubleshooting:} Low on-target (check guide RNA design, optimize Cas9 concentration), high nonspecific (improve DNA quality, optimize library prep), poor cutting efficiency (validate guide RNAs empirically, use fresh Cas9).
+
+\textbf{Mathematical reference:} For capture probability derivations and enrichment calculations, see Appendices~\ref{app:mathematical-models} and \ref{app:equation-master}.
+\end{keytakeaways}

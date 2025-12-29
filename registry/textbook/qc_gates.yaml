@@ -1,0 +1,228 @@
+# SMS Haplotype Framework - QC Gates and Thresholds
+# Extracted from Appendix C and Chapter 11
+
+version: "1.0"
+source:
+  - "extracted-figures-tables-main/extracted/tables/appendixC_populated_table01.tex"
+  - "individual-documents-claude-enhance-math-content/appendixC_populated.pdf"
+last_extracted: "2025-12-28"
+
+# =============================================================================
+# Core Quality Control Gates
+# =============================================================================
+
+qc_gates:
+  - id: "qc_fragment_model"
+    name: "Fragment Model Validation"
+    metric: "D_KL(f_emp || f_frag)"
+    metric_description: "KL divergence between empirical and model fragment distribution"
+    threshold: "< 0.05 bits"
+    threshold_value: 0.05
+    threshold_unit: "bits"
+    action: "Prefer empirical f_emp; if using analytic model, flag result"
+    chapter: 9
+    pipeline_stage: "d"
+
+  - id: "qc_read_length"
+    name: "Read-Length Sanity Check"
+    metric: "D_KL(f_emp || f_read)"
+    metric_description: "KL divergence between empirical and expected read length distribution"
+    thresholds:
+      warn: {min: 0.10, max: 0.20, unit: "bits"}
+      fail: {min: 0.30, unit: "bits"}
+    action: "Investigate truncation, filters, size selection, or ligation bias"
+    chapter: 10
+    pipeline_stage: "r"
+
+  - id: "qc_quality_overstatement"
+    name: "Quality Overstatement Detection"
+    metric: "d = (1/N) Σ I{Q_pred > Q_emp}"
+    metric_description: "Fraction of positions where predicted quality exceeds empirical"
+    threshold: "d ≤ 0.30"
+    threshold_value: 0.30
+    action: "Report with 95% CI; high d triggers calibration review"
+    chapter: 14
+    pipeline_stage: "r"
+
+  - id: "qc_purity_ceiling"
+    name: "Purity Ceiling Enforcement"
+    metric: "TPR vs purity"
+    metric_description: "True positive rate compared to measured purity"
+    threshold: "TPR ≤ π"
+    threshold_type: "hard_gate"
+    action: "Do not report TPR exceeding measured or estimated purity ceiling"
+    failure_indicates:
+      - "Contamination"
+      - "Reference errors"
+      - "Model failure"
+    chapter: 15
+    pipeline_stage: "A"
+
+# =============================================================================
+# SMA-seq QC Gates (Chapter 11)
+# =============================================================================
+
+sma_seq_gates:
+  - id: "qc_sma_minimum"
+    name: "Minimum SMA Threshold"
+    metric: "SMA_exact"
+    description: "Exact-sequence single molecule accuracy"
+    threshold: ">= 0.85"
+    threshold_value: 0.85
+    action: "Reject run if SMA below threshold"
+    pipeline_stage: "r"
+
+  - id: "qc_signal_positive"
+    name: "Signal Positive Fraction"
+    metric: "f_signal_positive"
+    description: "Fraction of reads with end_reason = signal_positive"
+    threshold: ">= 0.70"
+    threshold_value: 0.70
+    warn_threshold: 0.50
+    action: "Low fraction indicates flow cell issues or truncated reads"
+    pipeline_stage: "σ"
+
+  - id: "qc_q20_fraction"
+    name: "Q20 Quality Fraction"
+    metric: "f_Q20"
+    description: "Fraction of bases with Q >= 20"
+    threshold: ">= 0.90"
+    threshold_value: 0.90
+    action: "Below threshold indicates basecalling issues"
+    pipeline_stage: "r"
+
+  - id: "qc_mapping_rate"
+    name: "Mapping Rate"
+    metric: "mapped_reads / total_reads"
+    description: "Fraction of reads successfully mapped to reference"
+    threshold: ">= 0.95"
+    threshold_value: 0.95
+    action: "Low rate indicates contamination or wrong reference"
+    pipeline_stage: "r"
+
+  - id: "qc_identity"
+    name: "Sequence Identity"
+    metric: "1 - (S+I+D)/N"
+    description: "Alignment identity after error correction"
+    threshold: ">= 0.99"
+    threshold_value: 0.99
+    action: "Below threshold indicates systematic errors"
+    pipeline_stage: "r"
+
+# =============================================================================
+# Basecaller Fine-Tuning QC (Chapter 13)
+# =============================================================================
+
+basecaller_gates:
+  - id: "qc_calibration_error"
+    name: "Expected Calibration Error"
+    metric: "ECE"
+    description: "Expected calibration error across quality bins"
+    threshold: "< 0.02"
+    threshold_value: 0.02
+    action: "High ECE triggers recalibration"
+    chapter: 13
+    pipeline_stage: "r"
+
+  - id: "qc_maqd"
+    name: "Mean Absolute Quality Deviation"
+    metric: "MAQD_Q"
+    description: "Mean absolute difference between predicted and empirical Q"
+    threshold: "< 2.0 Phred units"
+    threshold_value: 2.0
+    threshold_unit: "Phred"
+    action: "High MAQD indicates systematic miscalibration"
+    chapter: 13
+    pipeline_stage: "r"
+
+  - id: "qc_brier_score"
+    name: "Brier Score"
+    metric: "BS"
+    description: "Mean squared error of probability predictions"
+    threshold: "< 0.01"
+    threshold_value: 0.01
+    action: "High Brier score indicates poor probability calibration"
+    chapter: 13
+    pipeline_stage: "r"
+
+# =============================================================================
+# Validation Gates (Chapter 14)
+# =============================================================================
+
+validation_gates:
+  - id: "qc_mixture_detection"
+    name: "Minor Haplotype Detection"
+    metric: "Detection limit"
+    description: "Minimum detectable minor haplotype fraction"
+    threshold: "<= 0.05"
+    threshold_value: 0.05
+    action: "Below 5% requires increased coverage"
+    chapter: 14
+    pipeline_stage: "A"
+
+  - id: "qc_diplotype_confidence"
+    name: "Diplotype Confidence"
+    metric: "P(d1,d2|R)"
+    description: "Posterior probability of called diplotype"
+    threshold: ">= 0.95"
+    threshold_value: 0.95
+    action: "Below threshold, report as ambiguous"
+    chapter: 14
+    pipeline_stage: "A"
+
+  - id: "qc_posterior_calibration"
+    name: "Posterior Calibration"
+    metric: "Calibration curve R²"
+    description: "Linearity of predicted vs observed frequencies"
+    threshold: ">= 0.95"
+    threshold_value: 0.95
+    action: "Poor calibration invalidates uncertainty estimates"
+    chapter: 14
+    pipeline_stage: "A"
+
+# =============================================================================
+# Workflow Integration
+# =============================================================================
+
+workflow_gates:
+  pre_sequencing:
+    - "qc_fragment_model"
+
+  post_basecalling:
+    - "qc_read_length"
+    - "qc_signal_positive"
+    - "qc_q20_fraction"
+    - "qc_mapping_rate"
+
+  sma_seq_validation:
+    - "qc_sma_minimum"
+    - "qc_identity"
+    - "qc_quality_overstatement"
+    - "qc_calibration_error"
+
+  classification:
+    - "qc_purity_ceiling"
+    - "qc_diplotype_confidence"
+    - "qc_posterior_calibration"
+
+# =============================================================================
+# Gate-to-Skill Mapping
+# =============================================================================
+
+skill_mapping:
+  end-reason:
+    - "qc_signal_positive"
+    - "qc_read_length"
+
+  dorado-bench:
+    - "qc_q20_fraction"
+    - "qc_calibration_error"
+    - "qc_maqd"
+
+  ont-align:
+    - "qc_mapping_rate"
+    - "qc_identity"
+
+  ont-pipeline:
+    - "qc_purity_ceiling"
+    - "qc_diplotype_confidence"

@@ -1,0 +1,80 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://ont-ecosystem.sms-lab.org/schemas/equation.json",
+  "title": "Mathematical Equation Definition",
+  "description": "Schema for equations in the SMS Haplotype Framework textbook registry",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Equation identifier (e.g., '9.5.1')",
+      "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+)?$"
+    },
+    "section": {
+      "type": "string",
+      "description": "Textbook section reference"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable equation name",
+      "minLength": 3
+    },
+    "latex": {
+      "type": "string",
+      "description": "LaTeX representation of the equation",
+      "minLength": 1
+    },
+    "python": {
+      "type": "string",
+      "description": "Python implementation (optional)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Plain-text description of the equation"
+    },
+    "importance": {
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low"],
+      "description": "Importance level for the framework"
+    },
+    "variables": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {"type": "string"},
+          {
+            "type": "object",
+            "properties": {
+              "symbol": {"type": "string"},
+              "name": {"type": "string"},
+              "domain": {"type": "string"},
+              "default": {"type": "string"},
+              "typical": {"type": "string"},
+              "description": {"type": "string"}
+            },
+            "required": ["symbol", "name"]
+          }
+        ]
+      },
+      "description": "List of variables (strings or objects with symbol/name/domain)"
+    },
+    "pipeline_stage": {
+      "type": "string",
+      "enum": ["h", "g", "u", "d", "l", "sigma", "r", "C", "A"],
+      "description": "Associated pipeline stage"
+    },
+    "chapter": {
+      "type": "string",
+      "description": "Chapter reference in textbook"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Categorization tags"
+    }
+  },
+  "required": ["name", "latex"],
+  "additionalProperties": true
+}

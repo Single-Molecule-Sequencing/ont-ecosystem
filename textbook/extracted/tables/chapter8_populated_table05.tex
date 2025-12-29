@@ -1,0 +1,23 @@
+\begin{table}[!htbp]
+\centering
+\caption{Common Issues in Standard Construction}
+\label{tab:standard-troubleshooting}
+\small
+\begin{tabular}{p{3.5cm}p{4cm}p{6cm}}
+\toprule
+\textbf{Problem} & \textbf{Likely Cause} & \textbf{Solution} \\
+\midrule
+No colonies after transformation & Inefficient ligation; incorrect antibiotic & Check insert:vector ratio (should be 2-3:1 molar); verify antibiotic matches plasmid resistance gene \\
+\midrule
+Colonies but all negative by PCR & Self-ligation of vector; incorrect primers & Increase insert:vector ratio; verify primers by BLAST; use vector with negative selection marker \\
+\midrule
+Insert present but wrong size & Off-target amplification; partial deletion & Re-design primers with higher specificity; use high-fidelity polymerase; gel-purify PCR product \\
+\midrule
+Sanger sequence doesn't match expected & Wrong template; PCR error; synthesis error & Sequence multiple clones; if consistent across clones, verify input sequence was correct \\
+\midrule
+Restriction digest unexpected pattern & Methylation blocking enzyme; partial digest & Use methylation-insensitive enzyme; increase enzyme amount or incubation time; verify enzyme is active \\
+\midrule
+Low plasmid yield from Dam$^-$ strains & Strain-specific growth deficiency & Increase culture volume; use richer media; try alternative Dam$^-$ strain (JM110 vs. SCS110) \\
+\bottomrule
+\end{tabular}
+\end{table}

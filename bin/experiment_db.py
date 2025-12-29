@@ -44,6 +44,34 @@ except ImportError:
     HAS_PANDAS = False
     logger.debug("pandas not available, using fallback CSV parsing")
 
+import math
+
+
+# =============================================================================
+# Q-score Utilities (Phred scale - MUST average in probability space)
+# =============================================================================
+# IMPORTANT: Q-scores are logarithmic and cannot be averaged directly.
+# Must convert to probability, average, then convert back.
+
+def _mean_qscore(qscores):
+    """
+    Calculate mean Q-score correctly via probability space.
+
+    Q-scores are logarithmic (Phred scale), so we MUST:
+    1. Convert each Q to error probability: P = 10^(-Q/10)
+    2. Average the probabilities
+    3. Convert back to Q-score: Q = -10 * log10(P_avg)
+
+    Direct averaging of Q-scores is INCORRECT.
+    """
+    if not qscores:
+        return 0.0
+    probs = [10 ** (-q / 10) for q in qscores]
+    mean_prob = sum(probs) / len(probs)
+    if mean_prob <= 0:
+        return 60.0  # Cap at Q60
+    return -10 * math.log10(mean_prob)
+
 
 # =============================================================================
 # Database Class
@@ -275,6 +303,186 @@ class ExperimentDatabase:
         ''', (f'%{search_term}%', f'%{search_term}%'))
         return cursor.fetchall()
 
+    def sync_from_event(self, experiment_id, event):
+        """
+        Sync analysis event results to database.
+
+        This is called by ont_experiments.py after running an analysis
+        to keep the database in sync with the registry.
+
+        Args:
+            experiment_id: Registry experiment ID (used to find DB record)
+            event: Event dict with analysis results
+
+        Returns:
+            True if sync succeeded, False otherwise
+        """
+        cursor = self.conn.cursor()
+
+        # Find experiment by path containing the ID
+        cursor.execute("""
+            SELECT id FROM experiments
+            WHERE experiment_path LIKE ?
+            LIMIT 1
+        """, (f'%{experiment_id}%',))
+        row = cursor.fetchone()
+
+        if row is None:
+            logger.debug(f"Experiment {experiment_id} not found in database")
+            return False
+
+        db_exp_id = row[0]
+        analysis = event.get('analysis', '')
+        results = event.get('results', {})
+
+        if analysis in ('end_reasons', 'endreason_qc'):
+            # Update end reason distribution
+            total_reads = results.get('total_reads', 0)
+            sp_pct = results.get('signal_positive_pct', 0)
+            unblock_pct = results.get('unblock_mux_pct', results.get('unblock_pct', 0))
+
+            # Delete existing end reasons for this experiment
+            cursor.execute("DELETE FROM end_reason_distribution WHERE experiment_id = ?", (db_exp_id,))
+
+            # Insert new end reasons
+            if sp_pct and total_reads:
+                sp_count = int(total_reads * sp_pct / 100)
+                cursor.execute("""
+                    INSERT INTO end_reason_distribution (experiment_id, end_reason, count, percentage)
+                    VALUES (?, 'signal_positive', ?, ?)
+                """, (db_exp_id, sp_count, sp_pct))
+
+            if unblock_pct and total_reads:
+                unblock_count = int(total_reads * unblock_pct / 100)
+                cursor.execute("""
+                    INSERT INTO end_reason_distribution (experiment_id, end_reason, count, percentage)
+                    VALUES (?, 'unblock_mux_change', ?, ?)
+                """, (db_exp_id, unblock_count, unblock_pct))
+
+            self.conn.commit()
+            logger.debug(f"Synced end_reasons for {experiment_id}")
+            return True
+
+        elif analysis == 'basecalling':
+            # Update read statistics
+            cursor.execute("SELECT id FROM read_statistics WHERE experiment_id = ?", (db_exp_id,))
+            stats_row = cursor.fetchone()
+
+            if stats_row:
+                # Update existing
+                cursor.execute("""
+                    UPDATE read_statistics SET
+                        total_reads = COALESCE(?, total_reads),
+                        passed_reads = COALESCE(?, passed_reads),
+                        total_bases = COALESCE(?, total_bases),
+                        mean_qscore = COALESCE(?, mean_qscore),
+                        median_qscore = COALESCE(?, median_qscore),
+                        n50 = COALESCE(?, n50)
+                    WHERE experiment_id = ?
+                """, (
+                    results.get('total_reads'),
+                    results.get('pass_reads'),
+                    results.get('bases_called'),
+                    results.get('mean_qscore'),
+                    results.get('median_qscore'),
+                    results.get('n50'),
+                    db_exp_id
+                ))
+            else:
+                # Insert new
+                cursor.execute("""
+                    INSERT INTO read_statistics (
+                        experiment_id, total_reads, passed_reads, total_bases,
+                        mean_qscore, median_qscore, n50
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    db_exp_id,
+                    results.get('total_reads', 0),
+                    results.get('pass_reads', 0),
+                    results.get('bases_called', 0),
+                    results.get('mean_qscore', 0),
+                    results.get('median_qscore', 0),
+                    results.get('n50', 0)
+                ))
+
+            self.conn.commit()
+            logger.debug(f"Synced basecalling stats for {experiment_id}")
+            return True
+
+        elif analysis == 'monitoring':
+            # Update from monitoring snapshot
+            cursor.execute("SELECT id FROM read_statistics WHERE experiment_id = ?", (db_exp_id,))
+            stats_row = cursor.fetchone()
+
+            if stats_row:
+                cursor.execute("""
+                    UPDATE read_statistics SET
+                        total_reads = COALESCE(?, total_reads),
+                        total_bases = COALESCE(?, total_bases),
+                        mean_qscore = COALESCE(?, mean_qscore),
+                        n50 = COALESCE(?, n50)
+                    WHERE experiment_id = ?
+                """, (
+                    results.get('total_reads'),
+                    results.get('total_bases'),
+                    results.get('mean_qscore'),
+                    results.get('n50'),
+                    db_exp_id
+                ))
+            else:
+                cursor.execute("""
+                    INSERT INTO read_statistics (
+                        experiment_id, total_reads, total_bases, mean_qscore, n50
+                    ) VALUES (?, ?, ?, ?, ?)
+                """, (
+                    db_exp_id,
+                    results.get('total_reads', 0),
+                    results.get('total_bases', 0),
+                    results.get('mean_qscore', 0),
+                    results.get('n50', 0)
+                ))
+
+            self.conn.commit()
+            logger.debug(f"Synced monitoring stats for {experiment_id}")
+            return True
+
+        return False
+
+
+# =============================================================================
+# Sync Helper Function
+# =============================================================================
+
+def sync_event_to_database(experiment_id, event, db_path=None):
+    """
+    Convenience function to sync an event to the database.
+
+    Called by ont_experiments.py after analysis completion.
+
+    Args:
+        experiment_id: Registry experiment ID
+        event: Event dict with analysis results
+        db_path: Optional database path (defaults to ~/.ont-registry/experiments.db)
+
+    Returns:
+        True if sync succeeded, False otherwise
+    """
+    if db_path is None:
+        db_path = Path.home() / ".ont-registry" / "experiments.db"
+
+    if not Path(db_path).exists():
+        return False
+
+    try:
+        db = ExperimentDatabase(str(db_path))
+        db.connect()
+        result = db.sync_from_event(experiment_id, event)
+        db.close()
+        return result
+    except Exception as e:
+        logger.warning(f"Failed to sync event to database: {e}")
+        return False
+
 
 # =============================================================================
 # Parsing Functions
@@ -440,7 +648,7 @@ def parse_sequencing_summary(filepath):
         'max_read_length': max(stats['lengths']) if stats['lengths'] else 0,
         'min_read_length': min(stats['lengths']) if stats['lengths'] else 0,
         'n50': calculate_n50(stats['lengths']),
-        'mean_qscore': sum(stats['qscores']) / len(stats['qscores']) if stats['qscores'] else 0,
+        'mean_qscore': _mean_qscore(stats['qscores']) if stats['qscores'] else 0,
         'median_qscore': sorted(stats['qscores'])[len(stats['qscores'])//2] if stats['qscores'] else 0,
         'mean_duration': sum(stats['durations']) / len(stats['durations']) if stats['durations'] else 0,
         'total_duration_hours': sum(stats['durations']) / 3600 if stats['durations'] else 0,

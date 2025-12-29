@@ -1,0 +1,329 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Chapter 4 Enhancements: Tables, Examples, and Tutorials
+%% TO BE INTEGRATED INTO chapter4_populated.tex
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Quick Reference: Key Variables and Notation}
+\label{sec:ch4-notation}
+
+Table~\ref{tab:ch4-variables} provides a quick reference for all variables introduced in this chapter, with links to detailed definitions and the appendix notation guide (Appendix~\ref{app:notation}).
+
+\begin{table}[H]
+\centering
+\caption{Quick Reference: Variables in the Classification Model}
+\label{tab:ch4-variables}
+\small
+\begin{tabular}{clp{5cm}c}
+\toprule
+\textbf{Symbol} & \textbf{Name} & \textbf{Definition} & \textbf{Reference} \\
+\midrule
+$\mathcal{H}$ & Haplotype space & Set of candidate haplotype sequences & Def.~\ref{def:state-space-hierarchy} \\
+$h_i$ & Haplotype $i$ & A specific candidate sequence & -- \\
+$P$ & Haplotype count & Total number of candidates & -- \\
+\midrule
+$\mathcal{R}$ & Read space & Set of all observed sequencing reads & Def.~\ref{def:state-space-hierarchy} \\
+$r_j$ & Read $j$ & A single basecalled sequence & -- \\
+$n$ & Read count & Total number of reads observed & -- \\
+\midrule
+$\sigma$ & Signal & Continuous sensor output (current or fluorescence) & Def.~\ref{def:signal-emission} \\
+$x_t$ & Signal at time $t$ & Measurement at specific timepoint & -- \\
+$T$ & Signal length & Number of timepoints in signal & -- \\
+\midrule
+$Q_j$ & Quality score & Phred-scaled error probability for position $j$ & Def.~\ref{def:quality-score-model} \\
+$\mathbf{Q}$ & Quality vector & Quality scores for all positions in a read & -- \\
+\midrule
+$\mathbf{C}$ & Confusion matrix & Empirical error probabilities $\Prob(\text{obs}|\text{true})$ & Def.~\ref{def:confusion-matrix} \\
+$C_{ij}$ & Confusion entry & Probability of observing $i$ given true $j$ & -- \\
+\midrule
+$d_{\text{edit}}(r,t)$ & Edit distance & Minimum edits to transform $r$ to $t$ & Def.~\ref{def:levenshtein-distance} \\
+$|r|$ & Sequence length & Number of bases in read $r$ & -- \\
+\midrule
+$\mathcal{A}$ & Nucleotide alphabet & $\{A, C, G, T\}$ & -- \\
+$\mathbb{I}[\cdot]$ & Indicator function & 1 if condition true, 0 otherwise & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent\textbf{Cross-Reference:} For comprehensive notation including mathematical operators, see Appendix~\ref{app:notation}. For core equation quick links, use \CEref{1} through \CEref{15}.
+
+\section{Worked Example: Complete Classification Pipeline}
+\label{sec:ch4-worked-example}
+
+\noindent This section presents a numerical walkthrough of the complete pipeline from a true haplotype to observed read, illustrating every transformation with concrete values.
+
+\subsection{Setup: Simple Two-Haplotype System}
+
+Consider a simple pharmacogene locus with two candidate haplotypes:
+\begin{itemize}
+    \item $h_1$: Reference allele with sequence \texttt{ACGTACGT} (8 bases)
+    \item $h_2$: Variant allele with sequence \texttt{ACGTCCGT} (SNP: A$\to$C at position 5)
+\end{itemize}
+
+Our task: given an observed read $r = \texttt{ACGTCCGT}$, compute the likelihood $\Prob(r|h_1)$ and $\Prob(r|h_2)$.
+
+\subsection{Step 1: Signal Generation}
+
+For this example, assume nanopore sequencing where each base generates a characteristic current level. Suppose the signal model (Definition~\ref{def:signal-emission}) produces:
+
+\begin{itemize}
+    \item True sequence \texttt{ACGTACGT} $\to$ expected signal: [110, 95, 130, 105, 110, 95, 130, 105] pA
+    \item True sequence \texttt{ACGTCCGT} $\to$ expected signal: [110, 95, 130, 105, 95, 95, 130, 105] pA
+\end{itemize}
+
+The difference occurs at position 5, where A (110 pA) is replaced by C (95 pA). Real signals include noise:
+
+\vspace{0.3cm}
+\noindent Observed signal (with Gaussian noise, $\sigma = 5$ pA):
+\[
+\sigma_{\text{obs}} = [112, 93, 128, 107, 97, 94, 131, 103] \text{ pA}
+\]
+
+\subsection{Step 2: Basecalling}
+
+The basecaller (e.g., Dorado) processes $\sigma_{\text{obs}}$ and produces:
+\begin{itemize}
+    \item Called sequence: $r = \texttt{ACGTCCGT}$
+    \item Quality scores: $\mathbf{Q} = [30, 28, 32, 29, 25, 27, 31, 30]$
+\end{itemize}
+
+Position 5 has lower quality (Q25) because the observed signal (97 pA) falls between expected values for A (110 pA) and C (95 pA), creating ambiguity.
+
+\subsection{Step 3: Likelihood Calculation via Quality Scores}
+
+Using the quality score model (Definition~\ref{def:quality-score-model}), we compute the likelihood of observing $r$ given each true haplotype.
+
+\textbf{For $h_1$ (\texttt{ACGTACGT}):}
+
+Positions 1-4 match, position 5 is a mismatch (observed C vs. true A), positions 6-8 match.
+
+\begin{align*}
+\Prob(r|h_1) &= \prod_{j=1}^{8} \Prob(r_j | h_{1,j}, Q_j) \\
+&= (1 - 10^{-30/10})(1 - 10^{-28/10})(1 - 10^{-32/10})(1 - 10^{-29/10}) \\
+&\quad \times \left(\frac{10^{-25/10}}{3}\right) \times (1 - 10^{-27/10})(1 - 10^{-31/10})(1 - 10^{-30/10}) \\
+&= (0.999)(0.998)(0.9994)(0.999) \times (0.00105) \times (0.998)(0.9992)(0.999) \\
+&\approx 0.001042
+\end{align*}
+
+The low probability is driven by the mismatch at position 5, where $\Prob(\text{error}) = 10^{-25/10} = 0.00316$ is divided by 3 (assuming uniform error distribution over incorrect bases).
+
+\textbf{For $h_2$ (\texttt{ACGTCCGT}):}
+
+Perfect match at all positions!
+
+\begin{align*}
+\Prob(r|h_2) &= \prod_{j=1}^{8} (1 - 10^{-Q_j/10}) \\
+&= (0.999)(0.998)(0.9994)(0.999)(0.9968)(0.998)(0.9992)(0.999) \\
+&\approx 0.9898
+\end{align*}
+
+\subsection{Step 4: Likelihood Ratio and Interpretation}
+
+The likelihood ratio strongly favors $h_2$:
+\[
+\frac{\Prob(r|h_2)}{\Prob(r|h_1)} = \frac{0.9898}{0.001042} \approx 950
+\]
+
+This read provides 950:1 evidence in favor of the variant haplotype $h_2$ versus the reference $h_1$. In a Bayesian framework (Chapter~\ref{chap:posteriors}), this likelihood ratio updates our prior belief $\Prob(h_2)/\Prob(h_1)$ to obtain the posterior $\Prob(h_2|r)/\Prob(h_1|r)$.
+
+If the prior odds were 1:1 (equal population frequency), the posterior odds would be 950:1, translating to:
+\[
+\Prob(h_2|r) = \frac{950}{950 + 1} \approx 0.999
+\]
+
+A single high-quality read is nearly decisive evidence for the variant haplotype in this simple two-candidate case.
+
+\subsection{Step 5: Effect of Quality Scores}
+
+The importance of quality scores becomes clear when we compare the same read with degraded quality:
+
+\vspace{0.3cm}
+\noindent\textbf{Scenario: Lower quality at position 5} ($Q_5 = 15$ instead of 25)
+
+For $h_1$ (mismatch at position 5):
+\[
+\Prob(r|h_1) = 0.994^4 \times \frac{10^{-15/10}}{3} \times 0.998^3 \approx 0.0104
+\]
+
+For $h_2$ (perfect match):
+\[
+\Prob(r|h_2) = 0.994^4 \times (1 - 10^{-15/10}) \times 0.998^3 \approx 0.9586
+\]
+
+Likelihood ratio:
+\[
+\frac{\Prob(r|h_2)}{\Prob(r|h_1)} \approx \frac{0.9586}{0.0104} \approx 92
+\]
+
+The evidence weakens dramatically (950:1 $\to$ 92:1) when quality degrades from Q25 to Q15, demonstrating why quality-aware models are essential.
+
+\section{Tutorial: Constructing Confusion Matrices}
+\label{sec:ch4-confusion-tutorial}
+
+\subsection{Single-Base Confusion Matrix}
+
+Suppose we sequence a plasmid standard with known sequence \texttt{AAACCCGGGTTTT} (4 of each base) 1,000 times. We count observed vs. true bases:
+
+\begin{table}[H]
+\centering
+\caption{Single-Base Confusion Matrix Example (counts from 1,000 reads)}
+\label{tab:ch4-confusion-counts}
+\begin{tabular}{l|cccc|c}
+\toprule
+\textbf{Observed $\backslash$ True} & \textbf{A} & \textbf{C} & \textbf{G} & \textbf{T} & \textbf{Total Obs.} \\
+\midrule
+A & 3,920 & 5 & 8 & 12 & 3,945 \\
+C & 8 & 3,880 & 6 & 7 & 3,901 \\
+G & 10 & 9 & 3,890 & 5 & 3,914 \\
+T & 12 & 6 & 6 & 3,876 & 3,900 \\
+\midrule
+\textbf{Total True} & 3,950 & 3,900 & 3,910 & 3,900 & 15,660 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Normalizing columns to sum to 1 gives the confusion matrix $\mathbf{C}$:
+
+\begin{table}[H]
+\centering
+\caption{Normalized Single-Base Confusion Matrix $\mathbf{C}$}
+\label{tab:ch4-confusion-matrix}
+\begin{tabular}{l|cccc}
+\toprule
+\textbf{Observed $\backslash$ True} & \textbf{A} & \textbf{C} & \textbf{G} & \textbf{T} \\
+\midrule
+A & 0.9924 & 0.0013 & 0.0020 & 0.0031 \\
+C & 0.0020 & 0.9949 & 0.0015 & 0.0018 \\
+G & 0.0025 & 0.0023 & 0.9949 & 0.0013 \\
+T & 0.0030 & 0.0015 & 0.0015 & 0.9938 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Interpretation:}
+\begin{itemize}
+    \item Diagonal elements ($\sim$0.99) represent accuracy for each base
+    \item Off-diagonal elements ($\sim$0.001--0.003) show substitution rates
+    \item Row sums $\neq 1$ because the matrix is column-normalized (each column is $\Prob(\text{obs}|\text{true})$)
+\end{itemize}
+
+\subsection{Using the Confusion Matrix for Likelihood}
+
+Given a read $r = \texttt{ACG}$ and true sequence $h = \texttt{ACG}$, the likelihood is:
+
+\begin{align*}
+\Prob(r|h) &= C_{AA} \times C_{CC} \times C_{GG} \\
+&= 0.9924 \times 0.9949 \times 0.9949 \\
+&\approx 0.9823
+\end{align*}
+
+For a mismatched read $r' = \texttt{ACT}$ versus $h = \texttt{ACG}$:
+
+\begin{align*}
+\Prob(r'|h) &= C_{AA} \times C_{CC} \times C_{TG} \\
+&= 0.9924 \times 0.9949 \times 0.0015 \\
+&\approx 0.00148
+\end{align*}
+
+The likelihood ratio is:
+\[
+\frac{\Prob(r|h)}{\Prob(r'|h)} = \frac{0.9823}{0.00148} \approx 664
+\]
+
+The perfect-match read is 664× more likely than the single-mismatch read under this confusion matrix.
+
+\subsection{Context-Dependent Errors: Homopolymer Example}
+
+Single-base confusion matrices miss context-dependent errors. For homopolymers, consider sequencing \texttt{AAAA} (4 A's):
+
+\begin{table}[H]
+\centering
+\caption{Homopolymer Confusion: Observed Lengths for True \texttt{AAAA}}
+\label{tab:ch4-homopolymer}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Observed Sequence} & \textbf{Count (out of 100)} & \textbf{Probability} \\
+\midrule
+\texttt{AAA} (deletion) & 8 & 0.08 \\
+\texttt{AAAA} (correct) & 78 & 0.78 \\
+\texttt{AAAAA} (insertion) & 12 & 0.12 \\
+\texttt{AAAAAA} (2 insertions) & 2 & 0.02 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Homopolymer indel rate (20\%) far exceeds single-base substitution rate ($\sim$1\%), illustrating why k-mer confusion matrices (capturing context) outperform single-base models for nanopore data.
+
+\section{Summary Table: Pipeline Transformations}
+\label{sec:ch4-pipeline-summary}
+
+Table~\ref{tab:ch4-pipeline-summary} consolidates all transformations in the sequencing pipeline with their mathematical representations and key parameters.
+
+\begin{table}[H]
+\centering
+\caption{Complete Sequencing Pipeline Transformations}
+\label{tab:ch4-pipeline-summary}
+\small
+\begin{tabular}{p{2.5cm}p{3cm}p{5.5cm}p{2.5cm}}
+\toprule
+\textbf{Stage} & \textbf{Transformation} & \textbf{Probabilistic Model} & \textbf{Key Parameters} \\
+\midrule
+Haplotype Prior & Population $\to$ Sample & $\Prob(h)$ from allele frequency databases & Population freq., ancestry \\
+\midrule
+Genomic Molecules & Haplotype $\to$ Molecules & $\Prob(\mathbf{g}|h)$ replication & Ploidy, mosaicism \\
+\midrule
+Somatic Mutation & Molecules $\to$ Mutated & $\Prob(\mathbf{u}|\mathbf{g})$ mutation rate & Mutation rate $\mu$ \\
+\midrule
+Fragmentation & DNA $\to$ Fragments & $\Prob(\mathbf{d}|\mathbf{u})$ shearing & Shear size dist., enzyme kinetics \\
+\midrule
+Library Prep & Fragments $\to$ Library & $\Prob(\mathbf{l}|\mathbf{d})$ ligation, enrichment & Adapter efficiency, enrichment fold \\
+\midrule
+Signal Generation & Library $\to$ Signal & $\Prob(\boldsymbol{\sigma}|\mathbf{l})$ sensor physics & Noise $\sigma$, drift, k-mer model \\
+\midrule
+Basecalling & Signal $\to$ Reads & $\Prob(\mathbf{r}|\boldsymbol{\sigma})$ neural network & Basecaller model, Q-score calibration \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent\textbf{Computational Strategy:} Direct computation of the full joint distribution is intractable. Practical implementations (Chapter~\ref{chap:posteriors}) approximate the pipeline by:
+\begin{enumerate}
+    \item Collapsing upstream stages (haplotype $\to$ library) into empirical fragment distributions
+    \item Modeling signal $\to$ reads via confusion matrices or quality scores
+    \item Assuming conditional independence of reads given haplotype
+\end{enumerate}
+
+These approximations enable real-time classification on standard computational hardware while maintaining mathematical rigor through explicit modeling of uncertainties.
+
+\section{Equation Index and Cross-References}
+\label{sec:ch4-equation-index}
+
+For rapid lookup, Table~\ref{tab:ch4-equation-index} indexes all key equations in this chapter with hyperlinks to full derivations and related content.
+
+\begin{table}[H]
+\centering
+\caption{Equation Quick Reference for Chapter 4}
+\label{tab:ch4-equation-index}
+\small
+\begin{tabular}{p{2cm}p{6cm}p{4.5cm}}
+\toprule
+\textbf{Equation} & \textbf{Description} & \textbf{See Also} \\
+\midrule
+Pipeline Factorization & $\Prob(h, \mathbf{g}, \ldots, \mathbf{r}) = \Prob(h) \prod \Prob(\text{next}|\text{prev})$ & Thm.~\ref{thm:pipeline-factorization}, \CEref{1} \\
+\midrule
+Signal Emission & $\Prob(\sigma|l) = \prod_t \Prob(x_t|s_t)$ & Def.~\ref{def:signal-emission} \\
+\midrule
+Phred Quality Score & $\Prob(\text{error}|Q) = 10^{-Q/10}$ & Def.~\ref{def:quality-score-model} \\
+\midrule
+Quality-Based Likelihood & $\Prob(\hat{s}=s|\mathbf{Q}) = \prod_j (\cdots)$ & Def.~\ref{def:quality-score-model}, \CEref{2} \\
+\midrule
+Edit Distance & $d_{\text{edit}}(r,t) = \min\{\#\text{edits}\}$ & Def.~\ref{def:levenshtein-distance} \\
+\midrule
+Read Accuracy & $\text{Acc} = 1 - d_{\text{edit}}/\max(|r|,|t|)$ & Example~\ref{ex:edit-distance} \\
+\midrule
+Confusion Matrix & $C_{ij} = \Prob(\text{obs } i | \text{true } j)$ & Def.~\ref{def:confusion-matrix}, Chapter~\ref{chap:sma-seq} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent\textbf{Navigation:} All core equations referenced in this framework are cataloged in Appendix~\ref{app:core-equations} with full derivations, numerical examples, and software implementation notes. Use \CEref{N} commands to hyperlink directly to core equation N.
+
+\clearpage

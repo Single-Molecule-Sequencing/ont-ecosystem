@@ -1,0 +1,61 @@
+\begin{figure}[!htbp]
+\centering
+\fbox{\begin{minipage}{0.9\textwidth}
+\centering
+\textbf{Complete Haplotype Classification Pipeline} \\
+\vspace{0.5cm}
+\begin{tabular}{c}
+\textbf{Sample Preparation} \\
+$\downarrow$ \\
+DNA extraction \& QC \\
+$\downarrow$ \\
+Fragmentation (optional) \\
+$\downarrow$ \\
+Cas9 enrichment (optional) \\
+$\downarrow$ \\
+Library preparation \\
+$\downarrow$ \\
+\hline
+\textbf{Sequencing} \\
+$\downarrow$ \\
+Single-molecule sequencing \\
+$\downarrow$ \\
+Raw signal acquisition \\
+$\downarrow$ \\
+\hline
+\textbf{Primary Analysis} \\
+$\downarrow$ \\
+Basecalling \\
+$\downarrow$ \\
+Quality score assignment \\
+$\downarrow$ \\
+FASTQ generation \\
+$\downarrow$ \\
+\hline
+\textbf{Secondary Analysis (QC only)} \\
+$\downarrow$ \\
+Reference alignment \\
+$\downarrow$ \\
+Coverage assessment \\
+$\downarrow$ \\
+Quality metrics \\
+$\downarrow$ \\
+\hline
+\textbf{Tertiary Analysis (Classification)} \\
+$\downarrow$ \\
+Confusion matrix estimation (if standards) \\
+$\downarrow$ \\
+Per-read likelihood computation \\
+$\downarrow$ \\
+Posterior probability calculation \\
+$\downarrow$ \\
+Haplotype assignment \\
+$\downarrow$ \\
+Quality control gates \\
+$\downarrow$ \\
+Clinical report
+\end{tabular}
+\end{minipage}}
+\caption{End-to-end workflow from biological sample to clinical classification result. Dashed boxes indicate optional steps depending on application.}
+\label{fig:complete-workflow}
+\end{figure}

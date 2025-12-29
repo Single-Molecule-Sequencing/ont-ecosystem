@@ -1,0 +1,112 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://ont-ecosystem.sms-lab.org/schemas/experiment.json",
+  "title": "Experiment Metadata",
+  "description": "Schema for ONT experiment entries in the registry",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique experiment identifier (exp-XXXX format)",
+      "pattern": "^exp-[a-zA-Z0-9]{4,12}$"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable experiment name",
+      "minLength": 3,
+      "maxLength": 100
+    },
+    "location": {
+      "type": "string",
+      "description": "Path to experiment data directory"
+    },
+    "platform": {
+      "type": "string",
+      "description": "ONT sequencing platform or consumable ID"
+    },
+    "flowcell_type": {
+      "type": "string",
+      "description": "Flowcell type (e.g., FLO-PRO114M)"
+    },
+    "kit": {
+      "type": "string",
+      "description": "Library prep kit (e.g., SQK-LSK114)"
+    },
+    "sample_id": {
+      "type": "string",
+      "description": "Sample identifier"
+    },
+    "reference": {
+      "type": "string",
+      "description": "Path to reference genome"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "running", "completed", "failed", "archived", "registered", "active"],
+      "description": "Experiment status"
+    },
+    "created": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Creation timestamp (ISO 8601)"
+    },
+    "updated": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last update timestamp (ISO 8601)"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Categorization tags"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Free-form notes"
+    },
+    "pipeline_stages": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["h", "g", "u", "d", "l", "sigma", "r", "C", "A"]
+      },
+      "description": "Active pipeline stages for this experiment"
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/event"
+      },
+      "description": "Timeline of experiment events"
+    }
+  },
+  "required": ["id", "name", "location"],
+  "$defs": {
+    "event": {
+      "type": "object",
+      "properties": {
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["created", "discovered", "registered", "analysis", "note", "status_change", "error", "tag_added", "tag_removed"]
+        },
+        "description": {
+          "type": "string"
+        },
+        "tool": {
+          "type": "string"
+        },
+        "results": {
+          "type": "object"
+        }
+      },
+      "required": ["timestamp", "type"]
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,17 @@
+\begin{table}[!htbp]
+\centering
+\caption{Standard mixture ratios for validation scenarios}
+\label{tab:mixture-ratios}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Scenario} & \textbf{Ratio} & \textbf{Clinical Relevance} & \textbf{Validation Purpose} \\
+\midrule
+Heterozygote & 1:1 & Normal diploid & Baseline accuracy \\
+Homozygote & 1:0 & Both alleles identical & Purity validation \\
+Duplication & 2:1 & Gene duplication & CNV detection \\
+Deletion carrier & 1:0* & Hemizygous & Null allele detection \\
+Somatic mixture & 95:5 & Tumor contamination & Sensitivity limit \\
+Compound het & 1:1:0 & Two variants & Multi-allele resolution \\
+\bottomrule
+\end{tabular}
+\end{table}

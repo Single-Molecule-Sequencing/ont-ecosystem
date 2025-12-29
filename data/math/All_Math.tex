@@ -1,0 +1,1180 @@
+\documentclass[11pt]{article}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsfonts,amsthm,bm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{enumitem}
+
+\title{Mathematical Models for Single-Molecule Sequencing,\\
+Error Characterization, Haplotype Classification, and Haplotagging}
+\author{Pranjal Srivastava}
+\date{November 2025}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+\section{Overview}
+
+This document merges and harmonizes the mathematical content for:
+\begin{itemize}[noitemsep]
+    \item single-molecule sequencing and basecalling,
+    \item Phred quality scores and alignment-based quality metrics,
+    \item sequence classification and confusion-matrix error models,
+    \item haplotype / diplotype classification (including polyploidy),
+    \item read-level haplotagging with known haplotypes,
+    \item plasmid replication and purity bounds, and
+    \item dual Cas9 cutting efficiency.
+\end{itemize}
+
+Each section reintroduces its own notation so that variable definitions remain consistent with the original sources.
+
+\section{Error Quantification}
+
+In this section we formalize the objects used to quantify sequencing and
+basecalling error.  We first introduce the mathematical preliminaries,
+then define refined read- and sequence-level quality variables, and
+finally give summary metrics that we use to evaluate a basecaller.
+
+\subsection{Preliminaries (Mathematical)}
+
+Let $\Sigma$ denote the nucleotide alphabet (e.g.\ $\Sigma=\{A,C,G,T\}$).
+Let
+\[
+\mathcal{S} \subset \Sigma^{<\infty}
+\qquad\text{and}\qquad
+\mathcal{R} \subset \Sigma^{<\infty}
+\]
+be the sets of possible input sequences and observed reads, respectively.
+For any sequence $x\in\mathcal{S}\cup\mathcal{R}$ we write $L(x)$ for its
+length in bases and $x[\ell]\in\Sigma$ for the base at position
+$\ell\in\{1,\dots,L(x)\}$.
+
+Each read $r\in\mathcal{R}$ comes with basecaller-provided per–base Phred
+quality scores
+\[
+Q_{r,\ell}\in\mathbb{R}, \qquad \ell=1,\dots,L(r),
+\]
+which are related to the basewise error probabilities by
+$p_{r,\ell}=10^{-Q_{r,\ell}/10}$.
+
+We will frequently consider \emph{pairs} $(s,r)\in \mathcal{S}\times\mathcal{R}$
+consisting of a ``true'' input sequence $s$ and an observed read $r$
+that has been aligned to $s$.  On such pairs we define the following
+joint variables.
+\begin{itemize}
+  \item The (integer) Levenshtein edit distance
+        \[
+        d(s,r)\in\mathbb{N}_0,
+        \]
+        i.e.\ the minimum number of substitutions, insertions and
+        deletions required to transform $s$ into $r$.
+  \item An optimal alignment
+        \[
+        A(s,r),
+        \]
+        for example a global alignment in the sense of Needleman--Wunsch
+        or an affine-gap variant, used to count how many of the edits in
+        $d(s,r)$ are mismatches versus insertions or deletions.
+\end{itemize}
+
+We consider a finite collection of experiments
+\[
+\mathcal{E} = \{e_1,\dots,e_N\}.
+\]
+Each experiment $e_i\in\mathcal{E}$ consists of:
+\begin{itemize}
+  \item A finite set of input (``ground truth'') sequences
+        \[
+        \mathcal{S}_i=\{s_{ij}\}_{j=1}^{m_i}\subset\mathcal{S},
+        \]
+        with associated mixture proportions (or purities)
+        \[
+        \pi_{ij}>0,\qquad
+        \sum_{j=1}^{m_i}\pi_{ij}=1.
+        \]
+  \item A finite multiset of reads
+        \[
+        \mathcal{R}_i=\{r_{ik}\}_{k=1}^{\ell_i}\subset\mathcal{R}.
+        \]
+        Each $r_{ik}$ carries basewise qualities
+        $Q_{ik\ell}:=Q_{r_{ik},\ell}$ for $\ell=1,\dots,L(r_{ik})$.
+\end{itemize}
+
+Whenever a read $r_{ik}$ is aligned to an input sequence $s_{ij}$ in
+experiment $e_i$, the pair $(s_{ij},r_{ik})$ inherits the joint
+variables $d(s_{ij},r_{ik})$ and $A(s_{ij},r_{ik})$ defined above.
+
+\subsection{Refined Quality Variables}
+\label{subsec:refined-quality}
+
+We now turn the edit distance into empirical error probabilities and
+corresponding Phred-like quality scores for both reads and sequences.
+
+\subsubsection*{Weighted edit distance}
+
+Given an alignment $A(s,r)$ of $s$ to $r$, let
+\[
+M(s,r) \quad\text{and}\quad I(s,r)
+\]
+denote, respectively, the number of mismatch events and the total number
+of insertion and deletion (indel) events in the alignment.
+
+Often we wish to penalize indels more strongly than mismatches.  Let
+$k\ge 0$ be the desired ratio of the indel weight to the mismatch
+weight; that is, we want one indel to ``count'' as $k$ mismatches.  Set
+\[
+\alpha = \frac{1}{1+k}, \qquad 1-\alpha = \frac{k}{1+k},
+\]
+so that indeed $(1-\alpha)/\alpha = k$.  We define the \emph{weighted
+edit count}
+\[
+E_\alpha(s,r)
+  := \alpha\,M(s,r) + (1-\alpha)\,I(s,r)
+\]
+and the corresponding \emph{normalized weighted edit distance}
+\[
+\tilde d_\alpha(s,r)
+  := \frac{E_\alpha(s,r)}{L(s)} \in [0,\infty).
+\]
+
+\paragraph{Example.}
+If we want each indel to weigh three times as much as a mismatch, we
+take $k=3$, hence
+\[
+\alpha = \frac{1}{1+3} = 0.25, \qquad 1-\alpha = 0.75.
+\]
+
+The unweighted normalized Levenshtein distance is recovered as
+$\tilde d_{{1}/{2}}(s,r) = (M(s,r)+I(s,r))/L(s)$.
+
+\subsubsection*{Per–read empirical quality}
+
+For a fixed aligned pair $(s_{ij},r_{ik})$, we interpret
+$\tilde d_\alpha(s_{ij},r_{ik})$ as an empirical estimate of the
+per–base error probability for that read relative to that sequence.
+To avoid degenerate values when the observed distance is extremely
+small or zero, we truncate this estimate to lie in the interval
+$\big[ L(s_{ij})^{-2},\,1 \big]$:
+\begin{equation}
+  \hat p^{\text{read}}_{ijk}
+    := \min\!\Bigl\{1,\,
+        \max\!\bigl(L(s_{ij})^{-2},\,
+                    \tilde d_\alpha(s_{ij},r_{ik})\bigr)
+      \Bigr\}.
+\end{equation}
+The corresponding empirical Phred-like quality of read $r_{ik}$ with
+respect to $s_{ij}$ is
+\begin{equation}
+  Q^{\text{read}}_{ijk}
+    := -10 \log_{10} \hat p^{\text{read}}_{ijk}.
+\end{equation}
+In particular, smaller normalized edit distances correspond to larger
+quality values.
+
+\subsubsection*{Sequence-level empirical quality}
+
+Fix a sequence $s_{ij}$ in experiment $e_i$, and suppose that
+$r_{ik}$, $k=1,\dots,\ell_i$, are the reads aligned to $s_{ij}$.  Under
+a simple model in which each base in each read is independently wrong
+with probability $p_{\mathrm{he}}$ (``per–base error''), the total
+number of errors across all alignments is approximately
+\[
+X_{ij} \sim \mathrm{Binomial}\bigl(N_{ij}, p_{\mathrm{he}}\bigr),
+\qquad
+N_{ij} := \ell_i\,L(s_{ij}).
+\]
+An unbiased and maximum-likelihood estimator of $p_{\mathrm{he}}$ is
+\begin{equation}
+  \hat p^{\text{seq}}_{ij}
+    := \frac{1}{\ell_i L(s_{ij})}
+       \sum_{k=1}^{\ell_i} E_\alpha\bigl(s_{ij},r_{ik}\bigr)
+     = \frac{X_{ij}}{N_{ij}}.
+\end{equation}
+We then define the empirical sequence-level quality of $s_{ij}$ as
+\begin{equation}
+  Q^{\text{seq}}_{ij}
+    := -10 \log_{10} \hat p^{\text{seq}}_{ij}.
+\end{equation}
+
+\subsubsection*{Basecaller-derived read quality}
+
+The basecaller provides per–base Phred scores $Q_{ik\ell}$ for read
+$r_{ik}$.  Converting these to per–base error probabilities
+$p_{ik\ell}=10^{-Q_{ik\ell}/10}$ and averaging over the read gives the
+basecaller’s implied per–base error probability for that read,
+\begin{equation}
+  \hat p^{\text{bc}}_{ik}
+    := \frac{1}{L(r_{ik})}
+       \sum_{\ell=1}^{L(r_{ik})} 10^{-Q_{ik\ell}/10}.
+\end{equation}
+The corresponding read-level quality reported by the basecaller is
+\begin{equation}
+  Q^{\text{bc}}_{ik}
+    := -10 \log_{10} \hat p^{\text{bc}}_{ik}.
+\end{equation}
+Here the $Q_{ik\ell}$ are the per–base $q$-values produced by the
+basecaller.
+
+\subsection{Quality Metrics of the Basecaller}
+
+Finally, we define summary statistics that compare the empirical
+qualities above and thereby quantify the performance of a basecaller.
+
+For each aligned pair $(s_{ij},r_{ik})$ we have three associated
+qualities:
+\[
+Q^{\text{seq}}_{ij},\qquad
+Q^{\text{read}}_{ijk},\qquad
+Q^{\text{bc}}_{ik}.
+\]
+We consider the following random differences over all such triples
+$(i,j,k)$:
+\begin{align}
+  \Delta_{\text{seq-read}} &:= Q^{\text{seq}}_{ij}
+                             - Q^{\text{read}}_{ijk}, \\
+  \Delta_{\text{bc-read}}  &:= Q^{\text{bc}}_{ik}
+                             - Q^{\text{read}}_{ijk}.
+\end{align}
+
+\paragraph{Precision.}
+We define the \emph{precision} of our empirical quality estimates as
+the empirical standard deviation of $\Delta_{\text{seq-read}}$:
+\begin{equation}
+  \mathrm{Precision}
+    := \operatorname{sd}\!\bigl(\Delta_{\text{seq-read}}\bigr).
+\end{equation}
+Small values indicate that the per–read empirical qualities
+$Q^{\text{read}}_{ijk}$ are tightly concentrated around the
+sequence-level qualities $Q^{\text{seq}}_{ij}$.
+
+\paragraph{Accuracy.}
+We define the \emph{accuracy} (or calibration error) of the basecaller
+as the empirical standard deviation of $\Delta_{\text{bc-read}}$:
+\begin{equation}
+  \mathrm{Accuracy}
+    := \operatorname{sd}\!\bigl(\Delta_{\text{bc-read}}\bigr).
+\end{equation}
+A perfectly calibrated basecaller would yield both small variance and a
+mean of $\Delta_{\text{bc-read}}$ close to zero; in practice we report
+$\mathrm{Accuracy}$ together with its empirical mean to summarize both
+dispersion and bias.
+
+These definitions provide a mathematically consistent framework for
+quantifying sequencing error and for comparing basecaller-reported
+quality values with empirically observed error rates.
+
+
+%=====================================================================
+
+
+\section{Single-Molecule Sequencing and Basecalling Model}
+
+\subsection{Raw signal and segmentation}
+
+A single-molecule sequencing instrument outputs a raw signal
+\begin{equation}
+  T = (t_1,t_2,\dots,t_z),
+\end{equation}
+where $t_j$ is the measurement at time index $j$ and $t$ is the total
+number of measurements in a run.  
+
+A \emph{single-molecule signal} (one binding event) is a contiguous
+subsequence of $X$:
+\begin{equation}
+  \mathbf{t}^{(i)} = (t_{a_i},t_{a_i+1},\dots,t_{b_i}),
+\end{equation}
+with length $L(\mathbf{t}^{(i)}) = b_i - a_i + 1$.
+
+A segmentation model $\mathcal{W}$ is applied to $T$ to identify $n$
+binding events:
+\begin{equation}
+  \mathcal{T} = \bigl\{ \mathbf{t}^{(1)},\dots,\mathbf{t}^{(n)} \bigr\}
+  = \mathcal{W}(T), 
+\end{equation}
+where each $\mathbf{x}^{(i)}$ is intended to correspond to a single
+molecule interacting with the instrument.
+
+\subsection{Basecalling}
+
+Let $\Sigma$ denote the nucleotide alphabet, typically
+\begin{equation}
+  \Sigma = \{A,C,G,T\}
+  \quad\text{or}\quad
+  \Sigma = \{A,C,G,T,N\}.
+\end{equation}
+
+A basecalling model $f$ maps each single-molecule signal to a sequence
+of bases (a \emph{read})
+\begin{equation}
+  r_{ik} = f\bigl(\mathbf{t}^{(i)}\bigr)
+  \in \Sigma^{L(\mathcal{T})},
+\end{equation}
+where $L(\mathcal{T})$ is the length of $r_{ik}$ which is $k$-th read in experiment $i$. For each base in read $r_{ik}$ , $f$ outputs a Phred
+quality score $Q_{ikl}$ encoding an estimated error probability
+$p_{ikl}$:
+\begin{equation}
+  Q_{ikl} = -10 \log_{10}\!\bigl( p_{ikl} \bigr),
+  \qquad
+  p_{ikl} = 10^{-Q_{ikl}/10}.
+\end{equation}
+
+Collecting all reads from a run gives
+\begin{equation}
+  \mathcal{R} = \bigl\{r_{i1},\dots,r_{ik}\bigr\}, \qquad
+  Q = \bigl\{\mathbf{Q}^{(1)},\dots,\mathbf{Q}^{(z)}\bigr\},
+\end{equation}
+where $\mathbf{Q}^{(z)} = (Q_{iz1},\dots,Q_{izL(r_{iz})})$.
+
+
+%=====================================================================
+
+\section{Sequence Counts, Experiments, and Confusion Matrix}
+
+\subsection{Individual experiments}
+
+Consider a single sequencing experiment $e$ generating a set of reads
+$R$.  Let
+\begin{equation}
+  U_e = \{u_{e1}, \dots, u_{ey}\}
+\end{equation}
+be the set of unique sequences observed in $R$ (after collapsing
+identical reads).
+
+Define the count vector $\mathbf{c}^{(E)}$ by
+\begin{equation}
+  c^{(e)}_j = 
+  \bigl|\{ r_{ek} \in R \;:\; r_{ek} = u_j \}\bigr|,
+  \qquad j=1,\dots, L(U_e).
+\end{equation}
+Then
+\begin{equation}
+  N_e = \sum_{j=1}^{U_e} c^{(e)}_j
+\end{equation}
+is the total number of reads in experiment $e$.
+
+
+\paragraph{Average predicted and empirical quality scores:}
+For each unique sequence $u_j \in U_E$, let  
+$b_{\mathrm{avg},j}$ denote the average predicted Phred quality score over reads matching $u_j$,  
+and let $q_{\mathrm{emp},j}$ denote the empirical read-level quality computed from Levenshtein error rates.
+
+We collect these quantities into sets:
+\[
+Q_{\mathrm{pred}} =
+\{Q^{bc}_{\mathrm{avg},1}, Q^{bc}_{\mathrm{avg},2}, \ldots, Q^{bc}_{\mathrm{avg},L(U_e)}\},
+\tag{18}
+\]
+\[
+Q_{\mathrm{emp}} =
+\{Q^{read}_{\mathrm{avg},1}, Q^{read}_{\mathrm{avg},2}, \ldots, Q^{read}_{\mathrm{avg},L(U_e)}\}.
+\tag{19}
+\]
+
+\paragraph{Percentage of overestimated accuracy:}
+For each unique sequence $s_i$ with count $c^{(E)}_i$, define
+\[
+I_{c_i} =
+\begin{cases}
+\sigma\!\left(k\bigl[Q_{\mathrm{pred}}(c^{(e)}_i) - Q_{\mathrm{emp}}(c^{(e)}_i) - \alpha\bigr]\right),
+& \text{if } Q_{\mathrm{pred}}(c^{(e)}_i) > Q_{\mathrm{emp}}(c^{(e)}_i), \\[4pt]
+0, & \text{otherwise},
+\end{cases}
+\tag{20}
+\]
+where $\sigma(x) = \dfrac{1}{1 + e^{-x}}$, and $k > 0$ and $\alpha$ are tunable parameters controlling the slope
+and offset, respectively.
+
+The percentage of reads whose accuracy is overestimated by the basecaller is then
+\[
+d =
+\frac{\displaystyle \sum_{i=1}^{L(U_e)} c^{(e)}_i I_{c_i}}{n}
+\,\times\, 100.
+\tag{21}
+\]
+
+
+
+\subsection{Set of experiments and global sequence index}
+
+Let $\mathcal{E} = \{e_1,\dots,e_N\}$ be a set of experiments
+performed using the same sequencing technology.
+
+Let the global set of unique sequences across all experiments be
+\begin{equation}
+  S = \bigcup_{k=1}^K S_{e_k}
+  = \{ s_1,\dots,s_M\}.
+\end{equation}
+
+For each experiment $e_k$, we can construct a count vector
+$\mathbf{c}^{(k)}\in\mathbb{N}^M$ over the global index $1,\dots,M$,
+where $c^{(k)}_j$ is the count of sequence $s_j$ in experiment $E_k$.
+Let $N_k = \sum_{j=1}^M c^{(k)}_j$ be the size of experiment $e_k$.
+
+\subsection{Confusion matrix and empirical error model}
+
+Using high-purity standards with known ground-truth sequences, we can
+construct a confusion matrix $C$ summarizing sequence-level
+classification performance of the basecaller.
+
+Let $S = \{s_1,\dots,s_M\}$ be the set of possible sequences used in
+standards.  The confusion matrix is an $M\times M$ matrix $C$ with
+entries
+\begin{equation}
+  C_{ij}
+  = \text{number of times a molecule of true sequence $s_i$
+         was classified as $s_j$}.
+\end{equation}
+Diagonal elements $C_{ii}$ correspond to correct classifications;
+off-diagonal elements $C_{ij}$ ($i\neq j$) correspond to
+misclassifications.
+
+For a given true sequence $s_i$, define
+\begin{equation}
+  N_i = \sum_{j=1}^M C_{ij},
+\end{equation}
+the total number of molecules of type $s_i$ used in standards.
+
+\paragraph{Correct classification (true positive rate).}
+\begin{equation}
+  \text{TPR}_i
+  = P(\hat{s}=s_i \mid s_i)
+  = \frac{C_{ii}}{N_i}.
+\end{equation}
+
+\paragraph{Misclassification probability for sequence $s_i$.}
+\begin{equation}
+  \epsilon_i
+  = P(\hat{s}\neq s_i \mid s_i)
+  = 1 - \text{TPR}_i
+  = 1 - \frac{C_{ii}}{N_i}
+  = \frac{\sum_{j\neq i}C_{ij}}{N_i}.
+\end{equation}
+
+\paragraph{Pairwise misclassification probability.}
+For $i\neq j$,
+\begin{equation}
+  P(\hat{s}=s_j \mid s_i)
+  = \frac{C_{ij}}{N_i}.
+\end{equation}
+
+These probabilities define a sequence-level empirical error model
+that can be used inside higher-level haplotype and diplotype
+classification models.
+
+%=====================================================================
+
+\section{Mean Phred Score vs.~Phred of Mean Error Probability}
+\label{sec:phred-inequality}
+
+Let $p_1,\dots,p_n\in(0,1]$ be error probabilities corresponding to
+individual basecalls, and let the Phred quality for base $i$ be
+\begin{equation}
+  Q_i = -10 \log_{10}(p_i).
+\end{equation}
+Define the arithmetic means
+\begin{equation}
+  p = \frac{1}{n} \sum_{i=1}^n p_i,
+  \qquad
+  Q = \frac{1}{n} \sum_{i=1}^n Q_i.
+\end{equation}
+
+\begin{theorem}
+The mean Phred score $Q$ is always greater than or equal to the Phred
+score of the mean error probability:
+\begin{equation}
+  Q \;\ge\; -10 \log_{10}(p),
+\end{equation}
+with equality if and only if all $p_i$ are equal (or $n=1$).
+\end{theorem}
+
+\begin{proof}
+The base-10 logarithm $\log_{10}(x)$ is concave on $(0,\infty)$.
+By Jensen's inequality, for any concave $f$,
+\begin{equation}
+  f\!\left(\frac{1}{n} \sum_{i=1}^n x_i\right)
+  \;\ge\;
+  \frac{1}{n}\sum_{i=1}^n f(x_i).
+\end{equation}
+Take $f(x) = \log_{10}(x)$ and $x_i = p_i$:
+\begin{equation}
+  \log_{10}\!\left(\frac{1}{n}\sum_{i=1}^n p_i\right)
+  \;\ge\;
+  \frac{1}{n}\sum_{i=1}^n \log_{10}(p_i).
+\end{equation}
+Multiply both sides by $-10$, which reverses the inequality:
+\begin{equation}
+ -10\log_{10}\!\left(\frac{1}{n}\sum_{i=1}^n p_i\right)
+ \;\le\;
+ -10\cdot\frac{1}{n}\sum_{i=1}^n \log_{10}(p_i).
+\end{equation}
+Recognizing that
+\(
+  Q_i = -10\log_{10}(p_i)
+\),
+we obtain
+\begin{equation}
+  -10 \log_{10}(p) \;\le\;
+  \frac{1}{n}\sum_{i=1}^n Q_i
+  = Q.
+\end{equation}
+Equality in Jensen's inequality holds if and only if all $x_i$ are
+equal, i.e.\ $p_1=\cdots=p_n$ (or if $n=1$).  This proves the claim.
+\end{proof}
+
+\paragraph{Interpretation.}
+Averaging in log-space (Phred) is more optimistic than converting the
+arithmetic mean error probability to a single Phred score, because the
+logarithm is concave and therefore gives more weight to smaller
+error probabilities.
+
+%=====================================================================
+
+\section{Alignment-Based Quality Metric}
+
+Let $G=(g_1,\dots,g_N)$ be a ground-truth sequence and
+$B=(b_1,\dots,b_N)$ a basecalled sequence aligned to $G$ (gaps are
+allowed).  Each basecall $b_i$ has a Phred quality score $Q_i$, with
+error probability
+\begin{equation}
+  p_i = 10^{-Q_i/10}.
+\end{equation}
+
+We define a per-alignment-column score $s_i$ as
+\begin{equation}
+  s_i =
+  \begin{cases}
+    1 - p_i, & \text{if } g_i = b_i, \\[4pt]
+    p_i, & \text{if } g_i \neq b_i, \\[4pt]
+    0, & \text{if } g_i = \text{``-''} \text{ or } b_i = \text{``-''}.
+  \end{cases}
+\end{equation}
+
+\paragraph{Mean correctness score.}
+Define
+\begin{equation}
+  M = \frac{1}{N} \sum_{i=1}^N s_i,
+\end{equation}
+so that $M\in[0,1]$ represents the average correctness score across
+the alignment, weighted by both basecall accuracy and confidence.
+
+\paragraph{Phred-like aggregate quality.}
+Define an \emph{effective} error probability
+\begin{equation}
+  p_{\text{err}} = 1 - M,
+\end{equation}
+and a Phred-like score
+\begin{equation}
+  Q_{\text{new}} = -10 \log_{10}(p_{\text{err}})
+  = -10 \log_{10}(1-M).
+\end{equation}
+Here, $M$ is the mean correctness, $1-M$ is the effective empirical
+error probability, and $Q_{\text{new}}$ is a single Phred-scale
+summary that incorporates both predicted and empirical accuracy.
+
+%=====================================================================
+
+\section{Per-Base Variant Likelihood From Basewise Error Rates}
+
+Consider a particular haplotype (or reference sequence) $h$ with
+sequence
+\begin{equation}
+  g = (g_1,\dots,g_L) \in \mathcal{A}^L,
+\end{equation}
+and a read
+\begin{equation}
+  r = (r_1,\dots,r_L)\in\mathcal{A}^L
+\end{equation}
+aligned to $g$.  Let $e_i\in[0,1]$ be the error rate at base $i$
+(e.g.\ $e_i = p_i$ from its Phred score).
+
+Assume that for each position $i$,
+\begin{align}
+  P(r_i = g_i \mid g_i, e_i) &= 1 - e_i, \\[4pt]
+  P(r_i = b \neq g_i \mid g_i, e_i)
+    &= \frac{e_i}{|\mathcal{A}|-1},
+    \qquad b\in\mathcal{A},\, b\neq g_i,
+\end{align}
+and that different positions are conditionally independent given $g$.
+Then the per-read likelihood is
+\begin{equation}
+  P(r\mid g, \mathbf{e})
+  = \prod_{i=1}^L
+      \Bigl[
+        (1-e_i)\,\mathbf{1}\{r_i=g_i\}
+        + \frac{e_i}{|\mathcal{A}|-1}\,\mathbf{1}\{r_i\neq g_i\}
+      \Bigr],
+\end{equation}
+where $\mathbf{e}=(e_1,\dots,e_L)$ and $\mathbf{1}\{\cdot\}$ is the
+indicator function.
+
+This can be used as a sequence-specific likelihood term inside
+haplotype or molecule-of-origin likelihood calculations.
+
+%=====================================================================
+
+\section{Haplotype Classification (Unknown Haplotype)}
+
+\subsection{Sets and priors}
+
+Let
+\begin{equation}
+  \mathcal{H} = \{h_1,\dots,h_p\}
+\end{equation}
+be a set of possible haplotypes for a sample (e.g.\ a set of known
+haplotypes from a population).  Each $h_i$ is specified as a
+population of DNA molecules (chromosomes) with known sequences and
+stoichiometric ratios.
+
+\begin{itemize}[noitemsep]
+  \item $P(h_i)$ is the prior probability of haplotype $h_i$, estimated
+        from population frequency data.
+  \item For haplotype $h_i$, let
+        \begin{equation}
+          M(h_i) = \{ m_{i1},\dots,m_{iv_i} \}
+        \end{equation}
+        be the set of DNA molecules in that haplotype (e.g.\ chromosomes
+        and plasmids).
+\end{itemize}
+
+\subsection{Cell population and derived sequences}
+
+Let
+\begin{itemize}[noitemsep]
+  \item $C(h_i) = \{c_1,\dots,c_w\}$ be the set of cells in a sample
+        derived from an original genome with haplotype $h_i$,
+  \item $U(h_i) = \{u_1,\dots,u_x\}$ be the set of unique DNA sequences
+        present in $C(h_i)$ after mutation accumulation.
+\end{itemize}
+
+Mutations accumulate over $n_{\text{div}}$ cell divisions at mutation
+rate $\mu$ for a genome (or molecule) of length $L$.  Conceptually we
+write
+\begin{equation}
+  P\bigl(u\mid m,\, \mu, n_{\text{div}}, L\bigr)
+\end{equation}
+for the probability of generating a particular sequence $u$ from an
+ancestral molecule $m$.
+
+\subsection{Fragmentation, labeling, and sequencing}
+
+\paragraph{Fragmentation.}
+Let
+\begin{equation}
+  D(h_i) = \{ d_1,\dots,d_y \}
+\end{equation}
+denote the set of DNA fragments after extraction and fragmentation
+(from $U(h_i)$).  Let $\theta_{\text{frag}}$ be parameters describing
+the fragmentation process.  Then
+\begin{equation}
+  P\bigl(d \mid u,\, \theta_{\text{frag}}\bigr)
+\end{equation}
+denotes the probability that a fragment $d$ is produced from a
+sequence $u$.
+
+\paragraph{Labeling and enrichment.}
+Let
+\begin{equation}
+  L(h_i) = \{\ell_1,\dots,\ell_z\}
+\end{equation}
+be the set of sequences that successfully receive sequencing-specific
+adaptors (i.e.\ are labeled and enriched).  Let $\theta_{\text{lab}}$
+be parameters describing adapter ligation and enrichment.  Then
+\begin{equation}
+  P\bigl(\ell \mid d,\, \theta_{\text{lab}}\bigr)
+\end{equation}
+is the probability that fragment $d$ becomes labeled sequence $\ell$.
+
+\paragraph{Sequencing and signal generation.}
+From the labeled sequences, a single-molecule sequencing experiment
+produces a set of events and signals
+\begin{equation}
+  X(h_i) = \{\mathbf{x}^{(1)},\dots,\mathbf{x}^{(n)}\}
+\end{equation}
+and corresponding basecalled reads
+\begin{equation}
+  R = \{r_1,\dots,r_n\}.
+\end{equation}
+
+Let $\theta_{\text{seq}}$ capture sequencing and basecalling error
+parameters.  Then
+\begin{equation}
+  P\bigl(r \mid \ell,\, \theta_{\text{seq}}\bigr)
+\end{equation}
+is the probability of obtaining read $r$ from labeled sequence $\ell$,
+incorporating the empirical error model (e.g.\ confusion matrix $C$).
+
+\subsection{Likelihood for a haplotype}
+
+Conditioning on haplotype $h_i$ and marginalizing over unobserved
+stages (mutation, fragmentation, labeling), a generic factorization
+for the likelihood of an observed read $r$ is
+\begin{equation}
+  P(r \mid h_i)
+  = \sum_{u\in U(h_i)} \sum_{d\in D(h_i)} \sum_{\ell\in L(h_i)}
+      P(r \mid \ell, \theta_{\text{seq}})
+      P(\ell \mid d, \theta_{\text{lab}})
+      P(d \mid u, \theta_{\text{frag}})
+      P(u \mid h_i, \mu, n_{\text{div}}, L).
+\end{equation}
+
+Assuming independence of reads given haplotype $h_i$,
+\begin{equation}
+  P(R \mid h_i)
+  = \prod_{r\in R} P(r \mid h_i).
+\end{equation}
+
+\subsection{Posterior probabilities and classification rule}
+
+By Bayes' theorem, the posterior for haplotype $h_i$ given observed
+reads $R$ is
+\begin{equation}
+  P(h_i \mid R)
+  = \frac{P(R \mid h_i) P(h_i)}{\displaystyle
+     \sum_{j=1}^p P(R \mid h_j) P(h_j)}.
+\end{equation}
+
+The posterior probability that the sample corresponds to \emph{any}
+haplotype other than $h_i$ is
+\begin{equation}
+  P\bigl(\text{``not } h_i\text{''} \mid R\bigr)
+  = 1 - P(h_i \mid R).
+\end{equation}
+
+Define the likelihood ratio (LR) for haplotype $h_i$ as
+\begin{equation}
+  \text{LR}_i(R)
+  = \frac{P(h_i \mid R)}{P(\text{``not }h_i\text{''} \mid R)}
+  = \frac{P(h_i \mid R)}{1 - P(h_i \mid R)}.
+\end{equation}
+
+Given a threshold $\tau > 0$, a simple decision rule is
+\begin{align}
+  \text{Accept } h_i \text{ for the sample}
+  \quad &\text{if} \quad \text{LR}_i(R) \ge \tau, \\
+  \text{otherwise} \quad &\text{declare the sample ``uncertain'' or consider resequencing}.
+\end{align}
+
+In a multiclass setting (multiple haplotypes), one may classify the
+sample as
+\begin{equation}
+  \hat{h}
+  = \arg\max_{1\le i \le p} P(h_i \mid R),
+\end{equation}
+optionally requiring that $P(\hat{h}\mid R)$ exceed a minimum
+probability threshold before accepting the call.
+
+%=====================================================================
+
+\section{Diplotypes, Polyploidy, and Cost-Based Decision Rules}
+
+\subsection{Additional notation for diplotypes and polyploidy}
+
+Let
+\begin{itemize}[noitemsep]
+  \item $\mathcal{D}$: set of all possible diplotypes (pairs of haplotypes),
+  \item $K$: number of sets of homologous chromosomes (e.g.\ $K=1$ for
+        a single gene, larger for polyploid loci),
+  \item $\gamma$: classification threshold on posterior probabilities,
+  \item $N$: number of reads per sample used for classification,
+  \item $\epsilon_{d\to d'}(N)$: empirical misclassification rate from
+        true diplotype $d\in\mathcal{D}$ to diplotype $d'\in\mathcal{D}$ when $N$ reads are used,
+  \item $C_{d\to d'}$: cost of misclassifying $d$ as $d'$,
+  \item $C_{\text{res},d}$: cost of resequencing a sample whose true
+        diplotype is $d$,
+  \item $\psi_{d}(\gamma,N)$: probability that a sample with true
+        diplotype $d$ is flagged for resequencing, given threshold
+        $\gamma$ and $N$ reads,
+  \item $\pi_d$: prior probability of diplotype $d$,
+  \item $\eta_{d,s}$: enrichment efficiency for sequence $s$ in diplotype $d$,
+  \item $L_d(R)$: likelihood of observing reads $R$ under diplotype $d$,
+  \item $\ell_{r,s}$: sequence-specific likelihood for signal/read $r$
+        and sequence $s$ (from basecalling error model).
+\end{itemize}
+
+\subsection{Expected cost}
+
+For a diplotype $d$, the posterior probability given reads $R$ is
+\begin{equation}
+  P(d\mid R) = \frac{L_d(R)\,\pi_d}{\displaystyle 
+    \sum_{d'\in\mathcal{D}} L_{d'}(R)\,\pi_{d'} }.
+\end{equation}
+
+A decision policy maps posterior probabilities to one of three
+actions: \emph{call diplotype $d'$}, \emph{declare uncertain and
+resequencing}, or \emph{no call}.  Under a given policy that depends
+on $\gamma$ and $N$, define:
+\begin{align}
+  \epsilon_{d\to d'}(\gamma,N)
+    &= P\bigl(\text{policy calls }d' \neq d
+              \,\big|\,
+              \text{true diplotype }d,\, N,\,\gamma\bigr),
+  \\[4pt]
+  \psi_{d}(\gamma,N)
+    &= P\bigl(\text{policy chooses ``resequencing''}
+              \,\big|\,
+              \text{true diplotype }d,\, N,\,\gamma\bigr).
+\end{align}
+
+The expected cost for a given $(\gamma,N)$ is
+\begin{equation}
+  \mathcal{C}(\gamma,N)
+  = \sum_{d\in\mathcal{D}} \pi_d
+      \left[
+        \sum_{d'\neq d} C_{d\to d'}\,\epsilon_{d\to d'}(\gamma,N)
+        + C_{\text{res},d}\,\psi_d(\gamma,N)
+      \right].
+\end{equation}
+
+An optimal pair $(\gamma^*,N^*)$ can be defined as
+\begin{equation}
+  (\gamma^*,N^*)
+  = \arg\min_{\gamma,N} \mathcal{C}(\gamma,N),
+\end{equation}
+subject to constraints (e.g.\ minimal acceptable sensitivity, budget
+limits on resequencing, etc.).
+
+%=====================================================================
+
+\section{Read-Level Haplotagging with Known Haplotype}
+
+In this section, the haplotype of the genomic source is assumed known:
+there is a single haplotype $h$ and
+\begin{equation}
+  P(h) = 1.
+\end{equation}
+
+The goal is to assign each read to its most likely \emph{molecule of
+origin} (e.g.\ specific chromosome or plasmid) within $h$.
+
+\subsection{Model and notation}
+
+Let
+\begin{itemize}[noitemsep]
+  \item $M(h) = \{m_1,\dots,m_v\}$ be the set of DNA molecules in haplotype $h$,
+  \item $P(m_j \mid h)$ be the prior probability that a randomly
+        selected molecule in the sample is of type $m_j$ (stoichiometric ratio),
+  \item $P(r\mid m_j,h)$ be the likelihood of read $r$ given that its
+        molecule-of-origin is $m_j$ (this incorporates the
+        basecalling error model, e.g.\ confusion matrix and
+        per-base error rates).
+\end{itemize}
+
+\subsection{Posterior for molecule-of-origin of a single read}
+
+By Bayes' theorem, the posterior probability that read $r$ originated
+from molecule $m_j$ is
+\begin{equation}
+  P(m_j \mid r, h)
+  = \frac{P(r\mid m_j,h)\,P(m_j\mid h)}{\displaystyle 
+          \sum_{k=1}^v P(r\mid m_k,h)\,P(m_k\mid h)}.
+\end{equation}
+
+The probability that $r$ originated from any other molecule is
+\begin{equation}
+  P(\text{``other''} \mid r, h)
+  = 1 - P(m_j \mid r,h).
+\end{equation}
+
+Define the per-read likelihood ratio
+\begin{equation}
+  \text{LR}_j(r)
+  = \frac{P(m_j \mid r,h)}{P(\text{``other''} \mid r,h)}
+  = \frac{P(m_j \mid r,h)}{1 - P(m_j\mid r,h)}.
+\end{equation}
+
+\subsection{Decision rule for haplotagging a read}
+
+Given a threshold $\tau > 0$, a basic decision rule for assigning read
+$r$ to molecule $m_j$ is
+\begin{align}
+  \text{Assign read $r$ to $m_j$}
+    &\quad \text{if} \quad \text{LR}_j(r) \ge \tau, \\[4pt]
+  \text{Declare $r$ ``unphased'' (unassigned)}
+    &\quad \text{if} \quad \text{LR}_j(r) < \tau
+    \quad \text{for all } j=1,\dots,v.
+\end{align}
+
+\subsection{Unphased reads and cost-based optimization}
+
+Let $N$ be the total number of reads from the sample.  For a given
+threshold $\tau$, define
+\begin{itemize}[noitemsep]
+  \item $P_{\text{unph}}(\tau)$: probability a randomly selected read is unphased
+        (i.e.\ no molecule’s LR exceeds $\tau$),
+  \item $P_{\text{mis}}(\tau)$: probability a read is assigned to the wrong molecule.
+\end{itemize}
+Then the expected number of unphased reads is
+\begin{equation}
+  U(\tau,N)
+  = N \, P_{\text{unph}}(\tau).
+\end{equation}
+
+Let $C_{\text{mis}}$ be the cost of misclassifying a read and
+$C_{\text{unph}}$ be the cost associated with leaving a read unphased.
+An example cost function is
+\begin{equation}
+  \mathcal{C}(\tau,N)
+  = C_{\text{mis}} \, N P_{\text{mis}}(\tau)
+    + C_{\text{unph}} \, U(\tau,N).
+\end{equation}
+An optimal threshold $\tau^*$ may be defined as
+\begin{equation}
+  \tau^* = \arg\min_{\tau} \mathcal{C}(\tau,N).
+\end{equation}
+
+In practice, $P_{\text{mis}}(\tau)$ and $P_{\text{unph}}(\tau)$ are
+estimated from standards or simulations, using the same empirical
+error model (confusion matrix, per-base error rates) that defines
+$P(r\mid m_j,h)$.
+
+%=====================================================================
+
+\section{Plasmid Replication, Mutation, and Purity Bounds}
+
+\subsection{Basic assumptions}
+
+\begin{itemize}[noitemsep]
+  \item A plasmid is an extragenomic circular dsDNA molecule that can
+        be maintained at (on average) single-copy per bacterium if it
+        contains a functional single-copy origin of replication (ORI).
+  \item An \emph{E.~coli} chromosome is a single circular dsDNA
+        molecule of length on the order of $10^6$\,bp.
+  \item A typical plasmid is two orders of magnitude shorter than the
+        chromosome, often between $3\times 10^3$ and $10^4$\,bp.
+  \item The per-base replication error rate of the \emph{E.~coli}
+        replisome is on the order of $10^{-10}$ errors per base per
+        replication.
+\end{itemize}
+
+Consider a single isolated \emph{E.~coli} cell containing:
+\begin{itemize}[noitemsep]
+  \item one genomic chromosome,
+  \item one single-copy plasmid.
+\end{itemize}
+After one replication (cell division), both DNA molecules replicate and
+segregate into two daughter cells, yielding two chromosomes and two
+plasmids in total, with the possibility of replication errors.
+
+\subsection{Theoretical purity under replication errors}
+
+Let
+\begin{itemize}[noitemsep]
+  \item $r$ be the per-base replication error rate,
+  \item $L$ be the plasmid length in bp,
+  \item $k$ be the number of replication cycles.
+\end{itemize}
+
+The probability that a single base remains error-free in a single
+replication is $(1-r)$.  After $k$ replications, the probability that
+this base is still identical to the original is $(1-r)^k$.
+
+Assuming independence across bases, the probability that \emph{all}
+$L$ bases of the plasmid remain error-free after $k$ replications is
+\begin{equation}
+  P_{\text{pure}}(k)
+  = (1-r)^{Lk}.
+\end{equation}
+This $P_{\text{pure}}(k)$ serves as an upper bound on the fraction of
+plasmids that remain identical to the original sequence after $k$
+replication cycles (i.e.\ an upper bound on purity).
+
+For small $r$ and large $Lk$, the approximation
+\begin{equation}
+  P_{\text{pure}}(k) \approx \exp(-rLk)
+\end{equation}
+is often useful.
+
+\subsection{Purity Q-value}
+
+Let $P = P_{\text{pure}}(k)$ be the theoretical purity.  Define the
+\emph{mutated fraction} (fraction of molecules that contain at least
+one replication error) as
+\begin{equation}
+  P_{\text{mut}} = 1 - P.
+\end{equation}
+
+A Phred-like \emph{purity Q-value} can be defined by treating
+$P_{\text{mut}}$ as an error probability:
+\begin{equation}
+  Q_{\text{pur}}
+  = -10 \log_{10}(P_{\text{mut}})
+  = -10 \log_{10}(1 - P_{\text{pure}}(k)).
+\end{equation}
+
+Higher $Q_{\text{pur}}$ indicates a smaller mutated fraction (higher
+purity).  This quantity can be plotted as a function of $k$, $L$, and
+$r$ to visualize how purity decays with replication cycles and
+plasmid length.
+
+\subsection{Lower-bound purity estimate from capillary electrophoresis}
+
+Let
+\begin{itemize}[noitemsep]
+  \item $C_{\text{major}}$: concentration of the major (intended) plasmid sequence,
+  \item $C_{\text{other}}$: concentration of all other sequences
+        (variants) in the sample.
+\end{itemize}
+Capillary electrophoresis (CE) size distributions plus standards of
+known concentration and length can be used to estimate
+$C_{\text{major}}$ and $C_{\text{other}}$.
+
+A lower bound on purity is
+\begin{equation}
+  P_{\text{low}}
+  = \frac{C_{\text{major}}}{C_{\text{major}} + C_{\text{other}}}.
+\end{equation}
+
+\subsection{Empirical purity from clonal expansion and Sanger sequencing}
+
+For a standard experiment $E$ with nominal sequence $s^\star$:
+\begin{itemize}[noitemsep]
+  \item Let $a$ be the number of single-colony expansions whose Sanger
+        sequencing matches $s^\star$,
+  \item Let $b$ be the total number of colonies sequenced.
+\end{itemize}
+Then an empirical purity estimate is
+\begin{equation}
+  \hat{P}_E = \frac{a}{b}.
+\end{equation}
+
+For all samples derived from a given \emph{E.~coli} strain with
+original sequence $s_0$:
+\begin{itemize}[noitemsep]
+  \item Let $c$ be the number of colonies whose Sanger sequencing matches $s_0$,
+  \item Let $d$ be the total number of colonies pooled across experiments.
+\end{itemize}
+Then an overall empirical purity estimate is
+\begin{equation}
+  \hat{P}_{\text{strain}} = \frac{c}{d}.
+\end{equation}
+
+Comparing $P_{\text{low}}$, $P_{\text{pure}}(k)$, and empirical
+estimates $\hat{P}_E$ and $\hat{P}_{\text{strain}}$ provides a
+consistency check between theoretical replication-based purity bounds
+and experimental measurements.
+
+%=====================================================================
+
+\section{Dual Cas9 Cutting: Probability of Isolating a Gene}
+
+We model the probability of successfully isolating a gene (or locus)
+via dual Cas9 cutting, accounting for fragment length distribution and
+cutting efficiencies.
+
+\subsection{Definitions}
+
+\begin{itemize}[noitemsep]
+  \item $G$: length of the gene (or distance between two Cas9 target
+        sites) in base pairs (bp).
+  \item $L$: length of a DNA fragment in bp.
+  \item $f_L(\ell)$: probability density function (pdf) of fragment lengths.
+  \item $F_L(\ell) = P(L \le \ell)$: cumulative distribution function (cdf).
+  \item $p_{\text{frag}}(G) = P(L \ge G)$: probability that a fragment
+        is at least as long as $G$.
+  \item $e_1,e_2$: base cutting efficiencies at Cas9 target sites 1
+        and 2, respectively.
+\end{itemize}
+
+\subsection{Probability that a fragment can contain the full gene}
+
+\begin{equation}
+  p_{\text{frag}}(G)
+  = P(L \ge G)
+  = 1 - F_L(G^-),
+\end{equation}
+where $F_L(G^-)$ denotes the limit of $F_L(\ell)$ from the left at
+$\ell=G$ (or simply $F_L(G)$ when the distribution is continuous).
+
+\subsection{Dual Cas9 cutting probability}
+
+Assuming:
+\begin{itemize}[noitemsep]
+  \item Fragmentation is random and independent of Cas9 cutting.
+  \item Cas9 cutting at each of the two target sites is independent,
+        with probabilities $e_1$ and $e_2$.
+\end{itemize}
+
+Then the probability that both cuts are successful \emph{given} that
+the fragment is long enough is
+\begin{equation}
+  p_{\text{cut} \mid \text{frag}} = e_1 e_2.
+\end{equation}
+
+The overall probability of successfully isolating the gene via dual
+Cas9 cutting is
+\begin{equation}
+  p_{\text{dual}}(G)
+  = p_{\text{frag}}(G) \cdot e_1 e_2
+  = \bigl[1 - F_L(G^-)\bigr] e_1 e_2.
+\end{equation}
+
+\subsection{Example: Exponential fragment size distribution}
+
+If fragment lengths are exponentially distributed with rate $\lambda$
+(so mean fragment length $= 1/\lambda$):
+\begin{equation}
+  f_L(\ell) = \lambda e^{-\lambda \ell}, \qquad \ell\ge 0,
+\end{equation}
+then
+\begin{equation}
+  F_L(\ell) = 1 - e^{-\lambda \ell}, \qquad
+  P(L \ge G) = e^{-\lambda G}.
+\end{equation}
+So
+\begin{equation}
+  p_{\text{dual}}(G)
+  = e^{-\lambda G} e_1 e_2.
+\end{equation}
+This explicitly shows the exponential decrease in success probability
+with gene length $G$ under random fragmentation.
+
+%=====================================================================
+
+\section{Summary of Key Notation}
+
+For convenience, we collect here several commonly used symbols (many
+are also redefined locally in their sections):
+
+\begin{itemize}[noitemsep]
+  \item $X$ : raw single-molecule signal from an experiment (sequence of current levels).
+  \item $\mathbf{x}^{(i)}$ : single-molecule signal (one binding event).
+  \item $R = \{r_1,\dots,r_n\}$ : set of basecalled reads.
+  \item $\mathcal{A}$ : nucleotide alphabet (e.g.\ $\{A,C,G,T\}$).
+  \item $Q_i$ : Phred quality score for base $i$.
+  \item $p_i$ : error probability for base $i$, $Q_i = -10\log_{10}(p_i)$.
+  \item $M$ : mean correctness score in alignment-based metric.
+  \item $Q_{\text{new}}$ : Phred-style summary from $M$:
+        $Q_{\text{new}}=-10\log_{10}(1-M)$.
+  \item $S$ : set of unique sequences across experiments.
+  \item $C_{ij}$ : confusion-matrix entry (true $s_i$, predicted $s_j$).
+  \item $\epsilon_i$ : misclassification probability for sequence $s_i$.
+  \item $\mathcal{H} = \{h_1,\dots,h_p\}$ : set of possible haplotypes.
+  \item $P(h_i)$ : prior probability of haplotype $h_i$.
+  \item $M(h)$ : set of molecules (chromosomes, plasmids) in haplotype $h$.
+  \item $P(r\mid h_i)$ : likelihood of reads under haplotype $h_i$.
+  \item $P(h_i\mid R)$ : posterior probability of haplotype $h_i$ given reads $R$.
+  \item $\text{LR}_i$ : likelihood ratio for haplotype or molecule $i$.
+  \item $\mathcal{D}$ : set of possible diplotypes.
+  \item $\pi_d$ : prior probability of diplotype $d$.
+  \item $\epsilon_{d\to d'}$ : misclassification rate from diplotype $d$ to $d'$.
+  \item $C_{d\to d'}$ : cost of misclassifying $d$ as $d'$.
+  \item $C_{\text{res},d}$ : cost of resequencing when true diplotype is $d$.
+  \item $r$ : per-base replication error rate (in plasmid model).
+  \item $L$ : plasmid length (bp).
+  \item $k$ : number of replication cycles.
+  \item $P_{\text{pure}}(k) = (1-r)^{Lk}$ : theoretical purity after $k$ cycles.
+  \item $P_{\text{low}}$ : lower-bound purity from CE and standards.
+  \item $G$ : gene length (distance between dual Cas9 cut sites).
+  \item $L$ (in Cas9 model) : fragment length (bp) with pdf $f_L$ and cdf $F_L$.
+  \item $e_1,e_2$ : Cas9 cutting efficiencies at two sites.
+\end{itemize}
+
+\end{document}
+
+
+\end{document}

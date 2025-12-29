@@ -1,0 +1,491 @@
+name: ONT Textbook Tasks
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Textbook task'
+        required: true
+        type: choice
+        options:
+          - list-equations
+          - list-figures
+          - validate-equations
+          - compute-equation
+          - chapter-overview
+          - export-latex
+          - generate-glossary
+          - build-reference
+      chapter:
+        description: 'Chapter number'
+        required: false
+        type: choice
+        default: 'all'
+        options:
+          - all
+          - '1'
+          - '2'
+          - '3'
+          - '4'
+          - '5'
+      equation_id:
+        description: 'Equation ID (for compute)'
+        required: false
+        type: string
+        default: ''
+
+env:
+  PYTHONPATH: ${{ github.workspace }}/bin:${{ github.workspace }}
+
+jobs:
+  textbook:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pyyaml numpy pandas
+          mkdir -p outputs
+
+      - name: List Equations
+        if: inputs.task == 'list-equations'
+        run: |
+          echo "## Textbook Equations" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import sys
+          sys.path.insert(0, 'bin')
+
+          try:
+              from ont_context import load_equations
+
+              eqs = load_equations()
+              equations = eqs.get('equations', {})
+
+              # Group by stage
+              by_stage = {}
+              for eq_id, eq_data in equations.items():
+                  if isinstance(eq_data, dict):
+                      stage = eq_data.get('stage', 'other')
+                      if stage not in by_stage:
+                          by_stage[stage] = []
+                      by_stage[stage].append({
+                          'id': eq_id,
+                          'name': eq_data.get('name', eq_id),
+                          'has_python': bool(eq_data.get('python')),
+                      })
+
+              for stage in sorted(by_stage.keys()):
+                  print(f'### Stage: {stage}')
+                  print('')
+                  print('| ID | Name | Computable |')
+                  print('|----|------|------------|')
+                  for eq in sorted(by_stage[stage], key=lambda x: x['id']):
+                      comp = '✅' if eq['has_python'] else '❌'
+                      print(f'| {eq[\"id\"]} | {eq[\"name\"]} | {comp} |')
+                  print('')
+
+              total = len(equations)
+              computable = sum(1 for e, d in equations.items()
+                              if isinstance(d, dict) and d.get('python'))
+              print(f'**Total**: {total} equations, {computable} computable')
+
+          except Exception as e:
+              print(f'Error: {e}')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: List Figures
+        if: inputs.task == 'list-figures'
+        run: |
+          echo "## Textbook Figures" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          from pathlib import Path
+
+          # List figures from textbook directory
+          textbook_dir = Path('textbook')
+          figures_dir = textbook_dir / 'figures'
+
+          if figures_dir.exists():
+              figures = list(figures_dir.glob('**/*'))
+              print('### Figure Files')
+              print('')
+              print('| Figure | Format | Size |')
+              print('|--------|--------|------|')
+
+              for fig in sorted(figures):
+                  if fig.is_file() and fig.suffix in ['.pdf', '.png', '.svg']:
+                      size = fig.stat().st_size
+                      size_str = f'{size/1024:.1f} KB' if size > 1024 else f'{size} B'
+                      print(f'| {fig.name} | {fig.suffix} | {size_str} |')
+          else:
+              print('No figures directory found')
+              print('')
+              print('Expected location: textbook/figures/')
+
+          # List figure generators
+          print('')
+          print('### Figure Generators')
+          print('')
+
+          gen_dir = Path('skills/manuscript/generators')
+          if gen_dir.exists():
+              generators = list(gen_dir.glob('gen_*.py'))
+              print(f'Found {len(generators)} generators')
+              print('')
+              for gen in sorted(generators):
+                  print(f'- {gen.stem}')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Validate Equations
+        if: inputs.task == 'validate-equations'
+        run: |
+          echo "## Equation Validation Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import sys
+          sys.path.insert(0, 'bin')
+
+          try:
+              from ont_context import load_equations
+
+              eqs = load_equations()
+              equations = eqs.get('equations', {})
+
+              valid = []
+              invalid = []
+
+              for eq_id, eq_data in equations.items():
+                  if not isinstance(eq_data, dict):
+                      invalid.append((eq_id, 'Not a dictionary'))
+                      continue
+
+                  errors = []
+
+                  # Check required fields
+                  if not eq_data.get('name'):
+                      errors.append('Missing name')
+
+                  # Validate Python code if present
+                  if eq_data.get('python'):
+                      try:
+                          compile(eq_data['python'], '<string>', 'exec')
+                      except SyntaxError as e:
+                          errors.append(f'Python syntax error: {e}')
+
+                  if errors:
+                      invalid.append((eq_id, '; '.join(errors)))
+                  else:
+                      valid.append(eq_id)
+
+              print('### Validation Summary')
+              print('')
+              print(f'- Valid: {len(valid)}')
+              print(f'- Invalid: {len(invalid)}')
+              print('')
+
+              if invalid:
+                  print('### Invalid Equations')
+                  print('')
+                  print('| ID | Issue |')
+                  print('|----|-------|')
+                  for eq_id, issue in invalid[:20]:
+                      print(f'| {eq_id} | {issue} |')
+                  if len(invalid) > 20:
+                      print(f'| ... | {len(invalid) - 20} more |')
+
+          except Exception as e:
+              print(f'Error loading equations: {e}')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Compute Equation
+        if: inputs.task == 'compute-equation'
+        run: |
+          echo "## Equation Computation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import sys
+          sys.path.insert(0, 'bin')
+
+          eq_id = '${{ inputs.equation_id }}'
+
+          if not eq_id:
+              print('No equation ID specified.')
+              print('')
+              print('Use the equation_id input to specify an equation.')
+              exit(0)
+
+          try:
+              from ont_context import load_equations
+
+              eqs = load_equations()
+              equations = eqs.get('equations', {})
+
+              if eq_id not in equations:
+                  print(f'Equation not found: {eq_id}')
+                  print('')
+                  print('Available equations:')
+                  for eid in sorted(equations.keys())[:10]:
+                      print(f'  - {eid}')
+                  exit(0)
+
+              eq = equations[eq_id]
+
+              print(f'### {eq.get(\"name\", eq_id)}')
+              print('')
+              print(f'**ID**: {eq_id}')
+              print(f'**Stage**: {eq.get(\"stage\", \"unknown\")}')
+              print('')
+
+              if eq.get('latex'):
+                  print('**LaTeX**:')
+                  print(f'\`\`\`latex')
+                  print(eq['latex'])
+                  print(f'\`\`\`')
+                  print('')
+
+              if eq.get('python'):
+                  print('**Python Implementation**:')
+                  print(f'\`\`\`python')
+                  print(eq['python'])
+                  print(f'\`\`\`')
+                  print('')
+
+                  # Try to execute with demo data
+                  print('**Demo Execution**:')
+                  try:
+                      # Create demo context
+                      demo_vars = {
+                          'signal_positive': 7500,
+                          'total_reads': 10000,
+                          'mean_qscore': 15.2,
+                          'n50': 12500,
+                      }
+                      exec(eq['python'], demo_vars)
+                      print('Execution successful')
+                  except Exception as e:
+                      print(f'Execution error: {e}')
+
+          except Exception as e:
+              print(f'Error: {e}')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Chapter Overview
+        if: inputs.task == 'chapter-overview'
+        run: |
+          echo "## Textbook Chapter Overview" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          chapters = {
+              '1': {
+                  'title': 'Introduction to Nanopore Sequencing',
+                  'topics': ['History', 'Technology overview', 'Applications'],
+                  'equations': 5,
+                  'figures': 8,
+              },
+              '2': {
+                  'title': 'Signal Processing',
+                  'topics': ['Raw signal', 'Event detection', 'Segmentation'],
+                  'equations': 12,
+                  'figures': 15,
+              },
+              '3': {
+                  'title': 'Basecalling',
+                  'topics': ['Neural networks', 'Models', 'Accuracy'],
+                  'equations': 18,
+                  'figures': 12,
+              },
+              '4': {
+                  'title': 'Quality Control',
+                  'topics': ['End reasons', 'Q-scores', 'Filtering'],
+                  'equations': 10,
+                  'figures': 10,
+              },
+              '5': {
+                  'title': 'Applications',
+                  'topics': ['Variant calling', 'Methylation', 'Pharmacogenomics'],
+                  'equations': 8,
+                  'figures': 20,
+              },
+          }
+
+          chapter_filter = '${{ inputs.chapter }}'
+
+          if chapter_filter == 'all':
+              chapters_to_show = chapters
+          else:
+              chapters_to_show = {chapter_filter: chapters.get(chapter_filter, {})}
+
+          for ch_num, ch_data in chapters_to_show.items():
+              if not ch_data:
+                  print(f'Chapter {ch_num} not found')
+                  continue
+
+              print(f'### Chapter {ch_num}: {ch_data[\"title\"]}')
+              print('')
+              print('**Topics**:')
+              for topic in ch_data['topics']:
+                  print(f'- {topic}')
+              print('')
+              print(f'**Equations**: {ch_data[\"equations\"]}')
+              print(f'**Figures**: {ch_data[\"figures\"]}')
+              print('')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Export LaTeX
+        if: inputs.task == 'export-latex'
+        run: |
+          echo "## LaTeX Export" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, 'bin')
+
+          try:
+              from ont_context import load_equations
+
+              eqs = load_equations()
+              equations = eqs.get('equations', {})
+
+              # Generate LaTeX
+              latex_content = []
+              latex_content.append(r'% ONT Ecosystem Equations')
+              latex_content.append(r'% Auto-generated')
+              latex_content.append('')
+
+              for eq_id, eq_data in sorted(equations.items()):
+                  if isinstance(eq_data, dict) and eq_data.get('latex'):
+                      name = eq_data.get('name', eq_id)
+                      latex_content.append(f'% {name}')
+                      latex_content.append(r'\\begin{equation}')
+                      latex_content.append(f'  {eq_data[\"latex\"]}')
+                      latex_content.append(f'  \\label{{eq:{eq_id}}}')
+                      latex_content.append(r'\\end{equation}')
+                      latex_content.append('')
+
+              # Save
+              Path('outputs').mkdir(exist_ok=True)
+              output_file = Path('outputs/equations.tex')
+              output_file.write_text('\\n'.join(latex_content))
+
+              print('### Generated LaTeX')
+              print('')
+              print(f'Equations exported: {len([e for e in equations.values() if isinstance(e, dict) and e.get(\"latex\")])}')
+              print(f'Output file: outputs/equations.tex')
+              print('')
+              print('### Preview (first 20 lines)')
+              print('')
+              print('\`\`\`latex')
+              for line in latex_content[:20]:
+                  print(line)
+              print('...')
+              print('\`\`\`')
+
+          except Exception as e:
+              print(f'Error: {e}')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Generate Glossary
+        if: inputs.task == 'generate-glossary'
+        run: |
+          echo "## ONT Sequencing Glossary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          glossary = {
+              'Adaptive Sampling': 'Real-time selective sequencing based on reference alignment',
+              'Basecalling': 'Converting raw electrical signals to nucleotide sequences',
+              'Duplex': 'Sequencing both strands of a DNA molecule',
+              'End Reason': 'Classification of why a read ended (signal positive, mux change, etc.)',
+              'Fast5': 'Legacy HDF5-based file format for raw signal data',
+              'Flowcell': 'Consumable containing nanopore array',
+              'HAC': 'High Accuracy basecalling model',
+              'MinION': 'Portable nanopore sequencing device',
+              'Mux Scan': 'Multiplexer scan to assess pore availability',
+              'N50': 'Read length where 50% of bases are in longer reads',
+              'Nanopore': 'Protein pore used for DNA/RNA sequencing',
+              'POD5': 'Current file format for raw signal data',
+              'Pore': 'Individual nanopore sensor on flowcell',
+              'PromethION': 'High-throughput nanopore sequencing platform',
+              'Q-score': 'Phred-scaled quality score',
+              'Read': 'Single molecule sequence',
+              'Signal Positive': 'Read ended naturally (full-length)',
+              'Simplex': 'Single-strand sequencing (standard)',
+              'Squiggle': 'Raw electrical signal from nanopore',
+              'SUP': 'Super-accuracy basecalling model',
+              'Translocation': 'Movement of DNA/RNA through nanopore',
+          }
+
+          print('| Term | Definition |')
+          print('|------|------------|')
+          for term in sorted(glossary.keys()):
+              print(f'| **{term}** | {glossary[term]} |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Build Reference
+        if: inputs.task == 'build-reference'
+        run: |
+          echo "## Reference Documentation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import sys
+          from pathlib import Path
+
+          print('### File Formats')
+          print('')
+          print('| Format | Extension | Description |')
+          print('|--------|-----------|-------------|')
+          print('| POD5 | .pod5 | Raw signal data |')
+          print('| FAST5 | .fast5 | Legacy raw signal |')
+          print('| FASTQ | .fastq | Basecalled sequences |')
+          print('| BAM | .bam | Aligned sequences |')
+          print('| bedMethyl | .bed | Methylation calls |')
+          print('| VCF | .vcf | Variant calls |')
+          print('')
+
+          print('### Key Tools')
+          print('')
+          print('| Tool | Purpose |')
+          print('|------|---------|')
+          print('| Dorado | Basecalling |')
+          print('| Minimap2 | Alignment |')
+          print('| Clair3 | Variant calling |')
+          print('| Modkit | Methylation analysis |')
+          print('| Sniffles2 | SV detection |')
+          print('| Cyrius | CYP2D6 calling |')
+          print('| PharmCAT | PGx interpretation |')
+          print('')
+
+          print('### Quality Thresholds')
+          print('')
+          print('| Metric | Minimum | Recommended |')
+          print('|--------|---------|-------------|')
+          print('| Q-score | Q10 | Q15+ |')
+          print('| Signal Positive | 70% | 80%+ |')
+          print('| Coverage | 10x | 30x+ |')
+          print('| N50 | 5 kb | 10 kb+ |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: textbook-output-${{ inputs.task }}
+          path: outputs/
+          if-no-files-found: ignore

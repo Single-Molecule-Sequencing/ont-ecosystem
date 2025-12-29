@@ -1,0 +1,35 @@
+# Git LFS Configuration for ont-ecosystem
+# Track large binary files with Git LFS
+
+# Force Unix line endings for shell scripts (prevents CRLF issues)
+*.sh text eol=lf
+*.bash text eol=lf
+
+# Python files should also use LF
+*.py text eol=lf
+
+# PowerShell scripts can use either (auto-detect)
+*.ps1 text
+
+# PDF files (reference documents, generated reports)
+*.pdf filter=lfs diff=lfs merge=lfs -text
+
+# Large image files (figures, diagrams)
+*.png filter=lfs diff=lfs merge=lfs -text
+*.jpg filter=lfs diff=lfs merge=lfs -text
+*.jpeg filter=lfs diff=lfs merge=lfs -text
+
+# Data files
+*.h5 filter=lfs diff=lfs merge=lfs -text
+*.hdf5 filter=lfs diff=lfs merge=lfs -text
+*.pod5 filter=lfs diff=lfs merge=lfs -text
+*.fast5 filter=lfs diff=lfs merge=lfs -text
+*.bam filter=lfs diff=lfs merge=lfs -text
+
+# Archive files
+*.zip filter=lfs diff=lfs merge=lfs -text
+*.tar.gz filter=lfs diff=lfs merge=lfs -text
+
+# SQLite databases
+*.db filter=lfs diff=lfs merge=lfs -text
+*.sqlite filter=lfs diff=lfs merge=lfs -text

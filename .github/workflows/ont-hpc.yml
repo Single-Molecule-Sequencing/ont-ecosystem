@@ -1,0 +1,434 @@
+name: ONT HPC Tasks
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'HPC task'
+        required: true
+        type: choice
+        options:
+          - cluster-configs
+          - slurm-templates
+          - resource-calculator
+          - gpu-partitions
+          - array-jobs
+          - job-monitoring
+          - best-practices
+          - troubleshooting
+      cluster:
+        description: 'Target cluster'
+        required: false
+        type: choice
+        default: 'greatlakes'
+        options:
+          - greatlakes
+          - armis2
+          - generic
+      job_type:
+        description: 'Job type'
+        required: false
+        type: choice
+        default: 'basecalling'
+        options:
+          - basecalling
+          - alignment
+          - variant-calling
+          - methylation
+          - full-pipeline
+
+env:
+  PYTHONPATH: ${{ github.workspace }}/bin:${{ github.workspace }}
+
+jobs:
+  hpc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pyyaml
+          mkdir -p outputs
+
+      - name: Cluster Configurations
+        if: inputs.task == 'cluster-configs'
+        run: |
+          echo "## HPC Cluster Configurations" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import yaml
+          from pathlib import Path
+
+          configs = {
+              'greatlakes': {
+                  'scheduler': 'SLURM',
+                  'partitions': {
+                      'standard': {'cores': 36, 'mem': '180G', 'time': '7-00:00:00'},
+                      'gpu': {'cores': 36, 'mem': '180G', 'gpus': 'v100:1', 'time': '3-00:00:00'},
+                      'spgpu': {'cores': 36, 'mem': '180G', 'gpus': 'a40:1', 'time': '14-00:00:00'},
+                  },
+                  'accounts': ['bleu1', 'bleu0'],
+                  'modules': ['cuda/12.1', 'python/3.11'],
+              },
+              'armis2': {
+                  'scheduler': 'SLURM',
+                  'partitions': {
+                      'sigbio-a40': {'cores': 64, 'mem': '512G', 'gpus': 'a40:4', 'time': '7-00:00:00'},
+                      'sigbio-cpu': {'cores': 64, 'mem': '256G', 'time': '7-00:00:00'},
+                  },
+                  'accounts': ['bleu1'],
+                  'modules': ['cuda/12.1'],
+              },
+          }
+
+          for cluster, config in configs.items():
+              print(f'### {cluster.title()}')
+              print('')
+              print(f'**Scheduler**: {config[\"scheduler\"]}')
+              print(f'**Accounts**: {\", \".join(config[\"accounts\"])}')
+              print('')
+
+              print('| Partition | Cores | Memory | GPUs | Max Time |')
+              print('|-----------|-------|--------|------|----------|')
+              for part, specs in config['partitions'].items():
+                  gpus = specs.get('gpus', '-')
+                  print(f'| {part} | {specs[\"cores\"]} | {specs[\"mem\"]} | {gpus} | {specs[\"time\"]} |')
+              print('')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: SLURM Templates
+        if: inputs.task == 'slurm-templates'
+        run: |
+          echo "## SLURM Job Templates" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          cluster = '${{ inputs.cluster }}'
+          job_type = '${{ inputs.job_type }}'
+
+          templates = {
+              'basecalling': '''#!/bin/bash
+#SBATCH --job-name=dorado-basecall
+#SBATCH --partition=spgpu
+#SBATCH --account=bleu1
+#SBATCH --gpus=a40:1
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=64G
+#SBATCH --time=24:00:00
+#SBATCH --output=basecall_%j.log
+
+module load cuda/12.1
+
+DORADO=/nfs/turbo/umms-bleu-secure/programs/dorado/bin/dorado
+MODEL=sup@v5.0.0
+INPUT=\$1
+OUTPUT=\$2
+
+\$DORADO basecaller \$MODEL \$INPUT > \$OUTPUT
+samtools index \$OUTPUT
+''',
+              'alignment': '''#!/bin/bash
+#SBATCH --job-name=minimap2-align
+#SBATCH --partition=standard
+#SBATCH --account=bleu1
+#SBATCH --cpus-per-task=32
+#SBATCH --mem=64G
+#SBATCH --time=4:00:00
+#SBATCH --output=align_%j.log
+
+REF=\$1
+INPUT=\$2
+OUTPUT=\$3
+
+minimap2 -ax map-ont -t 32 \$REF \$INPUT | \\
+  samtools sort -@ 8 -o \$OUTPUT
+samtools index \$OUTPUT
+''',
+              'variant-calling': '''#!/bin/bash
+#SBATCH --job-name=clair3-variants
+#SBATCH --partition=spgpu
+#SBATCH --account=bleu1
+#SBATCH --gpus=a40:1
+#SBATCH --cpus-per-task=32
+#SBATCH --mem=100G
+#SBATCH --time=24:00:00
+#SBATCH --output=clair3_%j.log
+
+module load cuda/12.1
+
+BAM=\$1
+REF=\$2
+OUTPUT=\$3
+MODEL=/path/to/clair3_models/r1041_e82_400bps_sup_v500
+
+run_clair3.sh \\
+  --bam_fn=\$BAM \\
+  --ref_fn=\$REF \\
+  --model_path=\$MODEL \\
+  --threads=32 \\
+  --platform=ont \\
+  --output=\$OUTPUT
+''',
+          }
+
+          print(f'### {job_type.replace(\"-\", \" \").title()} Template')
+          print('')
+          print('\`\`\`bash')
+          print(templates.get(job_type, templates['basecalling']))
+          print('\`\`\`')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Resource Calculator
+        if: inputs.task == 'resource-calculator'
+        run: |
+          echo "## Resource Calculator" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Resource Requirements by Task')
+          print('')
+          print('| Task | CPUs | Memory | GPUs | Est. Time (50GB) |')
+          print('|------|------|--------|------|------------------|')
+          print('| Basecalling (SUP) | 8 | 64G | 1 A40 | 10 hours |')
+          print('| Basecalling (HAC) | 8 | 32G | 1 V100 | 4 hours |')
+          print('| Alignment | 32 | 64G | - | 30 min |')
+          print('| Clair3 | 32 | 100G | 1 GPU | 8 hours |')
+          print('| Methylation | 8 | 32G | - | 2 hours |')
+          print('| SV calling | 8 | 64G | - | 1 hour |')
+          print('')
+
+          print('### Scaling Guidelines')
+          print('')
+          print('| Data Size | Basecalling Time | Total Pipeline |')
+          print('|-----------|------------------|----------------|')
+          print('| 10 GB | 2 hours | 4 hours |')
+          print('| 50 GB | 10 hours | 16 hours |')
+          print('| 100 GB | 20 hours | 32 hours |')
+          print('| 500 GB | 4 days | 7 days |')
+          print('')
+
+          print('### Cost Estimation (SUs)')
+          print('')
+          print('| Resource | SUs/hour |')
+          print('|----------|----------|')
+          print('| 1 CPU core | 1 |')
+          print('| 1 GB memory | 0.25 |')
+          print('| 1 V100 GPU | 10 |')
+          print('| 1 A40 GPU | 12 |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: GPU Partitions
+        if: inputs.task == 'gpu-partitions'
+        run: |
+          echo "## GPU Partition Guide" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Available GPU Partitions')
+          print('')
+          print('| Partition | GPUs | Memory/GPU | Best For |')
+          print('|-----------|------|------------|----------|')
+          print('| gpu | V100 (16GB) | 16 GB | HAC basecalling |')
+          print('| spgpu | A40 (48GB) | 48 GB | SUP basecalling |')
+          print('| sigbio-a40 | A40 x4 | 48 GB | Large batches |')
+          print('')
+
+          print('### GPU Selection Guide')
+          print('')
+          print('| Model | Min GPU Memory | Recommended GPU |')
+          print('|-------|----------------|-----------------|')
+          print('| Fast | 4 GB | Any |')
+          print('| HAC | 8 GB | V100, A40 |')
+          print('| SUP | 16 GB | A40, A100 |')
+          print('| SUP + mods | 24 GB | A40, A100 |')
+          print('')
+
+          print('### Multi-GPU Usage')
+          print('')
+          print('\`\`\`bash')
+          print('# Request multiple GPUs')
+          print('#SBATCH --gpus=a40:2')
+          print('')
+          print('# Dorado uses all available GPUs automatically')
+          print('dorado basecaller sup@v5.0.0 /input > output.bam')
+          print('\`\`\`')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Array Jobs
+        if: inputs.task == 'array-jobs'
+        run: |
+          echo "## SLURM Array Jobs" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Array Job Template')
+          print('')
+          print('\`\`\`bash')
+          print('#!/bin/bash')
+          print('#SBATCH --job-name=ont-batch')
+          print('#SBATCH --partition=spgpu')
+          print('#SBATCH --array=1-10%4  # 10 tasks, 4 concurrent')
+          print('#SBATCH --gpus=a40:1')
+          print('#SBATCH --cpus-per-task=8')
+          print('#SBATCH --mem=64G')
+          print('#SBATCH --time=24:00:00')
+          print('#SBATCH --output=batch_%A_%a.log')
+          print('')
+          print('# Read sample from list')
+          print('SAMPLE=\$(sed -n \"\${SLURM_ARRAY_TASK_ID}p\" samples.txt)')
+          print('')
+          print('# Process')
+          print('dorado basecaller sup@v5.0.0 \${SAMPLE}/pod5 > \${SAMPLE}/calls.bam')
+          print('\`\`\`')
+          print('')
+
+          print('### Creating Sample List')
+          print('')
+          print('\`\`\`bash')
+          print('# List all POD5 directories')
+          print('find /data/sequencing -name \"*.pod5\" -type f | \\\\')
+          print('  xargs -I{} dirname {} | sort -u > samples.txt')
+          print('')
+          print('# Submit array job')
+          print('sbatch --array=1-\$(wc -l < samples.txt) batch_job.sh')
+          print('\`\`\`')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Job Monitoring
+        if: inputs.task == 'job-monitoring'
+        run: |
+          echo "## Job Monitoring Guide" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Useful SLURM Commands')
+          print('')
+          print('| Command | Description |')
+          print('|---------|-------------|')
+          print('| \`squeue -u \$USER\` | List your jobs |')
+          print('| \`squeue -j JOBID\` | Job details |')
+          print('| \`sacct -j JOBID\` | Job accounting |')
+          print('| \`scontrol show job JOBID\` | Full job info |')
+          print('| \`scancel JOBID\` | Cancel job |')
+          print('| \`seff JOBID\` | Efficiency report |')
+          print('')
+
+          print('### Monitor GPU Usage')
+          print('')
+          print('\`\`\`bash')
+          print('# On compute node')
+          print('nvidia-smi')
+          print('')
+          print('# Watch continuously')
+          print('watch -n 1 nvidia-smi')
+          print('')
+          print('# GPU utilization history')
+          print('nvidia-smi dmon -s u')
+          print('\`\`\`')
+          print('')
+
+          print('### Log Analysis')
+          print('')
+          print('\`\`\`bash')
+          print('# Check progress')
+          print('tail -f basecall_12345.log')
+          print('')
+          print('# Search for errors')
+          print('grep -i error basecall_12345.log')
+          print('')
+          print('# Dorado progress')
+          print('grep -E \"^\\[\" basecall_12345.log | tail')
+          print('\`\`\`')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Best Practices
+        if: inputs.task == 'best-practices'
+        run: |
+          echo "## HPC Best Practices" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Resource Optimization')
+          print('')
+          print('1. **Request appropriate resources**')
+          print('   - Use \`seff\` on test jobs to tune')
+          print('   - Don\\'t over-request memory')
+          print('')
+          print('2. **Use scratch storage**')
+          print('   - Local scratch: /tmp or \$TMPDIR')
+          print('   - Shared scratch: /scratch')
+          print('')
+          print('3. **Batch similar jobs**')
+          print('   - Use array jobs for multiple samples')
+          print('   - Limit concurrent jobs (\`--array=1-100%10\`)')
+          print('')
+
+          print('### Data Management')
+          print('')
+          print('- Stage data to scratch before processing')
+          print('- Clean up intermediate files')
+          print('- Compress outputs when complete')
+          print('')
+
+          print('### Job Script Checklist')
+          print('')
+          print('- [ ] Appropriate partition selected')
+          print('- [ ] Memory request based on actual need')
+          print('- [ ] Time limit with buffer')
+          print('- [ ] Output/error logging configured')
+          print('- [ ] Modules loaded')
+          print('- [ ] Paths are absolute or properly relative')
+          print('- [ ] Exit codes checked')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Troubleshooting
+        if: inputs.task == 'troubleshooting'
+        run: |
+          echo "## HPC Troubleshooting" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Common Issues')
+          print('')
+          print('| Issue | Cause | Solution |')
+          print('|-------|-------|----------|')
+          print('| Job pending (Resources) | Requested resources unavailable | Reduce request or wait |')
+          print('| Job pending (Priority) | Other jobs have higher priority | Wait or use different partition |')
+          print('| OOM killed | Insufficient memory | Increase --mem |')
+          print('| Timeout | Job exceeded time limit | Increase --time |')
+          print('| GPU not found | Wrong partition | Use gpu/spgpu partition |')
+          print('')
+
+          print('### Debugging Steps')
+          print('')
+          print('1. **Check job output**')
+          print('   \`\`\`')
+          print('   cat slurm-JOBID.out')
+          print('   \`\`\`')
+          print('')
+          print('2. **Check resource usage**')
+          print('   \`\`\`')
+          print('   seff JOBID')
+          print('   sacct -j JOBID --format=JobID,MaxRSS,MaxVMSize,Elapsed')
+          print('   \`\`\`')
+          print('')
+          print('3. **Test interactively**')
+          print('   \`\`\`')
+          print('   salloc --partition=spgpu --gpus=1 --time=1:00:00')
+          print('   \`\`\`')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hpc-output-${{ inputs.task }}
+          path: outputs/
+          if-no-files-found: ignore

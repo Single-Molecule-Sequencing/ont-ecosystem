@@ -1,0 +1,25 @@
+\begin{table}[H]
+\centering
+\caption{Equation Quick Reference for Chapter 4}
+\label{tab:ch4-equation-index}
+\small
+\begin{tabular}{p{2cm}p{6cm}p{4.5cm}}
+\toprule
+\textbf{Equation} & \textbf{Description} & \textbf{See Also} \\
+\midrule
+Pipeline Factorization & $\Prob(h, \mathbf{g}, \ldots, \mathbf{r}) = \Prob(h) \prod \Prob(\text{next}|\text{prev})$ & Thm.~\ref{thm:pipeline-factorization}, \CEref{1} \\
+\midrule
+Signal Emission & $\Prob(\sigma|l) = \prod_t \Prob(x_t|s_t)$ & Def.~\ref{def:signal-emission} \\
+\midrule
+Phred Quality Score & $\Prob(\text{error}|Q) = 10^{-Q/10}$ & Def.~\ref{def:quality-score-model} \\
+\midrule
+Quality-Based Likelihood & $\Prob(\hat{s}=s|\mathbf{Q}) = \prod_j (\cdots)$ & Def.~\ref{def:quality-score-model}, \CEref{2} \\
+\midrule
+Edit Distance & $d_{\text{edit}}(r,t) = \min\{\#\text{edits}\}$ & Def.~\ref{def:levenshtein-distance} \\
+\midrule
+Read Accuracy & $\text{Acc} = 1 - d_{\text{edit}}/\max(|r|,|t|)$ & Example~\ref{ex:edit-distance} \\
+\midrule
+Confusion Matrix & $C_{ij} = \Prob(\text{obs } i | \text{true } j)$ & Def.~\ref{def:confusion-matrix}, Chapter~\ref{chap:sma-seq} \\
+\bottomrule
+\end{tabular}
+\end{table}

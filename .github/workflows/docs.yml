@@ -1,0 +1,204 @@
+name: Documentation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'skills/*/SKILL.md'
+      - 'README.md'
+      - 'CONTRIBUTING.md'
+      - 'bin/*.py'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'skills/*/SKILL.md'
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: 'Deploy to GitHub Pages'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pyyaml markdown pygments
+
+      - name: Generate skill documentation
+        run: |
+          python -c "
+          import yaml
+          import re
+          from pathlib import Path
+
+          output_dir = Path('docs/generated')
+          output_dir.mkdir(parents=True, exist_ok=True)
+
+          # Generate skills index
+          skills_md = ['# Available Skills\n\n']
+          skills_md.append('| Skill | Description | Version |\n')
+          skills_md.append('|-------|-------------|--------|\n')
+
+          for skill_dir in sorted(Path('skills').iterdir()):
+              if not skill_dir.is_dir():
+                  continue
+              skill_md = skill_dir / 'SKILL.md'
+              if not skill_md.exists():
+                  continue
+
+              content = skill_md.read_text()
+              match = re.match(r'^---\n(.*?)\n---', content, re.DOTALL)
+              if match:
+                  fm = yaml.safe_load(match.group(1))
+                  name = fm.get('name', skill_dir.name)
+                  desc = fm.get('description', 'No description')
+                  version = fm.get('version', '1.0.0')
+                  skills_md.append(f'| [{name}](skills/{skill_dir.name}.md) | {desc} | {version} |\n')
+
+          (output_dir / 'skills-index.md').write_text(''.join(skills_md))
+          print(f'Generated skills index with {len(list(Path(\"skills\").iterdir()))} skills')
+          "
+
+      - name: Generate CLI reference
+        run: |
+          python -c "
+          from pathlib import Path
+          import subprocess
+          import sys
+
+          output_dir = Path('docs/generated')
+          output_dir.mkdir(parents=True, exist_ok=True)
+
+          cli_md = ['# CLI Reference\n\n']
+
+          scripts = sorted(Path('bin').glob('ont_*.py'))
+          for script in scripts:
+              name = script.stem
+              cli_md.append(f'## {name}\n\n')
+
+              # Try to get help text
+              try:
+                  result = subprocess.run(
+                      [sys.executable, str(script), '--help'],
+                      capture_output=True, text=True, timeout=5
+                  )
+                  if result.returncode == 0:
+                      cli_md.append('\\`\\`\\`\n')
+                      cli_md.append(result.stdout)
+                      cli_md.append('\\`\\`\\`\n\n')
+                  else:
+                      cli_md.append('*Help not available*\n\n')
+              except Exception as e:
+                  cli_md.append(f'*Error getting help: {e}*\n\n')
+
+          (output_dir / 'cli-reference.md').write_text(''.join(cli_md))
+          print(f'Generated CLI reference for {len(scripts)} scripts')
+          "
+
+      - name: Generate API documentation
+        run: |
+          python -c "
+          from pathlib import Path
+          import ast
+          import re
+
+          output_dir = Path('docs/generated')
+          output_dir.mkdir(parents=True, exist_ok=True)
+
+          api_md = ['# Library API Reference\n\n']
+
+          for module in sorted(Path('lib').glob('*.py')):
+              if module.name.startswith('_'):
+                  continue
+
+              api_md.append(f'## lib.{module.stem}\n\n')
+
+              try:
+                  tree = ast.parse(module.read_text())
+
+                  # Get module docstring
+                  if ast.get_docstring(tree):
+                      api_md.append(f'{ast.get_docstring(tree)}\n\n')
+
+                  # List functions and classes
+                  for node in ast.walk(tree):
+                      if isinstance(node, ast.FunctionDef) and not node.name.startswith('_'):
+                          docstring = ast.get_docstring(node) or 'No documentation'
+                          api_md.append(f'### {node.name}()\n\n')
+                          api_md.append(f'{docstring.split(chr(10))[0]}\n\n')
+                      elif isinstance(node, ast.ClassDef) and not node.name.startswith('_'):
+                          docstring = ast.get_docstring(node) or 'No documentation'
+                          api_md.append(f'### class {node.name}\n\n')
+                          api_md.append(f'{docstring.split(chr(10))[0]}\n\n')
+
+              except Exception as e:
+                  api_md.append(f'*Error parsing: {e}*\n\n')
+
+          (output_dir / 'api-reference.md').write_text(''.join(api_md))
+          print('Generated API reference')
+          "
+
+      - name: Build documentation site
+        run: |
+          mkdir -p _site
+          cp README.md _site/index.md
+          cp -r docs/* _site/ 2>/dev/null || true
+          cp -r docs/generated/* _site/ 2>/dev/null || true
+
+          # Create simple index
+          echo "# ONT Ecosystem Documentation" > _site/README.md
+          echo "" >> _site/README.md
+          echo "- [Getting Started](QUICKSTART.md)" >> _site/README.md
+          echo "- [Skills Reference](generated/skills-index.md)" >> _site/README.md
+          echo "- [CLI Reference](generated/cli-reference.md)" >> _site/README.md
+          echo "- [API Reference](generated/api-reference.md)" >> _site/README.md
+
+      - name: Upload documentation
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs
+          path: _site/
+
+  deploy:
+    needs: build-docs
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || inputs.deploy)
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Download docs
+        uses: actions/download-artifact@v4
+        with:
+          name: docs
+          path: _site
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload to Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

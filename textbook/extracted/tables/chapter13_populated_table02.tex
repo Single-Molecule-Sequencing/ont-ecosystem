@@ -1,0 +1,14 @@
+\begin{table}[!htbp]
+\centering
+\caption{Recommended Data Splits for Fine-Tuning}
+\label{tab:data-splits}
+\begin{tabular}{p{2.5cm}p{3cm}p{2.5cm}p{4cm}}
+\toprule
+\textbf{Split} & \textbf{Proportion} & \textbf{Sample Size} & \textbf{Purpose} \\
+\midrule
+Training & 70\% & 7,000 reads & Gradient descent optimization \\
+Validation & 15\% & 1,500 reads & Hyperparameter tuning, early stopping \\
+Test & 15\% & 1,500 reads & Final unbiased performance assessment \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -1,0 +1,311 @@
+---
+################################################################################
+# SMS Textbook Equation and Variable Database Schema
+# Version 1.0
+# This YAML schema defines the structure for storing all equations and variables
+################################################################################
+
+# EQUATION DATABASE STRUCTURE
+# ============================
+
+equations:
+  # Each equation has a unique ID: chapter.number (e.g., "5.1", "5.2")
+
+  "5.1":
+    # Basic Information
+    id: "5.1"
+    chapter: 5
+    index: 1
+    title: "Purity ceiling on true positive rate"
+
+    # LaTeX Content
+    latex: "\\text{TPR} \\leq \\pi"
+    latex_full: |
+      \begin{equation}
+      \text{TPR} \leq \pi
+      \label{eq:purity-ceiling}
+      \end{equation}
+
+    # Semantic Information
+    type: "inequality"  # equation, inequality, identity, definition
+    category: "fundamental"  # fundamental, derived, computational, empirical
+
+    # Context
+    description: |
+      The purity ceiling theorem states that the maximum achievable true positive
+      rate (TPR) for any classification method cannot exceed the molecular purity
+      of the standard being classified.
+
+    physical_meaning: |
+      This is a fundamental physical constraint: if only π fraction of molecules
+      have the correct sequence, then at most π fraction can be correctly classified,
+      even with a perfect classifier and unlimited data.
+
+    assumptions:
+      - "Classification based on molecular sequence"
+      - "Standard has well-defined purity π"
+      - "No external information beyond sequence"
+
+    # Variables used (references to variable database)
+    variables:
+      - "TPR"
+      - "pi"
+
+    # Cross-references
+    related_equations:
+      - "5.2"  # Purity upper bound
+      - "5.3"  # Purity quality score
+
+    appears_in:
+      - chapter: 5
+        section: "Purity as Upper Bound on True Positive Rate"
+        line: 55
+      - chapter: 11
+        section: "SMA-seq Methodology"
+        line: 63
+        context: "Applied in SMA context"
+
+    # Examples and Applications
+    examples:
+      - title: "Perfect classifier on impure standard"
+        description: "Even a perfect classifier is limited by purity"
+        input:
+          pi: 0.95
+        output:
+          TPR_max: 0.95
+        interpretation: |
+          A standard with 95% purity cannot achieve better than 95% TPR,
+          regardless of sequencing depth or algorithm sophistication.
+
+      - title: "Practical validation example"
+        description: "CYP2D6*1 standard with measured purity"
+        input:
+          pi: 0.905
+        output:
+          TPR_max: 0.905
+        interpretation: |
+          For a plasmid standard with 90.5% purity (from replication errors),
+          the maximum achievable TPR is 90.5%. Any higher measured TPR indicates
+          either purity measurement error or model violation.
+
+    # Interactive Components
+    interactive:
+      simulator_type: "inequality_bounds"
+      parameters:
+        - name: "pi"
+          range: [0.5, 1.0]
+          default: 0.95
+          step: 0.01
+      visualizations:
+        - type: "scatter_plot"
+          x_axis: "Measured TPR"
+          y_axis: "Standard Purity"
+          constraint_line: "y = x"
+          description: "Shows TPR vs purity with ceiling constraint"
+
+    # Derivation
+    proof_sketch: |
+      Let N be the total number of molecules, Nπ have correct sequence s,
+      and N(1-π) have variant sequences. TPR = (# of s molecules classified as s) / Nπ.
+      Maximum occurs when all correct molecules are classified correctly,
+      giving TPR = Nπ/Nπ = π.
+
+    # Metadata
+    importance: "critical"
+    difficulty: "intermediate"
+    tags:
+      - "purity"
+      - "fundamental-limit"
+      - "quality-control"
+      - "classification-theory"
+
+
+# VARIABLE DATABASE STRUCTURE
+# ============================
+
+variables:
+  # Each variable has a unique symbol/ID
+
+  "pi":
+    # Basic Information
+    symbol: "\\pi"
+    symbol_display: "π"
+    name: "Purity"
+    alt_names:
+      - "Molecular purity"
+      - "Template purity"
+      - "Sequence fidelity"
+
+    # Physical Description
+    description: |
+      The fraction of molecules in a physical standard that have the intended
+      (correct) sequence. Complement of the error/variant fraction.
+
+    physical_meaning: |
+      Represents the quality of a molecular standard. A purity of 0.95 means
+      95% of molecules match the target sequence and 5% contain errors
+      (from replication, synthesis, or other sources).
+
+    # Units and Domain
+    units: "dimensionless"
+    domain: "[0, 1]"
+    typical_range: "[0.85, 0.999]"
+
+    # Measurement
+    measurement_methods:
+      - method: "Sanger sequencing of individual clones"
+        accuracy: "high"
+        cost: "medium"
+        description: |
+          Sequence 20-50 individual bacterial colonies and compute the fraction
+          with perfect match to target sequence.
+
+      - method: "Deep NGS sequencing"
+        accuracy: "high"
+        cost: "low"
+        description: |
+          Perform high-depth short-read sequencing and measure the fraction of
+          reads matching the reference exactly.
+
+      - method: "Capillary electrophoresis"
+        accuracy: "low (lower bound only)"
+        cost: "very low"
+        description: |
+          Measure fraction of product at expected size. Provides conservative
+          lower bound since same-size variants aren't detected.
+
+    determination: |
+      Empirically measured from standards. Cannot be determined from the sample
+      being classified (would be circular reasoning). Must use independent
+      validation experiments.
+
+    # Examples
+    examples:
+      - context: "High-quality plasmid standard"
+        value: 0.95
+        units: "dimensionless"
+        interpretation: "95% of molecules are correct; 5% have replication errors"
+        source: "Measured by sequencing 30 clones, 28.5 perfect matches"
+
+      - context: "Older standard with more replication cycles"
+        value: 0.88
+        units: "dimensionless"
+        interpretation: "12% error rate from accumulated replication errors"
+        source: "Computed from purity model: (1-r)^(kL)"
+
+      - context: "Fresh PCR product"
+        value: 0.998
+        units: "dimensionless"
+        interpretation: "Very high purity, minimal replication"
+        source: "Single amplification with high-fidelity polymerase"
+
+    # Relationships
+    related_variables:
+      - variable: "TPR"
+        relationship: "upper_bound"
+        equation: "5.1"
+      - variable: "pi_max"
+        relationship: "theoretical_limit"
+        equation: "5.2"
+      - variable: "Q_purity"
+        relationship: "log_transform"
+        equation: "5.3"
+
+    # Usage in Equations
+    appears_in_equations:
+      - eq_id: "5.1"
+        role: "upper_bound"
+      - eq_id: "5.2"
+        role: "output"
+      - eq_id: "5.3"
+        role: "input"
+      - eq_id: "11.1"
+        role: "constraint"
+
+    # Typical Values by Context
+    typical_values:
+      plasmid_fresh: 0.95-0.99
+      plasmid_aged: 0.85-0.95
+      pcr_product: 0.995-0.999
+      synthetic_oligo: 0.70-0.90
+
+    # Common Mistakes
+    common_errors:
+      - error: "Assuming purity = 1.0 without measurement"
+        consequence: "Overestimating achievable TPR"
+        fix: "Always measure purity empirically"
+
+      - error: "Using sequence-level accuracy as purity"
+        consequence: "Confusing per-base and per-molecule accuracy"
+        fix: "Purity is fraction of perfect molecules, not average base accuracy"
+
+    # Metadata
+    importance: "critical"
+    difficulty: "intermediate"
+    first_chapter: 5
+    tags:
+      - "quality-control"
+      - "fundamental-parameter"
+      - "empirical-measurement"
+
+  "TPR":
+    symbol: "\\text{TPR}"
+    symbol_display: "TPR"
+    name: "True Positive Rate"
+    alt_names:
+      - "Sensitivity"
+      - "Recall"
+      - "Detection rate"
+
+    description: |
+      The fraction of molecules with the correct sequence that are correctly
+      classified as having that sequence. Diagonal element of confusion matrix.
+
+    physical_meaning: |
+      Measures classifier performance: what fraction of correct molecules does
+      the classifier successfully identify? Higher is better.
+
+    units: "dimensionless"
+    domain: "[0, 1]"
+    typical_range: "[0.80, 0.99]"
+
+    measurement_methods:
+      - method: "Confusion matrix from SMA-seq"
+        accuracy: "high"
+        cost: "medium"
+        description: |
+          Sequence a pure standard and compute C_ii / N_i where C_ii is the
+          count of molecules from standard i classified as i.
+
+    determination: |
+      Measured empirically from standards with known sequences (ground truth).
+      Computed as the diagonal entry of the empirical confusion matrix.
+
+    examples:
+      - context: "High-quality CYP2D6*1 classification"
+        value: 0.95
+        units: "dimensionless"
+        interpretation: "95% of *1 molecules correctly identified as *1"
+        source: "SMA-seq with 500 reads from pure *1 standard"
+
+    related_variables:
+      - variable: "pi"
+        relationship: "bounded_by"
+        equation: "5.1"
+      - variable: "FPR"
+        relationship: "tradeoff"
+        description: "Lower FPR often means lower TPR in ROC space"
+
+    appears_in_equations:
+      - eq_id: "5.1"
+        role: "bounded_quantity"
+      - eq_id: "11.1"
+        role: "performance_metric"
+
+    importance: "critical"
+    difficulty: "beginner"
+    first_chapter: 4
+    tags:
+      - "classification-performance"
+      - "confusion-matrix"
+      - "quality-metric"

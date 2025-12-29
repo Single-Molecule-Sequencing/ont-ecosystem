@@ -1,0 +1,465 @@
+name: ONT Data Operations
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: 'Data operation to perform'
+        required: true
+        type: choice
+        options:
+          - list-public-datasets
+          - search-datasets
+          - show-registry-stats
+          - validate-registry
+          - export-registry-summary
+          - check-ont-open-data
+          - list-giab-datasets
+      search_query:
+        description: 'Search query (for search-datasets)'
+        required: false
+        type: string
+        default: ''
+      category:
+        description: 'Category filter'
+        required: false
+        type: choice
+        default: 'all'
+        options:
+          - all
+          - human-reference
+          - giab
+          - cancer
+          - microbial
+          - methylation
+          - rna
+
+env:
+  PYTHONPATH: ${{ github.workspace }}/bin:${{ github.workspace }}
+
+jobs:
+  data-ops:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml jsonschema requests
+
+      - name: List Public Datasets
+        if: inputs.operation == 'list-public-datasets'
+        run: |
+          echo "## ONT Public Datasets" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import json
+          from pathlib import Path
+
+          registry_path = Path('data/experiment_registry.json')
+
+          if not registry_path.exists():
+              print('Registry not found')
+              exit(1)
+
+          reg = json.load(open(registry_path))
+
+          # Group by category
+          categories = {}
+          for exp_id, exp_data in reg.get('experiments', {}).items():
+              if isinstance(exp_data, dict):
+                  cat = exp_data.get('category', 'other')
+                  if cat not in categories:
+                      categories[cat] = []
+                  categories[cat].append({
+                      'id': exp_id,
+                      'name': exp_data.get('name', exp_id),
+                      'description': exp_data.get('description', '')[:60],
+                      'source': exp_data.get('source', 'unknown')
+                  })
+
+          for cat in sorted(categories.keys()):
+              print(f'### {cat.replace(\"-\", \" \").title()}')
+              print('')
+              print('| ID | Name | Description |')
+              print('|----|------|-------------|')
+
+              for exp in sorted(categories[cat], key=lambda x: x['id']):
+                  print(f'| {exp[\"id\"]} | {exp[\"name\"]} | {exp[\"description\"]}... |')
+
+              print('')
+
+          print(f'**Total**: {sum(len(v) for v in categories.values())} datasets in {len(categories)} categories')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Search Datasets
+        if: inputs.operation == 'search-datasets'
+        run: |
+          echo "## Dataset Search Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Query: \`${{ inputs.search_query }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import json
+          import re
+          from pathlib import Path
+
+          query = '${{ inputs.search_query }}'.lower()
+
+          if not query:
+              print('No search query provided')
+              exit(0)
+
+          registry_path = Path('data/experiment_registry.json')
+          reg = json.load(open(registry_path))
+
+          results = []
+
+          for exp_id, exp_data in reg.get('experiments', {}).items():
+              if isinstance(exp_data, dict):
+                  # Search in multiple fields
+                  searchable = ' '.join([
+                      exp_id,
+                      exp_data.get('name', ''),
+                      exp_data.get('description', ''),
+                      exp_data.get('sample_id', ''),
+                      ' '.join(exp_data.get('tags', [])),
+                  ]).lower()
+
+                  if query in searchable:
+                      results.append({
+                          'id': exp_id,
+                          'name': exp_data.get('name', exp_id),
+                          'category': exp_data.get('category', 'other'),
+                          'description': exp_data.get('description', '')[:50]
+                      })
+
+          if results:
+              print('| ID | Name | Category | Description |')
+              print('|----|------|----------|-------------|')
+              for r in sorted(results, key=lambda x: x['id']):
+                  print(f'| {r[\"id\"]} | {r[\"name\"]} | {r[\"category\"]} | {r[\"description\"]}... |')
+              print('')
+              print(f'Found **{len(results)}** matching datasets')
+          else:
+              print('No datasets found matching query')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Show Registry Statistics
+        if: inputs.operation == 'show-registry-stats'
+        run: |
+          echo "## Registry Statistics" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import json
+          from pathlib import Path
+          from collections import Counter
+
+          registry_path = Path('data/experiment_registry.json')
+          reg = json.load(open(registry_path))
+
+          print('### Overview')
+          print('')
+          print('| Metric | Value |')
+          print('|--------|-------|')
+          print(f'| Total Experiments | {reg.get(\"total_experiments\", 0)} |')
+          print(f'| Total Reads | {reg.get(\"total_reads\", 0):,} |')
+          print(f'| Total Bases | {reg.get(\"total_bases\", 0)/1e12:.2f} Tb |')
+          print('')
+
+          # Count by category
+          experiments = reg.get('experiments', {})
+          categories = Counter()
+          flowcells = Counter()
+          sources = Counter()
+
+          for exp_id, exp_data in experiments.items():
+              if isinstance(exp_data, dict):
+                  categories[exp_data.get('category', 'unknown')] += 1
+                  flowcells[exp_data.get('flowcell_type', 'unknown')] += 1
+                  sources[exp_data.get('source', 'unknown')] += 1
+
+          print('### By Category')
+          print('')
+          print('| Category | Count |')
+          print('|----------|-------|')
+          for cat, count in categories.most_common():
+              print(f'| {cat} | {count} |')
+
+          print('')
+          print('### By Flowcell Type')
+          print('')
+          print('| Flowcell | Count |')
+          print('|----------|-------|')
+          for fc, count in flowcells.most_common(5):
+              print(f'| {fc} | {count} |')
+
+          print('')
+          print('### By Source')
+          print('')
+          print('| Source | Count |')
+          print('|--------|-------|')
+          for src, count in sources.most_common():
+              print(f'| {src} | {count} |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Validate Registry
+        if: inputs.operation == 'validate-registry'
+        run: |
+          echo "## Registry Validation Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import json
+          from pathlib import Path
+
+          registry_path = Path('data/experiment_registry.json')
+
+          try:
+              reg = json.load(open(registry_path))
+          except json.JSONDecodeError as e:
+              print(f'❌ Invalid JSON: {e}')
+              exit(1)
+
+          errors = []
+          warnings = []
+
+          # Check required top-level fields
+          required_fields = ['total_experiments', 'experiments']
+          for field in required_fields:
+              if field not in reg:
+                  errors.append(f'Missing required field: {field}')
+
+          # Validate experiments
+          experiments = reg.get('experiments', {})
+
+          for exp_id, exp_data in experiments.items():
+              if not isinstance(exp_data, dict):
+                  errors.append(f'{exp_id}: Invalid experiment data (not a dict)')
+                  continue
+
+              # Check required experiment fields
+              if not exp_data.get('name'):
+                  warnings.append(f'{exp_id}: Missing name')
+
+              # Validate S3 paths if present
+              s3_path = exp_data.get('s3_path', '')
+              if s3_path and not s3_path.startswith('s3://'):
+                  warnings.append(f'{exp_id}: Invalid S3 path format')
+
+          # Check counts match
+          actual_count = len(experiments)
+          reported_count = reg.get('total_experiments', 0)
+          if actual_count != reported_count:
+              warnings.append(f'Experiment count mismatch: reported {reported_count}, actual {actual_count}')
+
+          print('### Validation Results')
+          print('')
+
+          if errors:
+              print('#### Errors')
+              for err in errors:
+                  print(f'- ❌ {err}')
+              print('')
+
+          if warnings:
+              print('#### Warnings')
+              for warn in warnings[:10]:  # Limit to 10
+                  print(f'- ⚠️ {warn}')
+              if len(warnings) > 10:
+                  print(f'- ... and {len(warnings) - 10} more warnings')
+              print('')
+
+          if not errors and not warnings:
+              print('✅ Registry is valid with no issues')
+          elif not errors:
+              print(f'✅ Registry is valid with {len(warnings)} warnings')
+          else:
+              print(f'❌ Registry has {len(errors)} errors and {len(warnings)} warnings')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Export Registry Summary
+        if: inputs.operation == 'export-registry-summary'
+        run: |
+          echo "## Registry Summary Export" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import json
+          from pathlib import Path
+          from datetime import datetime
+
+          registry_path = Path('data/experiment_registry.json')
+          reg = json.load(open(registry_path))
+
+          summary = {
+              'generated_at': datetime.now().isoformat(),
+              'total_experiments': reg.get('total_experiments', 0),
+              'total_reads': reg.get('total_reads', 0),
+              'total_bases': reg.get('total_bases', 0),
+              'categories': {},
+              'sample_types': reg.get('sample_types', []),
+              'flowcell_types': reg.get('flowcell_types', []),
+          }
+
+          # Summarize by category
+          for exp_id, exp_data in reg.get('experiments', {}).items():
+              if isinstance(exp_data, dict):
+                  cat = exp_data.get('category', 'other')
+                  if cat not in summary['categories']:
+                      summary['categories'][cat] = {
+                          'count': 0,
+                          'experiments': []
+                      }
+                  summary['categories'][cat]['count'] += 1
+                  summary['categories'][cat]['experiments'].append(exp_id)
+
+          # Save
+          Path('outputs').mkdir(exist_ok=True)
+          Path('outputs/registry_summary.json').write_text(json.dumps(summary, indent=2))
+
+          print('### Summary')
+          print('')
+          print(f'- Total experiments: {summary[\"total_experiments\"]}')
+          print(f'- Total reads: {summary[\"total_reads\"]:,}')
+          print(f'- Total bases: {summary[\"total_bases\"]/1e12:.2f} Tb')
+          print(f'- Categories: {len(summary[\"categories\"])}')
+          print('')
+          print('Export saved to: outputs/registry_summary.json')
+          "
+
+          mkdir -p outputs
+          python -c "
+          import json
+          from pathlib import Path
+          reg = json.load(open('data/experiment_registry.json'))
+
+          summary = {
+              'total_experiments': reg.get('total_experiments', 0),
+              'total_reads': reg.get('total_reads', 0),
+              'total_bases': reg.get('total_bases', 0),
+          }
+          Path('outputs/registry_summary.json').write_text(json.dumps(summary, indent=2))
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Check ONT Open Data
+        if: inputs.operation == 'check-ont-open-data'
+        run: |
+          echo "## ONT Open Data Availability" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import json
+          from pathlib import Path
+
+          registry_path = Path('data/experiment_registry.json')
+          reg = json.load(open(registry_path))
+
+          # List known ONT Open Data buckets
+          ont_buckets = [
+              'ont-open-data',
+              's3://ont-open-data/giab_2023.05/',
+              's3://ont-open-data/giab_2025.01/',
+              's3://ont-open-data/gm24385_2023.12/',
+          ]
+
+          print('### Known ONT Open Data Sources')
+          print('')
+          print('| Dataset | S3 Path | Status |')
+          print('|---------|---------|--------|')
+
+          ont_datasets = []
+          for exp_id, exp_data in reg.get('experiments', {}).items():
+              if isinstance(exp_data, dict):
+                  s3_path = exp_data.get('s3_path', '')
+                  if 'ont-open-data' in s3_path:
+                      ont_datasets.append({
+                          'id': exp_id,
+                          'name': exp_data.get('name', exp_id),
+                          's3_path': s3_path
+                      })
+
+          for ds in sorted(ont_datasets, key=lambda x: x['id']):
+              # Status is informational only (can't actually check without AWS)
+              print(f'| {ds[\"name\"]} | {ds[\"s3_path\"][:50]}... | ℹ️ |')
+
+          print('')
+          print(f'Found **{len(ont_datasets)}** ONT Open Data datasets in registry')
+          print('')
+          print('> Note: S3 availability cannot be verified without AWS credentials.')
+          print('> Use `aws s3 ls <path> --no-sign-request` to check availability.')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: List GIAB Datasets
+        if: inputs.operation == 'list-giab-datasets'
+        run: |
+          echo "## GIAB Reference Datasets" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import json
+          from pathlib import Path
+
+          registry_path = Path('data/experiment_registry.json')
+          reg = json.load(open(registry_path))
+
+          print('### Available GIAB Datasets')
+          print('')
+          print('| Sample | Dataset | Chemistry | Description |')
+          print('|--------|---------|-----------|-------------|')
+
+          giab_datasets = []
+          for exp_id, exp_data in reg.get('experiments', {}).items():
+              if isinstance(exp_data, dict):
+                  name = exp_data.get('name', '').lower()
+                  desc = exp_data.get('description', '').lower()
+                  tags = [t.lower() for t in exp_data.get('tags', [])]
+
+                  # Check if GIAB-related
+                  if any(term in name or term in desc or term in tags
+                        for term in ['giab', 'hg002', 'hg003', 'hg004', 'na12878', 'gm24385']):
+                      giab_datasets.append({
+                          'id': exp_id,
+                          'name': exp_data.get('name', exp_id),
+                          'sample': exp_data.get('sample_id', 'unknown'),
+                          'chemistry': exp_data.get('chemistry', 'unknown'),
+                          'description': exp_data.get('description', '')[:40]
+                      })
+
+          for ds in sorted(giab_datasets, key=lambda x: x['id']):
+              print(f'| {ds[\"sample\"]} | {ds[\"name\"]} | {ds[\"chemistry\"]} | {ds[\"description\"]}... |')
+
+          print('')
+          print(f'Found **{len(giab_datasets)}** GIAB-related datasets')
+          print('')
+          print('### GIAB Samples Reference')
+          print('')
+          print('| Sample ID | Description |')
+          print('|-----------|-------------|')
+          print('| HG001/NA12878 | Pilot genome, female |')
+          print('| HG002/NA24385 | Ashkenazi Jewish trio, son |')
+          print('| HG003/NA24149 | Ashkenazi Jewish trio, father |')
+          print('| HG004/NA24143 | Ashkenazi Jewish trio, mother |')
+          print('| HG005/NA24631 | Chinese trio, son |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: data-output-${{ inputs.operation }}
+          path: |
+            outputs/
+          if-no-files-found: ignore

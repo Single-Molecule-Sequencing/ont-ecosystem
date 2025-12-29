@@ -1,0 +1,130 @@
+name: Changelog
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      since:
+        description: 'Generate changelog since tag (e.g., v3.0.0)'
+        required: false
+        type: string
+      update_file:
+        description: 'Update CHANGELOG.md file'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          if [ -n "${{ inputs.since }}" ]; then
+            python bin/ont_changelog.py generate --since ${{ inputs.since }} --format markdown > CHANGELOG_NEW.md
+          else
+            python bin/ont_changelog.py unreleased --format markdown > CHANGELOG_NEW.md
+          fi
+
+          echo "## Changelog Preview" >> $GITHUB_STEP_SUMMARY
+          cat CHANGELOG_NEW.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Get commit statistics
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Commit Statistics" >> $GITHUB_STEP_SUMMARY
+          python bin/ont_changelog.py stats >> $GITHUB_STEP_SUMMARY
+
+      - name: Update CHANGELOG.md
+        if: inputs.update_file
+        run: |
+          if [ -f CHANGELOG.md ]; then
+            # Prepend new content to existing changelog
+            cat CHANGELOG_NEW.md > CHANGELOG_TEMP.md
+            echo "" >> CHANGELOG_TEMP.md
+            cat CHANGELOG.md >> CHANGELOG_TEMP.md
+            mv CHANGELOG_TEMP.md CHANGELOG.md
+          else
+            mv CHANGELOG_NEW.md CHANGELOG.md
+          fi
+
+      - name: Create Pull Request
+        if: inputs.update_file
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "docs: Update CHANGELOG.md"
+          title: "docs: Update CHANGELOG.md"
+          body: |
+            This PR updates the CHANGELOG.md file with recent changes.
+
+            Generated automatically by the changelog workflow.
+          branch: changelog-update
+          delete-branch: true
+          labels: documentation
+
+      - name: Upload changelog
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelog
+          path: CHANGELOG_NEW.md
+
+  check-conventional:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Check commit format
+        run: |
+          COMMIT_MSG=$(git log -1 --format=%s)
+          echo "Commit message: $COMMIT_MSG"
+
+          python -c "
+          import re
+          import sys
+
+          msg = '''$COMMIT_MSG'''
+
+          # Conventional commit pattern
+          pattern = r'^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?: .+'
+
+          if re.match(pattern, msg):
+              print('Commit follows conventional format')
+              sys.exit(0)
+          elif msg.startswith('Merge'):
+              print('Merge commit - skipping validation')
+              sys.exit(0)
+          else:
+              print('WARNING: Commit does not follow conventional format')
+              print('Expected: <type>(<scope>): <description>')
+              print('Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert')
+              # Don't fail, just warn
+              sys.exit(0)
+          "

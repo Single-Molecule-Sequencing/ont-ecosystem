@@ -1,0 +1,4395 @@
+equations:
+  '5.1':
+    id: '5.1'
+    chapter: 5
+    index: 1
+    title: Purity definition
+    latex: \pi = \frac{\text{Number of correct molecules}}{\text{Total number of molecules}}
+    latex_full: '\begin{equation}
+
+      \pi = \frac{\text{Number of correct molecules}}{\text{Total number of molecules}}
+
+      \label{eq:purity-def}
+
+      \end{equation}
+
+      '
+    type: definition
+    category: fundamental
+    description: 'The purity π of a physical standard is the fraction of molecules
+      conforming to
+
+      the intended reference sequence. This quantifies template homogeneity and
+
+      establishes an absolute ceiling on measurable classification performance.
+
+      '
+    physical_meaning: 'Purity represents the quality of a molecular standard. A purity
+      of 0.95 means
+
+      95% of molecules match the target sequence and 5% contain errors from replication,
+
+      synthesis, or other sources.
+
+      '
+    assumptions:
+    - Well-defined intended reference sequence
+    - 'Binary classification: molecules either match reference or deviate'
+    - No partial matches (molecule-level assessment)
+    variables:
+    - pi
+    related_equations:
+    - '5.2'
+    - '5.7'
+    appears_in:
+    - chapter: 5
+      section: Defining Purity for Physical Standards
+      line: 23
+    examples:
+    - title: High-quality plasmid standard
+      description: Plasmid with 95% pure molecules
+      input:
+        correct_molecules: 950
+        total_molecules: 1000
+      output:
+        pi: 0.95
+      interpretation: '950 out of 1000 molecules match the reference exactly. The
+        remaining 50
+
+        contain replication errors, giving purity π = 0.95.
+
+        '
+    importance: critical
+    difficulty: beginner
+    tags:
+    - purity
+    - definition
+    - fundamental
+    - quality-control
+  '5.2':
+    id: '5.2'
+    chapter: 5
+    index: 2
+    title: Purity ceiling on true positive rate
+    latex: \text{TPR} \leq \pi
+    latex_full: '\begin{equation}
+
+      \text{TPR} \leq \pi
+
+      \label{eq:tpr-ceiling}
+
+      \end{equation}
+
+      '
+    type: inequality
+    category: fundamental
+    description: 'The Purity Ceiling Theorem states that the maximum achievable true
+      positive rate
+
+      (TPR) for any classification method cannot exceed the molecular purity of the
+
+      standard being classified.
+
+      '
+    physical_meaning: 'This is a fundamental physical constraint: if only π fraction
+      of molecules have
+
+      the correct sequence, then at most π fraction can be correctly classified, even
+
+      with a perfect classifier and unlimited data. This derives from physics, not
+      statistics.
+
+      '
+    assumptions:
+    - Classification based on molecular sequence
+    - Standard has well-defined purity π
+    - No external information beyond sequence
+    variables:
+    - TPR
+    - pi
+    related_equations:
+    - '5.1'
+    - '5.3'
+    - '5.4'
+    appears_in:
+    - chapter: 5
+      section: Purity as Upper Bound on True Positive Rate
+      line: 54
+    - chapter: 11
+      section: SMA-seq Methodology
+      context: Applied in confusion matrix constraints
+    examples:
+    - title: Perfect classifier on impure standard
+      description: Even a perfect classifier is limited by purity
+      input:
+        pi: 0.95
+      output:
+        TPR_max: 0.95
+      interpretation: 'A standard with 95% purity cannot achieve better than 95% TPR,
+        regardless
+
+        of sequencing depth or algorithm sophistication.
+
+        '
+    - title: Practical validation example
+      description: CYP2D6*1 standard with measured purity
+      input:
+        pi: 0.905
+      output:
+        TPR_max: 0.905
+      interpretation: 'For a plasmid standard with 90.5% purity (from replication
+        errors), the
+
+        maximum achievable TPR is 90.5%. Any higher measured TPR indicates either
+
+        purity measurement error or model violation.
+
+        '
+    interactive:
+      simulator_type: inequality_bounds
+      parameters:
+      - name: pi
+        range:
+        - 0.5
+        - 1.0
+        default: 0.95
+        step: 0.01
+      visualizations:
+      - type: scatter_plot
+        x_axis: Measured TPR
+        y_axis: Standard Purity
+        constraint_line: y = x
+        description: Shows TPR vs purity with ceiling constraint
+    proof_sketch: 'Let N be the total number of molecules, Nπ have correct sequence
+      s, and N(1-π)
+
+      have variant sequences. TPR = (# of s molecules classified as s) / Nπ. Maximum
+
+      occurs when all correct molecules are classified correctly, giving TPR = Nπ/Nπ
+      = π.
+
+      '
+    importance: critical
+    difficulty: intermediate
+    tags:
+    - purity
+    - fundamental-limit
+    - quality-control
+    - classification-theory
+  '5.3':
+    id: '5.3'
+    chapter: 5
+    index: 3
+    title: Capillary electrophoresis purity lower bound
+    latex: \pi_{\text{lower}} = f_{\text{expected}}
+    latex_full: '\begin{equation}
+
+      \pi_{\text{lower}} = f_{\text{expected}}
+
+      \label{eq:purity-ce-lower}
+
+      \end{equation}
+
+      '
+    type: equation
+    category: empirical
+    description: 'Capillary electrophoresis provides a conservative lower bound on
+      purity by
+
+      measuring the fraction of molecules appearing at the expected size.
+
+      '
+    physical_meaning: 'CE separates DNA by size with single-nucleotide resolution.
+      Molecules at the
+
+      correct size provide a floor on purity, though point mutations preserving length
+
+      are not detected.
+
+      '
+    assumptions:
+    - CE has sufficient resolution to detect length variants
+    - All incorrect-size molecules represent impurity
+    - Point mutations (SNPs) preserving length may be present
+    - CE peak quantification is accurate
+    variables:
+    - pi_lower
+    - f_expected
+    related_equations:
+    - '5.2'
+    - '5.4'
+    - '5.6'
+    appears_in:
+    - chapter: 5
+      section: 'Estimating Purity: Lower and Upper Bounds'
+      subsection: Capillary Electrophoresis-Based Lower Bound
+      line: 124
+    examples:
+    - title: Plasmid with length variants
+      description: CE detects insertion/deletion impurities
+      input:
+        total_peak_area: 10000
+        expected_size_peak_area: 9850
+        variant_peak_areas:
+        - 120
+        - 30
+      output:
+        f_expected: 0.985
+        pi_lower: 0.985
+      interpretation: '98.5% of molecules appear at the correct size, establishing
+        a lower bound
+
+        π_lower = 0.985. Point mutations would contribute additional impurity not
+
+        detected by this method.
+
+        '
+    importance: high
+    difficulty: intermediate
+    tags:
+    - purity
+    - measurement
+    - lower-bound
+    - capillary-electrophoresis
+  '5.4':
+    id: '5.4'
+    chapter: 5
+    index: 4
+    title: Purity upper bound from replication model
+    latex: \pi_{\text{upper}}(k, L, r) = (1 - r)^{kL}
+    latex_full: '\begin{equation}
+
+      \pi_{\text{upper}}(k, L, r) = (1 - r)^{kL}
+
+      \label{eq:purity-upper}
+
+      \end{equation}
+
+      '
+    type: equation
+    category: fundamental
+    description: 'For bacterial amplification after k cell doublings across a genomic
+      region of
+
+      length L with per-base replication error rate r, the maximum purity is bounded
+
+      by the probability that no errors occurred across all kL base-replication events.
+
+      '
+    physical_meaning: 'DNA replication introduces errors at a predictable per-base
+      rate, establishing
+
+      an upper bound on achievable purity for amplified samples based on replication
+
+      physics. Each of kL base-replication events has probability (1-r) of being
+
+      error-free; independence gives the product formula.
+
+      '
+    assumptions:
+    - 'Independence: errors at different base positions are independent'
+    - 'Independence across cycles: each replication cycle introduces errors independently'
+    - Constant error rate r across positions and cycles
+    - No repair or selection against mutants
+    - All mutations occur in final generation (early errors neglected)
+    variables:
+    - pi_upper
+    - k
+    - L
+    - r
+    related_equations:
+    - '5.2'
+    - '5.3'
+    - '5.5'
+    - '5.6'
+    appears_in:
+    - chapter: 5
+      section: 'Estimating Purity: Lower and Upper Bounds'
+      subsection: Replication-Based Upper Bound
+      line: 151
+    examples:
+    - title: Bacterial culture purity bound
+      description: 3 kb plasmid, 20 doublings, E. coli replication fidelity
+      input:
+        k: 20
+        L: 3000
+        r: 1.0e-09
+      output:
+        pi_upper: 0.99994
+        Q_purity: 42.2
+      interpretation: 'For a 3 kb plasmid propagated for 20 bacterial doublings with
+        r=10^-9, the
+
+        maximum purity is 0.99994 (Q42). Even with perfect sequencing, classifications
+
+        cannot exceed Q42 confidence.
+
+        '
+    - title: High-fidelity 5 kb plasmid
+      description: Shorter culture time for higher purity
+      input:
+        k: 15
+        L: 5000
+        r: 1.0e-09
+      output:
+        pi_upper: 0.999925
+        Q_purity: 41.2
+      interpretation: 'Reducing replication cycles from 20 to 15 increases purity
+        bound, establishing
+
+        Q41 ceiling for a 5 kb construct.
+
+        '
+    importance: critical
+    difficulty: advanced
+    tags:
+    - purity
+    - replication-model
+    - upper-bound
+    - bacterial-amplification
+  '5.5':
+    id: '5.5'
+    chapter: 5
+    index: 5
+    title: Poisson approximation for purity bound
+    latex: \pi_{\text{upper}}(k, L, r) = (1-r)^{kL} \approx e^{-rkL}
+    latex_full: '\begin{equation}
+
+      \pi_{\text{upper}}(k, L, r) = (1-r)^{kL} \approx e^{-rkL}
+
+      \label{eq:purity-upper-poisson}
+
+      \end{equation}
+
+      '
+    type: equation
+    category: derived
+    description: 'When the per-base error rate r is small (r << 1, typically r ~ 10^-9
+      for E. coli),
+
+      the exponential approximation provides intuitive interpretation of the purity
+      bound.
+
+      '
+    physical_meaning: 'The exponent rkL represents the expected number of mutations
+      across all
+
+      base-replication events. The formula gives the probability of observing zero
+
+      mutations (Poisson distribution with rate λ = rkL).
+
+      '
+    assumptions:
+    - 'Small error rate: r << 1'
+    - Relative error < 1% when rkL < 0.01
+    - Poisson approximation to binomial
+    variables:
+    - pi_upper
+    - k
+    - L
+    - r
+    related_equations:
+    - '5.4'
+    appears_in:
+    - chapter: 5
+      section: 'Estimating Purity: Lower and Upper Bounds'
+      subsection: Replication-Based Upper Bound
+      line: 159
+    examples:
+    - title: Poisson approximation accuracy
+      description: Comparing exact vs. approximate formulas
+      input:
+        k: 20
+        L: 3000
+        r: 1.0e-09
+        rkL: 6.0e-05
+      output:
+        pi_upper_exact: 0.99994
+        pi_upper_approx: 0.99994
+        relative_error: 0.0003
+      interpretation: 'For rkL = 0.00006, the Poisson approximation e^(-0.00006) ≈
+        0.99994 matches
+
+        the exact formula (1-10^-9)^60000 to within 0.03% relative error.
+
+        '
+    importance: normal
+    difficulty: intermediate
+    tags:
+    - purity
+    - approximation
+    - poisson
+    - mathematical-methods
+  '5.6':
+    id: '5.6'
+    chapter: 5
+    index: 6
+    title: Combined purity bounds
+    latex: \pi_{\text{lower}} \leq \pi_{\text{true}} \leq \pi_{\text{upper}}
+    latex_full: '\begin{equation}
+
+      \pi_{\text{lower}} \leq \pi_{\text{true}} \leq \pi_{\text{upper}}
+
+      \label{eq:purity-bracket}
+
+      \end{equation}
+
+      '
+    type: inequality
+    category: fundamental
+    description: 'The true purity is bracketed between the CE-based lower bound (detecting
+      length
+
+      variants) and the replication-based upper bound (accounting for all possible
+      errors).
+
+      '
+    physical_meaning: 'Combining orthogonal measurement methods provides confidence
+      intervals on purity.
+
+      Large gaps between bounds indicate either incomplete detection (CE) or conservative
+
+      modeling (replication theory).
+
+      '
+    assumptions:
+    - CE lower bound correctly identifies all length variants
+    - Replication upper bound accounts for all error sources
+    - No contamination or degradation beyond replication errors
+    variables:
+    - pi_lower
+    - pi_true
+    - pi_upper
+    related_equations:
+    - '5.3'
+    - '5.4'
+    appears_in:
+    - chapter: 5
+      section: 'Estimating Purity: Lower and Upper Bounds'
+      subsection: Combined Purity Estimation Strategy
+      line: 195
+    examples:
+    - title: Bracketing purity for quality control
+      description: Using both methods to constrain purity
+      input:
+        pi_lower_CE: 0.9995
+        pi_upper_replication: 0.99994
+      output:
+        pi_bracket: '[0.9995, 0.99994]'
+        bracket_width: 0.00044
+      interpretation: 'The true purity is between 99.95% (CE) and 99.994% (replication
+        model),
+
+        bracketing to within 0.044%. Narrow bracket increases confidence in purity
+
+        estimates.
+
+        '
+    importance: high
+    difficulty: intermediate
+    tags:
+    - purity
+    - bounds
+    - quality-control
+    - measurement
+  '5.7':
+    id: '5.7'
+    chapter: 5
+    index: 7
+    title: Purity quality score
+    latex: Q_{\text{purity}} = -10 \log_{10}(1 - \pi)
+    latex_full: '\begin{equation}
+
+      Q_{\text{purity}} = -10 \log_{10}(1 - \pi)
+
+      \label{eq:qpurity}
+
+      \end{equation}
+
+      '
+    type: equation
+    category: computational
+    description: 'Purity expressed on the Phred quality scale enables direct comparison
+      with
+
+      sequencing quality metrics. Unlike basecalling quality scores, Q_purity quantifies
+
+      template/molecular impurity, not sequencing errors.
+
+      '
+    physical_meaning: 'Q_purity represents template quality in the same logarithmic
+      scale as sequencing
+
+      quality. Q30 purity (π=0.999) means 1 in 1000 molecules is incorrect. Q40 purity
+
+      (π=0.9999) means 1 in 10,000 molecules is incorrect.
+
+      '
+    assumptions:
+    - 'Phred scale convention: Q = -10 log10(error_rate)'
+    - Error rate is 1 - π (impurity fraction)
+    variables:
+    - Q_purity
+    - pi
+    related_equations:
+    - '5.1'
+    - '5.2'
+    appears_in:
+    - chapter: 5
+      section: Purity-Equivalent Quality Scores
+      line: 243
+    examples:
+    - title: High-purity standard
+      description: Q40 purity requirement
+      input:
+        pi: 0.9999
+        impurity: 0.0001
+      output:
+        Q_purity: 40
+      interpretation: 'Purity of 99.99% (1 in 10,000 error rate) corresponds to Q40
+        on the Phred scale.
+
+        '
+    - title: Moderate-purity standard
+      description: Q30 purity level
+      input:
+        pi: 0.999
+        impurity: 0.001
+      output:
+        Q_purity: 30
+      interpretation: 'Purity of 99.9% (1 in 1,000 error rate) corresponds to Q30,
+        comparable to
+
+        good ONT sequencing quality.
+
+        '
+    - title: Purity limits sequencing benefit
+      description: Template quality dominates error budget
+      input:
+        pi: 0.999
+        Q_purity: 30
+        Q_sequencing: 35
+      output:
+        limiting_factor: purity
+      interpretation: 'When Q_sequencing (35) exceeds Q_purity (30), template impurity
+        dominates
+
+        the error budget. Improving basecalling won''t improve classification confidence.
+
+        '
+    interactive:
+      simulator_type: transform_calculator
+      parameters:
+      - name: pi
+        range:
+        - 0.9
+        - 1.0
+        default: 0.999
+        step: 0.0001
+      outputs:
+      - name: Q_purity
+        formula: -10 * log10(1 - pi)
+    importance: high
+    difficulty: beginner
+    tags:
+    - purity
+    - quality-score
+    - phred-scale
+    - measurement
+  '5.8':
+    id: '5.8'
+    chapter: 5
+    index: 8
+    title: Mismatch ambiguity
+    latex: \text{Observed mismatch} = \text{Sequencing error} \cup \text{Template
+      variant}
+    latex_full: '\begin{align}
+
+      \text{Observed mismatch} &= \text{Sequencing error} \cup \text{Template variant}
+
+      \label{eq:mismatch-ambiguity}
+
+      \end{align}
+
+      '
+    type: identity
+    category: fundamental
+    description: 'With impure standards, observed mismatches between reads and reference
+      cannot be
+
+      definitively attributed to sequencing errors versus template variants without
+
+      additional information. This represents a fundamental epistemic constraint.
+
+      '
+    physical_meaning: 'This irreducible uncertainty means no amount of data or algorithmic
+      sophistication
+
+      can fully decompose observed errors into sequencing versus template components
+
+      without independent purity measurements or technical replicates.
+
+      '
+    assumptions:
+    - 'Binary error model: either sequencing error or template variant'
+    - Cannot observe both simultaneously on single read
+    variables:
+    - observed_mismatch
+    - sequencing_error
+    - template_variant
+    related_equations:
+    - '5.1'
+    - '5.2'
+    appears_in:
+    - chapter: 5
+      section: Ground Truth Definition and Its Consequences
+      subsection: Purity as Epistemic Constraint
+      line: 326
+    examples:
+    - title: Unresolvable mismatch
+      description: Single-base disagreement with unknown cause
+      input:
+        read_base: A
+        reference_base: G
+      output:
+        possible_causes:
+        - Sequencing error (G→A)
+        - Template variant (true=A)
+      interpretation: 'A read showing ''A'' when reference is ''G'' could be either:
+        (1) sequencing
+
+        incorrectly called G as A, or (2) template truly has A (not G). Without
+
+        independent evidence, we cannot distinguish these.
+
+        '
+    importance: high
+    difficulty: advanced
+    tags:
+    - purity
+    - epistemic-constraint
+    - ambiguity
+    - ground-truth
+  '4.1':
+    id: '4.1'
+    chapter: 4
+    index: 1
+    title: Pipeline factorization theorem
+    latex: \Prob(h, \mathbf{g}, \mathbf{u}, \mathbf{d}, \mathbf{l}, \boldsymbol{\sigma},
+      \mathbf{r}) = \Prob(h) \cdot \Prob(\mathbf{g}|h) \cdot \Prob(\mathbf{u}|\mathbf{g})
+      \cdot \Prob(\mathbf{d}|\mathbf{u}) \cdot \Prob(\mathbf{l}|\mathbf{d}) \cdot
+      \Prob(\boldsymbol{\sigma}|\mathbf{l}) \cdot \Prob(\mathbf{r}|\boldsymbol{\sigma})
+    latex_full: '\begin{align}
+
+      \Prob(h, \mathbf{g}, \mathbf{u}, \mathbf{d}, \mathbf{l}, \boldsymbol{\sigma},
+      \mathbf{r}) = {}&\Prob(h) \cdot \Prob(\mathbf{g}|h) \cdot \Prob(\mathbf{u}|\mathbf{g})
+      \cdot \Prob(\mathbf{d}|\mathbf{u}) \nonumber \\
+
+      &\cdot \Prob(\mathbf{l}|\mathbf{d}) \cdot \Prob(\boldsymbol{\sigma}|\mathbf{l})
+      \cdot \Prob(\mathbf{r}|\boldsymbol{\sigma})
+
+      \label{eq:pipeline-factorization}
+
+      \end{align}
+
+      '
+    type: equation
+    category: fundamental
+    description: 'The Pipeline Factorization Theorem decomposes the joint probability
+      distribution
+
+      over all variables in the sequencing pipeline into conditional distributions
+
+      representing each physical and computational transformation.
+
+      '
+    physical_meaning: 'Embodies the Markov property: each sequencing stage depends
+      only on its immediate
+
+      predecessor. This enables modular optimization where each component (fragmentation,
+
+      library prep, basecalling) can be improved independently.
+
+      '
+    assumptions:
+    - 'Markov property: each stage independent of earlier stages given immediate predecessor'
+    - 'Complete observation: all relevant variables captured in state space'
+    - 'Stationary process: transformation probabilities don''t change over time'
+    variables:
+    - h
+    - g
+    - u
+    - d
+    - l
+    - sigma
+    - r
+    related_equations:
+    - '4.2'
+    - '4.3'
+    appears_in:
+    - chapter: 4
+      section: Measurable Spaces and Pipeline Architecture
+      line: 50
+    examples:
+    - title: Modular error analysis
+      description: Decompose total error into stage-specific contributions
+      interpretation: 'If basecalling error dominates (P(r|σ) has highest error rate),
+        focus optimization
+
+        on improving the basecaller rather than wet-lab protocols.
+
+        '
+    importance: critical
+    difficulty: advanced
+    tags:
+    - bayesian-framework
+    - pipeline-model
+    - factorization
+    - markov-property
+  '4.2':
+    id: '4.2'
+    chapter: 4
+    index: 2
+    title: Quality score error probability
+    latex: \Prob(\text{error at position } j | Q_j) = 10^{-Q_j/10}
+    latex_full: '\begin{equation}
+
+      \Prob(\text{error at position } j | Q_j) = 10^{-Q_j/10}
+
+      \label{eq:quality-score-error}
+
+      \end{equation}
+
+      '
+    type: equation
+    category: fundamental
+    description: 'Phred quality score encoding: converts basecaller confidence scores
+      to error
+
+      probabilities using base-10 logarithmic scale.
+
+      '
+    physical_meaning: 'Q=30 means 1-in-1000 error rate (0.1%), Q=20 means 1-in-100
+      (1%), Q=10 means
+
+      1-in-10 (10%). Higher Q indicates higher basecaller confidence.
+
+      '
+    assumptions:
+    - Quality scores correctly calibrated
+    - Errors independent across positions
+    - Phred scale convention (base-10)
+    variables:
+    - Q_j
+    - error_probability
+    related_equations:
+    - '4.3'
+    - '5.7'
+    appears_in:
+    - chapter: 4
+      section: Basecalling as Stochastic Decoding
+      line: 166
+    examples:
+    - title: Quality score interpretation
+      description: Convert Q scores to error rates
+      input:
+        Q: 30
+      output:
+        error_prob: 0.001
+        error_rate_percent: 0.1
+      interpretation: Q30 = 0.1% error rate (1 in 1000 bases incorrect)
+    - title: Low quality base
+      input:
+        Q: 10
+      output:
+        error_prob: 0.1
+        error_rate_percent: 10
+      interpretation: Q10 = 10% error rate (1 in 10 bases incorrect)
+    importance: critical
+    difficulty: beginner
+    tags:
+    - quality-score
+    - error-probability
+    - phred-scale
+    - basecalling
+  '4.3':
+    id: '4.3'
+    chapter: 4
+    index: 3
+    title: Sequence likelihood from quality scores
+    latex: \Prob(\hat{s} = s | \mathbf{Q}) = \prod_{j=1}^{n} \left(1 - 10^{-Q_j/10}\right)^{\mathbb{I}\{\hat{s}_j
+      = s_j\}} \cdot \left(\frac{10^{-Q_j/10}}{|\mathcal{A}| - 1}\right)^{\mathbb{I}\{\hat{s}_j
+      \neq s_j\}}
+    latex_full: '\begin{equation}
+
+      \Prob(\hat{s} = s | \mathbf{Q}) = \prod_{j=1}^{n} \left(1 - 10^{-Q_j/10}\right)^{\mathbb{I}\{\hat{s}_j
+      = s_j\}} \cdot \left(\frac{10^{-Q_j/10}}{|\mathcal{A}| - 1}\right)^{\mathbb{I}\{\hat{s}_j
+      \neq s_j\}}
+
+      \label{eq:sequence-likelihood-quality}
+
+      \end{equation}
+
+      '
+    type: equation
+    category: derived
+    description: 'Computes the probability of observing a specific basecalled sequence
+      given the
+
+      true sequence and per-base quality scores, assuming independence across positions.
+
+      '
+    physical_meaning: 'Aggregates evidence from all base-level quality scores into
+      a single read-level
+
+      likelihood. Higher quality scores at matching positions increase likelihood;
+
+      mismatches at high-Q positions strongly decrease likelihood.
+
+      '
+    assumptions:
+    - Independence of errors across positions
+    - Uniform error distribution over incorrect bases
+    - Quality scores correctly calibrated
+    - Alphabet size |A| = 4 (ACGT)
+    variables:
+    - s_hat
+    - s
+    - Q
+    - mathcal_A
+    related_equations:
+    - '4.2'
+    - '4.6'
+    appears_in:
+    - chapter: 4
+      section: Basecalling as Stochastic Decoding
+      line: 170
+    examples:
+    - title: Perfect match high quality
+      description: All bases match, all Q=30
+      input:
+        n: 100
+        matches: 100
+        Q_match: 30
+      output:
+        likelihood: 0.9048
+      interpretation: Very high likelihood for perfect match at Q30
+    - title: Single mismatch high quality
+      input:
+        n: 100
+        matches: 99
+        mismatches: 1
+        Q_match: 30
+        Q_mismatch: 30
+      output:
+        likelihood_approx: 0.0003
+      interpretation: High-Q mismatch strongly penalizes likelihood
+    importance: critical
+    difficulty: advanced
+    tags:
+    - likelihood
+    - quality-scores
+    - bayesian-inference
+    - sequence-probability
+  '4.4':
+    id: '4.4'
+    chapter: 4
+    index: 4
+    title: Levenshtein edit distance
+    latex: d_{\text{edit}}(r,t) = \min\{\text{\# insertions, deletions, substitutions
+      to transform } r \to t\}
+    latex_full: '\begin{equation}
+
+      d_{\text{edit}}(r,t) = \min\{\text{\# insertions, deletions, substitutions to
+      transform } r \to t\}
+
+      \label{eq:levenshtein-distance}
+
+      \end{equation}
+
+      '
+    type: definition
+    category: fundamental
+    description: 'Edit distance quantifies sequence similarity by counting the minimum
+      number of
+
+      single-base operations required to transform one sequence into another.
+
+      '
+    physical_meaning: 'Provides a comprehensive error metric treating all error types
+      equivalently.
+
+      Lower edit distance indicates higher sequence similarity.
+
+      '
+    assumptions:
+    - Unit cost for all operations (insertion, deletion, substitution)
+    - Optimal alignment via dynamic programming
+    - No affine gap penalties
+    variables:
+    - d_edit
+    - r
+    - t
+    related_equations:
+    - '4.5'
+    appears_in:
+    - chapter: 4
+      section: Per-Read Empirical Accuracy via Edit Distance
+      line: 193
+    examples:
+    - title: Single substitution
+      description: One base different
+      input:
+        r: ACGTCCGT
+        t: ACGTACGT
+      output:
+        d_edit: 1
+        operation: A→C at position 5
+      interpretation: Single substitution error
+    - title: Insertion error
+      input:
+        r: ACGTATACGT
+        t: ACGTACGT
+      output:
+        d_edit: 2
+        operation: AT inserted
+      interpretation: Two-base insertion
+    importance: high
+    difficulty: intermediate
+    tags:
+    - edit-distance
+    - alignment
+    - accuracy
+    - sequence-comparison
+  '4.5':
+    id: '4.5'
+    chapter: 4
+    index: 5
+    title: Per-read accuracy
+    latex: \text{Accuracy}(r,t) = 1 - \frac{d_{\text{edit}}(r,t)}{\max(|r|, |t|)}
+    latex_full: '\begin{equation}
+
+      \text{Accuracy}(r,t) = 1 - \frac{d_{\text{edit}}(r,t)}{\max(|r|, |t|)}
+
+      \label{eq:per-read-accuracy}
+
+      \end{equation}
+
+      '
+    type: equation
+    category: derived
+    description: 'Normalizes edit distance by sequence length to produce accuracy
+      score in [0,1].
+
+      Higher values indicate better sequence agreement.
+
+      '
+    physical_meaning: 'Fraction of bases that are correct. Accuracy 0.95 means 95%
+      of bases match,
+
+      5% contain errors. Commonly reported as percentage.
+
+      '
+    assumptions:
+    - Length normalization by maximum of read and truth lengths
+    - All error types weighted equally
+    variables:
+    - accuracy
+    - d_edit
+    - r
+    - t
+    related_equations:
+    - '4.4'
+    appears_in:
+    - chapter: 4
+      section: Per-Read Empirical Accuracy via Edit Distance
+      line: 197
+    examples:
+    - title: High accuracy read
+      input:
+        length: 5000
+        d_edit: 25
+      output:
+        accuracy: 0.995
+        accuracy_percent: 99.5
+      interpretation: 99.5% accuracy (25 errors in 5000 bases)
+    - title: Low accuracy read
+      input:
+        length: 1000
+        d_edit: 150
+      output:
+        accuracy: 0.85
+        accuracy_percent: 85
+      interpretation: 85% accuracy (150 errors in 1000 bases)
+    importance: high
+    difficulty: beginner
+    tags:
+    - accuracy
+    - quality-metric
+    - read-quality
+    - performance
+  '4.6':
+    id: '4.6'
+    chapter: 4
+    index: 6
+    title: Confusion matrix definition
+    latex: C_{ij} = \Prob(\text{observe sequence } j \mid \text{true sequence } i)
+    latex_full: '\begin{equation}
+
+      C_{ij} = \Prob(\text{observe sequence } j \mid \text{true sequence } i)
+
+      \label{eq:confusion-matrix}
+
+      \end{equation}
+
+      '
+    type: definition
+    category: fundamental
+    description: 'The confusion matrix captures empirical error patterns by measuring
+      the probability
+
+      of observing each possible output sequence given each possible true sequence.
+
+      '
+    physical_meaning: 'Rows index true sequences (ground truth from standards), columns
+      index observed
+
+      sequences (basecaller output). Diagonal elements are true positive rates; off-
+
+      diagonals capture specific error patterns.
+
+      '
+    assumptions:
+    - 'Row-stochastic matrix: Σⱼ C_ij = 1 for each row i'
+    - Measured on physical standards with known sequences
+    - Technology-specific patterns
+    variables:
+    - C_ij
+    - i
+    - j
+    related_equations:
+    - '4.3'
+    appears_in:
+    - chapter: 4
+      section: Introduction to Confusion Matrices
+      line: 238
+    examples:
+    - title: Single-base confusion matrix
+      description: 4×4 matrix for nucleotides
+      input:
+        true_base: A
+        observations:
+          A: 920
+          C: 30
+          G: 20
+          T: 30
+        total: 1000
+      output:
+        C_AA: 0.92
+        C_AC: 0.03
+        C_AG: 0.02
+        C_AT: 0.03
+      interpretation: 92% TPR for A; 8% total error distributed across C, G, T
+    - title: Homopolymer error pattern
+      input:
+        true_kmer: AAAAAA
+        indel_rate: 0.15
+      output:
+        interpretation: Homopolymers have higher indel rates, lower TPR
+      interpretation: Confusion matrices capture context-dependent errors
+    importance: critical
+    difficulty: intermediate
+    tags:
+    - confusion-matrix
+    - error-model
+    - empirical-measurement
+    - sma-seq
+  '6.1':
+    id: '6.1'
+    chapter: 6
+    index: 1
+    title: Likelihood factorization for independent reads
+    latex: \Prob(\mathbf{r}|h) = \prod_{n=1}^{N} \Prob(r_n|h)
+    latex_full: '\begin{equation}
+
+      \Prob(\mathbf{r}|h) = \prod_{n=1}^{N} \Prob(r_n|h)
+
+      \label{eq:likelihood-factorization}
+
+      \end{equation}
+
+      '
+    type: equation
+    category: fundamental
+    description: 'For independent reads, the total likelihood factorizes as the product
+      of individual
+
+      per-read likelihoods. This enables efficient computation and incremental updating.
+
+      '
+    physical_meaning: 'Each read provides independent evidence about the true haplotype.
+      Evidence from N
+
+      reads combines multiplicatively, with strong evidence accumulating over many
+      reads.
+
+      '
+    assumptions:
+    - Reads are conditionally independent given haplotype h
+    - No systematic biases correlating reads
+    - Fragments sample uniformly from haplotype
+    variables:
+    - r
+    - h
+    - N
+    related_equations:
+    - '6.2'
+    - '6.3'
+    - '4.1'
+    appears_in:
+    - chapter: 6
+      section: Likelihood from Fragmentation and Sequencing
+      line: 69
+    examples:
+    - title: Three independent reads
+      description: Likelihood from 3 reads
+      input:
+        N: 3
+        P_r1_h: 0.9
+        P_r2_h: 0.85
+        P_r3_h: 0.92
+      output:
+        P_r_h: 0.7038
+      interpretation: 'Combined likelihood is product: 0.9 × 0.85 × 0.92 ≈ 0.70'
+    importance: critical
+    difficulty: beginner
+    tags:
+    - bayesian-inference
+    - likelihood
+    - independence
+    - factorization
+  '6.2':
+    id: '6.2'
+    chapter: 6
+    index: 2
+    title: Per-read likelihood from confusion matrix
+    latex: \Prob(r_n|h) = C_{r_n,s_h}
+    latex_full: '\begin{equation}
+
+      \Prob(r_n|h) = C_{r_n,s_h}
+
+      \label{eq:per-read-likelihood}
+
+      \end{equation}
+
+      '
+    type: equation
+    category: empirical
+    description: 'The probability of observing read r_n given true haplotype h is
+      obtained by
+
+      looking up the confusion matrix entry for that read-haplotype pair.
+
+      '
+    physical_meaning: 'Confusion matrix C captures empirical error patterns. Entry
+      C[r_n, s_h] gives
+
+      the probability that basecaller produces read r_n when true sequence is s_h.
+
+      '
+    assumptions:
+    - Confusion matrix measured empirically via SMA-seq
+    - Error patterns stationary (don't change over time)
+    - Read aligns unambiguously to haplotype
+    variables:
+    - r
+    - h
+    - C_ij
+    related_equations:
+    - '6.1'
+    - '4.6'
+    appears_in:
+    - chapter: 6
+      section: Likelihood from Fragmentation and Sequencing
+      line: 76
+    examples:
+    - title: High-quality match
+      description: Read matches haplotype perfectly
+      input:
+        read: ACGT...
+        haplotype_seq: ACGT...
+        C_match: 0.95
+      output:
+        P_r_h: 0.95
+      interpretation: 95% probability from confusion matrix diagonal
+    - title: Single mismatch
+      input:
+        mismatches: 1
+        C_mismatch: 0.02
+      output:
+        P_r_h: 0.02
+      interpretation: Low probability for off-diagonal confusion matrix entry
+    importance: critical
+    difficulty: intermediate
+    tags:
+    - likelihood
+    - confusion-matrix
+    - empirical
+    - error-model
+  '6.3':
+    id: '6.3'
+    chapter: 6
+    index: 3
+    title: Bayes rule for haplotype classification
+    latex: \Prob(h_i|\mathbf{r}) = \frac{\Prob(h_i) \cdot \Prob(\mathbf{r}|h_i)}{\sum_{j=1}^{P}
+      \Prob(h_j) \cdot \Prob(\mathbf{r}|h_j)}
+    latex_full: '\begin{equation}
+
+      \Prob(h_i|\mathbf{r}) = \frac{\Prob(h_i) \cdot \Prob(\mathbf{r}|h_i)}{\sum_{j=1}^{P}
+      \Prob(h_j) \cdot \Prob(\mathbf{r}|h_j)}
+
+      \label{eq:posterior-bayes}
+
+      \end{equation}
+
+      '
+    type: equation
+    category: fundamental
+    description: 'Bayes'' theorem for haplotype classification: combines prior knowledge
+      P(h_i) with
+
+      likelihood P(r|h_i) to produce posterior probability P(h_i|r) after observing
+      reads.
+
+      '
+    physical_meaning: 'The posterior P(h_i|r) represents our updated belief about
+      haplotype identity after
+
+      seeing sequencing data. Prior knowledge is updated by evidence, with strength
+      of
+
+      update proportional to how well data fits each hypothesis.
+
+      '
+    assumptions:
+    - Complete set of candidate haplotypes (h_i covers all possibilities)
+    - Priors sum to 1
+    - Likelihoods computed correctly
+    variables:
+    - h
+    - r
+    - P_h
+    - P_r_h
+    related_equations:
+    - '6.1'
+    - '6.2'
+    - '6.4'
+    appears_in:
+    - chapter: 6
+      section: Posterior Computation
+      line: 98
+    examples:
+    - title: Binary classification with evidence
+      description: Two haplotypes, reads favor h1
+      input:
+        P_h1: 0.5
+        P_h2: 0.5
+        P_r_h1: 0.8
+        P_r_h2: 0.15
+      output:
+        P_h1_r: 0.842
+        P_h2_r: 0.158
+      interpretation: Posterior strongly favors h1 (84% vs 16%) based on likelihood
+        ratio
+    - title: Rare haplotype requires strong evidence
+      input:
+        P_h_rare: 0.01
+        P_h_common: 0.99
+        P_r_rare: 0.9
+        P_r_common: 0.1
+      output:
+        P_rare_r: 0.083
+      interpretation: Even with 9× likelihood advantage, rare prior keeps posterior
+        low
+    importance: critical
+    difficulty: intermediate
+    tags:
+    - bayesian-inference
+    - posterior
+    - bayes-theorem
+    - classification
+  '6.4':
+    id: '6.4'
+    chapter: 6
+    index: 4
+    title: Maximum a posteriori (MAP) classification
+    latex: \hat{h}_{\text{MAP}} = \argmax_{h \in \mathcal{H}} \Prob(h|\mathbf{r})
+    latex_full: '\begin{equation}
+
+      \hat{h}_{\text{MAP}} = \argmax_{h \in \mathcal{H}} \Prob(h|\mathbf{r})
+
+      \label{eq:map-classification}
+
+      \end{equation}
+
+      '
+    type: equation
+    category: decision
+    description: 'Maximum a posteriori decision rule: select the haplotype with highest
+      posterior
+
+      probability as the point estimate.
+
+      '
+    physical_meaning: 'MAP gives the single most likely haplotype given all evidence.
+      Minimizes expected
+
+      misclassification rate when all error types have equal cost.
+
+      '
+    assumptions:
+    - Uniform loss function (all errors equally costly)
+    - Point estimate needed (vs full posterior)
+    - Haplotype set contains truth
+    variables:
+    - h
+    - r
+    - h_hat_MAP
+    related_equations:
+    - '6.3'
+    appears_in:
+    - chapter: 6
+      section: Maximum A Posteriori (MAP) Classification
+      line: 186
+    examples:
+    - title: Clear winner
+      description: Decisive posterior concentration
+      input:
+        P_h1_r: 0.95
+        P_h2_r: 0.03
+        P_h3_r: 0.02
+      output:
+        h_MAP: h1
+        confidence: high (P=0.95)
+      interpretation: h1 clearly most likely, confident classification
+    - title: Ambiguous case
+      input:
+        P_h1_r: 0.45
+        P_h2_r: 0.42
+        P_h3_r: 0.13
+      output:
+        h_MAP: h1
+        confidence: low (P=0.45)
+      interpretation: h1 selected but low confidence suggests 'no call' appropriate
+    importance: high
+    difficulty: beginner
+    tags:
+    - classification
+    - decision-theory
+    - point-estimate
+    - map
+  '6.5':
+    id: '6.5'
+    chapter: 6
+    index: 5
+    title: Bayes factor for hypothesis comparison
+    latex: \text{BF}_{ij} = \frac{\Prob(\mathbf{r}|h_i)}{\Prob(\mathbf{r}|h_j)}
+    latex_full: '\begin{equation}
+
+      \text{BF}_{ij} = \frac{\Prob(\mathbf{r}|h_i)}{\Prob(\mathbf{r}|h_j)} = \frac{\Prob(h_i|\mathbf{r})/\Prob(h_i)}{\Prob(h_j|\mathbf{r})/\Prob(h_j)}
+
+      \label{eq:bayes-factor}
+
+      \end{equation}
+
+      '
+    type: equation
+    category: derived
+    description: 'Bayes factor quantifies relative evidence for hypothesis h_i over
+      h_j. Ratio of
+
+      likelihoods, independent of prior probabilities.
+
+      '
+    physical_meaning: 'BF > 1 means data favor h_i; BF < 1 means data favor h_j. BF=10
+      means data are
+
+      10× more likely under h_i. Provides prior-independent evidence quantification.
+
+      '
+    assumptions:
+    - Well-defined likelihoods for both hypotheses
+    - Hypotheses are distinct
+    variables:
+    - BF
+    - h
+    - r
+    related_equations:
+    - '6.3'
+    appears_in:
+    - chapter: 6
+      section: Bayes Factors for Hypothesis Comparison
+      line: 239
+    examples:
+    - title: Strong evidence for h1
+      description: Likelihood ratio 100:1
+      input:
+        P_r_h1: 0.8
+        P_r_h2: 0.008
+      output:
+        BF_12: 100
+        log10_BF: 2.0
+        interpretation: Decisive evidence for h1
+      interpretation: Data 100× more likely under h1 than h2
+    - title: Weak evidence
+      input:
+        P_r_h1: 0.55
+        P_r_h2: 0.45
+      output:
+        BF_12: 1.22
+        log10_BF: 0.09
+      interpretation: Barely any preference between hypotheses
+    importance: high
+    difficulty: intermediate
+    tags:
+    - bayes-factor
+    - hypothesis-testing
+    - evidence-quantification
+    - model-comparison
+  '6.6':
+    id: '6.6'
+    chapter: 6
+    index: 6
+    title: Diploid mixture likelihood
+    latex: \Prob(r_n|h_i, h_j; \lambda) = \lambda \cdot \Prob(r_n|h_i) + (1-\lambda)
+      \cdot \Prob(r_n|h_j)
+    latex_full: '\begin{equation}
+
+      \Prob(r_n|h_i, h_j; \lambda) = \lambda \cdot \Prob(r_n|h_i) + (1-\lambda) \cdot
+      \Prob(r_n|h_j)
+
+      \label{eq:diploid-mixture}
+
+      \end{equation}
+
+      '
+    type: equation
+    category: mixture
+    description: 'For diploid samples with haplotypes h_i and h_j in proportion λ,
+      the read
+
+      likelihood is a mixture of the two haplotype likelihoods.
+
+      '
+    physical_meaning: 'Each read originates from either maternal or paternal chromosome
+      with probability
+
+      λ and (1-λ). For balanced diploid, λ ≈ 0.5. Tumor samples may have skewed λ.
+
+      '
+    assumptions:
+    - Binary mixture (exactly two haplotypes)
+    - Mixture proportion λ known or estimated
+    - Read assignment independent
+    - Typically λ ∈ [0.3, 0.7] for balanced diploid
+    variables:
+    - r
+    - h
+    - lambda
+    related_equations:
+    - '6.1'
+    - '6.2'
+    appears_in:
+    - chapter: 6
+      section: Mixture Models and Complex Scenarios
+      line: 293
+    examples:
+    - title: Balanced diploid (50/50)
+      description: Equal contribution from both haplotypes
+      input:
+        lambda: 0.5
+        P_r_h1: 0.9
+        P_r_h2: 0.1
+      output:
+        P_r_diploid: 0.5
+      interpretation: Read equally likely from either haplotype, average likelihood
+    - title: Tumor with LOH (loss of heterozygosity)
+      input:
+        lambda: 0.85
+        P_r_h1: 0.92
+        P_r_h2: 0.08
+      output:
+        P_r_diploid: 0.794
+      interpretation: Skewed mixture reflects copy number imbalance
+    importance: high
+    difficulty: advanced
+    tags:
+    - mixture-model
+    - diploid
+    - heterozygosity
+    - tumor-analysis
+  '7.1':
+    id: '7.1'
+    chapter: 7
+    index: 1
+    title: Perfect read probability
+    latex: \Prob(\text{perfect read}) = \theta^L
+    latex_full: 'For a read of length $L$ with per-base accuracy $\theta$:
+
+      \begin{equation}
+
+      \Prob(\text{perfect read}) = \theta^L
+
+      \end{equation}
+
+      '
+    type: foundational
+    category: experimental-design
+    description: Probability of obtaining a read without any errors as exponential
+      function of length and per-base accuracy
+    physical_meaning: Captures dramatic impact of read length on perfect read yield
+      - longer reads exponentially less likely to be error-free
+    assumptions:
+    - Independent errors at each base position
+    - Uniform per-base accuracy θ along read
+    - Binary perfect/imperfect classification
+    variables:
+    - theta
+    - L
+    related_equations:
+    - '7.2'
+    - '7.3'
+    examples:
+    - scenario: Q15 average (θ=0.97), 100 bp read
+      result: P(perfect) ≈ 0.048 (4.8%)
+    - scenario: Q15 average (θ=0.97), 1000 bp read
+      result: P(perfect) ≈ 4.1 × 10^-14 (essentially zero)
+    - scenario: Q30 average (θ=0.999), 100 bp read
+      result: P(perfect) ≈ 0.905 (90.5%)
+    importance: foundational
+    difficulty: easy
+    tags:
+    - experimental-design
+    - quality-control
+    - power-analysis
+  '7.2':
+    id: '7.2'
+    chapter: 7
+    index: 2
+    title: Expected perfect read count
+    latex: \E[N_{\text{perfect}}] = N \int_{0}^{\infty} \theta(Q)^L f(L) \, dL
+    latex_full: 'Given $N$ total reads with length distribution $f(L)$ and quality-dependent
+      accuracy $\theta(Q)$:
+
+      \begin{equation}
+
+      \E[N_{\text{perfect}}] = N \int_{0}^{\infty} \theta(Q)^L f(L) \, dL
+
+      \end{equation}
+
+      '
+    type: computational
+    category: experimental-design
+    description: Expected number of perfect reads accounting for distribution of read
+      lengths and quality scores
+    physical_meaning: Integrates perfect read probability over empirical length distribution
+      to predict perfect read yield from experiment
+    assumptions:
+    - Independent reads
+    - Length distribution f(L) known or estimated
+    - Quality-length relationship θ(Q,L) characterized
+    variables:
+    - N
+    - theta
+    - L
+    - f(L)
+    related_equations:
+    - '7.1'
+    - '7.3'
+    examples:
+    - scenario: 1000 reads, uniform 500bp length, Q30
+      result: E[N_perfect] ≈ 1000 × 0.606 = 606 perfect reads
+    - scenario: Empirical ONT distribution, mean Q15
+      result: E[N_perfect] ≈ 0.05N (5% perfect)
+    importance: important
+    difficulty: medium
+    tags:
+    - experimental-design
+    - quality-control
+    - expectation
+  '7.3':
+    id: '7.3'
+    chapter: 7
+    index: 3
+    title: Expected error count
+    latex: \E[\text{errors}] = L \cdot 10^{-Q/10}
+    latex_full: 'For a read of length $L$ base pairs with average quality score $Q$:
+
+      \begin{equation}
+
+      \E[\text{errors}] = L \cdot 10^{-Q/10}
+
+      \end{equation}
+
+      '
+    type: foundational
+    category: quality-control
+    description: Expected number of errors in a read as linear function of length
+      and exponential function of quality
+    physical_meaning: Error budget scales linearly with read length and exponentially
+      with quality - longer/lower-quality reads have proportionally more errors
+    assumptions:
+    - Uniform quality Q along read
+    - Independent errors at each position
+    - Phred quality scale accurate
+    variables:
+    - L
+    - Q
+    related_equations:
+    - '7.1'
+    - '7.2'
+    examples:
+    - scenario: 500 bp read, Q20 average
+      result: E[errors] = 500 × 0.01 = 5 errors
+    - scenario: 500 bp read, Q30 average
+      result: E[errors] = 500 × 0.001 = 0.5 errors
+    - scenario: 1000 bp read, Q15 average
+      result: E[errors] = 1000 × 0.0316 = 31.6 errors
+    importance: foundational
+    difficulty: easy
+    tags:
+    - quality-control
+    - error-model
+    - phred-scale
+  '7.4':
+    id: '7.4'
+    chapter: 7
+    index: 4
+    title: Sample size for quality validation
+    latex: n \geq \frac{\left(z_{1-\alpha/2}\sqrt{P_0(1-P_0)} + z_{1-\beta}\sqrt{P_1(1-P_1)}\right)^2}{(P_0-P_1)^2}
+    latex_full: 'To detect quality score overstatement of $d$ Phred units with power
+      $1-\beta$ at significance level $\alpha$:
+
+      \begin{equation}
+
+      n \geq \frac{\left(z_{1-\alpha/2}\sqrt{P_0(1-P_0)} + z_{1-\beta}\sqrt{P_1(1-P_1)}\right)^2}{(P_0-P_1)^2}
+
+      \end{equation}
+
+      where $P_0 = \theta^L = 10^{-Q \cdot L/10}$ (claimed) and $P_1 = 10^{-(Q-d)
+      \cdot L/10}$ (true if overstated by $d$ units)
+
+      '
+    type: experimental-design
+    category: power-analysis
+    description: Minimum number of reads required to detect basecaller quality score
+      overstatement with specified power and significance
+    physical_meaning: Statistical power to detect systematic quality miscalibration
+      - longer reads and larger overstatements easier to detect
+    assumptions:
+    - Binomial sampling of perfect reads
+    - Normal approximation valid (Np > 10)
+    - Two-sided test at level α
+    - Known overstatement magnitude d
+    variables:
+    - n
+    - P_0
+    - P_1
+    - alpha
+    - beta
+    - z
+    - Q
+    - L
+    - d
+    related_equations:
+    - '7.1'
+    - '7.5'
+    examples:
+    - scenario: Detect 1 Phred unit overstatement, 500bp reads, Q20, α=0.05, power=0.80
+      result: n ≥ 212 reads
+    - scenario: Detect 1 Phred unit overstatement, 1000bp reads, Q20, α=0.05, power=0.80
+      result: n ≥ 106 reads (longer reads = less sample needed)
+    importance: important
+    difficulty: hard
+    tags:
+    - power-analysis
+    - quality-control
+    - hypothesis-testing
+  '7.5':
+    id: '7.5'
+    chapter: 7
+    index: 5
+    title: Exact binomial p-value
+    latex: p\text{-value} = \Prob(K \leq k \mid H_0) = \sum_{j=0}^{k} \binom{N}{j}
+      p_0^j (1-p_0)^{N-j}
+    latex_full: 'For exact binomial test with $k$ observed perfect reads out of $N$
+      total:
+
+      \begin{equation}
+
+      p\text{-value} = \Prob(K \leq k \mid H_0) = \sum_{j=0}^{k} \binom{N}{j} p_0^j
+      (1-p_0)^{N-j}
+
+      \end{equation}
+
+      where $p_0 = (1 - 10^{-Q_{\text{pred}}/10})^L$ under null hypothesis
+
+      '
+    type: statistical-test
+    category: quality-control
+    description: Exact p-value for binomial test of quality score accuracy using perfect
+      read counts
+    physical_meaning: Probability of observing k or fewer perfect reads if claimed
+      quality is accurate - low p-value indicates overstatement
+    assumptions:
+    - Binomial distribution exact (no approximation)
+    - Independent reads
+    - Lower-tail test (testing for worse quality than claimed)
+    variables:
+    - N
+    - k
+    - p_0
+    - Q
+    related_equations:
+    - '7.4'
+    - '7.1'
+    examples:
+    - scenario: N=100, k=40, p_0=0.50, claimed Q=constant
+      result: p-value = 0.028 < 0.05 → reject (quality overstated)
+    - scenario: N=50, k=25, p_0=0.50
+      result: p-value = 0.556 → fail to reject (quality plausible)
+    importance: important
+    difficulty: medium
+    tags:
+    - hypothesis-testing
+    - quality-control
+    - exact-test
+  '7.6':
+    id: '7.6'
+    chapter: 7
+    index: 6
+    title: Coverage for classification confidence
+    latex: N \geq \frac{\log(\epsilon/P) + z_{1-\delta}\sqrt{2\log(P/\epsilon)}}{D_{\text{KL}}(h_{\text{true}}
+      || h_{\text{closest}})}
+    latex_full: 'To achieve posterior probability $\Prob(h|\mathbf{r}) \geq 1-\epsilon$
+      with confidence $1-\delta$:
+
+      \begin{equation}
+
+      N \geq \frac{\log(\epsilon/P) + z_{1-\delta}\sqrt{2\log(P/\epsilon)}}{D_{\text{KL}}(h_{\text{true}}
+      || h_{\text{closest}})}
+
+      \end{equation}
+
+      where $P$ is number of haplotypes and $D_{\text{KL}}$ is Kullback-Leibler divergence
+      between read distributions
+
+      '
+    type: experimental-design
+    category: coverage-calculation
+    description: Minimum coverage required for haplotype classification with specified
+      posterior probability and confidence, based on Chernoff-Stein lemma
+    physical_meaning: Closely related haplotypes (small D_KL) require higher coverage;
+      statistical confidence increases with evidence accumulation
+    assumptions:
+    - Chernoff-Stein lemma applies (hypothesis testing framework)
+    - KL divergence accurately captures distinguishability
+    - Reads independent and identically distributed
+    variables:
+    - N
+    - epsilon
+    - P
+    - delta
+    - D_KL
+    - z
+    related_equations:
+    - '7.7'
+    - '6.3'
+    examples:
+    - scenario: P=50, ε=0.01 (99% posterior), δ=0.05, D_KL=6.89 bits
+      result: N ≥ 2.22 reads (high distinguishability)
+    - scenario: P=50, ε=0.01, δ=0.05, D_KL=1.0 bit
+      result: N ≥ 15.3 reads (low distinguishability)
+    importance: critical
+    difficulty: hard
+    tags:
+    - coverage
+    - experimental-design
+    - kl-divergence
+    - classification
+  '7.7':
+    id: '7.7'
+    chapter: 7
+    index: 7
+    title: KL divergence lower bound
+    latex: D_{\text{KL}}(h_1 || h_2) \geq k \cdot D_{\text{KL}}^{\text{min}}
+    latex_full: 'For haplotypes differing at $k$ positions with confusion matrix $\mathbf{C}$:
+
+      \begin{equation}
+
+      D_{\text{KL}}(h_1 || h_2) \geq k \cdot D_{\text{KL}}^{\text{min}}
+
+      \end{equation}
+
+      where $D_{\text{KL}}^{\text{min}} = \min_{a \neq b} \sum_{o} C_{ao} \log\frac{C_{ao}}{C_{bo}}$
+
+      '
+    type: theoretical-bound
+    category: information-theory
+    description: Lower bound on KL divergence between haplotypes based on number of
+      distinguishing positions and minimum per-position divergence
+    physical_meaning: Information content for distinguishing haplotypes scales with
+      number of variant positions and per-position distinguishability
+    assumptions:
+    - Confusion matrix accurately models read errors
+    - Variants contribute independently to divergence
+    - Per-position divergence bounded below by D_KL^min
+    variables:
+    - D_KL
+    - k
+    - C
+    related_equations:
+    - '7.6'
+    examples:
+    - scenario: k=1 SNP, Q30 basecalling
+      result: D_KL^min ≈ 6.89 bits, so D_KL ≥ 6.89 bits
+    - scenario: k=3 SNPs, Q30 basecalling
+      result: D_KL ≥ 3 × 6.89 = 20.67 bits
+    - scenario: k=10 variants, Q20 basecalling
+      result: D_KL ≥ 10 × 4.6 = 46 bits (very distinguishable)
+    importance: important
+    difficulty: hard
+    tags:
+    - information-theory
+    - kl-divergence
+    - distinguishability
+  '11.1':
+    id: '11.1'
+    chapter: 11
+    index: 1
+    title: Purity ceiling on achievable TPR
+    latex: \text{TPR}(s_i) \leq \pi_i
+    latex_full: 'Purity ceiling theorem applied to SMA-seq:
+
+      \begin{equation}
+
+      \text{TPR}(s_i) \leq \pi_i
+
+      \end{equation}
+
+      '
+    type: constraint
+    category: quality-control
+    description: Fundamental constraint that true positive rate cannot exceed template
+      purity in SMA-seq measurements
+    physical_meaning: Library contamination fundamentally limits achievable accuracy
+      - cannot measure accuracy beyond purity
+    assumptions:
+    - Known reference standard purity π_i
+    - Contaminants distinct from target sequence
+    variables:
+    - TPR
+    - pi
+    related_equations:
+    - '5.2'
+    - '11.2'
+    examples:
+    - scenario: Plasmid library with 95% purity
+      result: Maximum measurable TPR ≤ 0.95
+    - scenario: 'Violation: TPR = 0.98, π = 0.95'
+      result: Indicates contamination or measurement error
+    importance: critical
+    difficulty: easy
+    tags:
+    - purity
+    - sma-seq
+    - quality-control
+    - constraint
+  '11.2':
+    id: '11.2'
+    chapter: 11
+    index: 2
+    title: Purity degradation during replication
+    latex: \pi_{\text{upper}}(k, L, r) \approx (1 - r)^{kL}
+    latex_full: 'Upper bound on purity after bacterial replication:
+
+      \begin{equation}
+
+      \pi_{\text{upper}}(k, L, r) \approx (1 - r)^{kL}
+
+      \end{equation}
+
+      '
+    type: model
+    category: purity-theory
+    description: Purity degradation in bacterial replication as function of cycles
+      (k), plasmid length (L), and per-base error rate (r)
+    physical_meaning: Each replication cycle introduces errors - longer plasmids and
+      more cycles lead to exponential purity decay
+    assumptions:
+    - Independent errors at each base
+    - Constant per-base replication error rate r
+    - No selection against errors
+    variables:
+    - pi
+    - k
+    - L
+    - r
+    related_equations:
+    - '11.1'
+    - '5.5'
+    examples:
+    - scenario: k=20 cycles, L=5000 bp, r=10^-9
+      result: π ≈ (1 - 10^-9)^(20×5000) ≈ 0.9999
+    - scenario: k=30 cycles, L=10000 bp, r=10^-9
+      result: π ≈ 0.9997 (purity decay visible)
+    importance: important
+    difficulty: medium
+    tags:
+    - purity
+    - replication
+    - bacterial-standards
+  '11.3':
+    id: '11.3'
+    chapter: 11
+    index: 3
+    title: Single Molecule Accuracy (SMA) definition
+    latex: \mathrm{SMA}(s_i) := \mathrm{TPR}_i = \frac{C_{ii}}{N_i}
+    latex_full: 'For a standard with true sequence $s_i$:
+
+      \begin{equation}
+
+      \mathrm{SMA}(s_i) := \mathrm{TPR}_i = \frac{C_{ii}}{N_i}
+
+      \end{equation}
+
+      where $C_{ii}$ = count of reads correctly identified and $N_i$ = total reads
+      from standard
+
+      '
+    type: definition
+    category: quality-metric
+    description: 'Central SMA-seq metric: fraction of reads from standard that are
+      correctly classified as that standard'
+    physical_meaning: Direct measurement of sequencing+basecalling accuracy on known-truth
+      molecules
+    assumptions:
+    - Known reference standard
+    - Purity π ≥ 0.95
+    - Complete reads (signal_positive)
+    variables:
+    - SMA
+    - TPR
+    - C
+    - N
+    related_equations:
+    - '11.1'
+    - '11.15'
+    - '11.17'
+    examples:
+    - scenario: 100,000 reads from standard, 85,000 correctly classified
+      result: SMA = 85,000/100,000 = 0.85 (85%)
+    - scenario: Clinical acceptance threshold
+      result: SMA ≥ 0.85 for deployment
+    importance: critical
+    difficulty: easy
+    tags:
+    - sma
+    - accuracy
+    - quality-metric
+    - sma-seq
+  '11.4':
+    id: '11.4'
+    chapter: 11
+    index: 4
+    title: Confusion matrix construction
+    latex: \mathbf{M} = \begin{bmatrix} c_{11} & \cdots & c_{1v} \\ \vdots & \ddots
+      & \vdots \\ c_{u1} & \cdots & c_{uv} \end{bmatrix}
+    latex_full: 'For $u$ experiments and $v$ unique observed sequences:
+
+      \begin{equation}
+
+      \mathbf{M} = \begin{bmatrix}
+
+      c_{11} & c_{12} & \cdots & c_{1v} \\
+
+      c_{21} & c_{22} & \cdots & c_{2v} \\
+
+      \vdots & \vdots & \ddots & \vdots \\
+
+      c_{u1} & c_{u2} & \cdots & c_{uv}
+
+      \end{bmatrix}
+
+      \end{equation}
+
+      where rows = true sequences (experiments), columns = observed sequences
+
+      '
+    type: construction
+    category: confusion-matrix
+    description: Count matrix for SMA-seq experiments - each entry c_ij counts reads
+      from experiment i basecalled as sequence j
+    physical_meaning: Empirical measurement of sequencing error patterns across all
+      possible misclassifications
+    assumptions:
+    - Independent reads
+    - Known ground truth for each experiment
+    variables:
+    - C
+    - u
+    - v
+    related_equations:
+    - '11.3'
+    - '11.8'
+    examples:
+    - scenario: 3 standards, 50 unique observed sequences
+      result: Matrix M is 3×50
+    importance: important
+    difficulty: medium
+    tags:
+    - confusion-matrix
+    - sma-seq
+    - empirical-measurement
+  '11.5':
+    id: '11.5'
+    chapter: 11
+    index: 5
+    title: Quality overestimation fraction
+    latex: d = \frac{1}{|\mathcal{U}_E|} \sum_{u \in \mathcal{U}_E} \mathbb{I}[Q_{\text{pred}}(u)
+      > Q_{\text{emp}}(u)] \times 100\%
+    latex_full: 'Percentage of sequences with basecaller quality overestimation:
+
+      \begin{equation}
+
+      d = \frac{1}{|\mathcal{U}_E|} \sum_{u \in \mathcal{U}_E} \mathbb{I}[Q_{\text{pred}}(u)
+      > Q_{\text{emp}}(u)] \times 100\%
+
+      \end{equation}
+
+      '
+    type: quality-metric
+    category: calibration
+    description: Fraction of unique sequences for which basecaller overstates quality
+      (predicts better than empirical)
+    physical_meaning: Binary indicator of miscalibration prevalence - high d indicates
+      systematic overconfidence
+    assumptions:
+    - Sufficient reads per unique sequence for reliable empirical Q
+    - Independent sequences
+    variables:
+    - d
+    - Q_pred
+    - Q_emp
+    related_equations:
+    - '11.6'
+    - '11.12'
+    - '11.13'
+    examples:
+    - scenario: Well-calibrated basecaller
+      result: d ≈ 50% (equal over/under-estimation)
+    - scenario: Systematic overconfidence
+      result: 'd > 70% (warning: recalibrate)'
+    - scenario: Clinical acceptance
+      result: d ≤ 30% required
+    importance: important
+    difficulty: easy
+    tags:
+    - calibration
+    - quality-control
+    - overconfidence
+  '11.6':
+    id: '11.6'
+    chapter: 11
+    index: 6
+    title: Expected Calibration Error (ECE)
+    latex: \text{ECE} = \sum_{m=1}^{M} \frac{n_m}{N} \left| \bar{p}_m - \bar{y}_m
+      \right|
+    latex_full: 'Expected Calibration Error across M bins:
+
+      \begin{equation}
+
+      \text{ECE} = \sum_{m=1}^{M} \frac{n_m}{N} \left| \bar{p}_m - \bar{y}_m \right|
+
+      \end{equation}
+
+      where $n_m$ = reads in bin $m$, $N$ = total reads, $\bar{p}_m$ = mean predicted
+      error, $\bar{y}_m$ = empirical error rate
+
+      '
+    type: quality-metric
+    category: calibration
+    description: Weighted average deviation between predicted and empirical error
+      rates across probability bins
+    physical_meaning: Quantifies calibration quality - measures how well predicted
+      probabilities match observed frequencies
+    assumptions:
+    - Binning strategy chosen (quantile or uniform)
+    - Sufficient samples per bin (≥100 recommended)
+    variables:
+    - ECE
+    - M
+    - n_m
+    - N
+    - p_m
+    - y_m
+    related_equations:
+    - '11.5'
+    - '11.7'
+    examples:
+    - scenario: Perfect calibration
+      result: ECE = 0
+    - scenario: Acceptable clinical performance
+      result: ECE < 0.02 (2%)
+    - scenario: Requires recalibration
+      result: ECE > 0.05
+    importance: critical
+    difficulty: medium
+    tags:
+    - calibration
+    - ece
+    - quality-metric
+  '11.7':
+    id: '11.7'
+    chapter: 11
+    index: 7
+    title: Brier score for calibration
+    latex: \text{Brier} = \frac{1}{N} \sum_{i=1}^{N} (\hat{p}_{\text{err},i} - y_i)^2
+    latex_full: 'Brier score for calibration assessment:
+
+      \begin{equation}
+
+      \text{Brier} = \frac{1}{N} \sum_{i=1}^{N} (\hat{p}_{\text{err},i} - y_i)^2
+
+      \end{equation}
+
+      where $\hat{p}_{\text{err},i}$ = predicted error probability, $y_i \in \{0,1\}$
+      = error indicator
+
+      '
+    type: quality-metric
+    category: calibration
+    description: Proper scoring rule combining calibration and sharpness (discrimination
+      ability)
+    physical_meaning: Mean squared error between predicted error probabilities and
+      actual outcomes
+    assumptions:
+    - Binary outcomes (error/no-error)
+    - 'Convention: y_i=1 for error, y_i=0 for correct'
+    variables:
+    - Brier
+    - p_err
+    - y
+    - N
+    related_equations:
+    - '11.6'
+    examples:
+    - scenario: Excellent calibration
+      result: Brier < 0.05
+    - scenario: Acceptable clinical use
+      result: Brier ∈ [0.05, 0.10]
+    - scenario: Poor calibration
+      result: Brier > 0.10 (requires retraining)
+    importance: important
+    difficulty: medium
+    tags:
+    - calibration
+    - brier-score
+    - proper-scoring-rule
+  '11.8':
+    id: '11.8'
+    chapter: 11
+    index: 8
+    title: SEER matrix normalization
+    latex: M_{a,b} = \frac{C_{a,b}}{\sum_{b' \in \Sigma \cup \{\varepsilon\}} C_{a,b'}}
+    latex_full: 'Per-base SEER matrix via row normalization:
+
+      \begin{equation}
+
+      M_{a,b} = \frac{C_{a,b}}{\sum_{b'' \in \Sigma \cup \{\varepsilon\}} C_{a,b''}}
+      \quad \text{for } a \in \Sigma \cup \{\varepsilon\}
+
+      \end{equation}
+
+      where $\Sigma = \{A, C, G, T\}$ and $\varepsilon$ = gap (indel)
+
+      '
+    type: normalization
+    category: confusion-matrix
+    description: Row normalization of alignment pair counts to create probability
+      distribution over observed bases given true base
+    physical_meaning: Each row represents conditional distribution P(observed | true)
+      for per-base errors including indels
+    assumptions:
+    - Aligned reads to known reference
+    - No double gaps (ε, ε)
+    variables:
+    - M
+    - C
+    - a
+    - b
+    - Sigma
+    - epsilon
+    related_equations:
+    - '11.4'
+    - '11.9'
+    examples:
+    - scenario: 'True A: 990 match A, 5 called C, 3 called G, 2 deleted'
+      result: M_A,A=0.990, M_A,C=0.005, M_A,G=0.003, M_A,ε=0.002
+    importance: important
+    difficulty: medium
+    tags:
+    - seer-matrix
+    - normalization
+    - per-base-errors
+  '11.9':
+    id: '11.9'
+    chapter: 11
+    index: 9
+    title: Aggregate indel rates
+    latex: r_{\text{ins}} = \frac{\sum_{b \in \Sigma} C_{\varepsilon,b}}{\sum_{a,b}
+      C_{a,b}}, \quad r_{\text{del}} = \frac{\sum_{a \in \Sigma} C_{a,\varepsilon}}{\sum_{a,b}
+      C_{a,b}}
+    latex_full: 'Overall insertion and deletion rates from SEER matrix:
+
+      \begin{equation}
+
+      r_{\text{ins}} = \frac{\sum_{b \in \Sigma} C_{\varepsilon,b}}{\sum_{a \in \Sigma}
+      \sum_{b \in \Sigma \cup \{\varepsilon\}} C_{a,b}}, \quad
+
+      r_{\text{del}} = \frac{\sum_{a \in \Sigma} C_{a,\varepsilon}}{\sum_{a \in \Sigma}
+      \sum_{b \in \Sigma \cup \{\varepsilon\}} C_{a,b}}
+
+      \end{equation}
+
+      '
+    type: rate-calculation
+    category: error-metrics
+    description: Fraction of reference bases deleted and fraction of aligned positions
+      that are insertions
+    physical_meaning: Quantifies indel error burden separate from substitutions
+    assumptions:
+    - Alignment to known reference
+    - Proper handling of gap normalization
+    variables:
+    - r_ins
+    - r_del
+    - C
+    - Sigma
+    - epsilon
+    related_equations:
+    - '11.8'
+    - '11.18'
+    examples:
+    - scenario: ONT R9.4 typical
+      result: r_ins ≈ 0.02, r_del ≈ 0.03
+    - scenario: ONT R10.4 improved
+      result: r_ins ≈ 0.005, r_del ≈ 0.008
+    importance: important
+    difficulty: medium
+    tags:
+    - indels
+    - error-rates
+    - seer-matrix
+  '11.10':
+    id: '11.10'
+    chapter: 11
+    index: 10
+    title: Per-base error indicator
+    latex: Y_i = \begin{cases} 1 & \text{if base } i \text{ is error} \\ 0 & \text{if
+      match} \end{cases}
+    latex_full: 'Binary error indicator for base $i$ in read $r$:
+
+      \begin{equation}
+
+      Y_i = \begin{cases}
+
+      1 & \text{if base } i \text{ in } r \text{ is a mismatch or involved in an indel}
+      \\
+
+      0 & \text{otherwise (match)}
+
+      \end{cases}
+
+      \end{equation}
+
+      '
+    type: indicator
+    category: error-metrics
+    description: Binary variable indicating whether base i contains an error (substitution,
+      insertion, or deletion)
+    physical_meaning: Fundamental unit for error rate calculations - 1 if error, 0
+      if correct
+    assumptions:
+    - Aligned to known reference
+    - Unambiguous error classification
+    variables:
+    - Y
+    - i
+    related_equations:
+    - '11.11'
+    - '11.17'
+    examples:
+    - scenario: Base matches reference
+      result: Y_i = 0
+    - scenario: Substitution, insertion, or deletion
+      result: Y_i = 1
+    importance: foundational
+    difficulty: easy
+    tags:
+    - error-indicator
+    - per-base
+    - binary
+  '11.11':
+    id: '11.11'
+    chapter: 11
+    index: 11
+    title: Empirical per-read error rate
+    latex: \hat{e}^{\text{emp}}(r) = \frac{1}{\ell} \sum_{i=1}^{\ell} Y_i
+    latex_full: 'Empirical error rate for read $r$ of length $\ell$:
+
+      \begin{equation}
+
+      \hat{e}^{\text{emp}}(r) = \frac{1}{\ell} \sum_{i=1}^{\ell} Y_i
+
+      \end{equation}
+
+      '
+    type: rate-calculation
+    category: error-metrics
+    description: Fraction of bases in read that contain errors (substitutions, insertions,
+      or deletions)
+    physical_meaning: Directly observed error rate from alignment to known reference
+    assumptions:
+    - Aligned to known reference standard
+    - Error indicators Y_i computed for all bases
+    variables:
+    - e_emp
+    - ell
+    - Y
+    related_equations:
+    - '11.10'
+    - '11.12'
+    - '11.13'
+    examples:
+    - scenario: 1000 bp read with 15 errors
+      result: e_emp = 15/1000 = 0.015 (1.5%)
+    - scenario: Perfect read (no errors)
+      result: e_emp = 0
+    importance: important
+    difficulty: easy
+    tags:
+    - error-rate
+    - empirical
+    - per-read
+  '11.12':
+    id: '11.12'
+    chapter: 11
+    index: 12
+    title: Empirical read quality score
+    latex: Q_{\text{read}}^{\text{emp}}(r) = -10 \log_{10}\left( \hat{e}^{\text{emp}}(r)
+      \right)
+    latex_full: 'Phred-scale quality score from empirical error rate:
+
+      \begin{equation}
+
+      Q_{\text{read}}^{\text{emp}}(r) = -10 \log_{10}\left( \hat{e}^{\text{emp}}(r)
+      \right)
+
+      \end{equation}
+
+      '
+    type: conversion
+    category: quality-score
+    description: Convert empirical per-read error rate to Phred quality score for
+      comparison with basecaller predictions
+    physical_meaning: Empirical quality measured from known-truth alignment - ground
+      truth for calibration
+    assumptions:
+    - Error rate e_emp > 0 (avoid log(0))
+    - Phred scale definition
+    variables:
+    - Q_emp
+    - e_emp
+    related_equations:
+    - '11.11'
+    - '11.13'
+    - '11.20'
+    examples:
+    - scenario: e_emp = 0.01 (1% error)
+      result: Q_emp = 20
+    - scenario: e_emp = 0.001 (0.1% error)
+      result: Q_emp = 30
+    importance: important
+    difficulty: easy
+    tags:
+    - quality-score
+    - empirical
+    - phred-scale
+  '11.13':
+    id: '11.13'
+    chapter: 11
+    index: 13
+    title: Predicted read quality score
+    latex: \hat{e}^{\text{pred}}(r) = \frac{1}{\ell} \sum_{i=1}^{\ell} \hat{p}_i,
+      \quad Q_{\text{read}}^{\text{pred}}(r) = -10 \log_{10}\left( \hat{e}^{\text{pred}}(r)
+      \right)
+    latex_full: 'Predicted error rate and quality from basecaller Q scores:
+
+      \begin{equation}
+
+      \hat{p}_i = 10^{-Q_i/10}, \quad
+
+      \hat{e}^{\text{pred}}(r) = \frac{1}{\ell} \sum_{i=1}^{\ell} \hat{p}_i, \quad
+
+      Q_{\text{read}}^{\text{pred}}(r) = -10 \log_{10}\left( \hat{e}^{\text{pred}}(r)
+      \right)
+
+      \end{equation}
+
+      '
+    type: conversion
+    category: quality-score
+    description: Average predicted error probability from per-base quality scores,
+      converted to read-level quality
+    physical_meaning: Basecaller's prediction of read quality - compared against empirical
+      to assess calibration
+    assumptions:
+    - Per-base quality scores Q_i available
+    - Phred scale definition
+    variables:
+    - e_pred
+    - Q_pred
+    - p_i
+    - Q_i
+    - ell
+    related_equations:
+    - '11.12'
+    - '11.20'
+    examples:
+    - scenario: Read with mean Q=20 per base
+      result: e_pred ≈ 0.01, Q_pred ≈ 20
+    - scenario: Variable quality Q ∈ [10,30]
+      result: Q_pred = weighted average in Phred space
+    importance: important
+    difficulty: medium
+    tags:
+    - quality-score
+    - predicted
+    - basecaller
+  '11.14':
+    id: '11.14'
+    chapter: 11
+    index: 14
+    title: Exact-sequence SMA probability
+    latex: \text{SMA}_{\text{exact}} = \Pr(\hat{s}(r) = s_\star \mid \text{end\_reason}(r)
+      = \text{signal\_positive})
+    latex_full: 'Exact-sequence Single Molecule Accuracy:
+
+      \begin{equation}
+
+      \text{SMA}_{\text{exact}} = \Pr(\hat{s}(r) = s_\star \mid \text{end\_reason}(r)
+      = \text{signal\_positive})
+
+      \end{equation}
+
+      '
+    type: definition
+    category: quality-metric
+    description: Probability that a complete read perfectly matches reference standard
+      end-to-end (binary accuracy)
+    physical_meaning: Fraction of complete reads with zero errors - stringent accuracy
+      metric
+    assumptions:
+    - Complete reads only (signal_positive)
+    - Known reference standard s_star
+    - Binary classification (perfect vs imperfect)
+    variables:
+    - SMA_exact
+    - s_star
+    related_equations:
+    - '11.3'
+    - '11.15'
+    - '11.17'
+    examples:
+    - scenario: High-accuracy basecaller, short reads
+      result: SMA_exact ≈ 0.90
+    - scenario: Long reads (>10 kb)
+      result: SMA_exact < 0.01 (exponential decay)
+    importance: important
+    difficulty: easy
+    tags:
+    - sma
+    - exact-match
+    - accuracy
+  '11.15':
+    id: '11.15'
+    chapter: 11
+    index: 15
+    title: SMA exact-match empirical estimator
+    latex: \widehat{\text{SMA}}_{\text{exact}} = \frac{1}{|R_{S+}|} \sum_{r \in R_{S+}}
+      \mathbb{I}\{\hat{s}(r) = s_\star\}
+    latex_full: 'Empirical estimator for exact-sequence SMA:
+
+      \begin{equation}
+
+      \widehat{\text{SMA}}_{\text{exact}} = \frac{1}{|R_{S+}|} \sum_{r \in R_{S+}}
+      \mathbb{I}\{\hat{s}(r) = s_\star\}
+
+      \end{equation}
+
+      where $R_{S+}$ = reads with end_reason = signal_positive
+
+      '
+    type: estimator
+    category: quality-metric
+    description: 'Binomial proportion estimator: fraction of complete reads that are
+      perfect matches'
+    physical_meaning: Sample statistic for exact-sequence accuracy from SMA-seq experiment
+    assumptions:
+    - Independent reads
+    - Known reference s_star
+    - Signal-positive reads only
+    variables:
+    - SMA_exact
+    - R
+    - s_star
+    related_equations:
+    - '11.14'
+    - '11.16'
+    examples:
+    - scenario: 10,000 reads, 8,500 perfect matches
+      result: SMA_exact = 8500/10000 = 0.85
+    importance: important
+    difficulty: easy
+    tags:
+    - sma
+    - estimator
+    - exact-match
+  '11.16':
+    id: '11.16'
+    chapter: 11
+    index: 16
+    title: Wilson confidence interval for SMA
+    latex: \text{CI}_{95\%} = \frac{1}{1 + \frac{z^2}{n}} \left( \hat{p} + \frac{z^2}{2n}
+      \pm z \sqrt{\frac{\hat{p}(1-\hat{p})}{n} + \frac{z^2}{4n^2}} \right)
+    latex_full: 'Wilson score 95% confidence interval for binomial proportion:
+
+      \begin{equation}
+
+      \text{CI}_{95\%}(\text{SMA}_{\text{exact}}) = \frac{1}{1 + \frac{z^2}{n}} \left(
+      \hat{p} + \frac{z^2}{2n} \pm z \sqrt{\frac{\hat{p}(1-\hat{p})}{n} + \frac{z^2}{4n^2}}
+      \right)
+
+      \end{equation}
+
+      where $\hat{p} = \widehat{\text{SMA}}_{\text{exact}}$, $n = |R_{S+}|$, $z =
+      1.96$
+
+      '
+    type: confidence-interval
+    category: statistical-inference
+    description: Exact confidence interval for binomial proportion (better than normal
+      approximation for extreme proportions)
+    physical_meaning: Quantifies uncertainty in SMA estimate due to finite sample
+      size
+    assumptions:
+    - Binomial sampling
+    - Independent reads
+    variables:
+    - CI
+    - p
+    - n
+    - z
+    related_equations:
+    - '11.15'
+    examples:
+    - scenario: SMA=0.85, n=1000
+      result: CI_95% ≈ [0.826, 0.872]
+    - scenario: SMA=0.99, n=100 (extreme proportion)
+      result: Wilson better than normal approximation
+    importance: important
+    difficulty: medium
+    tags:
+    - confidence-interval
+    - wilson-score
+    - binomial
+  '11.17':
+    id: '11.17'
+    chapter: 11
+    index: 17
+    title: Per-base SMA
+    latex: \text{SMA}_{\text{base}} = 1 - \frac{\sum_{r \in R_{S+}} \sum_{i=1}^{\ell_r}
+      Y_i}{\sum_{r \in R_{S+}} \ell_r}
+    latex_full: 'Per-base SMA aggregated over complete reads:
+
+      \begin{equation}
+
+      \text{SMA}_{\text{base}} = 1 - \frac{\sum_{r \in R_{S+}} \sum_{i=1}^{\ell_r}
+      Y_i}{\sum_{r \in R_{S+}} \ell_r}
+
+      \end{equation}
+
+      where $Y_i$ = per-base error indicator, $\ell_r$ = read length
+
+      '
+    type: quality-metric
+    category: accuracy
+    description: Average per-base accuracy across all complete reads (continuous metric,
+      unlike binary exact-match SMA)
+    physical_meaning: Fraction of bases called correctly - more granular than exact-sequence
+      SMA
+    assumptions:
+    - Per-base error indicators computed
+    - Complete reads only (signal_positive)
+    variables:
+    - SMA_base
+    - Y
+    - ell
+    - R
+    related_equations:
+    - '11.10'
+    - '11.11'
+    - '11.14'
+    - '11.18'
+    examples:
+    - scenario: 100M bases, 2M errors
+      result: SMA_base = 1 - 2M/100M = 0.98 (98%)
+    - scenario: Q30-level basecalling
+      result: SMA_base ≈ 0.999
+    importance: critical
+    difficulty: easy
+    tags:
+    - sma
+    - per-base
+    - accuracy
+  '11.18':
+    id: '11.18'
+    chapter: 11
+    index: 18
+    title: SMA decomposition into error types
+    latex: \text{SMA}_{\text{base}} = 1 - (r_{\text{mismatch}} + r_{\text{ins}} +
+      r_{\text{del}})
+    latex_full: 'SMA decomposition by error type:
+
+      \begin{equation}
+
+      \text{SMA}_{\text{base}} = 1 - (r_{\text{mismatch}} + r_{\text{ins}} + r_{\text{del}})
+
+      \end{equation}
+
+      '
+    type: decomposition
+    category: error-analysis
+    description: Partition SMA into contributions from substitutions, insertions,
+      and deletions
+    physical_meaning: Identifies which error types dominate - guides targeted basecaller
+      improvements
+    assumptions:
+    - Mutually exclusive error types
+    - Error rates sum to total error rate
+    variables:
+    - SMA_base
+    - r_mismatch
+    - r_ins
+    - r_del
+    related_equations:
+    - '11.17'
+    - '11.9'
+    examples:
+    - scenario: ONT R9.4 typical
+      result: r_mismatch=0.04, r_ins=0.02, r_del=0.03 → SMA=0.91
+    - scenario: ONT R10.4 improved
+      result: r_mismatch=0.01, r_ins=0.005, r_del=0.008 → SMA=0.977
+    importance: important
+    difficulty: easy
+    tags:
+    - sma
+    - decomposition
+    - error-types
+  '11.19':
+    id: '11.19'
+    chapter: 11
+    index: 19
+    title: Predicted per-base SMA
+    latex: \widehat{\text{SMA}}_{\text{base}}^{\text{pred}} = 1 - \frac{\sum_{r \in
+      R_{S+}} \sum_{i=1}^{\ell_r} \hat{p}_i}{\sum_{r \in R_{S+}} \ell_r}
+    latex_full: 'Predicted SMA from basecaller quality scores:
+
+      \begin{equation}
+
+      \widehat{\text{SMA}}_{\text{base}}^{\text{pred}} = 1 - \frac{\sum_{r \in R_{S+}}
+      \sum_{i=1}^{\ell_r} \hat{p}_i}{\sum_{r \in R_{S+}} \ell_r}
+
+      \end{equation}
+
+      where $\hat{p}_i = 10^{-Q_i/10}$
+
+      '
+    type: prediction
+    category: quality-metric
+    description: Basecaller's predicted per-base accuracy aggregated across dataset
+    physical_meaning: What basecaller claims the accuracy is - compared against empirical
+      SMA for calibration
+    assumptions:
+    - Quality scores Q_i available for all bases
+    - Phred scale accurate
+    variables:
+    - SMA_pred
+    - p_i
+    - Q_i
+    - ell
+    - R
+    related_equations:
+    - '11.17'
+    - '11.20'
+    examples:
+    - scenario: Basecaller predicts Q30 average
+      result: SMA_pred ≈ 1 - 0.001 = 0.999
+    - scenario: Compare to SMA_base = 0.98
+      result: 'Overconfidence: Δ_SMA = +0.019'
+    importance: important
+    difficulty: medium
+    tags:
+    - sma
+    - predicted
+    - calibration
+  '11.20':
+    id: '11.20'
+    chapter: 11
+    index: 20
+    title: SMA calibration gap
+    latex: \Delta_{\text{SMA}} = \widehat{\text{SMA}}_{\text{base}}^{\text{pred}}
+      - \text{SMA}_{\text{base}}
+    latex_full: 'Calibration gap between predicted and empirical SMA:
+
+      \begin{equation}
+
+      \Delta_{\text{SMA}} = \widehat{\text{SMA}}_{\text{base}}^{\text{pred}} - \text{SMA}_{\text{base}}
+
+      \end{equation}
+
+      '
+    type: calibration-metric
+    category: quality-control
+    description: Difference between basecaller-predicted and empirically-measured
+      per-base accuracy
+    physical_meaning: Positive Δ indicates overconfidence (basecaller claims better
+      than reality), negative indicates underconfidence
+    assumptions:
+    - Both SMA metrics computed on same dataset
+    - Complete reads (signal_positive) only
+    variables:
+    - Delta_SMA
+    - SMA_pred
+    - SMA_base
+    related_equations:
+    - '11.19'
+    - '11.17'
+    - '11.12'
+    - '11.13'
+    examples:
+    - scenario: Perfect calibration
+      result: Δ_SMA = 0
+    - scenario: Basecaller overconfidence
+      result: Δ_SMA = +0.02 (predicts 0.99, actual 0.97)
+    - scenario: Acceptance threshold
+      result: '|Δ_SMA| < 0.01 for clinical deployment'
+    importance: critical
+    difficulty: easy
+    tags:
+    - calibration
+    - sma
+    - quality-control
+  '8.1':
+    id: '8.1'
+    chapter: 8
+    index: 1
+    title: Plasmid purity lower bound from technical replication
+    latex: \pi \geq \frac{\text{\# reads agreeing across replicates}}{\text{Total
+      reads}}
+    latex_full: 'Empirical lower bound on plasmid standard purity:
+
+      \begin{equation}
+
+      \pi \geq \frac{\text{\# reads agreeing across replicates}}{\text{Total reads}}
+
+      \end{equation}
+
+      '
+    type: empirical-bound
+    category: purity-estimation
+    description: Lower bound on plasmid standard purity from agreement rate across
+      technical replicates
+    physical_meaning: Technical replicates measure same molecules - high agreement
+      implies high purity
+    assumptions:
+    - Independent library preparations from same plasmid prep
+    - 3-5 technical replicates sequenced
+    - Agreement defined as exact sequence match
+    variables:
+    - pi
+    related_equations:
+    - '5.5'
+    - '11.1'
+    - '11.2'
+    examples:
+    - scenario: 10,000 reads, 9,990 agree across replicates
+      result: π ≥ 9990/10000 = 0.999
+    - scenario: High-quality plasmid standard
+      result: Agreement rate >99.9%, so π ≥ 0.999
+    - scenario: Conservative estimate combining with Sanger
+      result: π ≥ 0.995
+    importance: important
+    difficulty: easy
+    tags:
+    - purity
+    - plasmid-standards
+    - quality-control
+    - technical-replication
+  '9.1':
+    id: '9.1'
+    chapter: 9
+    index: 1
+    title: Dual Cas9 cutting probability
+    latex: P_{\text{capture}} = e_1 \cdot e_2 \cdot \Prob(\text{Fragment length} <
+      L_g)
+    latex_full: 'Probability of capturing target fragment via dual Cas9 cutting:
+
+      \begin{equation}
+
+      P_{\text{capture}} = e_1 \cdot e_2 \cdot \Prob(\text{Fragment length} < L_g)
+
+      \end{equation}
+
+      '
+    type: probability-model
+    category: targeted-enrichment
+    description: Capture probability for dual-guide Cas9 enrichment strategy - product
+      of independent cutting efficiencies and fragment length requirement
+    physical_meaning: 'Three independent events must occur: guide 1 cuts, guide 2
+      cuts, and fragment fits within cutspan'
+    assumptions:
+    - Independent cutting by two guide RNAs
+    - Pre-fragmented DNA population
+    - Fragment length distribution known or measured
+    variables:
+    - e_1
+    - e_2
+    - L_g
+    - P_capture
+    related_equations:
+    - '9.2'
+    - '9.7'
+    examples:
+    - scenario: e1=0.9, e2=0.8, P(frag<5kb)=0.92
+      result: P_capture = 0.9 × 0.8 × 0.92 = 0.661 (66.1%)
+    - scenario: Excellent guides e1=e2=0.95, short target
+      result: P_capture ≈ 0.90 (90%)
+    importance: critical
+    difficulty: medium
+    tags:
+    - cas9
+    - enrichment
+    - capture-probability
+  '9.2':
+    id: '9.2'
+    chapter: 9
+    index: 2
+    title: Fragment length CDF
+    latex: \Prob(\text{Fragment length} < L_g) = \int_{0}^{L_g} f_{\text{emp}}(\ell)
+      \, d\ell
+    latex_full: 'Cumulative distribution function for fragment lengths:
+
+      \begin{equation}
+
+      \Prob(\text{Fragment length} < L_g) = \int_{0}^{L_g} f_{\text{emp}}(\ell) \,
+      d\ell
+
+      \end{equation}
+
+      where $f_{\text{emp}}(\ell)$ is empirical fragment length distribution
+
+      '
+    type: probability-distribution
+    category: fragment-analysis
+    description: Probability that randomly selected fragment is shorter than target
+      capture span
+    physical_meaning: Fraction of DNA fragments that will be retained within dual
+      Cas9 cutspan
+    assumptions:
+    - Empirical fragment distribution f_emp(ℓ) measured or estimated
+    - Random fragmentation (mechanical or enzymatic)
+    variables:
+    - L_g
+    - f_emp
+    - ell
+    related_equations:
+    - '9.1'
+    examples:
+    - scenario: Exponential dist, mean 2kb, L_g=5kb
+      result: P(frag<5kb) = 1 - e^(-2.5) = 0.918
+    - scenario: Uniform dist [1kb, 10kb], L_g=5kb
+      result: P(frag<5kb) = 4/9 ≈ 0.44
+    importance: important
+    difficulty: medium
+    tags:
+    - fragment-distribution
+    - cdf
+    - enrichment
+  '9.3':
+    id: '9.3'
+    chapter: 9
+    index: 3
+    title: T7E1 cutting efficiency
+    latex: e = 1 - \sqrt{1 - \frac{I_{\text{digested}}}{I_{\text{total}}}}
+    latex_full: 'Cutting efficiency from T7 endonuclease I assay:
+
+      \begin{equation}
+
+      e = 1 - \sqrt{1 - \frac{I_{\text{digested}}}{I_{\text{total}}}}
+
+      \end{equation}
+
+      where $I_{\text{digested}}$ = intensity of cleaved bands, $I_{\text{total}}$
+      = sum of all bands
+
+      '
+    type: experimental-assay
+    category: validation
+    description: Empirical measurement of Cas9 guide RNA cutting efficiency via heteroduplex
+      mismatch assay
+    physical_meaning: Accounts for quadratic relationship between cutting efficiency
+      and heteroduplex formation in T7E1 assay
+    assumptions:
+    - T7E1 cleaves heteroduplex DNA formed between cut and uncut strands
+    - Complete denaturation and reannealing
+    - Accurate band intensity quantification
+    variables:
+    - e
+    - I_digested
+    - I_total
+    related_equations:
+    - '9.1'
+    examples:
+    - scenario: 50% of DNA digested
+      result: e = 1 - sqrt(0.5) = 0.293 (poor guide)
+    - scenario: 80% of DNA digested
+      result: e = 1 - sqrt(0.2) = 0.553
+    - scenario: 95% of DNA digested
+      result: e = 1 - sqrt(0.05) = 0.776 (good guide)
+    importance: important
+    difficulty: medium
+    tags:
+    - t7e1
+    - cutting-efficiency
+    - validation
+    - cas9
+  '9.4':
+    id: '9.4'
+    chapter: 9
+    index: 4
+    title: On-target fraction
+    latex: \text{On-target fraction} = \frac{\text{Reads mapping to } [p_1 - 100,
+      p_2 + 100]}{\text{Total reads}}
+    latex_full: 'Fraction of reads mapping to target region:
+
+      \begin{equation}
+
+      \text{On-target fraction} = \frac{\text{Reads mapping to } [p_1 - 100, p_2 +
+      100]}{\text{Total reads}}
+
+      \end{equation}
+
+      '
+    type: quality-metric
+    category: enrichment-validation
+    description: Primary enrichment success metric - fraction of sequencing reads
+      that map to intended target region
+    physical_meaning: Efficiency of enrichment strategy - higher is better, ideally
+      >70%
+    assumptions:
+    - Accurate read mapping to reference genome
+    - 100 bp flanking regions account for reads starting near cut sites
+    variables:
+    - p_1
+    - p_2
+    related_equations:
+    - '9.5'
+    - '9.6'
+    - '9.7'
+    examples:
+    - scenario: Excellent enrichment
+      result: On-target = 0.90 (90%)
+    - scenario: Good enrichment
+      result: On-target = 0.70 (70%)
+    - scenario: Poor enrichment (redesign guides)
+      result: On-target < 0.50
+    importance: critical
+    difficulty: easy
+    tags:
+    - enrichment
+    - on-target
+    - quality-metric
+  '9.5':
+    id: '9.5'
+    chapter: 9
+    index: 5
+    title: Off-target fraction
+    latex: \text{Off-target fraction} = \frac{\text{Reads mapping elsewhere in genome}}{\text{Total
+      reads}}
+    latex_full: 'Fraction of reads mapping outside target region:
+
+      \begin{equation}
+
+      \text{Off-target fraction} = \frac{\text{Reads mapping elsewhere in genome}}{\text{Total
+      reads}}
+
+      \end{equation}
+
+      '
+    type: quality-metric
+    category: enrichment-validation
+    description: Unintended genomic background captured despite Cas9 enrichment
+    physical_meaning: Inefficiency due to incomplete cutting, genomic contamination,
+      or off-target guide activity
+    assumptions:
+    - Accurate read mapping
+    - Excludes target region and immediate flanks
+    variables: []
+    related_equations:
+    - '9.4'
+    - '9.6'
+    examples:
+    - scenario: Good enrichment
+      result: Off-target < 0.20 (20%)
+    - scenario: Poor guide specificity
+      result: Off-target > 0.40 (redesign guides)
+    importance: important
+    difficulty: easy
+    tags:
+    - enrichment
+    - off-target
+    - background
+  '9.6':
+    id: '9.6'
+    chapter: 9
+    index: 6
+    title: Nonspecific fraction
+    latex: \text{Nonspecific fraction} = \frac{\text{Unmapped or low-quality reads}}{\text{Total
+      reads}}
+    latex_full: 'Fraction of unmapped or low-quality reads:
+
+      \begin{equation}
+
+      \text{Nonspecific fraction} = \frac{\text{Unmapped or low-quality reads}}{\text{Total
+      reads}}
+
+      \end{equation}
+
+      '
+    type: quality-metric
+    category: enrichment-validation
+    description: Noise component - reads that don't map to genome or have poor quality
+    physical_meaning: Technical noise from adapter dimers, contamination, or sequencing
+      failures
+    assumptions:
+    - Standard read quality filtering applied
+    - Mapping to reference genome
+    variables: []
+    related_equations:
+    - '9.4'
+    - '9.5'
+    examples:
+    - scenario: Good library quality
+      result: Nonspecific < 0.10 (10%)
+    - scenario: Adapter dimer problem
+      result: Nonspecific > 0.30 (check library prep)
+    importance: important
+    difficulty: easy
+    tags:
+    - enrichment
+    - quality-control
+    - noise
+  '9.7':
+    id: '9.7'
+    chapter: 9
+    index: 7
+    title: Enrichment fold-change
+    latex: \text{Enrichment fold} = \frac{(\text{On-target reads} / \text{Target size})}{(\text{Total
+      reads} / \text{Genome size})}
+    latex_full: 'Enrichment factor quantifying fold-increase in target coverage:
+
+      \begin{equation}
+
+      \text{Enrichment fold} = \frac{(\text{On-target reads} / \text{Target size})}{(\text{Total
+      reads} / \text{Genome size})}
+
+      \end{equation}
+
+      '
+    type: quality-metric
+    category: enrichment-validation
+    description: Normalized enrichment metric accounting for different sizes of target
+      vs genome
+    physical_meaning: How many times more efficiently target is sequenced vs random
+      genomic sampling
+    assumptions:
+    - Accurate read mapping and counting
+    - Known target and genome sizes
+    variables: []
+    related_equations:
+    - '9.1'
+    - '9.4'
+    - '9.8'
+    examples:
+    - scenario: 5kb target, 3Gb genome, 70% on-target from 1M reads
+      result: Enrichment = 420,000×
+    - scenario: Theoretical maximum (perfect capture)
+      result: Enrichment = (Genome size)/(Target size)
+    - scenario: Poor enrichment
+      result: Enrichment < 10,000× (check guides)
+    importance: critical
+    difficulty: medium
+    tags:
+    - enrichment
+    - fold-change
+    - efficiency
+  '9.8':
+    id: '9.8'
+    chapter: 9
+    index: 8
+    title: Spike-in enrichment efficiency
+    latex: \text{Enrichment efficiency} = \frac{(\text{Target read ratio})}{(\text{Spike-in
+      read ratio})} \times \frac{1}{\text{Input molar ratio}}
+    latex_full: 'Absolute enrichment efficiency using internal spike-in control:
+
+      \begin{equation}
+
+      \text{Enrichment efficiency} = \frac{(\text{Target read ratio})}{(\text{Spike-in
+      read ratio})} \times \frac{1}{\text{Input molar ratio}}
+
+      \end{equation}
+
+      '
+    type: quality-metric
+    category: validation
+    description: Absolute quantification of enrichment using non-target control sequence
+      spiked in at known ratio
+    physical_meaning: Measures true enrichment accounting for all library prep biases
+      via internal standard
+    assumptions:
+    - Spike-in sequence not targeted by Cas9
+    - Known molar ratio of spike-in to genomic DNA
+    - Both target and spike-in sequenced in same run
+    variables: []
+    related_equations:
+    - '9.7'
+    examples:
+    - scenario: 5kb target, 1:100 spike-in, observed 300,000× enrichment
+      result: Efficiency ≈ 50-80% (e1×e2 ≈ 0.5-0.8)
+    - scenario: Perfect capture (theoretical max)
+      result: Efficiency = (Genome size)/(Target size)
+    importance: important
+    difficulty: medium
+    tags:
+    - spike-in
+    - validation
+    - absolute-quantification
+  '10.1':
+    id: '10.1'
+    chapter: 10
+    index: 1
+    title: Dataset log-likelihood
+    latex: \log \Prob(\mathbf{r} | h_i) = \sum_{n=1}^{N} \log \Prob(r_n | h_i)
+    latex_full: 'Log-likelihood of entire dataset given haplotype:
+
+      \begin{align}
+
+      \log \Prob(\mathbf{r} | h_i) &= \sum_{n=1}^{N} \log \Prob(r_n | h_i) \\
+
+      &= \sum_{n=1}^{N} \log C_{i, j^*_n}
+
+      \end{align}
+
+      where $j^*_n$ is the classified category for read $r_n$
+
+      '
+    type: computational
+    category: likelihood-computation
+    description: Numerically stable log-space likelihood computation by summing per-read
+      log-likelihoods
+    physical_meaning: Total evidence from all reads supporting haplotype h_i - computed
+      in log-space to avoid numerical underflow
+    assumptions:
+    - Independent reads
+    - Confusion matrix C available from SMA-seq
+    - Log-space arithmetic to prevent underflow
+    variables:
+    - P(r|h)
+    - N
+    - C
+    related_equations:
+    - '6.1'
+    - '10.2'
+    examples:
+    - scenario: N=100 reads, average log-likelihood -2.5 per read
+      result: log P(r|h) = 100 × (-2.5) = -250
+    - scenario: High-quality match
+      result: log P(r|h) ≈ N × log(0.95) ≈ -0.05N
+    importance: critical
+    difficulty: medium
+    tags:
+    - log-likelihood
+    - numerical-stability
+    - workflow
+  '10.2':
+    id: '10.2'
+    chapter: 10
+    index: 2
+    title: Posterior probability (workflow)
+    latex: \Prob(h_i | \mathbf{r}) = \frac{\Prob(h_i) \cdot \Prob(\mathbf{r} | h_i)}{\sum_{k=1}^{K}
+      \Prob(h_k) \cdot \Prob(\mathbf{r} | h_k)}
+    latex_full: 'Posterior probability via Bayes'' rule:
+
+      \begin{equation}
+
+      \Prob(h_i | \mathbf{r}) = \frac{\Prob(h_i) \cdot \Prob(\mathbf{r} | h_i)}{\sum_{k=1}^{K}
+      \Prob(h_k) \cdot \Prob(\mathbf{r} | h_k)}
+
+      \end{equation}
+
+      In log-space: $\log \Prob(h_i | \mathbf{r}) = \log \Prob(h_i) + \log \Prob(\mathbf{r}
+      | h_i) - \log Z$
+
+      '
+    type: inference
+    category: classification
+    description: Complete workflow for haplotype classification - combines priors
+      and likelihoods via Bayes' rule
+    physical_meaning: Final classification probability integrating prior knowledge
+      and sequencing evidence
+    assumptions:
+    - Complete set of K candidate haplotypes
+    - Priors P(h_i) specified
+    - Likelihoods computed from confusion matrix
+    - Log-sum-exp trick for numerical stability
+    variables:
+    - P(h|r)
+    - P(h)
+    - P(r|h)
+    - K
+    related_equations:
+    - '6.3'
+    - '10.1'
+    examples:
+    - scenario: Uniform prior, K=10, one haplotype dominates likelihood
+      result: P(h_i|r) ≈ 0.99 (confident classification)
+    - scenario: Two equally likely haplotypes
+      result: P(h_i|r) ≈ 0.50 (ambiguous)
+    importance: critical
+    difficulty: easy
+    tags:
+    - posterior
+    - bayes-rule
+    - workflow
+    - classification
+  '12.1':
+    id: '12.1'
+    chapter: 12
+    index: 1
+    title: Label noise bias in training
+    latex: \mathbb{E}[\mathcal{L}(\tilde{\theta})] \geq \mathbb{E}[\mathcal{L}(\theta^*)]
+      + \mathcal{O}(\eta)
+    type: theoretical-bound
+    category: noisy-label-learning
+    description: Expected loss with noisy-label training exceeds optimal by linear
+      term in noise rate
+    physical_meaning: Label noise degrades model performance approximately linearly
+      with noise rate η
+    assumptions:
+    - Mild regularity conditions
+    - Noise rate η ∈ (0,1)
+    variables:
+    - theta
+    - eta
+    - L
+    related_equations:
+    - '12.3'
+    - '12.6'
+    importance: foundational
+    difficulty: hard
+    tags:
+    - noisy-labels
+    - training
+    - bias
+    latex_full: \mathbb{E}[\mathcal{L}(\tilde{\theta})] \geq \mathbb{E}[\mathcal{L}(\theta^*)]
+      + \mathcal{O}(\eta)
+  '12.2':
+    id: '12.2'
+    chapter: 12
+    index: 2
+    title: Minimum database size
+    latex: N_{\min} = \frac{CK}{\mathbb{E}[M_k]}
+    type: experimental-design
+    category: database-construction
+    description: Minimum signal database size for k-mer coverage C across K distinct
+      k-mers
+    physical_meaning: Database must contain enough reads to cover all k-mers with
+      desired depth
+    assumptions:
+    - K distinct k-mers
+    - Expected M_k k-mer occurrences per read
+    variables:
+    - N_min
+    - C
+    - K
+    - M_k
+    related_equations:
+    - '7.6'
+    importance: important
+    difficulty: easy
+    tags:
+    - database-size
+    - experimental-design
+    - k-mers
+    latex_full: N_{\min} = \frac{CK}{\mathbb{E}[M_k]}
+  '12.3':
+    id: '12.3'
+    chapter: 12
+    index: 3
+    title: Label transition matrix
+    latex: T_{ij} = \Prob(\tilde{Y} = j \mid Y = i)
+    type: definition
+    category: noise-model
+    description: Probability that true label i is observed as noisy label j
+    physical_meaning: Characterizes systematic label noise patterns - diagonal T_ii
+      = label accuracy
+    assumptions:
+    - Noisy labels follow probabilistic noise model
+    variables:
+    - T
+    - Y
+    - Y_tilde
+    - i
+    - j
+    related_equations:
+    - '12.4'
+    - '12.5'
+    - '12.6'
+    importance: critical
+    difficulty: medium
+    tags:
+    - label-noise
+    - transition-matrix
+    - noise-model
+    latex_full: T_{ij} = \Prob(\tilde{Y} = j \mid Y = i)
+  '12.4':
+    id: '12.4'
+    chapter: 12
+    index: 4
+    title: Observed confusion from noisy labels
+    latex: \tilde{\mathbf{C}} = \mathbf{C} \cdot \mathbf{T}
+    type: model
+    category: noise-propagation
+    description: Observed confusion matrix is product of true confusion and label
+      transition matrices
+    physical_meaning: Noisy labels corrupt observed performance - observed confusions
+      mix true errors and labeling errors
+    assumptions:
+    - Independent label noise
+    - Matrix multiplication valid
+    variables:
+    - C_tilde
+    - C
+    - T
+    related_equations:
+    - '12.3'
+    - '12.6'
+    importance: critical
+    difficulty: medium
+    tags:
+    - confusion-matrix
+    - label-noise
+    - matrix-multiplication
+    latex_full: \tilde{\mathbf{C}} = \mathbf{C} \cdot \mathbf{T}
+  '12.5':
+    id: '12.5'
+    chapter: 12
+    index: 5
+    title: Transition matrix estimation
+    latex: \hat{T}_{ij} = \frac{\text{count}(\text{true} = i, \text{observed} = j)}{\text{count}(\text{true}
+      = i)}
+    type: estimator
+    category: parameter-estimation
+    description: Empirical estimator for label transition probabilities from validation
+      data
+    physical_meaning: Fraction of true class i examples observed as class j
+    assumptions:
+    - Validation data with true labels available
+    - Sufficient samples per class
+    variables:
+    - T_hat
+    - i
+    - j
+    related_equations:
+    - '12.3'
+    - '12.6'
+    importance: important
+    difficulty: easy
+    tags:
+    - estimation
+    - validation
+    - transition-matrix
+    latex_full: \hat{T}_{ij} = \frac{\text{count}(\text{true} = i, \text{observed}
+      = j)}{\text{count}(\text{true} = i)}
+  '12.6':
+    id: '12.6'
+    chapter: 12
+    index: 6
+    title: Confusion matrix denoising
+    latex: \hat{\mathbf{C}} = \tilde{\mathbf{C}} \cdot \hat{\mathbf{T}}^{-1}
+    type: correction
+    category: denoising
+    description: Recover true confusion matrix by inverting label transition matrix
+    physical_meaning: Remove label noise corruption via matrix inversion
+    assumptions:
+    - T invertible (non-singular)
+    - Sufficient validation data
+    - All T_ii > 1/K
+    variables:
+    - C_hat
+    - C_tilde
+    - T_hat
+    related_equations:
+    - '12.4'
+    - '12.5'
+    importance: critical
+    difficulty: medium
+    tags:
+    - denoising
+    - matrix-inversion
+    - correction
+    latex_full: \hat{\mathbf{C}} = \tilde{\mathbf{C}} \cdot \hat{\mathbf{T}}^{-1}
+  '12.7':
+    id: '12.7'
+    chapter: 12
+    index: 7
+    title: Confusion matrix standard error
+    latex: \text{SE}(\hat{C}_{ij}) \approx \sqrt{\frac{\hat{C}_{ij}(1-\hat{C}_{ij})}{n_i}
+      + \sum_{k} \left(\frac{\partial \hat{C}_{ij}}{\partial T_{ik}}\right)^2 \frac{T_{ik}(1-T_{ik})}{m_i}}
+    type: uncertainty-quantification
+    category: statistical-inference
+    description: Standard error for denoised confusion matrix accounting for sampling
+      variability and label noise
+    physical_meaning: Total uncertainty combines sampling error and label noise propagation
+    assumptions:
+    - Multinomial sampling
+    - n_i validation examples for class i
+    - Delta method approximation
+    variables:
+    - SE
+    - C_hat
+    - n
+    - m
+    - T
+    related_equations:
+    - '12.6'
+    importance: important
+    difficulty: hard
+    tags:
+    - uncertainty
+    - confidence-intervals
+    - delta-method
+    latex_full: \text{SE}(\hat{C}_{ij}) \approx \sqrt{\frac{\hat{C}_{ij}(1-\hat{C}_{ij})}{n_i}
+      + \sum_{k} \left(\frac{\partial \hat{C}_{ij}}{\partial T_{ik}}\right)^2 \frac{T_{ik}(1-T_{ik})}{m_i}}
+  '12.8':
+    id: '12.8'
+    chapter: 12
+    index: 8
+    title: Robust loss with label smoothing
+    latex: \mathcal{L}_{\text{robust}}(\hat{y}, y) = -\sum_c \left[(1-\epsilon)y_c
+      + \frac{\epsilon}{K}\right] \log \hat{y}_c
+    type: loss-function
+    category: robust-training
+    description: Cross-entropy loss with label smoothing to prevent overconfidence
+      on noisy labels
+    physical_meaning: Interpolate between true label and uniform distribution to reduce
+      overfitting to label noise
+    assumptions:
+    - ε ∈ (0,1) smoothing parameter
+    - K classes
+    variables:
+    - L_robust
+    - epsilon
+    - K
+    - y
+    - y_hat
+    related_equations:
+    - '12.9'
+    importance: important
+    difficulty: medium
+    tags:
+    - loss-function
+    - label-smoothing
+    - robustness
+    latex_full: \mathcal{L}_{\text{robust}}(\hat{y}, y) = -\sum_c \left[(1-\epsilon)y_c
+      + \frac{\epsilon}{K}\right] \log \hat{y}_c
+  '12.9':
+    id: '12.9'
+    chapter: 12
+    index: 9
+    title: Generalized cross-entropy (GCE) loss
+    latex: \mathcal{L}_{\text{GCE}}(\hat{y}, y; q) = \frac{1-\sum_c y_c \hat{y}_c^q}{q}
+    type: loss-function
+    category: robust-training
+    description: Tunable robust loss - q→0 is cross-entropy, q=1 is MAE, intermediate
+      q provides noise robustness
+    physical_meaning: Parameter q controls sensitivity to outliers - higher q more
+      robust to label noise
+    assumptions:
+    - q parameter tunes robustness
+    - q ∈ [0,1]
+    variables:
+    - L_GCE
+    - q
+    - y
+    - y_hat
+    related_equations:
+    - '12.8'
+    importance: important
+    difficulty: medium
+    tags:
+    - loss-function
+    - gce
+    - robustness
+    latex_full: \mathcal{L}_{\text{GCE}}(\hat{y}, y; q) = \frac{1-\sum_c y_c \hat{y}_c^q}{q}
+  '12.10':
+    id: '12.10'
+    chapter: 12
+    index: 10
+    title: Weighted loss for noisy labels
+    latex: \mathcal{L}_{\text{weighted}} = \sum_{i=1}^N w_i \mathcal{L}(f(x_i; \theta),
+      y_i)
+    type: loss-function
+    category: sample-weighting
+    description: Weight training examples by label confidence - downweight likely
+      noisy labels
+    physical_meaning: Focus learning on high-confidence data, reduce influence of
+      noisy labels
+    assumptions:
+    - Weights w_i ∈ [0,1] reflect label confidence
+    variables:
+    - L_weighted
+    - w
+    - N
+    - theta
+    related_equations:
+    - '12.8'
+    - '12.9'
+    importance: important
+    difficulty: easy
+    tags:
+    - sample-weighting
+    - loss-function
+    - robustness
+    latex_full: \mathcal{L}_{\text{weighted}} = \sum_{i=1}^N w_i \mathcal{L}(f(x_i;
+      \theta), y_i)
+  '13.1':
+    id: '13.1'
+    chapter: 13
+    index: 1
+    title: Learning rate reduction for fine-tuning
+    latex: \eta_{\text{fine-tune}} = \alpha \cdot \eta_{\text{pretrain}}
+    type: hyperparameter
+    category: fine-tuning
+    description: Reduce learning rate by factor α for fine-tuning to avoid catastrophic
+      forgetting
+    physical_meaning: Smaller steps preserve pre-trained knowledge while adapting
+      to new data
+    variables:
+    - eta
+    - alpha
+    importance: important
+    difficulty: easy
+    tags:
+    - fine-tuning
+    - learning-rate
+    - transfer-learning
+    latex_full: \eta_{\text{fine-tune}} = \alpha \cdot \eta_{\text{pretrain}}
+  '13.2':
+    id: '13.2'
+    chapter: 13
+    index: 2
+    title: Fine-tuning objective
+    latex: \boldsymbol{\theta}^* = \argmin_{\boldsymbol{\theta}} \sum_{(x, s) \in
+      \mathcal{D}_{\text{SEER}}} \mathcal{L}(f_{\text{basecaller}}(x; \boldsymbol{\theta}),
+      s) + \lambda \mathcal{R}(\boldsymbol{\theta})
+    type: optimization
+    category: training
+    description: Optimize basecaller parameters on SEER signal database with regularization
+    physical_meaning: Balance fit to training data (first term) with parameter complexity
+      (regularization)
+    variables:
+    - theta
+    - lambda
+    - L
+    - R
+    related_equations:
+    - '12.8'
+    - '12.9'
+    importance: critical
+    difficulty: medium
+    tags:
+    - optimization
+    - fine-tuning
+    - regularization
+    latex_full: \boldsymbol{\theta}^* = \argmin_{\boldsymbol{\theta}} \sum_{(x, s)
+      \in \mathcal{D}_{\text{SEER}}} \mathcal{L}(f_{\text{basecaller}}(x; \boldsymbol{\theta}),
+      s) + \lambda \mathcal{R}(\boldsymbol{\theta})
+  '13.3':
+    id: '13.3'
+    chapter: 13
+    index: 3
+    title: Cross-entropy loss
+    latex: \mathcal{L}_{\text{CE}}(\hat{s}, s) = -\sum_{i=1}^{L} \sum_{b \in \{A,C,G,T\}}
+      \mathbb{I}\{s_i = b\} \log P(\hat{s}_i = b)
+    type: loss-function
+    category: training
+    description: Standard cross-entropy loss for sequence prediction
+    physical_meaning: Negative log-likelihood of correct base at each position
+    variables:
+    - L_CE
+    - s
+    - s_hat
+    - L
+    related_equations:
+    - '13.4'
+    - '13.5'
+    importance: foundational
+    difficulty: easy
+    tags:
+    - loss-function
+    - cross-entropy
+    latex_full: \mathcal{L}_{\text{CE}}(\hat{s}, s) = -\sum_{i=1}^{L} \sum_{b \in
+      \{A,C,G,T\}} \mathbb{I}\{s_i = b\} \log P(\hat{s}_i = b)
+  '13.4':
+    id: '13.4'
+    chapter: 13
+    index: 4
+    title: CTC loss
+    latex: \mathcal{L}_{\text{CTC}}(\hat{s}, s) = -\log \sum_{\pi \in \mathcal{A}(s)}
+      P(\pi | x)
+    type: loss-function
+    category: sequence-alignment
+    description: Connectionist Temporal Classification loss for alignment-free sequence
+      learning
+    physical_meaning: Sum over all valid alignments π that collapse to target sequence
+      s
+    variables:
+    - L_CTC
+    - pi
+    - A
+    related_equations:
+    - '13.3'
+    importance: important
+    difficulty: hard
+    tags:
+    - ctc
+    - loss-function
+    - alignment
+    latex_full: \mathcal{L}_{\text{CTC}}(\hat{s}, s) = -\log \sum_{\pi \in \mathcal{A}(s)}
+      P(\pi | x)
+  '13.5':
+    id: '13.5'
+    chapter: 13
+    index: 5
+    title: Focal loss
+    latex: \mathcal{L}_{\text{focal}}(\hat{s}, s) = -\sum_{i=1}^{L} (1 - P(\hat{s}_i
+      = s_i))^\gamma \log P(\hat{s}_i = s_i)
+    type: loss-function
+    category: robust-training
+    description: Focal loss downweights easy examples to focus on hard negatives
+    physical_meaning: γ parameter controls focus on difficult examples - higher γ
+      more focus
+    variables:
+    - L_focal
+    - gamma
+    - P
+    related_equations:
+    - '13.3'
+    importance: important
+    difficulty: medium
+    tags:
+    - focal-loss
+    - hard-negative-mining
+    latex_full: \mathcal{L}_{\text{focal}}(\hat{s}, s) = -\sum_{i=1}^{L} (1 - P(\hat{s}_i
+      = s_i))^\gamma \log P(\hat{s}_i = s_i)
+  '13.6':
+    id: '13.6'
+    chapter: 13
+    index: 6
+    title: Quality overestimation
+    latex: d = \frac{Q_{\text{emp}}(u) - \bar{Q}_{\text{pred}}(u)}{\bar{Q}_{\text{pred}}(u)}
+    type: quality-metric
+    category: calibration
+    description: Relative quality score overestimation as fraction
+    physical_meaning: Positive d indicates overconfidence, negative indicates underconfidence
+    variables:
+    - d
+    - Q_emp
+    - Q_pred
+    related_equations:
+    - '11.5'
+    - '13.7'
+    importance: important
+    difficulty: easy
+    tags:
+    - quality-control
+    - calibration
+    - overestimation
+    latex_full: d = \frac{Q_{\text{emp}}(u) - \bar{Q}_{\text{pred}}(u)}{\bar{Q}_{\text{pred}}(u)}
+  '13.7':
+    id: '13.7'
+    chapter: 13
+    index: 7
+    title: Calibration error (ECE)
+    latex: \text{ECE} = \sum_{i=1}^{B} \frac{n_i}{N} |\text{acc}(Q_i) - \bar{Q}_i|
+    type: quality-metric
+    category: calibration
+    description: Expected calibration error across B quality bins
+    physical_meaning: Average deviation between predicted and empirical accuracy
+    variables:
+    - ECE
+    - B
+    - n
+    - N
+    - Q
+    related_equations:
+    - '11.6'
+    importance: critical
+    difficulty: medium
+    tags:
+    - ece
+    - calibration
+    - quality
+    latex_full: \text{ECE} = \sum_{i=1}^{B} \frac{n_i}{N} |\text{acc}(Q_i) - \bar{Q}_i|
+  '13.8':
+    id: '13.8'
+    chapter: 13
+    index: 8
+    title: Linear recalibration
+    latex: Q_{\text{cal}} = \alpha + \beta Q_{\text{pred}}
+    type: calibration-method
+    category: post-processing
+    description: Linear transformation to recalibrate quality scores
+    physical_meaning: Fit linear model to map predicted Q to calibrated Q
+    variables:
+    - Q_cal
+    - Q_pred
+    - alpha
+    - beta
+    related_equations:
+    - '13.9'
+    importance: important
+    difficulty: easy
+    tags:
+    - recalibration
+    - linear-regression
+    latex_full: Q_{\text{cal}} = \alpha + \beta Q_{\text{pred}}
+  '13.9':
+    id: '13.9'
+    chapter: 13
+    index: 9
+    title: Isotonic recalibration
+    latex: Q_{\text{cal}} = f_{\text{iso}}(Q_{\text{pred}})
+    type: calibration-method
+    category: post-processing
+    description: Non-parametric monotonic recalibration via isotonic regression
+    physical_meaning: Flexible calibration preserving rank order but adjusting magnitudes
+    variables:
+    - Q_cal
+    - Q_pred
+    - f_iso
+    related_equations:
+    - '13.8'
+    importance: important
+    difficulty: medium
+    tags:
+    - isotonic-regression
+    - recalibration
+    - non-parametric
+    latex_full: Q_{\text{cal}} = f_{\text{iso}}(Q_{\text{pred}})
+  '13.10':
+    id: '13.10'
+    chapter: 13
+    index: 10
+    title: SEER workflow weight
+    latex: \pi_i(s) = P(s|h_i) \cdot f_{\text{emp}}(\ell(s)) \cdot A(\ell(s)) \cdot
+      [1 - \text{EER}(s)]
+    type: weighting-scheme
+    category: training
+    description: Training weight for sequence s from standard h_i accounting for multiple
+      factors
+    physical_meaning: Weight combines haplotype likelihood, length distribution, adapter
+      presence, and error rate
+    variables:
+    - pi
+    - P
+    - f_emp
+    - A
+    - EER
+    importance: important
+    difficulty: hard
+    tags:
+    - weighting
+    - seer
+    - training
+    latex_full: \pi_i(s) = P(s|h_i) \cdot f_{\text{emp}}(\ell(s)) \cdot A(\ell(s))
+      \cdot [1 - \text{EER}(s)]
+  '13.11':
+    id: '13.11'
+    chapter: 13
+    index: 11
+    title: Quality-weighted accuracy
+    latex: \text{Acc}_{Q} = \frac{\sum_{i=1}^{N} w_i \cdot \mathbb{I}\{\hat{s}_i =
+      s_i\}}{\sum_{i=1}^{N} w_i}
+    type: quality-metric
+    category: evaluation
+    description: Accuracy weighted by quality scores or other confidence measures
+    physical_meaning: Emphasize high-quality predictions in accuracy calculation
+    variables:
+    - Acc
+    - w
+    - N
+    importance: important
+    difficulty: easy
+    tags:
+    - accuracy
+    - weighted-metric
+    latex_full: \text{Acc}_{Q} = \frac{\sum_{i=1}^{N} w_i \cdot \mathbb{I}\{\hat{s}_i
+      = s_i\}}{\sum_{i=1}^{N} w_i}
+  '14.1':
+    id: '14.1'
+    chapter: 14
+    index: 1
+    title: Mixture proportion sample size
+    latex: N \geq \frac{z_{1-\delta/2}^2}{4\epsilon^2 \cdot \left[\lambda(1-\lambda)\right]}
+    type: experimental-design
+    category: power-analysis
+    description: Required informative reads to estimate mixture proportion λ within
+      ±ε with confidence 1-δ
+    physical_meaning: Sample size scales as 1/ε² and peaks at λ=0.5 (maximum variance)
+    variables:
+    - N
+    - z
+    - delta
+    - epsilon
+    - lambda
+    related_equations:
+    - '14.2'
+    - '14.3'
+    importance: important
+    difficulty: medium
+    tags:
+    - sample-size
+    - mixture
+    - power-analysis
+    latex_full: N \geq \frac{z_{1-\delta/2}^2}{4\epsilon^2 \cdot \left[\lambda(1-\lambda)\right]}
+  '14.2':
+    id: '14.2'
+    chapter: 14
+    index: 2
+    title: Mixture proportion error propagation
+    latex: \hat{\lambda} \sim \mathcal{N}\left(\lambda, \frac{\lambda(1-\lambda)}{N}\right)
+    type: statistical-distribution
+    category: inference
+    description: Asymptotic normal distribution for mixture proportion estimator
+    physical_meaning: Uncertainty in λ estimate decreases as 1/√N
+    variables:
+    - lambda_hat
+    - lambda
+    - N
+    related_equations:
+    - '14.1'
+    - '14.3'
+    importance: important
+    difficulty: medium
+    tags:
+    - mixture
+    - normal-distribution
+    - inference
+    latex_full: \hat{\lambda} \sim \mathcal{N}\left(\lambda, \frac{\lambda(1-\lambda)}{N}\right)
+  '14.3':
+    id: '14.3'
+    chapter: 14
+    index: 3
+    title: Mixture proportion variance
+    latex: \text{Var}(\hat{\lambda}) = \frac{\lambda(1-\lambda)}{N}
+    type: variance-formula
+    category: uncertainty-quantification
+    description: Variance of mixture proportion estimate from N informative reads
+    physical_meaning: Maximum variance at λ=0.5, decreases as λ→0 or λ→1
+    variables:
+    - Var
+    - lambda
+    - N
+    related_equations:
+    - '14.1'
+    - '14.2'
+    importance: foundational
+    difficulty: easy
+    tags:
+    - variance
+    - mixture
+    - binomial
+    latex_full: \text{Var}(\hat{\lambda}) = \frac{\lambda(1-\lambda)}{N}
+  '14.4':
+    id: '14.4'
+    chapter: 14
+    index: 4
+    title: Minor component detection limit
+    latex: N \geq \frac{(z_{1-\alpha} + z_{1-\beta})^2}{\lambda_{\text{min}}^2} \cdot
+      \left[1 + \mathcal{O}\left(\frac{1}{\sqrt{N}}\right)\right]
+    type: detection-limit
+    category: power-analysis
+    description: Coverage required to detect minor haplotype at fraction λ_min with
+      power 1-β
+    physical_meaning: Detection difficulty scales as 1/λ² - detecting 1% requires
+      100× more reads than 10%
+    variables:
+    - N
+    - z
+    - alpha
+    - beta
+    - lambda_min
+    related_equations:
+    - '14.8'
+    importance: critical
+    difficulty: medium
+    tags:
+    - detection-limit
+    - minor-component
+    - power
+    latex_full: N \geq \frac{(z_{1-\alpha} + z_{1-\beta})^2}{\lambda_{\text{min}}^2}
+      \cdot \left[1 + \mathcal{O}\left(\frac{1}{\sqrt{N}}\right)\right]
+  '14.5':
+    id: '14.5'
+    chapter: 14
+    index: 5
+    title: Diplotype error probability
+    latex: P(\text{diplotype error}) = P(\text{error on } h_i) + P(\text{error on
+      } h_j) - P(\text{error on both})
+    type: probability
+    category: error-analysis
+    description: Total diplotype error from union of errors on individual haplotypes
+    physical_meaning: Inclusion-exclusion principle for compound error probability
+    variables:
+    - P
+    - h_i
+    - h_j
+    importance: important
+    difficulty: easy
+    tags:
+    - diplotype
+    - error-probability
+    - inclusion-exclusion
+    latex_full: P(\text{diplotype error}) = P(\text{error on } h_i) + P(\text{error
+      on } h_j) - P(\text{error on both})
+  '14.6':
+    id: '14.6'
+    chapter: 14
+    index: 6
+    title: Joint diplotype posterior
+    latex: P(d|\mathbf{r}) = \frac{P(\mathbf{r}|d) P(d)}{\sum_{d'} P(\mathbf{r}|d')
+      P(d')}
+    type: inference
+    category: diplotype-calling
+    description: Posterior probability of diplotype d given reads, accounting for
+      mixture
+    physical_meaning: Bayes' rule for diplotype inference with mixture likelihood
+    variables:
+    - P(d|r)
+    - P(r|d)
+    - P(d)
+    - d
+    related_equations:
+    - '6.3'
+    - '6.6'
+    importance: critical
+    difficulty: medium
+    tags:
+    - diplotype
+    - posterior
+    - mixture
+    latex_full: P(d|\mathbf{r}) = \frac{P(\mathbf{r}|d) P(d)}{\sum_{d'} P(\mathbf{r}|d')
+      P(d')}
+  '14.7':
+    id: '14.7'
+    chapter: 14
+    index: 7
+    title: Wilson confidence interval
+    latex: \text{CI}_{1-\alpha} = \frac{\hat{p} + \frac{z^2}{2n} \pm z\sqrt{\frac{\hat{p}(1-\hat{p})}{n}
+      + \frac{z^2}{4n^2}}}{1 + \frac{z^2}{n}}
+    type: confidence-interval
+    category: statistical-inference
+    description: Wilson score interval for binomial proportion (better than normal
+      approximation)
+    physical_meaning: Exact confidence interval for success probability, works well
+      for extreme proportions
+    variables:
+    - CI
+    - p_hat
+    - z
+    - n
+    - alpha
+    related_equations:
+    - '11.16'
+    importance: important
+    difficulty: medium
+    tags:
+    - wilson-score
+    - confidence-interval
+    - binomial
+    latex_full: \text{CI}_{1-\alpha} = \frac{\hat{p} + \frac{z^2}{2n} \pm z\sqrt{\frac{\hat{p}(1-\hat{p})}{n}
+      + \frac{z^2}{4n^2}}}{1 + \frac{z^2}{n}}
+  '14.8':
+    id: '14.8'
+    chapter: 14
+    index: 8
+    title: Detection limit with KL divergence
+    latex: N > \frac{(z_{\alpha} + z_{\beta})^2}{4\lambda_{\text{min}}(1-\lambda_{\text{min}})}
+      \cdot \frac{1}{D_{KL}(h_{\text{minor}}||h_{\text{major}})}
+    type: detection-limit
+    category: information-theory
+    description: Coverage for minor haplotype detection accounting for distinguishability
+      via KL divergence
+    physical_meaning: Detection scales as 1/√(N·D_KL) - similar haplotypes need more
+      reads
+    variables:
+    - N
+    - z
+    - alpha
+    - beta
+    - lambda_min
+    - D_KL
+    related_equations:
+    - '7.6'
+    - '7.7'
+    - '14.4'
+    importance: critical
+    difficulty: hard
+    tags:
+    - detection-limit
+    - kl-divergence
+    - information-theory
+    latex_full: N > \frac{(z_{\alpha} + z_{\beta})^2}{4\lambda_{\text{min}}(1-\lambda_{\text{min}})}
+      \cdot \frac{1}{D_{KL}(h_{\text{minor}}||h_{\text{major}})}
+
+  # =============================================================================
+  # QC Equations with Python Implementations
+  # =============================================================================
+
+  'QC.1':
+    id: 'QC.1'
+    chapter: qc
+    index: 1
+    title: Pass rate calculation
+    latex: R_{\text{pass}} = \frac{N_{\text{pass}}}{N_{\text{total}}} \times 100\%
+    type: metric
+    category: quality-control
+    description: Percentage of reads passing quality thresholds
+    physical_meaning: Higher pass rate indicates better sequencing quality
+    variables:
+      - pass_reads
+      - total_reads
+    python: "(pass_reads / total_reads * 100) if total_reads > 0 else 0"
+    pipeline_stage: basecalling
+    importance: high
+    difficulty: easy
+    tags:
+      - qc
+      - pass-rate
+      - computable
+
+  'QC.2':
+    id: 'QC.2'
+    chapter: qc
+    index: 2
+    title: Signal positive fraction
+    latex: f_{\text{signal+}} = \frac{N_{\text{signal+}}}{N_{\text{total}}}
+    type: metric
+    category: quality-control
+    description: Fraction of reads with signal_positive end reason
+    physical_meaning: High signal_positive indicates natural read completion vs forced ejection
+    variables:
+      - signal_positive_pct
+    python: "signal_positive_pct"
+    pipeline_stage: end_reasons
+    importance: high
+    difficulty: easy
+    tags:
+      - qc
+      - end-reason
+      - computable
+
+  'QC.3':
+    id: 'QC.3'
+    chapter: qc
+    index: 3
+    title: Quality score to error probability
+    latex: P_{\text{error}} = 10^{-Q/10}
+    type: conversion
+    category: quality-control
+    description: Convert Phred quality score to error probability
+    physical_meaning: Q20 = 1% error, Q30 = 0.1% error
+    variables:
+      - mean_qscore
+    python: "10 ** (-mean_qscore / 10)"
+    pipeline_stage: basecalling
+    importance: foundational
+    difficulty: easy
+    tags:
+      - qc
+      - quality-score
+      - phred
+      - computable
+
+  'QC.4':
+    id: 'QC.4'
+    chapter: qc
+    index: 4
+    title: Throughput in gigabases
+    latex: T_{\text{Gb}} = \frac{B_{\text{total}}}{10^9}
+    type: metric
+    category: throughput
+    description: Total sequencing output in gigabases
+    physical_meaning: Higher throughput indicates more sequencing data
+    variables:
+      - total_bases
+    python: "total_bases / 1e9"
+    pipeline_stage: basecalling
+    importance: high
+    difficulty: easy
+    tags:
+      - throughput
+      - gigabases
+      - computable
+
+  'QC.5':
+    id: 'QC.5'
+    chapter: qc
+    index: 5
+    title: Mean read length from totals
+    latex: \bar{L} = \frac{B_{\text{total}}}{N_{\text{total}}}
+    type: metric
+    category: length-statistics
+    description: Average read length from total bases and reads
+    physical_meaning: Longer reads improve assembly and phasing
+    variables:
+      - total_bases
+      - total_reads
+    python: "(total_bases / total_reads) if total_reads > 0 else 0"
+    pipeline_stage: basecalling
+    importance: high
+    difficulty: easy
+    tags:
+      - length
+      - mean
+      - computable
+
+  'QC.6':
+    id: 'QC.6'
+    chapter: qc
+    index: 6
+    title: Accuracy from quality score
+    latex: A = 1 - 10^{-Q/10} = 1 - P_{\text{error}}
+    type: conversion
+    category: quality-control
+    description: Per-base accuracy from mean quality score
+    physical_meaning: Q20 = 99% accuracy, Q30 = 99.9% accuracy
+    variables:
+      - mean_qscore
+    python: "1 - 10 ** (-mean_qscore / 10)"
+    pipeline_stage: basecalling
+    importance: foundational
+    difficulty: easy
+    tags:
+      - accuracy
+      - quality-score
+      - computable
+
+  'QC.7':
+    id: 'QC.7'
+    chapter: qc
+    index: 7
+    title: Reads per gigabase
+    latex: R_{\text{Gb}} = \frac{N_{\text{total}} \times 10^9}{B_{\text{total}}}
+    type: metric
+    category: throughput
+    description: Average number of reads per gigabase of output
+    physical_meaning: Lower values indicate longer average read lengths
+    variables:
+      - total_reads
+      - total_bases
+    python: "(total_reads * 1e9 / total_bases) if total_bases > 0 else 0"
+    pipeline_stage: basecalling
+    importance: medium
+    difficulty: easy
+    tags:
+      - throughput
+      - density
+      - computable
+
+  'QC.8':
+    id: 'QC.8'
+    chapter: qc
+    index: 8
+    title: Expected errors per read
+    latex: E_{\text{errors}} = \bar{L} \times 10^{-\bar{Q}/10}
+    type: metric
+    category: quality-control
+    description: Expected number of errors per read based on mean length and quality
+    physical_meaning: Combines length and quality into single error metric
+    variables:
+      - mean_qscore
+      - total_bases
+      - total_reads
+    python: "((total_bases / total_reads) * (10 ** (-mean_qscore / 10))) if total_reads > 0 else 0"
+    pipeline_stage: basecalling
+    importance: high
+    difficulty: medium
+    tags:
+      - errors
+      - quality
+      - computable
+
+  'QC.9':
+    id: 'QC.9'
+    chapter: qc
+    index: 9
+    title: Unblock ratio
+    latex: R_{\text{unblock}} = \frac{P_{\text{unblock}}}{P_{\text{signal+}}}
+    type: metric
+    category: quality-control
+    description: Ratio of unblocked reads to signal positive reads
+    physical_meaning: Lower is better - indicates less adaptive sampling rejection
+    variables:
+      - signal_positive_pct
+      - unblock_pct
+    python: "(unblock_pct / signal_positive_pct) if signal_positive_pct > 0 else 0"
+    pipeline_stage: end_reasons
+    importance: medium
+    difficulty: easy
+    tags:
+      - end-reason
+      - ratio
+      - computable
+
+  'QC.10':
+    id: 'QC.10'
+    chapter: qc
+    index: 10
+    title: Q20 equivalent bases
+    latex: B_{Q20} = B_{\text{total}} \times \frac{1 - 10^{-\bar{Q}/10}}{0.99}
+    type: metric
+    category: quality-control
+    description: Total bases normalized to Q20 equivalent quality
+    physical_meaning: Standardizes output to Q20 reference for comparison
+    variables:
+      - total_bases
+      - mean_qscore
+    python: "(total_bases * (1 - 10**(-mean_qscore/10)) / 0.99) if mean_qscore > 0 else 0"
+    pipeline_stage: basecalling
+    importance: medium
+    difficulty: medium
+    tags:
+      - quality
+      - normalization
+      - computable
+
+  'QC.11':
+    id: 'QC.11'
+    chapter: qc
+    index: 11
+    title: Fail rate percentage
+    latex: R_{\text{fail}} = 100 - R_{\text{pass}}
+    type: metric
+    category: quality-control
+    description: Percentage of reads failing quality thresholds
+    physical_meaning: Complement of pass rate
+    variables:
+      - pass_reads
+      - total_reads
+    python: "(100 - (pass_reads / total_reads * 100)) if total_reads > 0 else 100"
+    pipeline_stage: basecalling
+    importance: medium
+    difficulty: easy
+    tags:
+      - fail-rate
+      - computable
+
+  'QC.12':
+    id: 'QC.12'
+    chapter: qc
+    index: 12
+    title: Log10 total reads
+    latex: \log_{10}(N) = \log_{10}(N_{\text{total}})
+    type: metric
+    category: scale
+    description: Log10 of total read count for scale comparison
+    physical_meaning: Useful for comparing experiments of different sizes
+    variables:
+      - total_reads
+    python: "log10(total_reads) if total_reads > 0 else 0"
+    pipeline_stage: basecalling
+    importance: low
+    difficulty: easy
+    tags:
+      - scale
+      - logarithm
+      - computable
+
+  'STAT.1':
+    id: 'STAT.1'
+    chapter: statistics
+    index: 1
+    title: Binomial standard error for proportion
+    latex: SE_p = \sqrt{\frac{p(1-p)}{N}}
+    type: statistical
+    category: uncertainty
+    description: Standard error for estimated proportion from N observations
+    physical_meaning: Uncertainty decreases as 1/sqrt(N)
+    variables:
+      - signal_positive_pct
+      - total_reads
+    python: "((signal_positive_pct/100 * (1 - signal_positive_pct/100) / total_reads) ** 0.5 * 100) if total_reads > 0 else 0"
+    pipeline_stage: end_reasons
+    importance: high
+    difficulty: medium
+    tags:
+      - statistics
+      - uncertainty
+      - binomial
+      - computable
+
+  'STAT.2':
+    id: 'STAT.2'
+    chapter: statistics
+    index: 2
+    title: Coefficient of variation estimate
+    latex: CV \approx \frac{1}{\sqrt{N}}
+    type: statistical
+    category: uncertainty
+    description: Approximate CV for count-based measurements
+    physical_meaning: Relative uncertainty for Poisson-like counts
+    variables:
+      - total_reads
+    python: "(1 / (total_reads ** 0.5)) if total_reads > 0 else 1"
+    pipeline_stage: basecalling
+    importance: medium
+    difficulty: easy
+    tags:
+      - statistics
+      - cv
+      - computable

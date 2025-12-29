@@ -11,29 +11,33 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          lfs: true  # Fetch Git LFS files (PDFs, images)
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+          cache: 'pip'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pyyaml pytest
-          pip install pysam edlib numpy pandas || true  # Optional deps
+          pip install pyyaml pytest pytest-cov jsonschema
+          pip install pysam edlib numpy pandas matplotlib || true  # Optional deps
 
-      - name: Validate skill files
+      - name: Validate skill frontmatter
         run: |
           python -c "
           import yaml
           import re
           from pathlib import Path
-          
+
+          errors = []
           for skill_dir in Path('skills').iterdir():
               if skill_dir.is_dir():
                   skill_md = skill_dir / 'SKILL.md'
@@ -42,29 +46,96 @@ jobs:
                       match = re.match(r'^---\n(.*?)\n---', content, re.DOTALL)
                       if match:
                           fm = yaml.safe_load(match.group(1))
-                          assert 'name' in fm, f'{skill_dir}: Missing name'
-                          assert 'description' in fm, f'{skill_dir}: Missing description'
-                          print(f'✅ {skill_dir.name}: valid')
+                          if 'name' not in fm:
+                              errors.append(f'{skill_dir.name}: Missing name')
+                          if 'description' not in fm:
+                              errors.append(f'{skill_dir.name}: Missing description')
+                          print(f'✅ {skill_dir.name}')
                       else:
-                          raise ValueError(f'{skill_dir}: Invalid frontmatter')
+                          errors.append(f'{skill_dir.name}: No frontmatter')
+                  else:
+                      errors.append(f'{skill_dir.name}: Missing SKILL.md')
+
+          if errors:
+              print('\\nErrors found:')
+              for e in errors:
+                  print(f'  ❌ {e}')
+              exit(1)
+          print(f'\\n✅ All {len(list(Path(\"skills\").iterdir()))} skills validated')
+          "
+
+      - name: Validate JSON schemas
+        run: |
+          python -c "
+          import json
+          from pathlib import Path
+
+          schemas_dir = Path('registry/schemas')
+          for schema_file in schemas_dir.glob('*.json'):
+              try:
+                  json.load(open(schema_file))
+                  print(f'✅ {schema_file.name}')
+              except Exception as e:
+                  print(f'❌ {schema_file.name}: {e}')
+                  exit(1)
+          print(f'\\n✅ All schemas valid')
           "
 
       - name: Check Python syntax
         run: |
           for script in bin/*.py; do
             python -m py_compile "$script"
-            echo "✅ $script: valid syntax"
           done
+          echo "✅ All bin scripts have valid syntax"
 
-      - name: Run tests
+      - name: Validate YAML files
         run: |
-          pytest tests/ -v || echo "Tests completed"
+          python -c "
+          import yaml
+          from pathlib import Path
+
+          files = [
+              'registry/INDEX.yaml',
+              'registry/experiments.yaml',
+              'registry/pipeline/stages.yaml',
+              'textbook/equations.yaml',
+              'textbook/variables.yaml',
+          ]
+
+          for f in files:
+              path = Path(f)
+              if path.exists():
+                  try:
+                      yaml.safe_load(open(path))
+                      print(f'✅ {f}')
+                  except Exception as e:
+                      print(f'❌ {f}: {e}')
+                      exit(1)
+              else:
+                  print(f'⚠️  {f}: Not found')
+          "
+
+      - name: Run health check
+        run: python bin/ont_check.py
+
+      - name: Run ecosystem stats
+        run: python bin/ont_stats.py --brief
+
+      - name: Run tests with coverage
+        run: pytest tests/ --cov=bin --cov-report=term-missing --cov-report=xml
+
+      - name: Upload coverage to Codecov
+        if: matrix.python-version == '3.11'
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: false
 
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -76,3 +147,171 @@ jobs:
             python -m py_compile "$script"
           done
           echo "✅ All scripts have valid syntax"
+
+  validate-registry:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pyyaml jsonschema
+
+      - name: Validate registry structure
+        run: |
+          python -c "
+          import yaml
+          from pathlib import Path
+
+          # Check INDEX.yaml
+          index = yaml.safe_load(open('registry/INDEX.yaml'))
+          print(f'Registry version: {index.get(\"version\")}')
+          print(f'Architecture: {index.get(\"architecture\")}')
+
+          # Check experiments
+          exps = yaml.safe_load(open('registry/experiments.yaml'))
+          exp_count = len(exps.get('experiments', {}))
+          print(f'Experiments: {exp_count}')
+
+          # Check textbook
+          eqs = yaml.safe_load(open('textbook/equations.yaml'))
+          eq_count = len(eqs.get('equations', {}))
+          print(f'Equations: {eq_count}')
+
+          vars = yaml.safe_load(open('textbook/variables.yaml'))
+          var_count = len(vars.get('variables', {}))
+          print(f'Variables: {var_count}')
+
+          print('\\n✅ Registry structure valid')
+          "
+
+      - name: Verify manuscript templates
+        run: |
+          python -c "
+          from pathlib import Path
+
+          templates = ['paper', 'chapter', 'supplement']
+          for t in templates:
+              tdir = Path(f'manuscripts/templates/{t}')
+              if not tdir.exists():
+                  print(f'❌ Missing template: {t}')
+                  exit(1)
+              if not (tdir / 'main.tex').exists():
+                  print(f'❌ Missing main.tex in {t}')
+                  exit(1)
+              if not (tdir / '.manuscript.yaml').exists():
+                  print(f'❌ Missing .manuscript.yaml in {t}')
+                  exit(1)
+              print(f'✅ {t}/ template complete')
+          "
+
+  test-equations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Test equation loading
+        run: |
+          python -c "
+          import sys
+          sys.path.insert(0, 'bin')
+          from ont_context import load_equations
+
+          eqs = load_equations()
+          total = len(eqs.get('equations', {}))
+          print(f'Total equations: {total}')
+
+          # Count computable equations
+          computable = [eq_id for eq_id, eq in eqs.get('equations', {}).items()
+                        if isinstance(eq, dict) and eq.get('python')]
+          print(f'Computable equations: {len(computable)}')
+
+          # Verify QC equations exist
+          qc_eqs = [eq_id for eq_id in computable if eq_id.startswith('QC.')]
+          print(f'QC equations: {len(qc_eqs)}')
+
+          if len(qc_eqs) < 6:
+              print('❌ Expected at least 6 QC equations')
+              exit(1)
+
+          print('✅ Equation system validated')
+          "
+
+  test-generators:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pyyaml matplotlib numpy
+
+      - name: Validate generator scripts
+        run: |
+          python -c "
+          from pathlib import Path
+          import ast
+
+          generators_dir = Path('skills/manuscript/generators')
+          if not generators_dir.exists():
+              print('❌ Generators directory missing')
+              exit(1)
+
+          generators = list(generators_dir.glob('gen_*.py'))
+          print(f'Found {len(generators)} generators')
+
+          for gen in generators:
+              try:
+                  ast.parse(gen.read_text())
+                  print(f'✅ {gen.name}')
+              except SyntaxError as e:
+                  print(f'❌ {gen.name}: {e}')
+                  exit(1)
+
+          if len(generators) < 5:
+              print('❌ Expected at least 5 generators')
+              exit(1)
+
+          print('✅ All generators valid')
+          "
+
+      - name: Test generator imports
+        run: |
+          python -c "
+          import sys
+          sys.path.insert(0, 'skills/manuscript/generators')
+          sys.path.insert(0, 'bin')
+
+          # Test that generators can be imported
+          from gen_end_reason_kde import generate_kde_plot
+          from gen_qc_summary_table import generate_qc_table
+          from gen_quality_distribution import generate_quality_plot
+          from gen_read_length_distribution import generate_length_plot
+          from gen_comparison_plot import generate_comparison_plot
+          from gen_comparison_table import generate_comparison_table
+          from gen_basecalling_table import generate_basecalling_table
+          from gen_yield_timeline import generate_yield_timeline
+          from gen_end_reason_pie import generate_end_reason_pie
+          from gen_metrics_heatmap import generate_metrics_heatmap
+          from gen_n50_barplot import generate_n50_barplot
+
+          print('✅ All 11 generators import successfully')
+          "

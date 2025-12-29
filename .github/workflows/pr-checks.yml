@@ -1,0 +1,148 @@
+name: PR Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  size-label:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Label PR by size
+        uses: codelytv/pr-size-labeler@v1
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          xs_label: 'size/XS'
+          xs_max_size: 10
+          s_label: 'size/S'
+          s_max_size: 50
+          m_label: 'size/M'
+          m_max_size: 200
+          l_label: 'size/L'
+          l_max_size: 500
+          xl_label: 'size/XL'
+          fail_if_xl: false
+          message_if_xl: >
+            This PR is quite large. Consider breaking it into smaller PRs for easier review.
+
+  path-labels:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Label by path
+        uses: actions/labeler@v5
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          configuration-path: .github/labeler.yml
+
+  conventional-title:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR title
+        run: |
+          TITLE="${{ github.event.pull_request.title }}"
+          echo "PR Title: $TITLE"
+
+          python3 -c "
+          import re
+          import sys
+
+          title = '''$TITLE'''
+          pattern = r'^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?: .+'
+
+          if re.match(pattern, title):
+              print('PR title follows conventional format')
+          else:
+              print('WARNING: PR title does not follow conventional commit format')
+              print('Recommended: <type>(<scope>): <description>')
+              print('Example: feat(workflow): Add GitHub Actions for CI/CD')
+          "
+
+  test-changes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pytest pyyaml jsonschema
+          pip install pysam edlib numpy pandas matplotlib || true
+
+      - name: Run affected tests
+        run: |
+          # Get changed files
+          git fetch origin ${{ github.base_ref }}
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+
+          echo "Changed files:"
+          echo "$CHANGED"
+
+          # Determine which tests to run based on changed paths
+          if echo "$CHANGED" | grep -q "^lib/"; then
+            echo "Running lib tests..."
+            pytest tests/test_lib.py -v
+          fi
+
+          if echo "$CHANGED" | grep -q "^bin/"; then
+            echo "Running utility tests..."
+            pytest tests/test_utilities.py -v
+          fi
+
+          if echo "$CHANGED" | grep -q "^skills/"; then
+            echo "Running core tests..."
+            pytest tests/test_core.py -v
+          fi
+
+          # Always run a quick smoke test
+          echo "Running smoke tests..."
+          pytest tests/ -v -k "test_core or test_imports" --maxfail=3
+
+  docs-preview:
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.labels.*.name, 'documentation') || contains(github.event.pull_request.changed_files, 'docs/')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check documentation changes
+        run: |
+          echo "## Documentation Changes" >> $GITHUB_STEP_SUMMARY
+
+          git fetch origin ${{ github.base_ref }}
+          git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -E '\.(md|rst|txt)$' || echo "No doc files changed"
+
+          # Check for broken links in markdown
+          python3 -c "
+          import re
+          from pathlib import Path
+
+          broken = []
+          for md in Path('.').rglob('*.md'):
+              if '.git' in str(md):
+                  continue
+              content = md.read_text()
+              # Find relative links
+              links = re.findall(r'\[.*?\]\((?!http)(.*?)\)', content)
+              for link in links:
+                  link_path = md.parent / link.split('#')[0]
+                  if link and not link_path.exists() and not link.startswith('#'):
+                      broken.append(f'{md}: {link}')
+
+          if broken:
+              print('Potentially broken links:')
+              for b in broken[:10]:
+                  print(f'  - {b}')
+          else:
+              print('No broken links found')
+          "

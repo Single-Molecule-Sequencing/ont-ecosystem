@@ -7,8 +7,8 @@ cluster_type: hpc_greatlakes
 # SLURM Configuration
 slurm:
   partition: gpu_mig40
-  account: bleu99  # Update with your account
-  job_name_prefix: dorado_bench
+  account: bleu99
+  job_name_prefix: dorado
   max_walltime: "14-00:00:00"
   max_gpus: variable
   max_memory: 256G
@@ -21,15 +21,18 @@ gpu:
   compute_capability: 8.0
   recommended_devices: "cuda:all"
   gres: "gpu:nvidia_a100_80gb_pcie_3g.40gb:1"
-  
-# File System Paths
+
+# File System Paths (Athey Lab turbo drive)
 paths:
-  dorado_executable: ./dorado-1.1.1-linux-x64/bin/dorado
-  models_directory: ./Models
-  input_base: ./Input
-  output_base: ./Output
+  turbo_base: /nfs/turbo/umms-atheylab
+  dorado_executable: /nfs/turbo/umms-atheylab/dorado-bench/dorado-1.1.1-linux-x64/bin/dorado
+  dorado_executable_v1_2: /nfs/turbo/umms-atheylab/dorado-bench/dorado-1.2.0-linux-x64/bin/dorado
+  models_directory: /nfs/turbo/umms-atheylab/dorado-bench/Models/Simplex
+  input_base: /nfs/turbo/umms-atheylab/dorado-bench/Input
+  output_base: /nfs/turbo/umms-atheylab/dorado-bench/Output
+  sequencing_data: /nfs/turbo/umms-atheylab/sequencing_data
   scratch_base: /scratch/bleu99/$USER
-  workspace: .
+  workspace: /nfs/turbo/umms-atheylab/dorado-bench
 
 # Input POD5 Samples
 samples: []

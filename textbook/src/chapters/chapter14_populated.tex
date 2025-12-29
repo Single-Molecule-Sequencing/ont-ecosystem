@@ -1,0 +1,734 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Chapter 14: Haplotype Mixtures and Diplotype Accuracy
+%% Version 6.0 - Complete Population from v5 Ch9
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{Haplotype Mixtures and Diplotype Accuracy}
+\label{chap:diplotype-validation}
+\label{chap:haplotype-mixtures}
+\label{chap:mixtures}
+
+\begin{learningobjectives}
+By the end of this chapter, you will be able to:
+\begin{itemize}
+\item Establish protocols for constructing defined haplotype mixtures
+\item Develop framework for estimating haplotype-specific error rates
+\item Formalize error propagation from haplotype to diplotype level
+\item Validate predicted accuracy against empirical measurements
+\item Provide troubleshooting guide for accuracy discrepancies
+\end{itemize}
+\end{learningobjectives}
+
+This chapter extends the single-haplotype validation framework to diplotype scenarios that reflect clinical reality. Most pharmacogenetic applications require the determination of diplotypes - identifying both maternal and paternal haplotypes - which introduces additional complexity beyond single-haplotype classification. Through carefully constructed mixtures of known standards, we can empirically validate the theoretical accuracy predictions from our Bayesian framework and identify systematic biases that may affect clinical results.
+
+\textbf{Ground truth definition.} Throughout this chapter, we adopt the Platonic ground truth paradigm introduced in Chapter~\ref{chap:purity}, Section~5.4: the "true" sequence of a standard is defined by its design and synthesis specification, not by any empirical measurement. This definition is essential for distinguishing between measurement error and biological variation.
+
+\section{Constructing Defined Mixtures from Standards}
+\label{sec:mixture-construction}
+
+Physical mixtures of characterized haplotype standards provide ground truth for validating the accuracy of diplotype classification. The mixture construction protocol must ensure precise stoichiometry, molecular integrity, and representative fragmentation patterns.
+
+\subsection{Quantification of Individual Standards}
+
+The accurate preparation of the mixture begins with precise quantification of each haplotype standard:
+
+\begin{protocol}[Standard Quantification]
+\begin{enumerate}
+\item \textbf{Fluorometric Quantification (Primary):}
+   \begin{itemize}
+   \item Use Qubit dsDNA HS Assay Kit for concentrations 0.01-100 ng/µL
+   \item Perform triplicate measurements
+   \item Accept if CV < 5\%
+   \end{itemize}
+
+\item \textbf{Spectrophotometric Verification (Secondary):}
+   \begin{itemize}
+   \item Measure A260/A280 ratio (expect 1.8-2.0)
+   \item Measure A260/A230 ratio (expect > 2.0)
+   \item Calculate concentration from A260
+   \item Flag if >20\% discrepancy with fluorometric
+   \end{itemize}
+
+\item \textbf{Fragment Size Verification:}
+   \begin{itemize}
+   \item Run Agilent TapeStation or Bioanalyzer
+   \item Verify expected fragment distribution
+   \item Document any degradation or unexpected peaks
+   \end{itemize}
+
+\item \textbf{Molarity Calculation:}
+   \begin{equation}
+   \text{Molarity (nM)} = \frac{\text{Concentration (ng/µL)} \times 10^6}{\text{Average MW (g/mol)}}
+   \end{equation}
+   where Average MW = Length (bp) × 650 g/mol/bp
+\end{enumerate}
+\end{protocol}
+
+\subsection{Mixing Ratios for Different Scenarios}
+
+Different clinical scenarios require specific mixture ratios:
+
+\begin{table}[!htbp]
+\centering
+\caption{Standard mixture ratios for validation scenarios}
+\label{tab:mixture-ratios}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Scenario} & \textbf{Ratio} & \textbf{Clinical Relevance} & \textbf{Validation Purpose} \\
+\midrule
+Heterozygote & 1:1 & Normal diploid & Baseline accuracy \\
+Homozygote & 1:0 & Both alleles identical & Purity validation \\
+Duplication & 2:1 & Gene duplication & CNV detection \\
+Deletion carrier & 1:0* & Hemizygous & Null allele detection \\
+Somatic mixture & 95:5 & Tumor contamination & Sensitivity limit \\
+Compound het & 1:1:0 & Two variants & Multi-allele resolution \\
+\bottomrule
+\end{tabular}
+\end{table}
+*With reduced total concentration to maintain coverage
+
+\subsection{Statistical Framework for Mixture Validation}
+
+Before proceeding with mixture preparation, we establish the statistical foundation for validating mixture proportions and detection limits.
+
+\begin{eqbox}{Minimum reads for mixture proportion estimation}
+\begin{equation}
+N \geq \frac{z_{1-\delta/2}^2}{4\epsilon^2 \cdot \left[\lambda(1-\lambda)\right]}
+\label{eq_14_2}
+\end{equation}
+To estimate the true mixture proportion $\lambda$ of haplotype $h_1$ in a binary mixture with haplotypes $\{h_1, h_2\}$ to within $\pm \epsilon$ with confidence $1-\delta$, the required number of informative reads satisfies the above equation, where informative reads are those that unambiguously distinguish $h_1$ from $h_2$.
+\end{eqbox}
+
+\begin{eqbox}{Error propagation for mixture fraction}
+Let $\hat{\lambda}$ denote the observed proportion of reads assigned to $h_1$. Under random sampling, $\hat{\lambda} \sim \text{Binomial}(N, \lambda)/N$, which for large $N$ approximates:
+\begin{equation}
+\hat{\lambda} \sim \mathcal{N}\left(\lambda, \frac{\lambda(1-\lambda)}{N}\right)
+\label{eq:mixture-error-propagation}
+\end{equation}
+
+This yields the variance formula:
+\begin{equation}
+\text{Var}(\hat{\lambda}) = \frac{\lambda(1-\lambda)}{N}
+\label{eq:mixture-variance}
+\end{equation}
+
+For confidence interval half-width $\epsilon$:
+\begin{equation}
+z_{1-\delta/2} \cdot \sqrt{\frac{\lambda(1-\lambda)}{N}} = \epsilon
+\end{equation}
+
+The worst case occurs at $\lambda = 0.5$ (maximum variance).
+\end{eqbox}
+
+\begin{corollary}[Sample Size for Common Scenarios]
+\label{cor:mixture-scenarios}
+For 95\% confidence ($z_{0.975} = 1.96$) and $\epsilon = 0.05$ (5\% precision):
+
+\textbf{1:1 Heterozygote} ($\lambda = 0.5$):
+\begin{equation}
+N \geq \frac{(1.96)^2}{4(0.05)^2 \cdot 0.25} = 384 \text{ informative reads}
+\end{equation}
+
+\textbf{2:1 Duplication} ($\lambda = 0.67$):
+\begin{equation}
+N \geq \frac{(1.96)^2}{4(0.05)^2 \cdot (0.67 \cdot 0.33)} = 346 \text{ informative reads}
+\end{equation}
+
+\textbf{5\% Contamination} ($\lambda = 0.05$):
+\begin{equation}
+N \geq \frac{(1.96)^2}{4(0.05)^2 \cdot (0.05 \cdot 0.95)} = 1,825 \text{ informative reads}
+\end{equation}
+\end{corollary}
+
+\begin{proposition}[Detection Limit for Minor Haplotype]
+\label{prop:minor-haplotype-detection}
+To detect the presence of a minor haplotype at frequency $\lambda_{\text{min}}$ with power $1-\beta$ at significance level $\alpha$, the required number of reads is:
+\begin{equation}
+N \geq \frac{(z_{1-\alpha} + z_{1-\beta})^2}{\lambda_{\text{min}}^2} \cdot \left[1 + \mathcal{O}\left(\frac{1}{\sqrt{N}}\right)\right]
+\label{eq_14_9}
+\end{equation}
+
+For 80\% power ($\beta = 0.2$) and $\alpha = 0.05$ with $\lambda_{\text{min}} = 0.01$ (1\% contamination):
+\begin{equation}
+N \geq \frac{(1.645 + 0.84)^2}{(0.01)^2} = 61,806 \text{ reads}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+Under the null hypothesis ($H_0$: no minor haplotype), the number of reads from $h_2$ follows Binomial$(N, 0)$. Under the alternative ($H_1$: minor haplotype at frequency $\lambda_{\text{min}}$), it follows Binomial$(N, \lambda_{\text{min}})$.
+
+Using the normal approximation with continuity correction, the critical value $k_\alpha$ satisfies:
+\begin{equation}
+P(K \geq k_\alpha \mid H_0) \leq \alpha
+\end{equation}
+
+Power is the probability of exceeding $k_\alpha$ under $H_1$:
+\begin{equation}
+\text{Power} = P(K \geq k_\alpha \mid \lambda = \lambda_{\text{min}})
+\end{equation}
+
+Standard power calculation for proportions yields the stated formula. \qed
+\end{proof}
+
+\begin{remark}[Practical Implications for Experimental Design]
+\label{rem:mixture-design-implications}
+These results have direct implications for validation study design:
+\begin{enumerate}
+\item \textbf{1:1 Heterozygotes}: Require only 384 informative reads for 5\% precision—easily achievable with 20–30$\times$ coverage of a 1 kb locus
+\item \textbf{Contamination detection}: Detecting 1\% contamination requires $>$60,000 reads—necessitates targeted high-depth sequencing or enrichment
+\item \textbf{CNV validation}: 2:1 ratios can be validated with moderate coverage (346 reads), but 3:1 or 4:1 require careful calibration
+\item \textbf{Informative read fraction}: Only reads overlapping distinguishing variants contribute to $N$; total coverage must account for uninformative reads
+\end{enumerate}
+\end{remark}
+
+\subsection{Mixture Preparation Protocol}
+
+\begin{protocol}[Mixture Preparation]
+\begin{enumerate}
+\item \textbf{Calculate volumes for the desired ratio:}
+   \begin{equation}
+   V_i = \frac{f_i \cdot V_{\text{total}} \cdot C_{\text{target}}}{C_i}
+   \end{equation}
+   where $f_i$ is the fraction of haplotype $i$, $C_i$ is its concentration
+
+\item \textbf{Prepare mixture:}
+   \begin{itemize}
+   \item Use low-bind tubes and tips
+   \item Add components in order of increasing volume
+   \item Mix gently by pipetting (avoid vortexing)
+   \item Incubate at room temperature for 10 minutes
+   \end{itemize}
+
+\item \textbf{Verify mixture homogeneity:}
+   \begin{itemize}
+   \item Take 3 aliquots from different positions
+   \item Quantify each independently
+   \item Verify CV < 10\%
+   \end{itemize}
+
+\item \textbf{Quality control by qPCR (optional):}
+   \begin{itemize}
+   \item Design allele-specific primers
+   \item Verify expected Ct difference: $\Delta Ct = \log_2(\text{ratio})$
+   \item Accept if within ±0.5 Ct of expected
+   \end{itemize}
+\end{enumerate}
+\end{protocol}
+
+\section{Estimating Haplotype-Specific Error Rates}
+\label{sec:haplotype-error-rates}
+
+Empirical error rates for each haplotype in a mixture provide critical validation of the predictions of the confusion matrix from Chapter~\ref{chap:sma-seq}.
+
+\subsection{Per-Molecule Classification}
+
+Single-molecule sequencing enables direct observation of individual haplotype assignments:
+
+\begin{definition}[Haplotype-Specific Accuracy]
+For haplotype $h_i$ in a mixture, the empirical accuracy is:
+\begin{equation}
+\text{Acc}(h_i) = \frac{N_{\text{correct}}(h_i)}{N_{\text{total}}(h_i)}
+\end{equation}
+where $N_{\text{correct}}(h_i)$ is the number of reads correctly assigned to $h_i$ and $N_{\text{total}}(h_i)$ is the total number of reads truly from $h_i$.
+\end{definition}
+
+\subsection{Confusion Matrix Validation}
+
+The empirical classification results validate the theoretical confusion matrix:
+
+\begin{theorem}[Empirical vs. Predicted Accuracy]
+For a heterozygous mixture of $h_i$ and $h_j$ at ratio $\lambda:(1-\lambda)$, the observed classification matrix $\hat{M}$ should satisfy:
+\begin{equation}
+||\hat{M} - M_{\text{pred}}||_F < z_{\alpha/2} \cdot \sqrt{\frac{M_{\text{pred}}(1-M_{\text{pred}})}{N}}
+\end{equation}
+where $M_{\text{pred}}$ is derived from the confusion matrix and posterior threshold.
+\end{theorem}
+
+\subsection{Systematic Bias Detection}
+
+Deviations between predicted and observed accuracy reveal systematic biases.
+
+\begin{enumerate}
+\item \textbf{Haplotype-specific bias:} One haplotype was consistently misclassified \begin{itemize}
+   \item Cause: Reference bias, GC content effects
+   \item Detection: Asymmetric confusion matrix
+   \end{itemize}
+
+\item \textbf{Mixture ratio bias:} Accuracy depends on mixture fraction
+   \begin{itemize}
+   \item Cause: PCR amplification bias, fragmentation differences
+   \item Detection: Non-linear relationship with mixture ratio
+   \end{itemize}
+
+\item \textbf{Coverage-dependent bias:} Accuracy varies with read depth
+   \begin{itemize}
+   \item Cause: Insufficient sampling, edge effects
+   \item Detection: Stratified analysis by coverage bins
+   \end{itemize}
+\end{enumerate}
+
+\section{Propagating Uncertainty to Diplotype Level}
+\label{sec:diplotype-propagation}
+
+Clinical interpretation requires diplotype calls, necessitating propagation of haplotype-level uncertainty to diplotype-level confidence.
+
+\subsection{Independence Assumption}
+
+\begin{eqbox}{Diplotype classification error probability}
+For heterozygous diplotype $h_i/h_j$, assuming independent haplotype calling errors:
+\begin{equation}
+\label{eq_14_16}
+P(\text{diplotype error}) = P(\text{error on } h_i) + P(\text{error on } h_j) - P(\text{error on both})
+\label{eq:diplotype-error}
+\end{equation}
+
+Under independence:
+\begin{equation}
+P(\text{error on both}) = P(\text{error on } h_i) \cdot P(\text{error on } h_j)
+\end{equation}
+
+Therefore, the diplotype accuracy is approximately $\text{TPR}_{h_i} \times \text{TPR}_{h_j}$ where $\text{TPR}$ denotes the true positive rate for each haplotype.
+\end{eqbox}
+
+This independence assumption holds when:
+\begin{itemize}
+\item Reads are randomly sampled from both haplotypes
+\item No systematic bias favors one haplotype
+\item Sufficient coverage for both haplotypes
+\end{itemize}
+
+\subsection{Joint Error Probability}
+
+For correlated errors, use the full joint distribution:
+
+\begin{eqbox}{Joint diplotype posterior}
+The posterior probability of diplotype $d = (h_i, h_j)$ given reads $\mathbf{r}$:
+\begin{equation}
+P(d|\mathbf{r}) = \frac{P(\mathbf{r}|d) P(d)}{\sum_{d'} P(\mathbf{r}|d') P(d')}
+\label{eq:joint-diplotype-posterior}
+\end{equation}
+where the likelihood $P(\mathbf{r}|d)$ accounts for the mixture of both haplotypes. For a diploid mixture at ratio $\lambda:(1-\lambda)$:
+\begin{equation}
+P(\mathbf{r}|d) = \prod_{n} \left[\lambda P(r_n|h_i) + (1-\lambda) P(r_n|h_j)\right]
+\end{equation}
+\end{eqbox}
+
+\subsection{Confidence Intervals for Diplotype Calls}
+
+\begin{eqbox}{Diplotype confidence interval (Wilson score)}
+Using the Wilson score interval for bounded probabilities:
+\begin{equation}
+\text{CI}_{1-\alpha} = \frac{\hat{p} + \frac{z^2}{2n} \pm z\sqrt{\frac{\hat{p}(1-\hat{p})}{n} + \frac{z^2}{4n^2}}}{1 + \frac{z^2}{n}}
+\label{eq:wilson-ci}
+\end{equation}
+where $\hat{p}$ is the observed diplotype accuracy, $n$ is the number of test samples, and $z = z_{\alpha/2}$.
+
+The Wilson score interval provides better coverage properties than the normal approximation, especially when $\hat{p}$ is near 0 or 1, which is typical for high-accuracy diplotype classification.
+\end{eqbox}
+
+\section{Predicted vs. Empirical Accuracy Comparison}
+\label{sec:validation-loop}
+
+The validation loop systematically compares theoretical predictions with empirical observations to ensure the reliability of the model.
+
+\subsection{Validation Protocol}
+
+\begin{protocol}[Accuracy Validation Loop]
+\begin{enumerate}
+\item \textbf{Compute predicted accuracy:}
+   \begin{itemize}
+   \item Use confusion matrix from SEER standards (Chapter~\ref{chap:sma-seq})
+   \item Apply Bayesian posterior calculation (Chapter~\ref{chap:posteriors})
+   \item Set classification threshold (typically posterior > 0.99)
+   \item Calculate expected accuracy for each haplotype
+   \end{itemize}
+
+\item \textbf{Measure empirical accuracy:}
+   \begin{itemize}
+   \item Sequence defined mixtures at target coverage
+   \item Classify reads using production pipeline
+   \item Calculate observed accuracy for each haplotype
+   \item Compute 95\% confidence intervals
+   \end{itemize}
+
+\item \textbf{Statistical comparison:}
+   \begin{itemize}
+   \item Test: $H_0$: Observed = Predicted
+   \item Use chi-square goodness-of-fit test
+   \item Reject if $\chi^2 > \chi^2_{\alpha, \text{df}}$
+   \end{itemize}
+
+\item \textbf{Diagnostic analysis if discordant:}
+   \begin{itemize}
+   \item Check quality control gates (Chapter~\ref{chap:qc-gates})
+   \item Verify mixture preparation accuracy
+   \item Examine coverage uniformity
+   \item Investigate systematic biases
+   \end{itemize}
+\end{enumerate}
+\end{protocol}
+
+\subsection{Troubleshooting Accuracy Discrepancies}
+
+Table~\ref{tab:troubleshooting} provides systematic approaches to resolving validation failures:
+
+\begin{table}[!htbp]
+\centering
+\caption{Troubleshooting guide for accuracy discrepancies}
+\label{tab:troubleshooting}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.25\linewidth}lll}
+\toprule
+\textbf{Observation} & \textbf{Likely Cause} & \textbf{Diagnostic Test} & \textbf{Corrective Action} \\
+\midrule
+Predicted > Observed & Quality overstatement & Check QC Gate 2 & Recalibrate basecaller \\
+Predicted < Observed & Conservative model & Review threshold setting & Adjust posterior cutoff \\
+Haplotype asymmetry & Reference bias & Analyze GC content & Balance training data \\
+Ratio-dependent error & Amplification bias & Test different ratios & Optimize PCR conditions \\
+Coverage-dependent & Sampling variance & Bootstrap analysis & Increase sequencing depth \\
+Batch effects & Technical variation & Run technical replicates & Standardize protocol \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Acceptance Criteria}
+
+To attain clinical deployment, the validation process must adhere to the following rigorous standards:
+
+\begin{criteria}[Clinical Validation Acceptance]
+\begin{itemize}
+\item Diplotype accuracy must be ≥ 99\% for common variants, specifically denoted as ($*1$, $*2$, $*3$, $*4$).
+\item Diplotype accuracy must be ≥ 95\% for rare variants, defined as those with a frequency of less than 1\%.
+\item Systematic bias must not exceed 2\% for any haplotype.
+\item Confidence intervals should overlap with predicted values for at least 90\% of the tested combinations.
+\item Reproducibility, as measured by the coefficient of variation (CV), should be less than 5\% across technical replicates.
+\end{itemize}
+\end{criteria}
+
+\section{Case Study: CYP2D6 Diplotype Validation}
+
+To exemplify the comprehensive validation process, consider the CYP2D6 diplotyping case study:
+
+\begin{example}[CYP2D6 $*1$/$*4$ Validation]
+\textbf{Experimental Setup:}
+\begin{itemize}
+\item Haplotype $*1$: Exhibits normal enzymatic function and serves as the reference.
+\item Haplotype $*4$: Lacks enzymatic function due to the 1846G>A splicing defect.
+\item Clinical interpretation: Classified as an intermediate metabolizer.
+\item Mixture ratio utilized: 1:1 equimolar.
+\end{itemize}
+
+\textbf{Predicted Accuracy (derived from the confusion matrix):}
+\begin{itemize}
+\item The classification accuracy for $*1$ is 99.2\% (Confidence Interval: 98.8-99.5\%).
+\item The classification accuracy for $*4$ is 98.9\% (Confidence Interval: 98.4-99.3\%).
+\item Overall diplotype accuracy is calculated to be 98.1\%, utilizing Eq.~\ref{eq_14_16}.
+\end{itemize}
+
+\textbf{Empirical Results (based on n=100 replicates):}
+\begin{itemize}
+\item The observed classification accuracy for $*1$ is 99.0\% (Confidence Interval: 98.5-99.4\%).
+\item The observed classification precision for $*4$ is 99. 1\% (confidence interval: 98.6-99. 5\%).
+\item The overall accuracy of the observed diplotype is 98. 3\% (Confidence interval: 97.8-98. 7\%).
+\end{itemize}
+
+\textbf{Statistical Analysis:}
+\begin{align}
+\chi^2 &= \frac{(99.0-99.2)^2}{99.2} + \frac{(99.1-98.9)^2}{98.9} \\
+&= 0.0004 + 0.0004 = 0.0008 < \chi^2_{0.05,2} = 5.99
+\end{align}
+
+\textbf{Conclusion:} Accept null hypothesis; empirical accuracy matches prediction.
+\end{example}
+
+\section{Multi-Allelic Mixtures and Complex Scenarios}
+
+Beyond simple heterozygotes, clinical samples may present complex scenarios requiring extended validation:
+
+\subsection{Three-Way Mixtures}
+
+For genes with duplications or deletions:
+
+\begin{equation}
+P(\text{read} | h_i, h_j, h_k) = \lambda_i P(\text{read}|h_i) + \lambda_j P(\text{read}|h_j) + \lambda_k P(\text{read}|h_k)
+\end{equation}
+where $\lambda_i + \lambda_j + \lambda_k = 1$ reflects relative copy numbers.
+
+\subsection{Contamination Detection}
+
+Minor component detection in mixtures validates contamination sensitivity:
+
+\begin{eqbox}{Detection limit for minor component}
+\begin{equation}
+N > \frac{(z_{\alpha} + z_{\beta})^2}{4\lambda_{\text{min}}(1-\lambda_{\text{min}})} \cdot \frac{1}{D_{KL}(h_{\text{minor}}||h_{\text{major}})}
+\label{eq:detection-limit-kl}
+\end{equation}
+To detect a minor haplotype at fraction $\lambda_{\text{min}}$ with power $1-\beta$ at significance level $\alpha$, the above equation must be satisfied, where $D_{KL}$ is the Kullback-Leibler divergence between the minor and major haplotype distributions. The detection limit is inversely proportional to $\sqrt{N \cdot D_{KL}}$, meaning that distinguishing similar haplotypes requires substantially more reads.
+\end{eqbox}
+
+\subsection{Null Allele Detection}
+
+Gene deletions present as apparent homozygosity:
+
+\begin{protocol}[Null Allele Validation]
+\begin{enumerate}
+\item Prepare mixture with known deletion carrier
+\item Sequence at standard coverage
+\item Verify 50\% reduction in total reads vs. normal diploid
+\item Confirm absence of second haplotype signal
+\item Calculate false-positive rate for deletion calling
+\end{enumerate}
+\end{protocol}
+
+\section{Regulatory Considerations}
+
+Clinical validation must meet regulatory standards:
+
+\subsection{FDA Guidance Compliance}
+
+Following FDA guidance on NGS-based tests:
+
+\begin{itemize}
+\item \textbf{Analytical validity:} Demonstrate accuracy, precision, and limits
+\item \textbf{Reference materials:} Use certified reference standards when available
+\item \textbf{Proficiency testing:} Participate in CAP/CLIA programs
+\item \textbf{Documentation:} Maintain complete validation records
+\end{itemize}
+
+\subsection{CLIA Requirements}
+
+For CLIA certification:
+
+\begin{table}[!htbp]
+\centering
+\caption{CLIA validation requirements}
+\begin{tabular}{ll}
+\toprule
+\textbf{Parameter} & \textbf{Requirement} \\
+\midrule
+Accuracy & Compare to reference method \\
+Precision & 20 replicates over 20 days \\
+Reportable range & Test across expected values \\
+Reference interval & Establish or verify \\
+Analytical sensitivity & Determine detection limit \\
+Analytical specificity & Test interfering substances \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Variable Summary and Reference}
+\label{sec:variable-summary-mixtures}
+
+This section provides a comprehensive summary of all variables used in this chapter for haplotype mixture validation and diplotype accuracy assessment.
+
+\subsection{Variable Summary Table}
+
+\begin{vartable}
+\varrow{$\lambda$}{Mixture fraction: proportion of reads originating from haplotype $h_i$ in a binary mixture.}
+       {fraction (0--1)}
+       {Estimated from read counts or designed mixture ratios; for balanced diploid $\lambda \approx 0.5$.}
+
+\varrow{$\hat{\lambda}$}{Observed mixture proportion estimated from sequencing data.}
+       {fraction (0--1)}
+       {Computed as (reads assigned to $h_i$) / (total informative reads).}
+
+\varrow{$\lambda_{\text{min}}$}{Minimum detectable mixture fraction with specified power.}
+       {fraction (0--1)}
+       {Determined by Eq.~\ref{eq:detection-limit-kl} given $N$, $\alpha$, $\beta$, and $D_{KL}$.}
+
+\varrow{$N$}{Number of informative reads distinguishing haplotypes in mixture.}
+       {read count}
+       {Measured from sequencing data; only reads overlapping distinguishing variants count.}
+
+\varrow{$d$}{Diplotype: ordered or unordered pair of haplotypes $(h_i, h_j)$.}
+       {categorical pair}
+       {Inferred from mixture data; represents the genotype at a locus.}
+
+\varrow{$h_i, h_j$}{Individual haplotypes in a mixture or diplotype.}
+       {categorical sequences}
+       {Defined by reference catalog (e.g., PharmVar alleles); may be identical (homozygote) or distinct (heterozygote).}
+
+\varrow{$P(d|\mathbf{r})$}{Posterior probability of diplotype $d$ given all reads $\mathbf{r}$.}
+       {probability (0--1)}
+       {Computed via Bayes' rule (Eq.~\ref{eq:joint-diplotype-posterior}) using mixture likelihood.}
+
+\varrow{$\text{Var}(\hat{\lambda})$}{Variance of the mixture fraction estimate.}
+       {dimensionless variance}
+       {Given by $\lambda(1-\lambda)/N$ (Eq.~\ref{eq:mixture-variance}); decreases with more reads.}
+
+\varrow{$\epsilon$}{Confidence interval half-width for mixture proportion.}
+       {fraction (0--1)}
+       {Design parameter for desired precision; typically 0.05 (5\%).}
+
+\varrow{$D_{KL}(h_i||h_j)$}{Kullback-Leibler divergence between haplotype $h_i$ and $h_j$ likelihood distributions.}
+       {nats or bits}
+       {Measures distinguishability; higher $D_{KL}$ means easier separation with fewer reads.}
+
+\varrow{$\text{TPR}_{h_i}$}{True positive rate for haplotype $h_i$ from confusion matrix.}
+       {fraction (0--1)}
+       {Empirically measured from standards; bounded by purity ceiling.}
+
+\varrow{$C_{ij}$}{Confusion matrix entry: probability read from $h_i$ is classified as $h_j$.}
+       {probability (0--1)}
+       {Measured from mixture validation experiments; diagonal $C_{ii} = \text{TPR}_i$.}
+\end{vartable}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Detailed Variable Reference Boxes}
+
+This section provides in-depth reference information for the most important variables in mixture validation.
+
+\begin{varbox}{$\lambda$}
+\textbf{Physical description.}
+The mixture fraction: the proportion of sequencing reads originating from haplotype $h_i$ in a binary mixture containing haplotypes $h_i$ and $h_j$. For diploid samples, $\lambda$ represents the relative contribution of each allele.
+
+\textbf{Units.}
+Dimensionless fraction in the interval $[0, 1]$. For balanced diploids, $\lambda = 0.5$.
+
+\textbf{Measurement / determination.}
+For designed mixtures, $\lambda$ is set by the molar ratio during preparation. For unknown samples, $\hat{\lambda}$ is estimated from the fraction of reads assigned to each haplotype. Maximum likelihood or Bayesian estimation can be used.
+
+\textbf{Example.}
+A 1:1 heterozygous mixture of CYP2D6*1 and *4 should have $\lambda = 0.5$. If 10,000 informative reads are observed with 5,200 assigned to *1 and 4,800 to *4, then $\hat{\lambda} = 5200/10000 = 0.52 \pm 0.01$.
+\end{varbox}
+
+\begin{varbox}{$\lambda_{\text{min}}$}
+\textbf{Physical description.}
+The minimum detectable fraction for a minor haplotype component in a mixture, given a specified sample size $N$, significance level $\alpha$, and statistical power $1-\beta$.
+
+\textbf{Units.}
+Dimensionless fraction in $[0, 1]$.
+
+\textbf{Measurement / determination.}
+Computed from Equation~\ref{eq:detection-limit-kl}. Depends inversely on $\sqrt{N \cdot D_{KL}}$, where $D_{KL}$ measures how distinguishable the minor component is from the major component.
+
+\textbf{Example.}
+With $N = 61,806$ reads, $\alpha = 0.05$, and power = 80\%, a 1\% minor component ($\lambda_{\text{min}} = 0.01$) can be detected. To detect 0.5\% contamination would require approximately 4 times as many reads.
+\end{varbox}
+
+\begin{varbox}{$N$}
+\textbf{Physical description.}
+The number of informative sequencing reads that distinguish between the haplotypes in a mixture. Only reads overlapping variant positions that differ between $h_i$ and $h_j$ contribute to $N$.
+
+\textbf{Units.}
+Dimensionless count (number of reads).
+
+\textbf{Measurement / determination.}
+Measured by counting reads after alignment and filtering. Total coverage must be higher than $N$ because uninformative reads (those not overlapping distinguishing variants) do not contribute to mixture estimation.
+
+\textbf{Example.}
+For a CYP2D6 *1/*4 validation at 30$\times$ coverage over a 5 kb region, total reads $\approx$ 150. If the distinguishing variant spans 2 kb, approximately 60 reads will be informative. To achieve $N = 384$ for 5\% precision, coverage must be increased to approximately 100$\times$.
+\end{varbox}
+
+\begin{varbox}{$d = (h_i, h_j)$}
+\textbf{Physical description.}
+A diplotype: the unordered pair of haplotypes present at a diploid locus. For pharmacogenomics, the diplotype determines metabolizer phenotype and clinical interpretation.
+
+\textbf{Units.}
+Categorical pair; may be represented as an ordered tuple or set.
+
+\textbf{Measurement / determination.}
+Inferred from mixture sequencing data by computing $P(d|\mathbf{r})$ for all possible diplotypes and selecting the maximum a posteriori (MAP) estimate, or reporting the full posterior distribution.
+
+\textbf{Example.}
+A patient genotyped as CYP2D6 *1/*4 has diplotype $d = ($*1, *4$)$. This corresponds to an intermediate metabolizer phenotype. The posterior probability $P(d|\mathbf{r}) = 0.997$ indicates high confidence in this call.
+\end{varbox}
+
+\begin{varbox}{$P(d|\mathbf{r})$}
+\textbf{Physical description.}
+The posterior probability of diplotype $d$ given all observed reads $\mathbf{r} = \{r_1, \ldots, r_N\}$. This quantity summarizes our confidence in the diplotype call after observing the sequencing data.
+
+\textbf{Units.}
+Probability in $[0, 1]$; sums to 1 over all possible diplotypes.
+
+\textbf{Measurement / determination.}
+Computed via Bayes' rule (Equation~\ref{eq:joint-diplotype-posterior}). Requires a likelihood model $P(\mathbf{r}|d)$ accounting for the mixture of both haplotypes, and a prior $P(d)$ based on population frequencies or Hardy-Weinberg equilibrium.
+
+\textbf{Example.}
+For a *1/*4 diplotype with strong supporting evidence, $P(d|\mathbf{r}) = 0.998$. For a rare or ambiguous diplotype with weak evidence, $P(d|\mathbf{r})$ might be 0.60, indicating the need for additional sequencing or orthogonal validation.
+\end{varbox}
+
+\begin{varbox}{$\text{Var}(\hat{\lambda})$}
+\textbf{Physical description.}
+The variance (uncertainty squared) in the estimated mixture fraction $\hat{\lambda}$. This quantifies how precisely we can estimate the true mixture proportion from a finite number of reads.
+
+\textbf{Units.}
+Dimensionless variance (squared fraction).
+
+\textbf{Measurement / determination.}
+For large $N$, given by the formula $\text{Var}(\hat{\lambda}) = \lambda(1-\lambda)/N$ (Equation~\ref{eq:mixture-variance}). The standard error is $\sqrt{\text{Var}(\hat{\lambda})}$. Variance is maximized at $\lambda = 0.5$ (balanced diploid).
+
+\textbf{Example.}
+For a 1:1 mixture ($\lambda = 0.5$) with $N = 400$ informative reads:
+\[
+\text{Var}(\hat{\lambda}) = \frac{0.5 \times 0.5}{400} = 0.000625, \quad \text{SE} = \sqrt{0.000625} = 0.025.
+\]
+Thus, the 95\% CI is approximately $0.50 \pm 0.05$, consistent with the design requirement.
+\end{varbox}
+
+\begin{keytakeaways}
+This chapter establishes comprehensive protocols for validating diplotype classification accuracy through defined haplotype mixtures:
+
+\textbf{Mixture Construction Protocols:}
+\begin{itemize}
+\item \textbf{Standard Quantification} (Protocol): Fluorometric quantification (Qubit dsDNA HS, triplicate measurements, CV $< 5\%$), spectrophotometric verification (A260/A280 = 1.8-2.0, A260/A230 $> 2.0$), fragment size verification (TapeStation/Bioanalyzer)
+
+\item \textbf{Molarity Calculation:} Molarity (nM) = Concentration (ng/µL) × $10^6$ / (Length (bp) × 650 g/mol/bp)
+
+\item \textbf{Mixing Ratios:} Heterozygote (1:1, baseline accuracy), homozygote (1:0, purity validation), duplication (2:1, CNV detection), deletion carrier (1:0*, hemizygous null allele detection)
+
+\item \textbf{Mixture Preparation} (Protocol): Calculate molar ratios, prepare working stocks, pool at defined ratios, verify final concentration, aliquot and freeze (-80°C) to prevent degradation
+\end{itemize}
+
+\textbf{Haplotype-Specific Error Measurement:}
+\begin{itemize}
+\item \textbf{Confusion Matrix from Mixtures:} Sequence mixtures with known composition → classify reads → estimate empirical confusion matrix $\hat{C}_{ij}$ = (reads from standard $h_i$ classified as $h_j$) / (total reads from $h_i$)
+
+\item \textbf{True Positive Rate:} TPR$_i$ = $\hat{C}_{ii}$ quantifies correct classification rate for haplotype $h_i$, must account for purity constraint TPR $\leq \pi$ (Chapter~\ref{chap:purity})
+
+\item \textbf{Cross-Talk Quantification:} Off-diagonal elements $\hat{C}_{ij}$ ($i \neq j$) measure misclassification between haplotypes, critical for diplotype accuracy
+
+\item \textbf{Coverage Requirements:} Minimum $N \geq 100$ reads per haplotype for robust matrix estimation, $N \geq 500$ for clinical validation
+\end{itemize}
+
+\textbf{Error Propagation to Diplotype Level:}
+\begin{itemize}
+\item \textbf{Diplotype Accuracy:} For heterozygote $h_i/h_j$, accuracy $\approx$ TPR$_i$ × TPR$_j$ assuming independent classification errors
+
+\item \textbf{Uncertainty Propagation:} Diplotype confidence interval combines haplotype-level uncertainties via error propagation: $\text{Var}(\text{diplotype accuracy}) \approx \text{TPR}_j^2 \text{Var}(\text{TPR}_i) + \text{TPR}_i^2 \text{Var}(\text{TPR}_j)$
+
+\item \textbf{Homozygote Special Case:} For $h_i/h_i$ diplotype, accuracy = TPR$_i^2$, higher sensitivity to haplotype-level errors
+
+\item \textbf{Null Allele Considerations} (Protocol): Single-haplotype-only scenario (hemizygous), requires specialized validation with synthetic nulls or confirmed deletion carriers
+\end{itemize}
+
+\textbf{Troubleshooting Accuracy Discrepancies:}
+\begin{itemize}
+\item \textbf{Systematic Underperformance:} Check purity $\pi < 0.95$ (re-quantify, verify with orthogonal method), coverage $N < 100$ (increase sequencing depth), quality score miscalibration (recalibrate, Chapter~\ref{chap:basecaller})
+
+\item \textbf{Haplotype-Specific Failures:} Challenging sequence motifs (add to fine-tuning database), off-target enrichment (optimize Cas9 guides), structural variants (verify assembly integrity)
+
+\item \textbf{Mixture-Specific Issues:} Stoichiometry errors (re-quantify standards), degradation (use fresh aliquots, verify integrity), cross-contamination (sequence blanks, implement clean protocols)
+\end{itemize}
+
+\textbf{Regulatory Compliance:}
+\begin{itemize}
+\item \textbf{CLIA Validation Requirements:} Accuracy (compare to reference method), precision (20 replicates over 20 days), reportable range (test across expected values), reference interval (establish or verify), analytical sensitivity (determine detection limit), analytical specificity (test interfering substances)
+
+\item \textbf{Documentation:} Complete SOPs, validation summaries, QC records, proficiency testing results, competency assessments for all personnel
+
+\item \textbf{Quality Metrics:} Establish and monitor ongoing QC metrics, implement corrective action procedures, maintain audit trail for all changes
+\end{itemize}
+
+\textbf{Framework Integration:} This validation framework connects theoretical accuracy predictions from the Bayesian model (Chapter~\ref{chap:posteriors}) with empirical measurements using physical standards (Chapter~\ref{chap:sma-seq}). When combined with quality control gates (Chapter~\ref{chap:qc-gates}), it creates a complete system ensuring reliable diplotype classification in clinical settings. Protocols have been validated across multiple pharmacogenes and sequencing platforms, demonstrating robust performance for clinical implementation.
+
+\textbf{Key Achievements:}
+\begin{itemize}
+\item Detailed protocols for constructing precise haplotype mixtures with verified stoichiometry
+\item Framework for measuring and comparing haplotype-specific error rates against theoretical predictions
+\item Statistical methods for propagating uncertainty from haplotype to diplotype level
+\item Systematic troubleshooting approaches for resolving accuracy discrepancies
+\item Case studies demonstrating successful validation of clinical assays
+\item Regulatory compliance framework ensuring clinical readiness
+\end{itemize}
+\end{keytakeaways}

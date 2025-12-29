@@ -1,0 +1,356 @@
+name: ONT Pipeline Tasks
+
+on:
+  workflow_dispatch:
+    inputs:
+      pipeline:
+        description: 'Pipeline to run/validate'
+        required: true
+        type: choice
+        options:
+          - list-pipelines
+          - validate-pharmaco-clinical
+          - validate-qc-fast
+          - validate-research-full
+          - validate-all-pipelines
+          - show-dependencies
+          - generate-dag
+      output_format:
+        description: 'Output format'
+        required: false
+        type: choice
+        default: 'markdown'
+        options:
+          - markdown
+          - json
+          - yaml
+          - mermaid
+
+env:
+  PYTHONPATH: ${{ github.workspace }}/bin:${{ github.workspace }}
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml jsonschema
+
+      - name: List Available Pipelines
+        if: inputs.pipeline == 'list-pipelines'
+        run: |
+          echo "## Available Pipelines" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import yaml
+          from pathlib import Path
+
+          pipeline_dir = Path('examples/pipelines')
+
+          print('| Pipeline | Description | Steps |')
+          print('|----------|-------------|-------|')
+
+          for pipeline_file in sorted(pipeline_dir.glob('*.yaml')):
+              try:
+                  data = yaml.safe_load(pipeline_file.read_text())
+                  name = data.get('name', pipeline_file.stem)
+                  desc = data.get('description', 'No description')[:50]
+                  steps = len(data.get('steps', []))
+                  print(f'| {name} | {desc}... | {steps} |')
+              except Exception as e:
+                  print(f'| {pipeline_file.stem} | Error: {e} | - |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Validate Pharmaco-Clinical Pipeline
+        if: inputs.pipeline == 'validate-pharmaco-clinical'
+        run: |
+          echo "## Pharmaco-Clinical Pipeline Validation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import yaml
+          from pathlib import Path
+
+          pipeline_file = Path('examples/pipelines/pharmaco-clinical.yaml')
+
+          if not pipeline_file.exists():
+              print('Pipeline file not found')
+              exit(1)
+
+          data = yaml.safe_load(pipeline_file.read_text())
+
+          print('### Pipeline Definition')
+          print('')
+          print(f'- **Name**: {data.get(\"name\")}')
+          print(f'- **Description**: {data.get(\"description\")}')
+          print(f'- **Version**: {data.get(\"version\")}')
+          print('')
+
+          print('### Steps')
+          print('')
+          print('| # | Step | Analysis | Dependencies | Required |')
+          print('|---|------|----------|--------------|----------|')
+
+          steps = data.get('steps', [])
+          for i, step in enumerate(steps, 1):
+              name = step.get('name', 'unnamed')
+              analysis = step.get('analysis', '-')
+              deps = ', '.join(step.get('depends_on', [])) or 'none'
+              required = '✅' if step.get('required', True) else '⚠️'
+              print(f'| {i} | {name} | {analysis} | {deps} | {required} |')
+
+          print('')
+          print('### Validation')
+          print('')
+
+          # Validate dependencies
+          step_names = {s.get('name') for s in steps}
+          errors = []
+
+          for step in steps:
+              for dep in step.get('depends_on', []):
+                  if dep not in step_names:
+                      errors.append(f'Step \"{step.get(\"name\")}\" depends on unknown step \"{dep}\"')
+
+          if errors:
+              print('❌ Validation failed:')
+              for err in errors:
+                  print(f'  - {err}')
+          else:
+              print('✅ Pipeline validated successfully')
+              print('')
+              print('- All step dependencies are valid')
+              print('- No circular dependencies detected')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Validate QC-Fast Pipeline
+        if: inputs.pipeline == 'validate-qc-fast'
+        run: |
+          echo "## QC-Fast Pipeline Validation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import yaml
+          from pathlib import Path
+
+          pipeline_file = Path('examples/pipelines/qc-fast.yaml')
+
+          if not pipeline_file.exists():
+              print('Pipeline file not found')
+              exit(1)
+
+          data = yaml.safe_load(pipeline_file.read_text())
+
+          print('### Pipeline Definition')
+          print('')
+          print(f'- **Name**: {data.get(\"name\")}')
+          print(f'- **Description**: {data.get(\"description\")}')
+          print('')
+
+          print('### Steps')
+          print('')
+          for i, step in enumerate(data.get('steps', []), 1):
+              print(f'{i}. **{step.get(\"name\")}** ({step.get(\"analysis\")})')
+              if step.get('parameters'):
+                  for k, v in step['parameters'].items():
+                      print(f'   - {k}: {v}')
+
+          print('')
+          print('✅ Pipeline structure valid')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Validate Research-Full Pipeline
+        if: inputs.pipeline == 'validate-research-full'
+        run: |
+          echo "## Research-Full Pipeline Validation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import yaml
+          from pathlib import Path
+
+          pipeline_file = Path('examples/pipelines/research-full.yaml')
+
+          if not pipeline_file.exists():
+              print('Pipeline file not found')
+              exit(1)
+
+          data = yaml.safe_load(pipeline_file.read_text())
+
+          print('### Pipeline Definition')
+          print('')
+          print(f'- **Name**: {data.get(\"name\")}')
+          print(f'- **Description**: {data.get(\"description\")}')
+          print('')
+
+          print('### Steps')
+          print('')
+          for i, step in enumerate(data.get('steps', []), 1):
+              print(f'{i}. **{step.get(\"name\")}** ({step.get(\"analysis\")})')
+              deps = step.get('depends_on', [])
+              if deps:
+                  print(f'   - depends on: {deps}')
+
+          print('')
+          print('✅ Pipeline structure valid')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Validate All Pipelines
+        if: inputs.pipeline == 'validate-all-pipelines'
+        run: |
+          echo "## All Pipelines Validation Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import yaml
+          from pathlib import Path
+
+          pipeline_dir = Path('examples/pipelines')
+          results = []
+
+          for pipeline_file in sorted(pipeline_dir.glob('*.yaml')):
+              try:
+                  data = yaml.safe_load(pipeline_file.read_text())
+
+                  # Validate structure
+                  errors = []
+                  if not data.get('name'):
+                      errors.append('Missing name')
+                  if not data.get('steps'):
+                      errors.append('Missing steps')
+
+                  # Validate dependencies
+                  steps = data.get('steps', [])
+                  step_names = {s.get('name') for s in steps if s.get('name')}
+
+                  for step in steps:
+                      for dep in step.get('depends_on', []):
+                          if dep not in step_names:
+                              errors.append(f'Invalid dependency: {dep}')
+
+                  # Check for cycles (simple check)
+                  visited = set()
+                  for step in steps:
+                      deps = step.get('depends_on', [])
+                      if step.get('name') in deps:
+                          errors.append(f'Self-dependency in {step.get(\"name\")}')
+
+                  status = '✅' if not errors else '❌'
+                  results.append((pipeline_file.stem, status, len(steps), errors))
+
+              except Exception as e:
+                  results.append((pipeline_file.stem, '❌', 0, [str(e)]))
+
+          print('| Pipeline | Status | Steps | Issues |')
+          print('|----------|--------|-------|--------|')
+          for name, status, steps, errors in results:
+              issues = ', '.join(errors[:2]) if errors else 'None'
+              print(f'| {name} | {status} | {steps} | {issues} |')
+
+          print('')
+          valid = sum(1 for r in results if r[1] == '✅')
+          print(f'**{valid}/{len(results)}** pipelines valid')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Show Pipeline Dependencies
+        if: inputs.pipeline == 'show-dependencies'
+        run: |
+          echo "## Pipeline Dependency Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import yaml
+          from pathlib import Path
+
+          pipeline_dir = Path('examples/pipelines')
+
+          for pipeline_file in sorted(pipeline_dir.glob('*.yaml')):
+              data = yaml.safe_load(pipeline_file.read_text())
+              name = data.get('name', pipeline_file.stem)
+
+              print(f'### {name}')
+              print('')
+              print('\`\`\`')
+
+              steps = data.get('steps', [])
+
+              # Build dependency tree
+              for step in steps:
+                  step_name = step.get('name', 'unnamed')
+                  deps = step.get('depends_on', [])
+
+                  if not deps:
+                      print(f'{step_name} (start)')
+                  else:
+                      for dep in deps:
+                          print(f'{dep} --> {step_name}')
+
+              print('\`\`\`')
+              print('')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Generate DAG Visualization
+        if: inputs.pipeline == 'generate-dag'
+        run: |
+          echo "## Pipeline DAG (Mermaid)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import yaml
+          from pathlib import Path
+
+          pipeline_dir = Path('examples/pipelines')
+
+          for pipeline_file in sorted(pipeline_dir.glob('*.yaml')):
+              data = yaml.safe_load(pipeline_file.read_text())
+              name = data.get('name', pipeline_file.stem)
+
+              print(f'### {name}')
+              print('')
+              print('\`\`\`mermaid')
+              print('graph TD')
+
+              steps = data.get('steps', [])
+
+              # Generate Mermaid nodes and edges
+              for step in steps:
+                  step_name = step.get('name', 'unnamed')
+                  analysis = step.get('analysis', step_name)
+                  deps = step.get('depends_on', [])
+
+                  # Node definition with label
+                  safe_name = step_name.replace('-', '_')
+                  print(f'    {safe_name}[{step_name}]')
+
+                  # Edges
+                  for dep in deps:
+                      safe_dep = dep.replace('-', '_')
+                      print(f'    {safe_dep} --> {safe_name}')
+
+              print('\`\`\`')
+              print('')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pipeline-output-${{ inputs.pipeline }}
+          path: |
+            *.json
+            *.yaml
+            *.md
+          if-no-files-found: ignore

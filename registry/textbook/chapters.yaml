@@ -1,0 +1,136 @@
+# SMS Haplotype Framework Textbook - Chapter Index
+# Extracted from: SMS_Haplotype_Framework_Textbook 96.pdf
+# Version: 6.0 (Complete Edition, November 2025)
+# Completion: 75% (14/20 chapters complete)
+
+version: "6.0"
+source_pdf: "SMS_Haplotype_Framework_Textbook 96.pdf"
+last_extracted: "2025-12-28"
+
+parts:
+  - part_id: "I"
+    title: "Clinical Motivation and Technical Background"
+    chapters: [1, 2, 3]
+    status: "complete"
+    description: >
+      Establishes clinical need for accurate haplotype classification
+      and limitations of current testing modalities.
+
+  - part_id: "II"
+    title: "Mathematical Foundations"
+    chapters: [4, 5, 6, 7]
+    status: "complete"
+    description: >
+      Develops measurable spaces and probability models for each stage
+      of the sequencing pipeline, including Pipeline Factorization Theorem.
+    key_concepts:
+      - "Pipeline Factorization Theorem"
+      - "Purity Theory"
+      - "Posterior Computation"
+      - "Experimental Design"
+
+  - part_id: "III"
+    title: "Physical Standards and Workflows"
+    chapters: [8, 9, 10]
+    status: "complete"
+    description: >
+      Documents laboratory workflows for constructing standards and
+      clinical libraries using Golden Gate assembly.
+    key_concepts:
+      - "Plasmid Standards"
+      - "Targeted Enrichment (Cas9)"
+      - "Haplotype Mixtures"
+
+  - part_id: "IV"
+    title: "SMA-seq and Model Improvement"
+    chapters: [11, 12, 13]
+    status: "complete"
+    description: >
+      Formalizes SMA-seq and SEER framework as the empirical core
+      of the system for basecaller calibration and improvement.
+    key_concepts:
+      - "SMA-seq Protocol"
+      - "SEER Framework"
+      - "Noisy Label Learning"
+      - "Basecaller Fine-Tuning"
+
+  - part_id: "V"
+    title: "Validation"
+    chapters: [14, 15]
+    status: "complete"
+    description: >
+      Uses SMA-seq tools to define rigorous validation gates for
+      haplotype mixture analysis and end-to-end workflows.
+
+  - part_id: "VI"
+    title: "Clinical Applications"
+    chapters: [16, 17, 18]
+    status: "partial"
+    description: >
+      Applies framework to bacterial strain typing and CYP2D6
+      pharmacogenomics case studies.
+    key_concepts:
+      - "Bacterial Strain Typing"
+      - "CYP2D6 Pharmacogenomics"
+      - "Singapore Cohort"
+      - "Tamoxifen Therapy"
+
+  - part_id: "VII"
+    title: "Operational Excellence"
+    chapters: [19, 20]
+    status: "outline"
+    description: >
+      Addresses operationalization and economic considerations
+      (forthcoming content).
+
+appendices:
+  - id: "A"
+    title: "Notation"
+    status: "complete"
+  - id: "B"
+    title: "Core Equations"
+    status: "complete"
+  - id: "C"
+    title: "QC Gates"
+    status: "complete"
+  - id: "D"
+    title: "Computational Protocols"
+    status: "complete"
+  - id: "E"
+    title: "Version History"
+    status: "complete"
+  - id: "F"
+    title: "Mathematical Models"
+    status: "complete"
+  - id: "G"
+    title: "Reference Tables"
+    status: "complete"
+  - id: "H"
+    title: "Cross-References"
+    status: "complete"
+
+reading_paths:
+  quick_clinical:
+    description: "Quick clinical overview"
+    chapters: [1, 17, 18]
+    appendices: ["C"]
+
+  mathematical_foundations:
+    description: "Mathematical foundations deep dive"
+    chapters: [4, 5, 6, 7]
+    appendices: ["B", "F", "G", "H"]
+
+  laboratory_implementation:
+    description: "Laboratory implementation guide"
+    chapters: [3, 8, 9, 10, 19]
+    appendices: ["C", "D"]
+
+  sma_seq_specialist:
+    description: "SMA-seq specialist path"
+    chapters: [4, 5, 8, 11, 12, 13]
+    appendices: ["F", "G", "H"]
+
+  comprehensive:
+    description: "Comprehensive mastery (linear)"
+    chapters: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+    appendices: ["A", "B", "C", "D", "E", "F", "G", "H"]

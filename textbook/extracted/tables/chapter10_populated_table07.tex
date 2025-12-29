@@ -1,0 +1,16 @@
+\begin{table}[!htbp]
+\centering
+\caption{QC Gates in Workflow}
+\label{tab:qc-workflow-integration}
+\begin{tabular}{lll}
+\toprule
+\textbf{QC Gate} & \textbf{Workflow Stage} & \textbf{Action if Failed} \\
+\midrule
+Gate 1: Input Quality & Sample preparation & Repeat DNA extraction \\
+Gate 2: Library Quality & Post-sequencing & Re-prepare library \\
+Gate 3: Coverage & Secondary analysis & Sequence additional runs \\
+Gate 4: Calibration & Tertiary analysis & Re-train basecaller \\
+Gate 5: Classification & Tertiary analysis & Report inconclusive \\
+\bottomrule
+\end{tabular}
+\end{table}

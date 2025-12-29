@@ -1,0 +1,66 @@
+# SMS Haplotype Framework - Compilation Configuration
+# ====================================================
+#
+# This file controls the behavior of the advanced compilation system.
+# Modify these settings to customize the compilation process.
+
+# Main LaTeX file to compile
+main_file: "haplotype_v6_complete_FIXED.tex"
+
+# Output PDF name (without .pdf extension)
+output_name: "SMS_Haplotype_Framework_Textbook"
+
+# Maximum number of compilation passes
+# (compilation may stop earlier if all references are resolved)
+max_passes: 4
+
+# Timeout per compilation pass (seconds)
+# Increase if compilation is slow on your system
+timeout_per_pass: 300
+
+# Run BibTeX for bibliography processing
+run_bibtex: true
+
+# Automatically clean up old auxiliary files before compilation
+# This helps prevent issues from stale files
+auto_cleanup: true
+
+# Enable verbose output for debugging
+verbose: false
+
+# Automatically open PDF after successful compilation
+open_pdf: true
+
+# LaTeX compiler to use
+# Options: pdflatex, xelatex, lualatex
+compiler: "pdflatex"
+
+# Additional compiler flags
+# These flags are passed to the LaTeX compiler
+compiler_flags:
+  - "-interaction=nonstopmode"  # Don't stop on errors
+  - "-file-line-error"          # Show file and line for errors
+  - "-recorder"                 # Record file dependencies
+
+# Retry compilation on certain errors
+retry_on_error: true
+
+# Maximum number of retries on transient errors
+max_retries: 2
+
+# Advanced options (usually don't need to change)
+# -------------------------------------------------
+
+# Extensions to clean up during auto_cleanup
+# cleanup_extensions:
+#   - ".aux"
+#   - ".log"
+#   - ".out"
+#   - ".toc"
+#   - ".lof"
+#   - ".lot"
+#   - ".fls"
+#   - ".fdb_latexmk"
+#   - ".synctex.gz"
+#   - ".blg"
+#   - ".bbl"

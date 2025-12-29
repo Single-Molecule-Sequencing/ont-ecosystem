@@ -1,0 +1,113 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://ont-ecosystem.github.io/schemas/manuscript.json",
+  "title": "Manuscript Metadata Schema",
+  "description": "Schema for manuscript repository metadata and connection configuration",
+  "type": "object",
+  "required": ["id", "name", "template", "created_at"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique manuscript identifier",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable manuscript name"
+    },
+    "template": {
+      "type": "string",
+      "enum": ["paper", "chapter", "supplement"],
+      "description": "Template type used to create manuscript"
+    },
+    "description": {
+      "type": "string",
+      "description": "Brief description of the manuscript"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 creation timestamp"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 last update timestamp"
+    },
+    "ont_ecosystem_version": {
+      "type": "string",
+      "description": "Version of ont-ecosystem used to create manuscript"
+    },
+    "experiments": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of experiment IDs linked to this manuscript"
+    },
+    "artifacts": {
+      "type": "object",
+      "properties": {
+        "figures": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "experiment_id": { "type": "string" },
+              "version": { "type": "integer" },
+              "format": { "type": "string" },
+              "synced_at": { "type": "string", "format": "date-time" }
+            }
+          }
+        },
+        "tables": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "experiment_id": { "type": "string" },
+              "version": { "type": "integer" },
+              "format": { "type": "string" },
+              "synced_at": { "type": "string", "format": "date-time" }
+            }
+          }
+        }
+      }
+    },
+    "submodule": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "Git URL for ont-ecosystem submodule"
+        },
+        "path": {
+          "type": "string",
+          "description": "Local path to submodule"
+        },
+        "commit": {
+          "type": "string",
+          "description": "Pinned commit SHA"
+        }
+      }
+    },
+    "authors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "affiliation": { "type": "string" }
+        }
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Keywords for categorization"
+    }
+  }
+}

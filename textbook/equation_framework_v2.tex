@@ -1,0 +1,147 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% SIMPLIFIED EQUATION AND VARIABLE FRAMEWORK V2
+%% More robust, less error-prone version using mdframed instead of tcolorbox
+%% (avoids tcolorbox nesting conflicts and breakable-environment issues in long equation boxes)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Required packages
+\usepackage{amsmath,amssymb}
+\usepackage{chngcntr}
+\usepackage[framemethod=tikz]{mdframed}
+\usepackage{booktabs}
+\usepackage{xcolor}
+
+% Equation numbering by chapter
+\counterwithin{equation}{chapter}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% EQUATION BOX - Simplified version using mdframed
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Define colors
+\definecolor{eqboxframe}{RGB}{0,0,0}
+\definecolor{eqboxback}{RGB}{255,255,255}
+
+% Simple equation box using mdframed
+% Usage: \begin{eqbox}{Title} \begin{equation} ... \end{equation} \end{eqbox}
+\mdfdefinestyle{equationbox}{
+    linecolor=eqboxframe,
+    backgroundcolor=eqboxback,
+    linewidth=1pt,
+    innertopmargin=10pt,
+    innerbottommargin=10pt,
+    innerleftmargin=10pt,
+    innerrightmargin=10pt,
+    skipabove=12pt,
+    skipbelow=12pt,
+    frametitlerule=true,
+    frametitlebackgroundcolor=eqboxback,
+    frametitlerulewidth=1pt,
+}
+
+\newenvironment{eqbox}[1]{%
+    \begin{mdframed}[style=equationbox, frametitle={\textbf{#1}}]
+}{%
+    \end{mdframed}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% ALTERNATIVE: Even simpler box using fbox (fallback option)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Uncomment this section if mdframed causes issues
+% \newenvironment{eqbox}[1]{%
+%     \par\vspace{12pt}
+%     \noindent\fbox{\begin{minipage}{\dimexpr\textwidth-2\fboxsep-2\fboxrule}
+%     \textbf{#1}\\[6pt]
+% }{%
+%     \end{minipage}}\par\vspace{12pt}
+% }
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% VARIABLE TABLE
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newenvironment{vartable}[1][]{%
+  \begin{table}[ht]
+  \centering
+  \caption{Variable summary for Chapter~\thechapter}
+  \begin{tabular}{llll}
+  \toprule
+  Symbol & Physical description & Units & Measurement / determination \\
+  \midrule
+}{%
+  \bottomrule
+  \end{tabular}
+  \end{table}
+}
+
+\newcommand{\varrow}[4]{%
+  #1 & #2 & #3 & #4 \\
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% VARIABLE BOX - Simplified version
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\mdfdefinestyle{variablebox}{
+    linecolor=blue!60!black,
+    backgroundcolor=blue!3!white,
+    linewidth=0.8pt,
+    innertopmargin=10pt,
+    innerbottommargin=10pt,
+    innerleftmargin=10pt,
+    innerrightmargin=10pt,
+    skipabove=10pt,
+    skipbelow=10pt,
+    frametitlerule=true,
+    frametitlebackgroundcolor=blue!10!white,
+    frametitlerulewidth=0.8pt,
+}
+
+\newenvironment{varbox}[1]{%
+    \begin{mdframed}[style=variablebox, frametitle={\textbf{Variable: $#1$}}]
+}{%
+    \end{mdframed}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% USAGE EXAMPLES
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Example 1: Simple equation in box
+% \begin{eqbox}{Bayes' rule}
+% \begin{equation}
+% P(A|B) = \frac{P(B|A)P(A)}{P(B)}
+% \label{eq:bayes}
+% \end{equation}
+% \end{eqbox}
+
+% Example 2: Multi-line equation
+% \begin{eqbox}{System of equations}
+% \begin{align}
+% x + y &= 5 \\
+% 2x - y &= 1
+% \end{align}
+% \end{eqbox}
+
+% Example 3: Variable table
+% \begin{vartable}
+% \varrow{$x$}{Position}{meters}{Measured by GPS}
+% \varrow{$v$}{Velocity}{m/s}{Computed from position derivative}
+% \end{vartable}
+
+% Example 4: Variable box
+% \begin{varbox}{$\lambda$}
+% \textbf{Physical description.}
+% Mixture fraction of first haplotype.
+%
+% \textbf{Units.}
+% Dimensionless, range [0,1].
+%
+% \textbf{Measurement.}
+% Estimated via EM algorithm.
+%
+% \textbf{Example.}
+% For balanced diploid: $\lambda = 0.5$.
+% \end{varbox}

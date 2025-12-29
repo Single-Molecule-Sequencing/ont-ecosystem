@@ -1,0 +1,36 @@
+{
+  "name": "end-reason",
+  "version": "1.0.0",
+  "description": "Oxford Nanopore read end reason QC analysis for adaptive sampling efficiency",
+  "command": "/end-reason",
+  "author": "ONT Ecosystem",
+  "category": "quality-control",
+  "tags": [
+    "qc",
+    "end-reason",
+    "adaptive-sampling",
+    "nanopore",
+    "sequencing",
+    "pod5"
+  ],
+  "dependencies": {
+    "python": ">=3.9",
+    "packages": [
+      "pod5",
+      "pysam",
+      "numpy"
+    ]
+  },
+  "inputs": [
+    "POD5 files",
+    "Fast5 files",
+    "sequencing_summary.txt"
+  ],
+  "outputs": [
+    "JSON summary",
+    "CSV per-read data",
+    "PNG/PDF plot"
+  ],
+  "repository": "https://github.com/Single-Molecule-Sequencing/ont-ecosystem",
+  "install_path": "skills/end-reason/scripts/end_reason.py"
+}

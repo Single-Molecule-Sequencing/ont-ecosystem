@@ -1,0 +1,204 @@
+# SMS Haplotype Framework - Definitions and Theorems
+# Extracted from textbook chapters 4-14
+
+version: "1.0"
+source: "SMS_Haplotype_Framework_Textbook 96.pdf"
+last_extracted: "2025-12-28"
+
+# =============================================================================
+# Chapter 5: Purity and Ground Truth Constraints
+# =============================================================================
+
+definitions:
+  - id: "def_5_1"
+    name: "Purity"
+    chapter: 5
+    formal_name: "Definition 5.1 (Purity)"
+    statement: >
+      The purity π of a physical standard is the fraction of molecules
+      matching the intended sequence.
+    formula:
+      latex: "\\pi = \\frac{\\text{correct molecules}}{\\text{total molecules}}"
+      python: "purity = correct_molecules / total_molecules"
+    related: ["thm_5_3", "eq_5_2", "eq_5_11"]
+    pipeline_stages: ["g"]
+
+  - id: "def_6_1"
+    name: "Prior Categories"
+    chapter: 6
+    formal_name: "Definition 6.1 (Prior Categories)"
+    statement: >
+      Three main categories of priors for haplotype classification:
+      (1) Population-based P(h) ∝ f_pop(h),
+      (2) Dirichlet prior π ~ Dir(α),
+      (3) Sparsity-inducing P(h) ∝ exp(-λ·complexity).
+    related: ["eq_6_1", "eq_6_2", "eq_6_3"]
+    pipeline_stages: ["h"]
+
+  - id: "def_6_6"
+    name: "Threshold-Based Decision Rule"
+    chapter: 6
+    formal_name: "Definition 6.6 (Threshold-Based Decision Rule)"
+    statement: >
+      Given threshold τ ∈ (0,1), the decision rule either calls the MAP
+      haplotype or returns "No call" based on posterior confidence.
+    formula:
+      latex: "\\hat{h} = \\begin{cases} h_{MAP} & \\text{if } P(h_{MAP}|r) \\geq \\tau \\\\ \\text{No call} & \\text{otherwise} \\end{cases}"
+    related: ["eq_6_8", "thm_6_4"]
+    pipeline_stages: ["A"]
+
+  - id: "def_6_8"
+    name: "Bayes Factor"
+    chapter: 6
+    formal_name: "Definition 6.8 (Bayes Factor)"
+    statement: >
+      The Bayes factor comparing haplotypes h_i and h_j given observed
+      reads r quantifies the relative evidence.
+    formula:
+      latex: "BF_{ij} = \\frac{P(r|h_i)}{P(r|h_j)}"
+    related: ["eq_6_10", "thm_6_4"]
+    pipeline_stages: ["A"]
+
+  - id: "def_6_10"
+    name: "Diploid Mixture Model"
+    chapter: 6
+    formal_name: "Definition 6.10 (Diploid Mixture Model)"
+    statement: >
+      For a diploid sample with haplotypes h_i and h_j in proportion λ,
+      the per-read likelihood follows the mixture model.
+    formula:
+      latex: "P(r_n|h_i, h_j; \\lambda) = \\lambda P(r_n|h_i) + (1-\\lambda) P(r_n|h_j)"
+    related: ["eq_6_11", "eq_6_12"]
+    pipeline_stages: ["A"]
+
+  - id: "def_11_2"
+    name: "Reference Standard"
+    chapter: 11
+    formal_name: "Definition 11.2 (Reference Standard)"
+    statement: >
+      A reference standard is a physical DNA molecule with:
+      (1) Known true sequence verified by orthogonal methods,
+      (2) Quantified purity bounds,
+      (3) Traceability to laboratory protocols.
+    related: ["def_5_1", "thm_5_3"]
+    pipeline_stages: ["g"]
+
+  - id: "def_11_19"
+    name: "Exact-Sequence Single-Molecule Accuracy"
+    chapter: 11
+    formal_name: "Definition 11.19 (Exact-Sequence SMA)"
+    statement: >
+      The exact-sequence SMA is the fraction of reads with zero errors
+      relative to the reference sequence.
+    formula:
+      latex: "SMA_{exact} = \\frac{|\\{r : r = s^*\\}|}{|R|}"
+      python: "sma_exact = sum(1 for r in reads if r == reference) / len(reads)"
+    related: ["def_11_21", "eq_sma"]
+    pipeline_stages: ["r"]
+
+  - id: "def_11_21"
+    name: "Per-Base Single-Molecule Accuracy"
+    chapter: 11
+    formal_name: "Definition 11.21 (Per-Base SMA)"
+    statement: >
+      The per-base SMA is one minus the mean per-base error rate
+      across all aligned positions.
+    formula:
+      latex: "SMA_{base} = 1 - \\frac{\\sum_i (S_i + I_i + D_i)}{\\sum_i L_i}"
+    related: ["def_11_19", "eq_identity"]
+    pipeline_stages: ["r"]
+
+  - id: "def_11_28"
+    name: "End Reason Categories"
+    chapter: 11
+    formal_name: "Definition 11.28 (End Reason Categories)"
+    statement: >
+      End reason categories: signal_positive, signal_negative, mux_change,
+      unblock_mux_change, data_service_unblock_mux_change.
+      Only signal_positive indicates complete reads.
+    related: ["thm_11_29", "def_11_30"]
+    pipeline_stages: ["σ", "r"]
+
+theorems:
+  - id: "thm_pipeline_factorization"
+    name: "Pipeline Factorization Theorem"
+    chapter: 4
+    formal_name: "Pipeline Factorization Theorem"
+    statement: >
+      The full generative process decomposes into a sequence of conditional
+      distributions linking haplotypes h to basecalled reads r.
+    formula:
+      latex: "P(h, g, u, d, l, \\sigma, r) = P(h) \\cdot P(g|h) \\cdot P(u|g) \\cdot P(d|u) \\cdot P(l|d) \\cdot P(\\sigma|l) \\cdot P(r|\\sigma)"
+      unicode: "P(h,g,u,d,l,σ,r) = P(h)·P(g|h)·P(u|g)·P(d|u)·P(l|d)·P(σ|l)·P(r|σ)"
+    significance: >
+      Central theorem providing state-space architecture for the entire framework.
+      Enables modular calibration and improvement of each stage independently.
+    related: ["eq_4_8", "eq_4_10", "eq_4_11"]
+    pipeline_stages: ["h", "g", "u", "d", "ℓ", "σ", "r"]
+
+  - id: "thm_5_3"
+    name: "Purity Ceiling Theorem"
+    chapter: 5
+    formal_name: "Theorem 5.3 (Purity Ceiling)"
+    statement: >
+      For any classification method applied to a standard with purity π,
+      the true positive rate cannot exceed π: TPR ≤ π.
+    formula:
+      latex: "TPR \\leq \\pi"
+    significance: >
+      Establishes fundamental physical limit on achievable accuracy.
+      No algorithm can exceed purity of the input material.
+    related: ["def_5_1", "eq_5_2"]
+    pipeline_stages: ["g", "A"]
+
+  - id: "thm_6_4"
+    name: "Bayes' Rule for Haplotype Classification"
+    chapter: 6
+    formal_name: "Theorem 6.4 (Bayes' Rule for Haplotype Classification)"
+    statement: >
+      Given observed reads r = {r_1, ..., r_N} and candidate haplotypes H,
+      the posterior probability is computed via Bayes' theorem.
+    formula:
+      latex: "P(h_i|r) = \\frac{P(r|h_i) P(h_i)}{\\sum_{h' \\in H} P(r|h') P(h')}"
+    related: ["eq_6_6", "def_6_1", "eq_6_4"]
+    pipeline_stages: ["A"]
+
+  - id: "thm_11_23"
+    name: "Purity Bias in SMA Measurements"
+    chapter: 11
+    formal_name: "Theorem 11.23 (Purity Bias in SMA Measurements)"
+    statement: >
+      For a library with purity π, the expected measured SMA is biased
+      downward by impure molecules.
+    related: ["def_5_1", "def_11_19"]
+    pipeline_stages: ["g", "r"]
+
+  - id: "thm_11_29"
+    name: "End Reason and Read Completeness"
+    chapter: 11
+    formal_name: "Theorem 11.29 (End Reason and Read Completeness)"
+    statement: >
+      For a homogeneous sample with true molecule length L, only reads
+      with end_reason = signal_positive represent complete molecules.
+    related: ["def_11_28", "def_11_30"]
+    pipeline_stages: ["σ", "r"]
+
+  - id: "thm_12_1"
+    name: "Label Noise Bias"
+    chapter: 12
+    formal_name: "Theorem 12.1 (Label Noise Bias)"
+    statement: >
+      Let θ* denote optimal model parameters under perfect labels.
+      Training on noisy labels with noise rate η produces biased estimates.
+    significance: >
+      Justifies need for high-purity standards and noise-aware training.
+    pipeline_stages: ["r"]
+
+  - id: "thm_14_1"
+    name: "Minimum Reads for Mixture Proportion Estimation"
+    chapter: 14
+    formal_name: "Theorem 14.1 (Minimum Reads for Mixture Proportion Estimation)"
+    statement: >
+      To estimate true haplotype proportions in a mixture with precision ε,
+      the minimum number of reads required scales as N ∝ 1/ε².
+    pipeline_stages: ["A"]

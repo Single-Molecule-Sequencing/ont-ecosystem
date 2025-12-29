@@ -1,0 +1,25 @@
+\begin{table}[H]
+\centering
+\caption{Complete Sequencing Pipeline Transformations}
+\label{tab:ch4-pipeline-summary}
+\small
+\begin{tabular}{p{2.5cm}p{3cm}p{5.5cm}p{2.5cm}}
+\toprule
+\textbf{Stage} & \textbf{Transformation} & \textbf{Probabilistic Model} & \textbf{Key Parameters} \\
+\midrule
+Haplotype Prior & Population $\to$ Sample & $\Prob(h)$ from allele frequency databases & Population freq., ancestry \\
+\midrule
+Genomic Molecules & Haplotype $\to$ Molecules & $\Prob(\mathbf{g}|h)$ replication & Ploidy, mosaicism \\
+\midrule
+Somatic Mutation & Molecules $\to$ Mutated & $\Prob(\mathbf{u}|\mathbf{g})$ mutation rate & Mutation rate $\mu$ \\
+\midrule
+Fragmentation & DNA $\to$ Fragments & $\Prob(\mathbf{d}|\mathbf{u})$ shearing & Shear size dist., enzyme kinetics \\
+\midrule
+Library Prep & Fragments $\to$ Library & $\Prob(\mathbf{l}|\mathbf{d})$ ligation, enrichment & Adapter efficiency, enrichment fold \\
+\midrule
+Signal Generation & Library $\to$ Signal & $\Prob(\boldsymbol{\sigma}|\mathbf{l})$ sensor physics & Noise $\sigma$, drift, k-mer model \\
+\midrule
+Basecalling & Signal $\to$ Reads & $\Prob(\mathbf{r}|\boldsymbol{\sigma})$ neural network & Basecaller model, Q-score calibration \\
+\bottomrule
+\end{tabular}
+\end{table}

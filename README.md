@@ -2,26 +2,55 @@
 
 [![CI](https://github.com/Single-Molecule-Sequencing/ont-ecosystem/actions/workflows/ci.yml/badge.svg)](https://github.com/Single-Molecule-Sequencing/ont-ecosystem/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 
-A comprehensive toolkit for Oxford Nanopore sequencing experiment management with **full provenance tracking**, **event-sourced registry**, and **integrated analysis workflows**.
+A comprehensive **consolidated monorepo** (v3.0) for Oxford Nanopore sequencing experiment management with:
+- **Full provenance tracking** via Pattern B orchestration
+- **Event-sourced registry** with complete audit trail
+- **Integrated analysis workflows** (QC, basecalling, alignment, monitoring)
+- **SMS Haplotype Framework** (4000+ equations, textbook content)
+- **Publication-quality figure/table generation**
+- **Connected manuscript repository system**
 
 ## Quick Install
+
+### Linux / macOS
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/Single-Molecule-Sequencing/ont-ecosystem/main/install.sh | bash
 source ~/.ont-ecosystem/env.sh
 ```
 
+### Windows (PowerShell)
+
+```powershell
+irm https://raw.githubusercontent.com/Single-Molecule-Sequencing/ont-ecosystem/main/install.ps1 | iex
+. "$env:USERPROFILE\.ont-ecosystem\env.ps1"
+```
+
+### From Cloned Repository (All Platforms)
+
+```bash
+git clone https://github.com/Single-Molecule-Sequencing/ont-ecosystem.git
+cd ont-ecosystem
+
+# Linux/macOS
+./install.sh
+
+# Windows PowerShell
+.\install.ps1
+```
+
 ## Skills Overview
 
-| Skill | Description | Key Features |
-|-------|-------------|--------------|
-| **ont-experiments-v2** | Core registry & orchestration | Event sourcing, Pattern B, pipeline integration |
-| **ont-align** | Alignment & edit distance | minimap2/dorado, reference mgmt, Levenshtein |
-| **ont-pipeline** | Workflow orchestration | Multi-step pipelines, unified QC, batch processing |
-| **end-reason** | Read end reason QC | Adaptive sampling analysis, quality thresholds |
-| **dorado-bench-v2** | Basecalling workflows | Model management, SLURM generation, GPU optimization |
-| **ont-monitor** | Run monitoring | Live dashboard, time-series, alerts |
+| Skill                  | Description                   | Key Features                                         |
+| ---------------------- | ----------------------------- | ---------------------------------------------------- |
+| **ont-experiments-v2** | Core registry & orchestration | Event sourcing, Pattern B, pipeline integration      |
+| **ont-align**          | Alignment & edit distance     | minimap2/dorado, reference mgmt, Levenshtein         |
+| **ont-pipeline**       | Workflow orchestration        | Multi-step pipelines, unified QC, batch processing   |
+| **end-reason**         | Read end reason QC            | Adaptive sampling analysis, quality thresholds       |
+| **dorado-bench-v2**    | Basecalling workflows         | Model management, SLURM generation, GPU optimization |
+| **ont-monitor**        | Run monitoring                | Live dashboard, time-series, alerts                  |
 
 ## Architecture
 
@@ -140,30 +169,46 @@ ont_experiments.py run basecalling exp-abc123 --model sup@v5.0.0
 ## Repository Structure
 
 ```
-ont-ecosystem/
-├── bin/                          # Executable scripts
-│   ├── ont_experiments.py        # Core orchestration
-│   ├── ont_align.py              # Alignment + edit distance
-│   ├── ont_pipeline.py           # Pipeline orchestration
-│   ├── end_reason.py             # QC analysis
-│   ├── ont_monitor.py            # Run monitoring
-│   ├── dorado_basecall.py        # Basecalling
-│   └── calculate_resources.py    # Resource estimation
-├── skills/                       # Claude skill packages
-│   ├── ont-experiments-v2/
-│   ├── ont-align/
-│   ├── ont-pipeline/
-│   ├── end-reason/
-│   ├── dorado-bench-v2/
-│   └── ont-monitor/
-├── dashboards/                   # React visualization components
-│   ├── ont-experiments-dashboard.jsx
-│   ├── ont-align-dashboard.jsx
-│   └── ont-workflow-dashboard.jsx
-├── docs/                         # Documentation
-├── tests/                        # Unit tests
-└── lib/                          # Shared libraries
+ont-ecosystem/                    # Consolidated Monorepo v3.0
+├── bin/                          # Orchestration + wrapper scripts
+│   ├── ont_experiments.py        # Core orchestrator (AUTHORITATIVE)
+│   ├── experiment_db.py          # Database operations (AUTHORITATIVE)
+│   ├── ont_manuscript.py         # Figure/table generation
+│   ├── ont_context.py            # Unified experiment view
+│   ├── ont_registry.py           # Permanent registry
+│   ├── ont_endreason_qc.py       # Enhanced QC visualization
+│   ├── end_reason.py             # Wrapper → skills/end-reason/
+│   ├── ont_align.py              # Wrapper → skills/ont-align/
+│   └── dorado_basecall.py        # Wrapper → skills/dorado-bench-v2/
+│
+├── skills/                       # Analysis code (AUTHORITATIVE)
+│   ├── end-reason/scripts/       # QC analysis source
+│   ├── ont-align/scripts/        # Alignment source
+│   ├── dorado-bench-v2/scripts/  # Basecalling source
+│   ├── ont-monitor/scripts/      # Monitoring source
+│   ├── ont-pipeline/scripts/     # Workflow source
+│   └── experiment-db/scripts/    # Database source
+│
+├── textbook/                     # SMS Haplotype Framework (AUTHORITATIVE)
+│   ├── equations.yaml            # 4087 equations
+│   ├── variables.yaml            # 3532 variables
+│   ├── sms.sty                   # LaTeX style package
+│   └── src/chapters/             # 24 LaTeX chapter files
+│
+├── data/                         # Experiment data
+│   └── experiment_registry.json  # 145 experiments
+│
+├── registry/                     # Schemas only (lightweight)
+│   ├── INDEX.yaml                # Master index
+│   └── schemas/                  # JSON schemas
+│
+├── dashboards/                   # React JSX components
+├── examples/                     # Pipelines + HPC configs
+├── tests/                        # 180 pytest tests
+└── docs/                         # Architecture docs
 ```
+
+See [AUTHORITATIVE_SOURCES.md](AUTHORITATIVE_SOURCES.md) for detailed source locations.
 
 ## Installation
 
@@ -182,6 +227,18 @@ git clone https://github.com/Single-Molecule-Sequencing/ont-ecosystem.git
 cd ont-ecosystem
 ./install.sh --hpc
 source ~/.ont-ecosystem/env.sh
+```
+
+### Verify Installation
+
+```bash
+# Check system health
+ont_check.py                      # Full health check
+ont_check.py --json               # JSON output for automation
+
+# View ecosystem statistics
+ont_stats.py                      # Full statistics
+ont_stats.py --brief              # One-line summary
 ```
 
 ### Dependencies
@@ -275,9 +332,9 @@ Single Molecule Sequencing Lab, University of Michigan
 
 ## Related Repositories
 
-| Repository | Description |
-|------------|-------------|
-| [dorado-bench](https://github.com/Single-Molecule-Sequencing/dorado-bench) | Dorado model benchmarking |
-| [dorado-run](https://github.com/Single-Molecule-Sequencing/dorado-run) | Dorado execution tool |
-| [End_Reason_nf](https://github.com/Single-Molecule-Sequencing/End_Reason_nf) | End reason Nextflow |
-| [PGx-prep](https://github.com/Single-Molecule-Sequencing/PGx-prep) | PGx BAM preprocessing |
+| Repository                                                                   | Description               |
+| ---------------------------------------------------------------------------- | ------------------------- |
+| [dorado-bench](https://github.com/Single-Molecule-Sequencing/dorado-bench)   | Dorado model benchmarking |
+| [dorado-run](https://github.com/Single-Molecule-Sequencing/dorado-run)       | Dorado execution tool     |
+| [End_Reason_nf](https://github.com/Single-Molecule-Sequencing/End_Reason_nf) | End reason Nextflow       |
+| [PGx-prep](https://github.com/Single-Molecule-Sequencing/PGx-prep)           | PGx BAM preprocessing     |

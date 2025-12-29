@@ -1,0 +1,20 @@
+\begin{table}[H]
+\centering
+\caption{Recommended Corrective Actions for QC Failures}
+\label{tab:corrective-actions}
+\begin{tabular}{p{4cm}p{4cm}p{6cm}}
+\toprule
+\textbf{Failure Type} & \textbf{Stage} & \textbf{Corrective Action} \\
+\midrule
+Low library quality & Pre-sequencing & Re-extract DNA or re-prepare library with fresh reagents \\
+Poor fragment distribution & Pre-sequencing & Adjust fragmentation protocol; optimize size selection \\
+Low read yield & Sequencing & Check loading concentration; verify instrument calibration \\
+Declining quality & Sequencing & Monitor pore/cluster health; consider terminating run early \\
+Low alignment rate & Analysis & Check reference sequences; screen for contamination \\
+Poor coverage uniformity & Analysis & Investigate capture bias; check PCR conditions \\
+Failed controls & Analysis & Re-run with fresh standards; check confusion matrix \\
+Sub-threshold posterior & Result & Increase sequencing depth; verify sample quality \\
+Purity constraint violation & Result & Investigate contamination; verify reference accuracy \\
+\bottomrule
+\end{tabular}
+\end{table}

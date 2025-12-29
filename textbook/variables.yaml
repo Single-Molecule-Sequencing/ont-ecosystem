@@ -1,0 +1,3532 @@
+variables:
+  pi:
+    symbol: \pi
+    symbol_display: π
+    name: Purity
+    alt_names:
+    - Molecular purity
+    - Template purity
+    - Sequence fidelity
+    description: 'The fraction of molecules in a physical standard that have the intended
+
+      (correct) sequence. Complement of the error/variant fraction.
+
+      '
+    physical_meaning: 'Represents the quality of a molecular standard. A purity of
+      0.95 means
+
+      95% of molecules match the target sequence and 5% contain errors
+
+      (from replication, synthesis, or other sources).
+
+      '
+    units: dimensionless
+    domain: '[0, 1]'
+    typical_range: '[0.85, 0.999]'
+    measurement_methods:
+    - method: Sanger sequencing of individual clones
+      accuracy: high
+      cost: medium
+      description: 'Sequence 20-50 individual bacterial colonies and compute the fraction
+
+        with perfect match to target sequence. Use binomial confidence intervals.
+
+        '
+    - method: Deep NGS sequencing
+      accuracy: high
+      cost: low
+      description: 'Perform high-depth short-read sequencing and measure the fraction
+        of
+
+        reads matching the reference exactly. Requires orthogonal validation.
+
+        '
+    - method: Capillary electrophoresis
+      accuracy: low (lower bound only)
+      cost: very low
+      description: 'Measure fraction of product at expected size. Provides conservative
+
+        lower bound since same-size variants aren''t detected.
+
+        '
+    determination: 'Empirically measured from standards. Cannot be determined from
+      the sample
+
+      being classified (would be circular reasoning). Must use independent
+
+      validation experiments.
+
+      '
+    examples:
+    - context: High-quality plasmid standard
+      value: 0.95
+      units: dimensionless
+      interpretation: 95% of molecules are correct; 5% have replication errors
+      source: Measured by sequencing 30 clones, 28.5 perfect matches
+    - context: Older standard with more replication cycles
+      value: 0.88
+      units: dimensionless
+      interpretation: 12% error rate from accumulated replication errors
+      source: 'Computed from purity model: (1-r)^(kL)'
+    - context: Fresh PCR product
+      value: 0.998
+      units: dimensionless
+      interpretation: Very high purity, minimal replication
+      source: Single amplification with high-fidelity polymerase
+    related_variables:
+    - variable: TPR
+      relationship: upper_bound
+      equation: '5.2'
+      description: Purity establishes ceiling on TPR
+    - variable: pi_upper
+      relationship: bounded_by
+      equation: '5.4'
+      description: True purity bounded above by replication model
+    - variable: pi_lower
+      relationship: bounded_by
+      equation: '5.3'
+      description: True purity bounded below by CE measurement
+    - variable: Q_purity
+      relationship: log_transform
+      equation: '5.7'
+      description: Purity expressed on Phred scale
+    appears_in_equations:
+    - eq_id: '11.1'
+      role: used
+    - eq_id: '11.2'
+      role: used
+    - eq_id: '13.10'
+      role: used
+    - eq_id: '13.4'
+      role: used
+    - eq_id: '5.1'
+      role: defined_quantity
+    - eq_id: '5.2'
+      role: upper_bound
+    - eq_id: '5.7'
+      role: input
+    - eq_id: '8.1'
+      role: used
+    typical_values:
+      plasmid_fresh: 0.95-0.99
+      plasmid_aged: 0.85-0.95
+      pcr_product: 0.995-0.999
+      synthetic_oligo: 0.70-0.90
+    common_errors:
+    - error: Assuming purity = 1.0 without measurement
+      consequence: Overestimating achievable TPR
+      fix: Always measure purity empirically
+    - error: Using sequence-level accuracy as purity
+      consequence: Confusing per-base and per-molecule accuracy
+      fix: Purity is fraction of perfect molecules, not average base accuracy
+    - error: Ignoring purity when reporting classification performance
+      consequence: Claiming TPR > purity, violating physical reality
+      fix: Always enforce TPR ≤ π quality control gate
+    importance: critical
+    difficulty: intermediate
+    first_chapter: 5
+    tags:
+    - quality-control
+    - fundamental-parameter
+    - empirical-measurement
+    - purity
+  pi_upper:
+    symbol: pi_upper
+    symbol_display: $\pi_{\text{upper}}$
+    name: Purity upper bound
+    alt_names:
+    - upper purity limit
+    - replication-based purity bound
+    description: Upper bound on plasmid standard purity based on replication error
+      model
+    physical_meaning: Maximum achievable purity after k replication cycles accounting
+      for per-base error accumulation
+    units: fraction
+    domain: '[0, 1]'
+    typical_range: '[0.995, 1.0]'
+    measurement_methods:
+    - calculated from replication parameters
+    - theoretical bound
+    determination: Calculated from pi_upper(k,L,r) = (1-r)^(kL) using replication
+      cycles k, insert length L, and per-base error rate r
+    examples:
+    - context: 20 replication cycles, 5 kb insert
+      value: pi_upper = 0.9999
+      interpretation: With r=10^-9, purity exceeds 99.99%
+    related_variables:
+    - pi
+    - k_rep
+    - L_insert
+    - r_error
+    appears_in_equations:
+    - '5.4'
+    - '5.5'
+    - '5.6'
+    typical_values:
+    - condition: High-fidelity polymerase, few cycles
+      value: '>0.999'
+    - condition: Standard cloning, many passages
+      value: 0.995-0.999
+    common_errors:
+    - Ignoring cumulative error from multiple replication cycles
+    - Using per-cycle error rate instead of per-base-per-cycle
+    importance: high
+    difficulty: intermediate
+    first_chapter: 8
+    tags:
+    - plasmid-standards
+    - purity
+    - quality-control
+    - replication-error
+  pi_lower:
+    symbol: \pi_{\text{lower}}
+    symbol_display: π_lower
+    name: Purity lower bound (capillary electrophoresis)
+    alt_names:
+    - CE-based purity floor
+    - Size-based purity bound
+    description: 'Lower bound on purity from capillary electrophoresis analysis. Represents
+      the
+
+      fraction of molecules at the expected size, detecting insertion/deletion variants
+
+      but not point mutations.
+
+      '
+    physical_meaning: 'CE separates molecules by size with single-nucleotide resolution.
+      The fraction
+
+      appearing at the correct size provides a conservative purity estimate, since
+
+      substitutions preserving length are invisible to CE.
+
+      '
+    units: dimensionless
+    domain: '[0, 1]'
+    typical_range: '[0.95, 0.999]'
+    measurement_methods:
+    - method: Capillary electrophoresis size analysis
+      accuracy: medium (conservative)
+      cost: low
+      description: 'Linearize plasmid by restriction digest, run CE, quantify peak
+        areas.
+
+        f_expected = (area at correct size) / (total area). Resolution ~200-800 bp
+        optimal.
+
+        '
+    determination: 'Measured empirically via CE. Requires sample preparation (linearization
+      for
+
+      plasmids), electrophoresis, and peak quantification. Reports π_lower = f_expected.
+
+      '
+    examples:
+    - context: Plasmid with deletion variants
+      value: 0.985
+      units: dimensionless
+      interpretation: 98.5% at correct size; 1.5% have indels
+      source: CE shows major peak (9850 area) vs. minor peaks (150 total)
+    - context: High-quality standard, minimal length variants
+      value: 0.998
+      units: dimensionless
+      interpretation: Very few indels detected by CE
+      source: Expected-size peak 99.8% of total signal
+    related_variables:
+    - variable: pi
+      relationship: lower_bound_on
+      equation: '5.3'
+      description: True purity at least π_lower (may be higher due to SNPs)
+    - variable: f_expected
+      relationship: equals
+      equation: '5.3'
+      description: π_lower is defined as f_expected
+    appears_in_equations:
+    - eq_id: '5.3'
+      role: output
+    - eq_id: '5.6'
+      role: lower_bound
+    typical_values:
+      high_quality_plasmid: 0.98-0.999
+      moderate_quality: 0.95-0.98
+      aged_sample: 0.90-0.95
+    common_errors:
+    - error: Treating π_lower as true purity
+      consequence: Underestimating impurity from SNPs
+      fix: Recognize CE cannot detect point mutations
+    - error: Using CE on fragments outside optimal range
+      consequence: Poor resolution leads to inaccurate f_expected
+      fix: Use restriction digests to generate 200-800 bp fragments
+    importance: normal
+    difficulty: intermediate
+    first_chapter: 5
+    tags:
+    - purity
+    - lower-bound
+    - capillary-electrophoresis
+    - empirical-measurement
+  TPR:
+    symbol: \text{TPR}
+    symbol_display: TPR
+    name: True Positive Rate
+    alt_names:
+    - Sensitivity
+    - Recall
+    - Detection rate
+    description: 'The fraction of molecules with the correct sequence that are correctly
+
+      classified as having that sequence. Diagonal element of confusion matrix.
+
+      '
+    physical_meaning: 'Measures classifier performance: what fraction of correct molecules
+      does
+
+      the classifier successfully identify? Higher is better. Fundamentally
+
+      constrained by template purity (TPR ≤ π).
+
+      '
+    units: dimensionless
+    domain: '[0, 1]'
+    typical_range: '[0.80, 0.99]'
+    measurement_methods:
+    - method: Confusion matrix from SMA-seq
+      accuracy: high
+      cost: medium
+      description: 'Sequence a pure standard and compute C_ii / N_i where C_ii is
+        the
+
+        count of molecules from standard i classified as i.
+
+        '
+    - method: Validation on orthogonal sequencing
+      accuracy: high
+      cost: high
+      description: 'Compare classifications to independent sequencing method (Sanger,
+
+        short-read) to compute true positive fraction.
+
+        '
+    determination: 'Measured empirically from standards with known sequences (ground
+      truth).
+
+      Computed as the diagonal entry of the empirical confusion matrix. Requires
+
+      validated reference standards.
+
+      '
+    examples:
+    - context: High-quality CYP2D6*1 classification
+      value: 0.95
+      units: dimensionless
+      interpretation: 95% of *1 molecules correctly identified as *1
+      source: SMA-seq with 500 reads from pure *1 standard
+    - context: Classification limited by purity
+      value: 0.905
+      units: dimensionless
+      interpretation: TPR matches purity ceiling (π=0.905)
+      source: Perfect classifier on impure standard
+    related_variables:
+    - variable: pi
+      relationship: bounded_by
+      equation: '5.2'
+      description: TPR cannot exceed purity (TPR ≤ π)
+    - variable: FPR
+      relationship: tradeoff
+      description: Lower FPR often means lower TPR in ROC space
+    appears_in_equations:
+    - eq_id: '11.1'
+      role: used
+    - eq_id: '11.3'
+      role: used
+    - eq_id: '5.2'
+      role: bounded_quantity
+    typical_values:
+      high_quality_method: 0.95-0.99
+      moderate_quality: 0.85-0.95
+      low_quality: 0.70-0.85
+    common_errors:
+    - error: Reporting TPR > measured purity
+      consequence: Violates physical reality; indicates systematic error
+      fix: Investigate purity measurement, reference sequence, or contamination
+    - error: Confusing TPR with accuracy
+      consequence: Ignoring false positives in overall performance assessment
+      fix: Report both TPR and FPR (or precision/recall)
+    importance: critical
+    difficulty: beginner
+    first_chapter: 4
+    tags:
+    - classification-performance
+    - confusion-matrix
+    - quality-metric
+    - validation
+  Q_purity:
+    symbol: Q_{\text{purity}}
+    symbol_display: Q_purity
+    name: Purity quality score
+    alt_names:
+    - Template quality score
+    - Phred-scaled purity
+    description: 'Purity expressed on the Phred quality scale: Q = -10 log₁₀(error_rate).
+
+      Enables direct comparison with sequencing quality metrics (Q_base, Q_read).
+
+      '
+    physical_meaning: 'Quantifies template impurity in the same logarithmic units
+      as sequencing quality.
+
+      Q30 means 1-in-1000 molecules are incorrect. Q40 means 1-in-10,000. Unlike
+
+      sequencing quality, this measures physical template errors, not computational
+
+      basecalling errors.
+
+      '
+    units: Phred units (dimensionless log-scale)
+    domain: '[0, ∞)'
+    typical_range: '[20, 50]'
+    measurement_methods:
+    - method: Computed from measured purity
+      accuracy: depends on purity measurement
+      cost: zero (computational)
+      description: 'Transform measured purity π via Q = -10 log₁₀(1 - π). Accuracy
+        depends
+
+        entirely on accuracy of underlying purity measurement.
+
+        '
+    determination: 'Computational transformation of empirical purity measurement via
+      Equation 5.7.
+
+      Not independently measured; inherits uncertainty from π.
+
+      '
+    examples:
+    - context: Q40 purity standard
+      value: 40
+      units: Phred
+      interpretation: Purity 0.9999 (1 in 10,000 error rate)
+      source: π = 0.9999, Q = -10 log₁₀(0.0001) = 40
+    - context: Q30 purity standard
+      value: 30
+      units: Phred
+      interpretation: Purity 0.999 (1 in 1,000 error rate)
+      source: π = 0.999, Q = -10 log₁₀(0.001) = 30
+    - context: Purity limits sequencing benefit
+      value: 30
+      units: Phred
+      interpretation: Q_seq=35 > Q_purity=30, so template dominates error budget
+      source: Further basecalling improvements won't help classification
+    related_variables:
+    - variable: pi
+      relationship: transform_of
+      equation: '5.7'
+      description: Q_purity = -10 log₁₀(1 - π)
+    appears_in_equations:
+    - eq_id: '5.7'
+      role: output
+    typical_values:
+      high_purity: 40-50
+      moderate_purity: 30-40
+      low_purity: 20-30
+    common_errors:
+    - error: Confusing Q_purity with Q_sequencing
+      consequence: Misattributing error sources
+      fix: Q_purity measures template errors; Q_seq measures basecalling errors
+    - error: Adding Q scores linearly
+      consequence: Incorrect error propagation
+      fix: Convert to error rates, combine, then convert back to Q
+    importance: high
+    difficulty: beginner
+    first_chapter: 5
+    tags:
+    - purity
+    - quality-score
+    - phred-scale
+    - measurement
+  k:
+    symbol: k
+    symbol_display: $k$
+    name: Number of distinguishing positions
+    alt_names:
+    - variant count
+    - SNP count
+    - differences
+    description: Number of base positions where two haplotypes differ (SNPs, indels,
+      structural variants)
+    physical_meaning: Information content for distinguishing haplotypes scales with
+      k - more variants means easier classification
+    units: dimensionless count
+    domain: non-negative integers
+    typical_range: '[1, 100]'
+    measurement_methods:
+    - Alignment and variant calling between haplotypes
+    - Count from haplotype database
+    - Direct sequence comparison
+    determination: From haplotype sequence alignment
+    examples:
+    - case: CYP2D6 *1 vs *2 (single SNP)
+      values: k = 1
+    - case: CYP2D6 *1 vs *4 (3 SNPs)
+      values: k = 3
+    - case: Distant haplotypes
+      values: k = 50+
+    related_variables:
+    - D_KL
+    - L
+    appears_in_equations:
+    - '11.2'
+    - '5.4'
+    - '5.5'
+    - '7.5'
+    - '7.7'
+    typical_values:
+    - 'Close haplotypes: k = 1-5'
+    - 'Moderate distance: k = 10-30'
+    - 'Distant: k > 50'
+    common_errors:
+    - Counting non-informative variants (not spanning read)
+    - Ignoring indel complexity
+    importance: important
+    difficulty: easy
+    first_chapter: 7
+    tags:
+    - variants
+    - distinguishability
+    - experimental-design
+  L:
+    symbol: L
+    symbol_display: L
+    name: Molecule length
+    alt_names:
+    - Sequence length
+    - Target region length
+    - Amplicon size
+    description: 'Length of the DNA molecule or target region in base pairs. Longer
+      sequences
+
+      accumulate more replication errors, reducing purity upper bound.
+
+      '
+    physical_meaning: 'Represents the number of base positions subject to replication
+      errors. In the
+
+      replication model, kL is the total number of base-replication events, each with
+
+      error probability r.
+
+      '
+    units: base pairs (bp)
+    domain: '[1, ∞)'
+    typical_range: '[1000, 10000]'
+    measurement_methods:
+    - method: Sequence design or reference annotation
+      accuracy: exact
+      cost: zero (known from design)
+      description: 'For plasmids: total construct length. For genomic regions: reference
+        genome
+
+        coordinates. For amplicons: primer-to-primer distance.
+
+        '
+    determination: 'Known from construct design or reference genome coordinates. No
+      measurement
+
+      required; design parameter.
+
+      '
+    examples:
+    - context: 3 kb plasmid construct
+      value: 3000
+      units: bp
+      interpretation: Standard plasmid size for gene expression
+      source: Vector + insert = 3000 bp total
+    - context: 5 kb CYP2D6 genomic region
+      value: 5000
+      units: bp
+      interpretation: Targeted enrichment captures full gene locus
+      source: chr22:42,126,500-42,131,500 (hg38)
+    - context: Short 500 bp amplicon
+      value: 500
+      units: bp
+      interpretation: PCR product for Sanger validation
+      source: Primer pair flanking exon 3
+    related_variables:
+    - variable: pi_upper
+      relationship: determines
+      equation: '5.4'
+      description: Longer L reduces π_upper exponentially
+    - variable: k
+      relationship: multiplies_with
+      equation: '5.4'
+      description: Product kL is total base-replication events
+    - variable: r
+      relationship: combines_with
+      equation: '5.4'
+      description: Product rL gives error probability per cycle
+    appears_in_equations:
+    - eq_id: '11.2'
+      role: used
+    - eq_id: '12.1'
+      role: used
+    - eq_id: '13.2'
+      role: used
+    - eq_id: '13.3'
+      role: used
+    - eq_id: '5.4'
+      role: exponent_parameter
+    - eq_id: '5.5'
+      role: exponent_parameter
+    - eq_id: '7.1'
+      role: used
+    - eq_id: '7.2'
+      role: used
+    - eq_id: '7.3'
+      role: used
+    - eq_id: '7.4'
+      role: used
+    typical_values:
+      plasmid_insert: 1000-5000
+      full_plasmid: 3000-8000
+      genomic_locus: 5000-15000
+      amplicon: 200-1000
+    common_errors:
+    - error: Using full plasmid length when only insert is relevant
+      consequence: Overestimating error accumulation for target region
+      fix: Use length of sequenced/classified region, not total vector
+    - error: Ignoring L dependence in purity calculations
+      consequence: Cannot compare purity across different construct sizes
+      fix: Always report L when computing π_upper
+    importance: normal
+    difficulty: beginner
+    first_chapter: 5
+    tags:
+    - purity
+    - replication-model
+    - sequence-length
+    - design-parameter
+  r:
+    symbol: r
+    symbol_display: r
+    name: Read
+    alt_names:
+    - Basecalled sequence
+    - Observed read
+    description: 'A basecalled nucleotide sequence with associated per-base quality
+      scores produced
+
+      by the sequencing platform. The fundamental unit of data for classification.
+
+      '
+    physical_meaning: 'The decoded output from sequencing signal. Contains the basecaller''s
+      best estimate
+
+      of the template sequence along with confidence scores for each base.
+
+      '
+    units: nucleotide string (bp), Phred quality scores
+    domain: strings over {A,C,G,T}, length 100-100,000 bp
+    typical_range: 1,000-10,000 bp for long reads
+    measurement_methods:
+    - method: Nanopore sequencing + Dorado/Guppy basecaller
+      accuracy: 85-99.5% per-base
+      cost: varies by platform
+      description: Real-time or offline basecalling from electrical signals
+    - method: PacBio HiFi sequencing + CCS
+      accuracy: 99.5-99.9% per-base
+      cost: higher cost per base
+      description: Circular consensus from multiple passes
+    determination: 'Directly measured by sequencing instrument and decoded by basecaller.
+      After QC
+
+      filtering (min length, min quality, mapping), remaining reads form dataset R.
+
+      '
+    examples:
+    - context: ONT CYP2D6 read
+      value: 7,300 bp sequence, Q_mean=29.7
+      interpretation: Single read spanning full gene
+    - context: PacBio HiFi read
+      value: 15,000 bp, Q_mean=35
+      interpretation: High-accuracy long read from circular template
+    related_variables:
+    - variable: sigma
+      relationship: derived_from
+      description: Read r basecalled from signal σ
+    - variable: Q_j
+      relationship: has_attribute
+      description: Each read has per-base quality scores
+    - variable: d_edit
+      relationship: measured_by
+      description: Accuracy measured via edit distance
+    appears_in_equations:
+    - eq_id: '11.2'
+      role: used
+    - eq_id: '4.1'
+      role: observed_data
+    - eq_id: '4.4'
+      role: observed_for_comparison
+    - eq_id: '4.5'
+      role: observed_sequence
+    - eq_id: '5.4'
+      role: used
+    - eq_id: '5.5'
+      role: used
+    - eq_id: '6.1'
+      role: used
+    - eq_id: '6.2'
+      role: used
+    - eq_id: '6.3'
+      role: used
+    - eq_id: '6.4'
+      role: used
+    - eq_id: '6.5'
+      role: used
+    - eq_id: '6.6'
+      role: used
+    typical_values:
+      ONT_fast: Q20-Q25, 3-15 kb
+      ONT_hac: Q25-Q30, 3-15 kb
+      ONT_sup: Q28-Q32, 3-15 kb
+      PacBio_HiFi: Q30-Q40, 10-25 kb
+    common_errors:
+    - error: Using low-quality reads (Q<15)
+      consequence: Noise dominates signal
+      fix: Filter reads by mean quality threshold
+    - error: Ignoring quality scores
+      consequence: Equal weighting of high and low confidence bases
+      fix: Use quality-weighted likelihood (Eq 4.3)
+    importance: critical
+    difficulty: beginner
+    first_chapter: 4
+    tags:
+    - sequencing
+    - observed-data
+    - basecalling
+    - reads
+  f_expected:
+    symbol: f_{\text{expected}}
+    symbol_display: f_expected
+    name: Fraction at expected size (CE)
+    alt_names:
+    - Correct-size fraction
+    - CE purity fraction
+    description: 'Fraction of molecules appearing at the expected size in capillary
+      electrophoresis
+
+      analysis. Provides lower bound on purity by detecting length variants.
+
+      '
+    physical_meaning: 'Quantifies the proportion of molecules with the correct length.
+      Insertions,
+
+      deletions, and rearrangements shift size, reducing f_expected. Point mutations
+
+      preserving length are invisible, so f_expected ≤ true purity.
+
+      '
+    units: dimensionless fraction
+    domain: '[0, 1]'
+    typical_range: '[0.95, 0.999]'
+    measurement_methods:
+    - method: CE peak area quantification
+      accuracy: medium
+      cost: low
+      description: 'Integrate peak areas in electropherogram. f_expected = (area at
+        correct size) /
+
+        (total area). Requires proper baseline correction and peak identification.
+
+        '
+    determination: 'Measured from capillary electrophoresis electropherograms. Linearize
+      sample
+
+      (restriction digest for plasmids), run CE, quantify peak areas.
+
+      '
+    examples:
+    - context: High-quality plasmid with few indels
+      value: 0.998
+      units: dimensionless
+      interpretation: 99.8% of molecules at correct size
+      source: Major peak 9980 area, minor peaks 20 total area, total 10000
+    - context: Plasmid with deletion variants
+      value: 0.985
+      units: dimensionless
+      interpretation: 1.5% have length-altering variants
+      source: Expected-size peak 9850/10000 total area
+    related_variables:
+    - variable: pi_lower
+      relationship: equals
+      equation: '5.3'
+      description: By definition, π_lower = f_expected
+    - variable: pi
+      relationship: lower_bound_on
+      equation: '5.3'
+      description: True purity ≥ f_expected (SNPs not detected)
+    appears_in_equations:
+    - eq_id: '5.3'
+      role: measured_input
+    typical_values:
+      high_quality: 0.98-0.999
+      moderate_quality: 0.95-0.98
+      low_quality: 0.90-0.95
+    common_errors:
+    - error: Treating f_expected as exact purity
+      consequence: Ignoring point mutations that preserve length
+      fix: Recognize f_expected is a conservative lower bound
+    - error: Poor baseline correction in electropherograms
+      consequence: Inaccurate peak area quantification
+      fix: Use proper baseline subtraction; validate peak integration
+    importance: normal
+    difficulty: intermediate
+    first_chapter: 5
+    tags:
+    - purity
+    - capillary-electrophoresis
+    - measurement
+    - empirical
+  h:
+    symbol: h
+    symbol_display: h
+    name: Haplotype
+    alt_names:
+    - Candidate haplotype
+    - Phased sequence
+    description: 'A specific fully phased DNA sequence from the haplotype space H
+      that could be
+
+      present in the sample. Represents one possible genomic configuration at the
+      target locus.
+
+      '
+    physical_meaning: 'One of the candidate sequences being classified. For example,
+      CYP2D6*1, *2, *10, etc.
+
+      The goal is to compute posterior probability P(h|R) for each candidate.
+
+      '
+    units: categorical sequence
+    domain: finite set H = {h₁, h₂, ..., hₚ}
+    typical_range: 2-100 candidates depending on locus complexity
+    measurement_methods:
+    - method: Bayesian inference from sequencing data
+      accuracy: high (depends on coverage and error model)
+      cost: computational
+      description: Compute P(h|R) using Bayes rule with empirical likelihood
+    determination: 'Sequence of each candidate h_i is predefined from reference databases
+      (PharmVar,
+
+      structural variant catalogs). Posterior probability inferred from reads.
+
+      '
+    examples:
+    - context: CYP2D6 diplotype classification
+      value: CYP2D6*1 (wild-type)
+      units: categorical
+      interpretation: One of ~100 known CYP2D6 star alleles
+    - context: Binary classification
+      value: h1=reference, h2=variant
+      interpretation: Simplest case with two candidates
+    related_variables:
+    - variable: R
+      relationship: evidence_for
+      description: Reads R provide evidence for haplotype h
+    - variable: C_ij
+      relationship: error_model
+      description: Confusion matrix models P(read|haplotype)
+    appears_in_equations:
+    - eq_id: '4.1'
+      role: top_level_variable
+    - eq_id: '6.1'
+      role: used
+    - eq_id: '6.2'
+      role: used
+    - eq_id: '6.3'
+      role: used
+    - eq_id: '6.4'
+      role: used
+    - eq_id: '6.5'
+      role: used
+    - eq_id: '6.6'
+      role: used
+    typical_values:
+      simple_SNP: 2 candidates
+      pharmacogene: 10-100 star alleles
+      structural_variant: 5-20 configurations
+    common_errors:
+    - error: Incomplete candidate set
+      consequence: True haplotype not among candidates
+      fix: Use comprehensive variant databases
+    - error: Assuming independence of haplotypes
+      consequence: Ignoring linkage disequilibrium
+      fix: Model haplotype blocks jointly
+    importance: critical
+    difficulty: beginner
+    first_chapter: 4
+    tags:
+    - classification
+    - bayesian-inference
+    - haplotype
+    - target-variable
+  C_ij:
+    symbol: C_{ij}
+    symbol_display: C_ij
+    name: Confusion matrix entry
+    alt_names:
+    - Error probability
+    - Conditional observation probability
+    description: 'Entry in the confusion matrix: empirical probability of observing
+      sequence j
+
+      (basecaller output) when the true sequence is i (ground truth).
+
+      '
+    physical_meaning: 'Captures technology-specific error patterns. Diagonal elements
+      C_ii are TPR
+
+      (true positive rates); off-diagonals capture substitution/indel patterns.
+
+      '
+    units: probability (0-1)
+    domain: '[0, 1], row-stochastic (Σⱼ C_ij = 1 for each i)'
+    typical_range: Diagonal 0.85-0.98, off-diagonal 0.001-0.05
+    measurement_methods:
+    - method: SMA-seq on physical standards
+      accuracy: high (depends on sample size)
+      cost: requires standards and deep sequencing
+      description: Align reads to known truth, tabulate frequencies
+    determination: 'Measured empirically by sequencing standards with known sequences.
+      Reads aligned
+
+      to truth, error frequencies counted. Matrix is (4^k × 4^k) for k-mers.
+
+      '
+    examples:
+    - context: Single-base confusion (A nucleotide)
+      value: C_AA=0.92, C_AC=0.03, C_AG=0.02, C_AT=0.03
+      interpretation: 92% correct calls for A; 8% errors distributed
+    - context: Homopolymer 6-mer
+      value: C_AAAAAA,AAAAAA=0.75 (lower TPR)
+      interpretation: Homopolymers harder to call accurately
+    related_variables:
+    - variable: h
+      relationship: models_errors_for
+      description: Confusion matrix models P(read|haplotype)
+    - variable: r
+      relationship: probability_of
+      description: C_ij gives P(observed r | true sequence)
+    - variable: Q_j
+      relationship: alternative_to
+      description: Confusion matrix alternative to quality score model
+    appears_in_equations:
+    - eq_id: '4.6'
+      role: defined_quantity
+    - eq_id: '6.2'
+      role: used
+    typical_values:
+      high_quality_base: 0.95-0.98 (diagonal)
+      homopolymer: 0.70-0.90 (diagonal)
+      rare_substitution: 0.001-0.01 (off-diagonal)
+    common_errors:
+    - error: Insufficient sample size for estimation
+      consequence: Noisy estimates, especially for rare k-mers
+      fix: Sequence 1000+ reads per standard
+    - error: Not accounting for purity
+      consequence: Template impurity biases confusion matrix
+      fix: Measure and correct for standard purity (Chapter 5)
+    importance: critical
+    difficulty: intermediate
+    first_chapter: 4
+    tags:
+    - confusion-matrix
+    - error-model
+    - sma-seq
+    - empirical
+  Q_j:
+    symbol: Q_j
+    symbol_display: Q
+    name: Quality score
+    alt_names:
+    - Phred score
+    - Base quality
+    - Q-score
+    description: 'Phred quality score at position j in a read, encoding the basecaller''s
+      estimated
+
+      error probability at that base.
+
+      '
+    physical_meaning: 'Basecaller confidence metric. Q=30 means 1-in-1000 error (99.9%
+      correct),
+
+      Q=20 means 1-in-100 (99% correct).
+
+      '
+    units: Phred units (dimensionless log scale)
+    domain: '[0, ∞), typically 0-50'
+    typical_range: 15-40 for modern basecallers
+    measurement_methods:
+    - method: Computed by basecaller neural network
+      accuracy: varies by calibration
+      cost: zero (automatic output)
+      description: Model outputs confidence scores during decoding
+    determination: 'Computed by basecaller based on signal quality and model confidence.
+      Reported
+
+      in FASTQ format. Calibration assessed empirically via SMA-seq.
+
+      '
+    examples:
+    - context: High confidence base
+      value: Q=35
+      units: Phred
+      interpretation: P(error) = 10^-3.5 ≈ 0.0003 (0.03%)
+    - context: Low confidence base
+      value: Q=15
+      interpretation: P(error) = 10^-1.5 ≈ 0.032 (3.2%)
+    related_variables:
+    - variable: r
+      relationship: attribute_of
+      description: Quality scores are attributes of reads
+    - variable: C_ij
+      relationship: alternative_error_model
+      description: Quality scores vs confusion matrix for error modeling
+    appears_in_equations:
+    - eq_id: '4.2'
+      role: input_variable
+    typical_values:
+      ONT_fast: Q15-Q25
+      ONT_sup: Q25-Q35
+      PacBio_HiFi: Q30-Q45
+    common_errors:
+    - error: Assuming perfect calibration
+      consequence: Overconfident or underconfident posteriors
+      fix: Validate calibration via SMA-seq, use confusion matrices
+    - error: Averaging quality scores
+      consequence: Loses information about low-quality regions
+      fix: Use per-base quality in likelihood (Eq 4.3)
+    importance: critical
+    difficulty: beginner
+    first_chapter: 4
+    tags:
+    - quality-score
+    - basecalling
+    - error-probability
+    - confidence
+  d_edit:
+    symbol: d_{\text{edit}}
+    symbol_display: d_edit
+    name: Edit distance
+    alt_names:
+    - Levenshtein distance
+    - Alignment distance
+    description: 'Minimum number of single-base operations (insertions, deletions,
+      substitutions)
+
+      required to transform one sequence into another.
+
+      '
+    physical_meaning: 'Quantifies sequence dissimilarity. Lower distance means higher
+      similarity.
+
+      Used to compute per-read accuracy.
+
+      '
+    units: count of edit operations
+    domain: '[0, ∞), integers'
+    typical_range: 0-500 for typical reads
+    measurement_methods:
+    - method: Dynamic programming alignment
+      accuracy: exact (guaranteed optimal)
+      cost: O(mn) time for sequences of length m, n
+      description: Smith-Waterman or Needleman-Wunsch algorithms
+    determination: 'Computed algorithmically by aligning observed read to true sequence
+      (when known,
+
+      e.g., from standards) and counting minimum edit operations.
+
+      '
+    examples:
+    - context: Single substitution
+      value: d_edit = 1
+      interpretation: One base different between sequences
+    - context: High-accuracy read
+      value: d_edit = 25 for 5000 bp
+      interpretation: 25 errors in 5000 bases = 99.5% accuracy
+    related_variables:
+    - variable: r
+      relationship: measured_on
+      description: Edit distance compares read r to truth
+    - variable: accuracy
+      relationship: determines
+      description: Accuracy = 1 - d_edit/length
+    appears_in_equations:
+    - eq_id: '4.4'
+      role: defined_quantity
+    - eq_id: '4.5'
+      role: numerator_component
+    typical_values:
+      high_accuracy_read: 10-50 (for 5-10 kb reads)
+      moderate_accuracy: 50-200
+      low_accuracy: 200-1000
+    common_errors:
+    - error: Using non-optimal alignment
+      consequence: Overestimate edit distance
+      fix: Use proper DP algorithms (SW/NW)
+    - error: Ignoring indels
+      consequence: Undercounting errors in homopolymers
+      fix: Use full edit distance including indels
+    importance: normal
+    difficulty: intermediate
+    first_chapter: 4
+    tags:
+    - edit-distance
+    - alignment
+    - accuracy
+    - sequence-comparison
+  sigma:
+    symbol: \sigma
+    symbol_display: σ
+    name: Sequencing signal
+    alt_names:
+    - Raw signal
+    - Current trace (nanopore)
+    - Fluorescence (PacBio)
+    description: 'Continuous sequencing signal generated as a library molecule transits
+      through
+
+      the sensor. Raw data before basecalling.
+
+      '
+    physical_meaning: 'For nanopore: electrical current in picoamperes as DNA passes
+      through protein pore.
+
+      For PacBio: fluorescence intensity as nucleotides are incorporated.
+
+      '
+    units: pA (nanopore), arbitrary units (PacBio)
+    domain: continuous time series, typically 10-200 pA (nanopore)
+    typical_range: 50-150 pA for nanopore, 4-5 kHz sampling
+    measurement_methods:
+    - method: Nanopore sensor direct measurement
+      accuracy: high temporal resolution
+      cost: hardware-dependent
+      description: Electrical current measured during molecule transit
+    - method: PacBio optical detection
+      accuracy: fluorescence intensity over time
+      description: Multi-channel fluorescence during polymerization
+    determination: 'Measured directly by sequencing hardware. Preprocessed (normalization,
+      drift
+
+      correction) then segmented and decoded by basecaller to produce read r.
+
+      '
+    examples:
+    - context: Nanopore read
+      value: 50,000 current measurements over 10 seconds
+      interpretation: Basecaller segments into ~7,000 bases
+    - context: Homopolymer plateau
+      value: Constant current for extended duration
+      interpretation: Difficult to determine exact length
+    related_variables:
+    - variable: r
+      relationship: decoded_to
+      description: Signal σ basecalled to produce read r
+    - variable: l
+      relationship: generated_from
+      description: Library molecule l generates signal σ
+    appears_in_equations:
+    - eq_id: '4.1'
+      role: intermediate_variable
+    typical_values:
+      nanopore_6mer_A: 90-100 pA
+      nanopore_6mer_T: 60-70 pA
+      PacBio_4_channel: varies by nucleotide
+    common_errors:
+    - error: Skipping signal-level analysis
+      consequence: Missing opportunity for improved basecalling
+      fix: Retrain basecaller on signal data (Chapter 13)
+    - error: Not correcting for drift
+      consequence: Reduced basecalling accuracy
+      fix: Apply normalization and drift correction
+    importance: normal
+    difficulty: advanced
+    first_chapter: 4
+    tags:
+    - signal
+    - raw-data
+    - nanopore
+    - measurement
+  P(h_i):
+    symbol: P(h_i)
+    symbol_display: $\Prob(h_i)$
+    name: Prior probability of haplotype
+    alt_names:
+    - haplotype prior
+    - population prior
+    description: Probability of haplotype $h_i$ before observing sequencing data,
+      encoding prior knowledge from population frequencies or other sources
+    physical_meaning: Reflects expected frequency of haplotype in relevant population
+      or belief about haplotype probability before evidence
+    units: probability
+    domain: '[0, 1]'
+    typical_range: '[10^-6, 0.5]'
+    measurement_methods:
+    - Population databases (gnomAD, 1000 Genomes)
+    - PharmVar haplotype frequencies
+    - Uniform prior (1/P)
+    - Dirichlet prior parameters
+    determination: From population genetic studies or set to uniform/weakly informative
+      prior
+    examples:
+    - case: Common CYP2D6*1 haplotype in European population
+      values: P(h_i) ≈ 0.35
+    - case: Rare CYP2D6*5 deletion
+      values: P(h_i) ≈ 0.02
+    - case: Uniform prior over 50 haplotypes
+      values: P(h_i) = 0.02
+    related_variables:
+    - P(h_i|r)
+    - BF_ij
+    - P
+    appears_in_equations: []
+    typical_values:
+    - 'Common haplotypes: 0.1-0.5'
+    - 'Rare variants: <0.01'
+    - 'Uniform prior: 1/P'
+    common_errors:
+    - Using incorrect population reference (e.g., European frequencies for African
+      patient)
+    - Overly informative prior dominating evidence
+    importance: critical
+    difficulty: medium
+    first_chapter: 6
+    tags:
+    - bayesian
+    - prior
+    - population-genetics
+    - classification
+  P(r_n|h_i):
+    symbol: P(r_n|h_i)
+    symbol_display: $\Prob(r_n|h_i)$
+    name: Per-read likelihood
+    alt_names:
+    - read likelihood
+    - single-read probability
+    description: Probability of observing sequencing read $r_n$ given true haplotype
+      is $h_i$, computed from confusion matrix
+    physical_meaning: Quantifies how well read $r_n$ matches haplotype $h_i$ accounting
+      for sequencing errors
+    units: probability
+    domain: '[0, 1]'
+    typical_range: '[10^-10, 0.999]'
+    measurement_methods:
+    - Confusion matrix lookup C_{r_n,s_{h_i}}
+    - SMA-seq calibration standards
+    - Empirical error model from plasmid mixtures
+    determination: 'Equation 6.2: P(r_n|h_i) = C_{r_n,s_h}'
+    examples:
+    - case: Perfect match, high quality
+      values: P(r_n|h_i) ≈ 0.999
+    - case: One mismatch at low quality position
+      values: P(r_n|h_i) ≈ 0.85
+    - case: Read from wrong haplotype
+      values: P(r_n|h_i) ≈ 10^-6
+    related_variables:
+    - P(r|h_i)
+    - C_rs
+    - TPR
+    - pi
+    appears_in_equations: []
+    typical_values:
+    - 'Concordant reads: >0.95'
+    - 'Discordant reads: <0.1'
+    common_errors:
+    - Forgetting to account for quality scores
+    - Assuming independence when reads overlap
+    importance: critical
+    difficulty: medium
+    first_chapter: 6
+    tags:
+    - likelihood
+    - bayesian
+    - sequencing-error
+    - confusion-matrix
+  P(h_i|r):
+    symbol: P(h_i|r)
+    symbol_display: $\Prob(h_i|\mathbf{r})$
+    name: Posterior probability of haplotype
+    alt_names:
+    - posterior
+    - classification probability
+    description: Updated probability of haplotype $h_i$ after observing all sequencing
+      reads, combining prior and likelihood via Bayes' rule
+    physical_meaning: Quantifies confidence in haplotype classification given sequencing
+      evidence - the final classification metric
+    units: probability
+    domain: '[0, 1]'
+    typical_range: '[0, 1]'
+    measurement_methods:
+    - Bayes' rule computation (Equation 6.3)
+    - Log-space numerically stable algorithm
+    determination: P(h_i|r) = P(h_i) · P(r|h_i) / Σ_j P(h_j) · P(r|h_j)
+    examples:
+    - case: High coverage, strong match
+      values: P(h_i|r) = 0.9999
+    - case: Low coverage, ambiguous
+      values: P(h_i|r) = 0.45
+    - case: Two equally likely haplotypes
+      values: P(h_i|r) = 0.50
+    related_variables:
+    - P(h_i)
+    - P(r|h_i)
+    - tau
+    - BF_ij
+    appears_in_equations: []
+    typical_values:
+    - 'Confident classification: >0.99'
+    - 'Clinical threshold: >0.95'
+    - 'Uncertain: <0.80'
+    common_errors:
+    - Reporting MAP without checking posterior probability
+    - Ignoring low posterior warning signs
+    importance: critical
+    difficulty: medium
+    first_chapter: 6
+    tags:
+    - posterior
+    - bayesian
+    - classification
+    - clinical
+  BF_ij:
+    symbol: BF_ij
+    symbol_display: $\text{BF}_{ij}$
+    name: Bayes factor
+    alt_names:
+    - likelihood ratio
+    - evidence ratio
+    description: Ratio of likelihoods comparing haplotype $h_i$ to $h_j$, quantifying
+      relative evidence strength independent of priors
+    physical_meaning: How many times more likely the data are under hypothesis $h_i$
+      compared to $h_j$
+    units: dimensionless ratio
+    domain: (0, ∞)
+    typical_range: '[10^-3, 10^6]'
+    measurement_methods:
+    - 'Likelihood ratio: P(r|h_i) / P(r|h_j)'
+    - Posterior odds ratio divided by prior odds ratio
+    determination: BF_ij = P(r|h_i) / P(r|h_j)
+    examples:
+    - case: Decisive evidence for h_i
+      values: BF_ij > 100 (log₁₀ BF > 2)
+    - case: Strong evidence for h_i
+      values: BF_ij ≈ 10-30
+    - case: Weak evidence
+      values: BF_ij ≈ 1-3
+    related_variables:
+    - P(r|h_i)
+    - P(h_i|r)
+    appears_in_equations: []
+    typical_values:
+    - 'Decisive: >100'
+    - 'Strong: 10-100'
+    - 'Weak: 1-10'
+    common_errors:
+    - Confusing BF with posterior probability
+    - Not reporting BF on log scale for large values
+    importance: important
+    difficulty: medium
+    first_chapter: 6
+    tags:
+    - bayesian
+    - hypothesis-testing
+    - evidence
+  tau:
+    symbol: τ
+    symbol_display: $\tau$
+    name: Posterior probability threshold
+    alt_names:
+    - classification threshold
+    - confidence threshold
+    description: Minimum posterior probability required to make classification decision,
+      balancing false positives and no-calls
+    physical_meaning: Risk tolerance level for classification - higher values reduce
+      errors but increase no-calls
+    units: probability
+    domain: (0, 1)
+    typical_range: '[0.80, 0.999]'
+    measurement_methods:
+    - Set based on clinical risk assessment
+    - Calibrated from validation studies
+    determination: Application-dependent policy choice balancing sensitivity and specificity
+    examples:
+    - case: Standard clinical testing
+      values: τ = 0.95
+    - case: High-risk medications
+      values: τ = 0.99
+    - case: Research applications
+      values: τ = 0.80
+    related_variables:
+    - P(h_i|r)
+    appears_in_equations: []
+    typical_values:
+    - 'Clinical: 0.95-0.99'
+    - 'Research: 0.80-0.90'
+    common_errors:
+    - Using same threshold for all applications
+    - Setting threshold without validating calibration
+    importance: important
+    difficulty: easy
+    first_chapter: 6
+    tags:
+    - decision-rule
+    - clinical
+    - threshold
+  lambda:
+    symbol: λ
+    symbol_display: $\lambda$
+    name: Mixture fraction
+    alt_names:
+    - allele balance
+    - haplotype proportion
+    description: Proportion of reads from first haplotype in diploid mixture, ideally
+      0.5 for balanced diploid
+    physical_meaning: Relative abundance of two haplotypes in diploid sample - deviations
+      from 0.5 indicate bias or contamination
+    units: fraction
+    domain: '[0, 1]'
+    typical_range: '[0.3, 0.7]'
+    measurement_methods:
+    - EM algorithm from read counts
+    - Direct estimation from variant allele frequencies
+    - Assumed 0.5 for balanced diploid
+    determination: Estimated from data or fixed at 0.5
+    examples:
+    - case: Balanced diploid
+      values: λ = 0.50
+    - case: Slight amplification bias
+      values: λ = 0.55
+    - case: Contamination
+      values: λ = 0.80
+    related_variables:
+    - P(r_n|h_i,h_j)
+    appears_in_equations:
+    - '13.2'
+    - '14.1'
+    - '14.2'
+    - '14.3'
+    - '6.6'
+    typical_values:
+    - 'Ideal balanced: 0.50'
+    - 'Acceptable range: 0.40-0.60'
+    - 'Bias concern: <0.3 or >0.7'
+    common_errors:
+    - Assuming λ=0.5 without validation
+    - Ignoring amplification bias
+    importance: important
+    difficulty: medium
+    first_chapter: 6
+    tags:
+    - diploid
+    - mixture
+    - allele-balance
+  P:
+    symbol: P
+    symbol_display: $P$
+    name: Number of candidate haplotypes
+    alt_names:
+    - haplotype space size
+    description: Total number of possible haplotypes in classification space $\mathcal{H}$
+    physical_meaning: Complexity of classification problem - larger P requires more
+      reads for confident classification
+    units: dimensionless count
+    domain: positive integers
+    typical_range: '[2, 200]'
+    measurement_methods:
+    - Count from haplotype database
+    - Defined by assay design
+    determination: Fixed by experimental design and reference database
+    examples:
+    - case: Simple diploid (two haplotypes)
+      values: P = 2
+    - case: CYP2D6 full panel
+      values: P = 150
+    - case: Targeted 10-haplotype assay
+      values: P = 10
+    related_variables:
+    - P(h_i)
+    - N
+    appears_in_equations:
+    - '13.10'
+    - '13.5'
+    - '14.5'
+    - '7.6'
+    typical_values:
+    - 'Simple assays: 2-20'
+    - 'Comprehensive panels: 50-200'
+    common_errors:
+    - Including non-relevant haplotypes
+    - Incomplete haplotype database
+    importance: important
+    difficulty: easy
+    first_chapter: 6
+    tags:
+    - classification
+    - experimental-design
+  theta:
+    symbol: theta
+    symbol_display: $\boldsymbol{\theta}$
+    name: Model parameters
+    alt_names:
+    - neural network weights
+    - basecaller parameters
+    description: Vector of all trainable parameters in machine learning model (weights,
+      biases)
+    physical_meaning: Numerical values that define the basecaller's transformation
+      from signal to sequence
+    units: dimensionless (model-specific)
+    domain: real-valued vector in R^d where d is parameter count
+    typical_range: millions to billions of parameters for modern basecallers
+    measurement_methods:
+    - learned via gradient descent
+    - initialized randomly or from pretrained model
+    determination: Optimized during training to minimize loss function on training
+      data
+    examples:
+    - context: Basecaller neural network
+      value: θ ∈ R^{10^7} for model with 10M parameters
+      interpretation: 10 million weights and biases
+    related_variables:
+    - eta
+    - x_signal
+    - s_true
+    appears_in_equations:
+    - '12.1'
+    - '12.10'
+    - '13.2'
+    - '7.1'
+    - '7.2'
+    typical_values:
+    - condition: ONT basecaller (Guppy)
+      value: ~10-50M parameters
+    - condition: Modern transformer basecaller
+      value: ~100M-1B parameters
+    common_errors:
+    - Not tracking parameter count across model versions
+    - Using too many parameters for small training sets (overfitting)
+    importance: high
+    difficulty: advanced
+    first_chapter: 12
+    tags:
+    - machine-learning
+    - neural-networks
+    - optimization
+  D_KL:
+    symbol: D_KL
+    symbol_display: $D_{\text{KL}}$
+    name: Kullback-Leibler divergence
+    alt_names:
+    - KL divergence
+    - relative entropy
+    - information divergence
+    description: Information-theoretic measure of distinguishability between two haplotypes
+      based on their read distributions
+    physical_meaning: Quantifies how much information each read provides for distinguishing
+      haplotypes - higher values mean easier classification
+    units: bits (nats if using natural log)
+    domain: '[0, ∞)'
+    typical_range: '[0.1, 100]'
+    measurement_methods:
+    - 'Computed from confusion matrix: D_KL = Σ C_a,o log(C_a,o / C_b,o)'
+    - 'Lower bound from variant count: D_KL ≥ k × D_KL^min'
+    - Empirical estimation from read distributions
+    determination: From confusion matrix and haplotype sequences
+    examples:
+    - case: Single SNP, Q30 basecalling
+      values: D_KL ≈ 6.89 bits
+    - case: 3 SNPs, Q30 basecalling
+      values: D_KL ≥ 20.67 bits
+    - case: Closely related haplotypes
+      values: D_KL < 1 bit (hard to distinguish)
+    related_variables:
+    - N
+    - k
+    appears_in_equations:
+    - '14.8'
+    - '7.6'
+    - '7.7'
+    typical_values:
+    - 'High quality, distant haplotypes: >10 bits'
+    - 'Moderate distinguishability: 1-10 bits'
+    - 'Difficult cases: <1 bit'
+    common_errors:
+    - Ignoring position-specific quality variation
+    - Using symmetric KL divergence assumption (it's asymmetric)
+    importance: critical
+    difficulty: hard
+    first_chapter: 7
+    tags:
+    - information-theory
+    - distinguishability
+    - experimental-design
+  epsilon:
+    symbol: epsilon
+    symbol_display: $\epsilon$
+    name: Precision tolerance
+    alt_names:
+    - error tolerance
+    - estimation precision
+    - margin of error
+    description: Maximum acceptable deviation of estimated proportion from true value
+    physical_meaning: Half-width of confidence interval for mixture proportion estimate
+    units: fraction (0-1)
+    domain: (0, 1)
+    typical_range: '[0.01, 0.10]'
+    measurement_methods:
+    - specified by user
+    - calculated from confidence requirements
+    determination: Chosen based on application requirements (e.g., ε = 0.05 for ±5%
+      precision)
+    examples:
+    - context: Mixture proportion validation
+      value: ε = 0.05
+      interpretation: Want to estimate λ within ±5%
+    related_variables:
+    - lambda_hat
+    - delta
+    - N_reads
+    appears_in_equations:
+    - '11.8'
+    - '11.9'
+    - '12.8'
+    - '14.1'
+    - '7.6'
+    typical_values:
+    - condition: Clinical validation
+      value: 0.05 (5%)
+    - condition: Research applications
+      value: 0.10 (10%)
+    - condition: High-precision requirements
+      value: 0.01 (1%)
+    common_errors:
+    - Not specifying ε before calculating sample size
+    - Using ε smaller than achievable with available coverage
+    importance: medium
+    difficulty: intermediate
+    first_chapter: 14
+    tags:
+    - statistics
+    - precision
+    - experimental-design
+  delta:
+    symbol: delta
+    symbol_display: $\delta$
+    name: Confidence level parameter
+    alt_names:
+    - significance level
+    - 1 - confidence
+    description: Probability of confidence interval not containing true value (complement
+      of confidence level)
+    physical_meaning: Acceptable risk of making error in proportion estimate
+    units: probability (0-1)
+    domain: (0, 1)
+    typical_range: '[0.01, 0.10]'
+    measurement_methods:
+    - specified by user based on risk tolerance
+    determination: Typically set to 0.05 for 95% confidence or 0.01 for 99% confidence
+    examples:
+    - context: 95% confidence interval
+      value: δ = 0.05
+      interpretation: 5% chance interval misses true value
+    related_variables:
+    - epsilon
+    - z_score
+    - lambda_hat
+    appears_in_equations:
+    - '14.1'
+    - '7.6'
+    typical_values:
+    - condition: Standard confidence
+      value: 0.05 (95% CI)
+    - condition: High confidence
+      value: 0.01 (99% CI)
+    common_errors:
+    - Confusing δ with confidence level (should use 1-δ)
+    - Not adjusting for multiple comparisons
+    importance: medium
+    difficulty: basic
+    first_chapter: 14
+    tags:
+    - statistics
+    - confidence-intervals
+  alpha:
+    symbol: α
+    symbol_display: $\alpha$
+    name: Significance level
+    alt_names:
+    - type I error rate
+    - false positive rate
+    description: Maximum acceptable probability of rejecting null hypothesis when
+      it's true (false positive rate)
+    physical_meaning: Controls how often we incorrectly conclude quality is overstated
+      when it's actually accurate
+    units: probability
+    domain: (0, 1)
+    typical_range: '[0.001, 0.10]'
+    measurement_methods:
+    - Set by conventional standards (0.05, 0.01)
+    - Adjusted for multiple testing (Bonferroni)
+    determination: Conventional statistical choice, application-dependent
+    examples:
+    - case: Standard hypothesis test
+      values: α = 0.05 (5% false positive rate)
+    - case: Stringent test
+      values: α = 0.01 (1% false positive rate)
+    - case: Multiple testing correction
+      values: α = 0.05/m (Bonferroni for m tests)
+    related_variables:
+    - beta
+    - z
+    - p-value
+    appears_in_equations:
+    - '13.1'
+    - '13.8'
+    - '14.4'
+    - '14.7'
+    - '14.8'
+    - '7.4'
+    typical_values:
+    - 'Standard: 0.05'
+    - 'Stringent: 0.01'
+    - 'Exploratory: 0.10'
+    common_errors:
+    - Confusing α with power (1-β)
+    - Not adjusting for multiple comparisons
+    importance: important
+    difficulty: easy
+    first_chapter: 7
+    tags:
+    - hypothesis-testing
+    - significance
+    - type-I-error
+  beta:
+    symbol: β
+    symbol_display: $\beta$
+    name: Type II error rate
+    alt_names:
+    - false negative rate
+    - 1 minus power
+    description: Probability of failing to reject null hypothesis when alternative
+      is true (power = 1-β)
+    physical_meaning: Controls how often we fail to detect quality overstatement when
+      it truly exists
+    units: probability
+    domain: (0, 1)
+    typical_range: '[0.05, 0.20]'
+    measurement_methods:
+    - Set based on desired statistical power
+    - β = 0.20 for 80% power (standard)
+    - β = 0.10 for 90% power (stringent)
+    determination: Application-dependent, balanced against sample size constraints
+    examples:
+    - case: Standard power (80%)
+      values: β = 0.20
+    - case: High power (90%)
+      values: β = 0.10
+    - case: Very high power (95%)
+      values: β = 0.05
+    related_variables:
+    - alpha
+    - n
+    - power
+    appears_in_equations:
+    - '13.8'
+    - '14.4'
+    - '14.8'
+    - '7.4'
+    typical_values:
+    - 'Standard: β = 0.20 (80% power)'
+    - 'High power: β = 0.10 (90% power)'
+    common_errors:
+    - Confusing β with significance level α
+    - Ignoring power in experimental design
+    importance: important
+    difficulty: medium
+    first_chapter: 7
+    tags:
+    - hypothesis-testing
+    - power
+    - type-II-error
+  d:
+    symbol: d
+    symbol_display: $d$
+    name: Quality score overstatement
+    alt_names:
+    - Phred unit bias
+    - quality miscalibration
+    description: Magnitude of systematic quality score overstatement in Phred units
+      (d = Q_claimed - Q_true)
+    physical_meaning: How much basecaller overstates quality - d=1 means claiming
+      Q20 when true quality is Q19
+    units: Phred units (dimensionless)
+    domain: '[0, ∞)'
+    typical_range: '[0.5, 5]'
+    measurement_methods:
+    - Empirical comparison of claimed vs. observed error rates
+    - Validation experiments on known standards
+    - Quality calibration plots
+    determination: From validation experiments comparing claimed to observed quality
+    examples:
+    - case: Well-calibrated basecaller
+      values: d ≈ 0 (no overstatement)
+    - case: Modest overstatement
+      values: d = 1 (e.g., Q20 claimed, Q19 true)
+    - case: Severe overstatement
+      values: d = 3-5 (e.g., Q25 claimed, Q20 true)
+    related_variables:
+    - Q
+    - theta
+    - P_0
+    - P_1
+    appears_in_equations:
+    - '11.5'
+    - '13.6'
+    - '14.6'
+    - '4.1'
+    - '7.4'
+    typical_values:
+    - 'Good calibration: d < 1'
+    - 'Acceptable: d = 1-2'
+    - 'Poor calibration: d > 3'
+    common_errors:
+    - Assuming d = 0 without validation
+    - Ignoring context-dependent miscalibration
+    importance: important
+    difficulty: medium
+    first_chapter: 7
+    tags:
+    - quality-control
+    - calibration
+    - bias
+  SMA:
+    symbol: SMA
+    symbol_display: $\text{SMA}$
+    name: Single Molecule Accuracy
+    alt_names:
+    - single-molecule accuracy
+    - SMA-seq metric
+    description: Fraction of reads from known standard that are correctly classified
+      - central SMA-seq quality metric
+    physical_meaning: Direct empirical measurement of end-to-end sequencing+basecalling
+      accuracy on known-truth molecules
+    units: fraction (0-1)
+    domain: '[0, 1]'
+    typical_range: '[0.70, 0.99]'
+    measurement_methods:
+    - 'Exact-sequence SMA: fraction of perfect-match reads'
+    - 'Per-base SMA: 1 - (error rate across all bases)'
+    - 'Measured via confusion matrix: SMA = C_ii / N_i'
+    determination: Empirical measurement from SMA-seq experiments with plasmid standards
+    examples:
+    - case: ONT R9.4 typical
+      values: SMA ≈ 0.85-0.90
+    - case: ONT R10.4 improved
+      values: SMA ≈ 0.95-0.98
+    - case: Clinical acceptance threshold
+      values: SMA ≥ 0.85
+    related_variables:
+    - TPR
+    - C
+    - N
+    - SMA_exact
+    - SMA_base
+    appears_in_equations:
+    - '11.3'
+    typical_values:
+    - 'Excellent: >0.95'
+    - 'Good: 0.90-0.95'
+    - 'Acceptable: 0.85-0.90'
+    - 'Poor: <0.85'
+    common_errors:
+    - Reporting SMA without purity π (SMA ≤ π always)
+    - Mixing exact-sequence and per-base SMA definitions
+    - Not filtering by end_reason (incomplete reads)
+    importance: critical
+    difficulty: easy
+    first_chapter: 11
+    tags:
+    - sma
+    - accuracy
+    - quality-metric
+    - sma-seq
+  ECE:
+    symbol: ECE
+    symbol_display: $\text{ECE}$
+    name: Expected Calibration Error
+    alt_names:
+    - calibration error
+    - ECE metric
+    description: Weighted average deviation between predicted and empirical error
+      rates across probability bins
+    physical_meaning: Quantifies how well basecaller quality scores match observed
+      error frequencies - zero means perfect calibration
+    units: probability
+    domain: '[0, 1]'
+    typical_range: '[0, 0.10]'
+    measurement_methods:
+    - Bin reads by predicted error probability
+    - Compute empirical error rate per bin
+    - Weighted average of |predicted - empirical|
+    - Equation 11.6
+    determination: From per-base or per-read calibration analysis on known standards
+    examples:
+    - case: Perfect calibration
+      values: ECE = 0
+    - case: Acceptable clinical
+      values: ECE < 0.02 (2%)
+    - case: Requires recalibration
+      values: ECE > 0.05
+    related_variables:
+    - Brier
+    - Q_pred
+    - Q_emp
+    - d
+    appears_in_equations:
+    - '11.6'
+    - '13.7'
+    typical_values:
+    - 'Excellent: <0.01'
+    - 'Good: 0.01-0.02'
+    - 'Acceptable: 0.02-0.05'
+    - 'Poor: >0.05'
+    common_errors:
+    - Using uniform binning with skewed Q distribution
+    - Insufficient samples per bin (<100)
+    - Not stratifying by end_reason
+    importance: critical
+    difficulty: medium
+    first_chapter: 11
+    tags:
+    - calibration
+    - ece
+    - quality-control
+  Brier:
+    symbol: Brier
+    symbol_display: $\text{Brier}$
+    name: Brier score
+    alt_names:
+    - Brier calibration score
+    - mean squared calibration error
+    description: Proper scoring rule combining calibration (accuracy of probabilities)
+      and sharpness (discrimination ability)
+    physical_meaning: Mean squared error between predicted error probabilities and
+      binary outcomes - rewards both calibration and confident correct predictions
+    units: dimensionless
+    domain: '[0, 1]'
+    typical_range: '[0, 0.20]'
+    measurement_methods:
+    - 'Per-base: Brier = mean((p_pred_i - y_i)^2)'
+    - y_i = 1 if error, 0 if correct
+    - Equation 11.7
+    determination: From per-base analysis on known standards
+    examples:
+    - case: Excellent
+      values: Brier < 0.05
+    - case: Acceptable clinical
+      values: Brier ∈ [0.05, 0.10]
+    - case: Poor
+      values: Brier > 0.10 (requires retraining)
+    related_variables:
+    - ECE
+    - p_err
+    - Y
+    appears_in_equations:
+    - '11.7'
+    typical_values:
+    - 'High quality: <0.05'
+    - 'Clinical acceptable: 0.05-0.10'
+    - 'Needs improvement: >0.10'
+    common_errors:
+    - Confusing y=1 convention (error vs correct)
+    - Not considering both calibration and sharpness components
+    importance: important
+    difficulty: medium
+    first_chapter: 11
+    tags:
+    - brier-score
+    - calibration
+    - proper-scoring-rule
+  Q_emp:
+    symbol: Q_emp
+    symbol_display: $Q_{\text{emp}}$
+    name: Empirical quality score
+    alt_names:
+    - observed quality
+    - ground-truth quality
+    description: 'Phred-scale quality score computed from empirical error rate on
+      known standard: Q_emp = -10 log₁₀(e_emp)'
+    physical_meaning: True quality measured from alignment to known reference - gold
+      standard for calibration assessment
+    units: Phred units
+    domain: '[0, 60]'
+    typical_range: '[10, 40]'
+    measurement_methods:
+    - Align reads to known reference standard
+    - Compute error rate e_emp
+    - 'Convert to Phred: Q_emp = -10 log₁₀(e_emp)'
+    - Equation 11.12
+    determination: From SMA-seq experiments with known-truth plasmid standards
+    examples:
+    - case: e_emp = 0.01 (1% error)
+      values: Q_emp = 20
+    - case: e_emp = 0.001 (0.1% error)
+      values: Q_emp = 30
+    - case: Compare Q_pred=25, Q_emp=20
+      values: 'Overstatement: ΔQ = +5'
+    related_variables:
+    - Q_pred
+    - e_emp
+    - Delta_Q
+    appears_in_equations:
+    - '11.12'
+    - '11.5'
+    - '13.6'
+    typical_values:
+    - 'ONT R9.4: Q15-Q20'
+    - 'ONT R10.4: Q20-Q25'
+    - 'PacBio HiFi: Q30+'
+    common_errors:
+    - Computing Q_emp without sufficient coverage
+    - Including incomplete reads (not signal_positive)
+    importance: critical
+    difficulty: easy
+    first_chapter: 11
+    tags:
+    - quality-score
+    - empirical
+    - ground-truth
+  Q_pred:
+    symbol: Q_pred
+    symbol_display: $Q_{\text{pred}}$
+    name: Predicted quality score
+    alt_names:
+    - basecaller quality
+    - reported quality
+    description: Quality score reported by basecaller, predicting error probability
+      p = 10^(-Q/10)
+    physical_meaning: Basecaller's confidence in base call - ideally calibrated to
+      match empirical error rates
+    units: Phred units
+    domain: '[0, 60]'
+    typical_range: '[5, 50]'
+    measurement_methods:
+    - Reported by basecaller per base
+    - Aggregated to read level by averaging error probabilities
+    - Equation 11.13
+    determination: From basecaller neural network output
+    examples:
+    - case: High confidence base
+      values: Q_pred = 30 (p=0.001)
+    - case: Low confidence base
+      values: Q_pred = 10 (p=0.10)
+    - case: Miscalibration check
+      values: Compare Q_pred vs Q_emp
+    related_variables:
+    - Q_emp
+    - p_i
+    - Delta_Q
+    appears_in_equations:
+    - '11.13'
+    - '11.5'
+    - '13.6'
+    - '13.8'
+    - '13.9'
+    typical_values:
+    - 'Typical range: Q10-Q40'
+    - 'Mode: Q15-Q25 (platform-dependent)'
+    common_errors:
+    - Assuming Q_pred = Q_emp (basecallers often miscalibrated)
+    - Ignoring context-dependent quality variation
+    importance: critical
+    difficulty: easy
+    first_chapter: 11
+    tags:
+    - quality-score
+    - predicted
+    - basecaller
+  Delta_SMA:
+    symbol: Δ_SMA
+    symbol_display: $\Delta_{\text{SMA}}$
+    name: SMA calibration gap
+    alt_names:
+    - SMA miscalibration
+    - accuracy overstatement
+    description: Difference between basecaller-predicted and empirically-measured
+      per-base accuracy
+    physical_meaning: Positive = overconfidence (basecaller claims better than reality),
+      negative = underconfidence
+    units: fraction
+    domain: '[-1, 1]'
+    typical_range: '[-0.05, 0.05]'
+    measurement_methods:
+    - Δ_SMA = SMA_pred - SMA_base
+    - SMA_pred from quality scores, SMA_base from alignment
+    - Equation 11.20
+    determination: From SMA-seq calibration experiments
+    examples:
+    - case: Perfect calibration
+      values: Δ_SMA = 0
+    - case: Basecaller overconfidence
+      values: Δ_SMA = +0.02 (claims 0.99, actual 0.97)
+    - case: Acceptance threshold
+      values: '|Δ_SMA| < 0.01'
+    related_variables:
+    - SMA_pred
+    - SMA_base
+    - ECE
+    appears_in_equations:
+    - '11.20'
+    typical_values:
+    - 'Well-calibrated: |Δ| < 0.01'
+    - 'Acceptable: |Δ| < 0.02'
+    - 'Needs recalibration: |Δ| > 0.02'
+    common_errors:
+    - Comparing different read sets for SMA_pred vs SMA_base
+    - Not accounting for purity ceiling
+    importance: important
+    difficulty: easy
+    first_chapter: 11
+    tags:
+    - calibration
+    - sma
+    - miscalibration
+  r_ins:
+    symbol: r_ins
+    symbol_display: $r_{\text{ins}}$
+    name: Insertion rate
+    alt_names:
+    - insertion error rate
+    - indel insertion rate
+    description: Fraction of aligned positions that are spurious insertions (bases
+      in read not in reference)
+    physical_meaning: Basecaller tendency to insert extra bases - often context-dependent
+      (homopolymers)
+    units: fraction
+    domain: '[0, 1]'
+    typical_range: '[0.001, 0.05]'
+    measurement_methods:
+    - From aligned reads to known reference
+    - Count insertions (gaps in reference)
+    - Normalize by total aligned positions
+    - Equation 11.9
+    determination: From SEER matrix analysis
+    examples:
+    - case: ONT R9.4
+      values: r_ins ≈ 0.02 (2%)
+    - case: ONT R10.4 improved
+      values: r_ins ≈ 0.005 (0.5%)
+    - case: Homopolymer run
+      values: r_ins can exceed 0.10 locally
+    related_variables:
+    - r_del
+    - r_mismatch
+    - SMA_base
+    appears_in_equations:
+    - '11.9'
+    - '11.18'
+    typical_values:
+    - 'Low: <0.005'
+    - 'Moderate: 0.005-0.02'
+    - 'High: >0.02'
+    common_errors:
+    - Confusing insertion normalization (per aligned position vs per reference base)
+    - Not accounting for homopolymer context
+    importance: important
+    difficulty: medium
+    first_chapter: 11
+    tags:
+    - insertion
+    - indel
+    - error-rate
+  r_del:
+    symbol: r_del
+    symbol_display: $r_{\text{del}}$
+    name: Deletion rate
+    alt_names:
+    - deletion error rate
+    - indel deletion rate
+    description: Fraction of reference bases that are deleted (missing from read)
+    physical_meaning: Basecaller tendency to skip bases - often elevated in homopolymers
+      and low-signal regions
+    units: fraction
+    domain: '[0, 1]'
+    typical_range: '[0.001, 0.05]'
+    measurement_methods:
+    - From aligned reads to known reference
+    - Count deletions (gaps in read)
+    - Normalize by total reference bases
+    - Equation 11.9
+    determination: From SEER matrix analysis
+    examples:
+    - case: ONT R9.4
+      values: r_del ≈ 0.03 (3%)
+    - case: ONT R10.4 improved
+      values: r_del ≈ 0.008 (0.8%)
+    - case: Homopolymer AAAAA
+      values: r_del can exceed 0.15 (difficult to resolve length)
+    related_variables:
+    - r_ins
+    - r_mismatch
+    - SMA_base
+    appears_in_equations:
+    - '11.9'
+    - '11.18'
+    typical_values:
+    - 'Low: <0.01'
+    - 'Moderate: 0.01-0.03'
+    - 'High: >0.03'
+    common_errors:
+    - Not distinguishing single-base vs multi-base deletions
+    - Ignoring homopolymer context effects
+    importance: important
+    difficulty: medium
+    first_chapter: 11
+    tags:
+    - deletion
+    - indel
+    - error-rate
+  end_reason:
+    symbol: end_reason
+    symbol_display: $\text{end\_reason}$
+    name: Read completion status
+    alt_names:
+    - read termination reason
+    - end_reason metadata
+    description: ONT metadata field indicating why read sequencing terminated (signal_positive
+      = complete, others = incomplete)
+    physical_meaning: Distinguishes complete reads from truncated/failed reads - critical
+      for accurate SMA measurement
+    units: categorical
+    domain: '{signal_positive, unblock_mux_change, signal_negative, data_service_unblock_mux_change,
+      ...}'
+    typical_range: N/A (categorical)
+    measurement_methods:
+    - Extracted from POD5 metadata
+    - Available in BAM tags (ONT)
+    determination: Recorded by MinKNOW during sequencing
+    examples:
+    - case: Complete successful read
+      values: end_reason = signal_positive
+    - case: Read truncated by mux change
+      values: end_reason = unblock_mux_change
+    - case: Poor signal quality, early termination
+      values: end_reason = signal_negative
+    related_variables:
+    - SMA
+    - N
+    - ell
+    appears_in_equations: []
+    typical_values:
+    - 'Good run: 70-85% signal_positive'
+    - 'Poor run: <50% signal_positive'
+    common_errors:
+    - Not filtering by end_reason (mixing complete and incomplete reads)
+    - Assuming all reads are complete
+    importance: critical
+    difficulty: easy
+    first_chapter: 11
+    tags:
+    - metadata
+    - read-quality
+    - filtering
+    - ont
+  k_rep:
+    symbol: k
+    symbol_display: $k$
+    name: Replication cycles
+    alt_names:
+    - number of passages
+    - bacterial generations
+    description: Number of bacterial replication cycles or PCR amplification cycles
+    physical_meaning: Each cycle represents one round of DNA polymerization introducing
+      potential errors
+    units: cycles (dimensionless count)
+    domain: positive integers
+    typical_range: '[10, 30]'
+    measurement_methods:
+    - counted from protocol
+    - inferred from culture OD
+    determination: Directly counted from experimental protocol (PCR cycles or bacterial
+      doublings)
+    examples:
+    - context: Overnight bacterial culture
+      value: k ≈ 25-30 generations
+      interpretation: Typical E. coli growth to saturation
+    related_variables:
+    - pi_upper
+    - L_insert
+    - r_error
+    appears_in_equations: []
+    typical_values:
+    - condition: PCR amplification
+      value: 20-35 cycles
+    - condition: Bacterial overnight culture
+      value: 25-30 generations
+    common_errors:
+    - Confusing PCR cycles with bacterial generations
+    - Not accounting for exponential phase growth
+    importance: medium
+    difficulty: basic
+    first_chapter: 8
+    tags:
+    - plasmid-standards
+    - replication
+    - amplification
+  L_insert:
+    symbol: L
+    symbol_display: $L$
+    name: Insert length
+    alt_names:
+    - fragment size
+    - plasmid insert size
+    description: Length of cloned insert or PCR amplicon in base pairs
+    physical_meaning: Total sequence length subject to replication errors
+    units: base pairs (bp)
+    domain: positive integers
+    typical_range: '[1000, 10000]'
+    measurement_methods:
+    - gel electrophoresis
+    - fragment analyzer
+    - sequence assembly
+    determination: Measured via agarose gel or calculated from sequence file
+    examples:
+    - context: CYP2D6 gene insert
+      value: L = 4,383 bp
+      interpretation: Full gene with flanking regions
+    related_variables:
+    - pi_upper
+    - k_rep
+    - r_error
+    appears_in_equations: []
+    typical_values:
+    - condition: Single exon
+      value: 200-1500 bp
+    - condition: Full pharmacogene
+      value: 3000-6000 bp
+    common_errors:
+    - Using plasmid size instead of insert size
+    - Forgetting to include flanking sequences
+    importance: high
+    difficulty: basic
+    first_chapter: 8
+    tags:
+    - plasmid-standards
+    - sequence-length
+    - molecular-biology
+  r_error:
+    symbol: r
+    symbol_display: $r$
+    name: Per-base error rate
+    alt_names:
+    - polymerase error rate
+    - replication fidelity
+    description: Probability of introducing an error at any given base position during
+      one replication cycle
+    physical_meaning: Intrinsic fidelity of DNA polymerase or cellular replication
+      machinery
+    units: errors per base per cycle
+    domain: '[0, 1]'
+    typical_range: '[1e-9, 1e-6]'
+    measurement_methods:
+    - polymerase specification
+    - error-rate assays
+    - deep sequencing
+    determination: Manufacturer specifications for high-fidelity polymerases or E.
+      coli mutation rates
+    examples:
+    - context: E. coli chromosomal replication
+      value: r ≈ 10^-9 per base per generation
+      interpretation: One error per billion bases per cycle
+    - context: High-fidelity PCR polymerase
+      value: r ≈ 10^-7 to 10^-6
+      interpretation: Orders of magnitude higher than cellular machinery
+    related_variables:
+    - pi_upper
+    - k_rep
+    - L_insert
+    appears_in_equations: []
+    typical_values:
+    - condition: E. coli with proofreading
+      value: ~10^-9
+    - condition: High-fidelity polymerase (Q5, Phusion)
+      value: ~10^-7
+    - condition: Standard Taq polymerase
+      value: ~10^-5
+    common_errors:
+    - Using PCR error rate for bacterial replication
+    - Not accounting for proofreading mechanisms
+    importance: high
+    difficulty: intermediate
+    first_chapter: 8
+    tags:
+    - plasmid-standards
+    - error-rate
+    - fidelity
+    - polymerase
+  e_1:
+    symbol: e_1
+    symbol_display: $e_1$
+    name: Guide RNA 1 cutting efficiency
+    alt_names:
+    - gRNA1 efficiency
+    - first cut efficiency
+    description: Probability that Cas9 with guide RNA 1 successfully cuts at target
+      site
+    physical_meaning: Fraction of molecules that receive double-strand break at position
+      p_1
+    units: probability (0-1)
+    domain: '[0, 1]'
+    typical_range: '[0.7, 0.95]'
+    measurement_methods:
+    - T7E1 assay
+    - NGS validation
+    - gel quantification
+    determination: 'Measured empirically via T7 endonuclease I assay: e = 1 - sqrt(1
+      - I_digested/I_total)'
+    examples:
+    - context: Well-designed gRNA
+      value: e_1 = 0.85
+      interpretation: 85% of molecules cut at first site
+    related_variables:
+    - e_2
+    - P_capture
+    - L_g
+    appears_in_equations:
+    - '9.1'
+    typical_values:
+    - condition: Optimized gRNA
+      value: 0.8-0.95
+    - condition: Suboptimal gRNA
+      value: 0.5-0.7
+    - condition: Poor design
+      value: <0.5
+    common_errors:
+    - Not validating cutting efficiency before production
+    - Assuming 100% efficiency without measurement
+    importance: high
+    difficulty: intermediate
+    first_chapter: 9
+    tags:
+    - targeted-enrichment
+    - CRISPR
+    - Cas9
+    - efficiency
+  e_2:
+    symbol: e_2
+    symbol_display: $e_2$
+    name: Guide RNA 2 cutting efficiency
+    alt_names:
+    - gRNA2 efficiency
+    - second cut efficiency
+    description: Probability that Cas9 with guide RNA 2 successfully cuts at target
+      site
+    physical_meaning: Fraction of molecules that receive double-strand break at position
+      p_2
+    units: probability (0-1)
+    domain: '[0, 1]'
+    typical_range: '[0.7, 0.95]'
+    measurement_methods:
+    - T7E1 assay
+    - NGS validation
+    - gel quantification
+    determination: Measured empirically via T7 endonuclease I assay independently
+      from e_1
+    examples:
+    - context: Independent gRNA validation
+      value: e_2 = 0.90
+      interpretation: 90% cutting at second site
+    related_variables:
+    - e_1
+    - P_capture
+    - L_g
+    appears_in_equations:
+    - '9.1'
+    typical_values:
+    - condition: Optimized gRNA
+      value: 0.8-0.95
+    - condition: Suboptimal gRNA
+      value: 0.5-0.7
+    common_errors:
+    - Assuming e_1 = e_2 without independent validation
+    - Not testing each gRNA separately
+    importance: high
+    difficulty: intermediate
+    first_chapter: 9
+    tags:
+    - targeted-enrichment
+    - CRISPR
+    - Cas9
+    - efficiency
+  P_capture:
+    symbol: P_capture
+    symbol_display: $P_{\text{capture}}$
+    name: Dual-cut capture probability
+    alt_names:
+    - capture efficiency
+    - enrichment probability
+    description: Probability that a DNA fragment is successfully captured by both
+      Cas9 cuts
+    physical_meaning: Joint probability that both cuts occur and fragment length is
+      suitable for capture
+    units: probability (0-1)
+    domain: '[0, 1]'
+    typical_range: '[0.5, 0.8]'
+    measurement_methods:
+    - calculated from e_1, e_2, and fragment distribution
+    - empirical on-target fraction
+    determination: P_capture = e_1 × e_2 × P(fragment < L_g)
+    examples:
+    - context: Good dual-cut design
+      value: P_capture = 0.66
+      interpretation: 66% of molecules successfully captured
+    related_variables:
+    - e_1
+    - e_2
+    - L_g
+    - f_emp
+    appears_in_equations:
+    - '9.1'
+    typical_values:
+    - condition: Both gRNAs efficient (>0.8)
+      value: 0.6-0.8
+    - condition: One gRNA suboptimal
+      value: 0.4-0.6
+    - condition: Poor design
+      value: <0.4
+    common_errors:
+    - Ignoring fragment length distribution
+    - Not accounting for independent cutting probabilities
+    importance: high
+    difficulty: advanced
+    first_chapter: 9
+    tags:
+    - targeted-enrichment
+    - CRISPR
+    - probability
+    - experimental-design
+  L_g:
+    symbol: L_g
+    symbol_display: $L_g$
+    name: Target gene/region length
+    alt_names:
+    - target size
+    - capture window
+    description: Distance between two Cas9 cut sites defining the enrichment target
+    physical_meaning: Genomic span from p_1 to p_2 that must be captured in single
+      fragment
+    units: base pairs (bp)
+    domain: positive integers
+    typical_range: '[1000, 10000]'
+    measurement_methods:
+    - calculated from guide RNA positions
+    - reference genome coordinates
+    determination: L_g = p_2 - p_1 where p_1, p_2 are cut site positions
+    examples:
+    - context: CYP2D6 targeted enrichment
+      value: L_g = 5000 bp
+      interpretation: 5 kb region spanning full gene
+    related_variables:
+    - P_capture
+    - e_1
+    - e_2
+    - p_1
+    - p_2
+    appears_in_equations:
+    - '9.1'
+    - '9.2'
+    typical_values:
+    - condition: Single exon capture
+      value: 500-2000 bp
+    - condition: Full gene capture
+      value: 3000-6000 bp
+    - condition: Multi-gene locus
+      value: 10000-20000 bp
+    common_errors:
+    - Choosing L_g larger than typical fragment length
+    - Not accounting for cut position variability
+    importance: high
+    difficulty: basic
+    first_chapter: 9
+    tags:
+    - targeted-enrichment
+    - genomic-coordinates
+    - experimental-design
+  f_emp:
+    symbol: f_emp
+    symbol_display: $f_{\text{emp}}(\ell)$
+    name: Empirical fragment length distribution
+    alt_names:
+    - fragment size distribution
+    - shearing distribution
+    description: Probability density function of DNA fragment lengths after shearing/fragmentation
+    physical_meaning: Distribution describing likelihood of observing fragment of
+      length ℓ
+    units: probability density (bp^-1)
+    domain: ℓ ∈ (0, ∞)
+    typical_range: modal length 2000-10000 bp for long-read platforms
+    measurement_methods:
+    - TapeStation
+    - Bioanalyzer
+    - pulse-field gel
+    - ONT read length distribution
+    determination: Measured from fragmented DNA library via electrophoresis or sequencing
+      read lengths
+    examples:
+    - context: Mechanical shearing
+      value: 'Exponential: f_emp(ℓ) = λ^-1 exp(-ℓ/λ), λ=2000 bp'
+      interpretation: Exponentially distributed fragments, mean 2 kb
+    related_variables:
+    - P_capture
+    - L_g
+    appears_in_equations:
+    - '13.10'
+    - '9.2'
+    typical_values:
+    - condition: Needle shearing for ONT
+      value: Mean 8-15 kb
+    - condition: Enzymatic fragmentation
+      value: Mean 3-8 kb
+    - condition: Covaris (Illumina)
+      value: Mean 300-500 bp
+    common_errors:
+    - Using plasmid size instead of fragmented gDNA distribution
+    - Not validating fragment distribution before enrichment
+    importance: high
+    difficulty: advanced
+    first_chapter: 9
+    tags:
+    - targeted-enrichment
+    - fragmentation
+    - probability-distribution
+  p_1:
+    symbol: p_1
+    symbol_display: $p_1$
+    name: First cut site position
+    alt_names:
+    - gRNA1 target position
+    - upstream cut site
+    description: Genomic coordinate of first Cas9 double-strand break
+    physical_meaning: Position where guide RNA 1 directs Cas9 to cut DNA
+    units: base pairs (genomic coordinate)
+    domain: positive integers (genomic position)
+    typical_range: depends on target gene location
+    measurement_methods:
+    - guide RNA design
+    - PAM site identification
+    determination: Determined during gRNA design based on PAM site locations flanking
+      target
+    examples:
+    - context: CYP2D6 upstream flank
+      value: p_1 = chr22:42,126,500
+      interpretation: Cut site 500 bp upstream of gene
+    related_variables:
+    - p_2
+    - L_g
+    - e_1
+    appears_in_equations:
+    - '9.4'
+    typical_values:
+    - condition: Relative to gene start
+      value: TSS - 200 to TSS + 500
+    common_errors:
+    - Not accounting for PAM orientation
+    - Confusing target coordinate with PAM coordinate
+    importance: medium
+    difficulty: basic
+    first_chapter: 9
+    tags:
+    - targeted-enrichment
+    - CRISPR
+    - genomic-coordinates
+  p_2:
+    symbol: p_2
+    symbol_display: $p_2$
+    name: Second cut site position
+    alt_names:
+    - gRNA2 target position
+    - downstream cut site
+    description: Genomic coordinate of second Cas9 double-strand break
+    physical_meaning: Position where guide RNA 2 directs Cas9 to cut DNA
+    units: base pairs (genomic coordinate)
+    domain: positive integers (genomic position)
+    typical_range: depends on target gene location
+    measurement_methods:
+    - guide RNA design
+    - PAM site identification
+    determination: Determined during gRNA design, must satisfy L_g = p_2 - p_1
+    examples:
+    - context: CYP2D6 downstream flank
+      value: p_2 = chr22:42,131,500
+      interpretation: Cut site 500 bp downstream of gene
+    related_variables:
+    - p_1
+    - L_g
+    - e_2
+    appears_in_equations:
+    - '9.4'
+    typical_values:
+    - condition: Relative to gene end
+      value: TES + 200 to TES + 500
+    common_errors:
+    - Not verifying p_2 > p_1 on same chromosome
+    - Choosing positions that span unintended repetitive regions
+    importance: medium
+    difficulty: basic
+    first_chapter: 9
+    tags:
+    - targeted-enrichment
+    - CRISPR
+    - genomic-coordinates
+  eta_noise:
+    symbol: eta
+    symbol_display: $\eta$
+    name: Label noise rate
+    alt_names:
+    - noise fraction
+    - label corruption rate
+    description: Fraction of training labels that are incorrect due to various error
+      sources
+    physical_meaning: Probability that any given training example has mislabeled ground
+      truth
+    units: probability (0-1)
+    domain: '[0, 1]'
+    typical_range: '[0.01, 0.2]'
+    measurement_methods:
+    - validation against high-quality standards
+    - cross-platform comparison
+    determination: Estimated by comparing training labels to gold-standard verification
+    examples:
+    - context: Training data from reference alignment
+      value: η ≈ 0.05-0.10
+      interpretation: 5-10% of labels may be incorrect
+    related_variables:
+    - theta
+    - s_true
+    - s_hat
+    appears_in_equations: []
+    typical_values:
+    - condition: High-quality physical standards
+      value: 0.001-0.01
+    - condition: Reference genome alignment
+      value: 0.05-0.15
+    - condition: Consensus-based labeling
+      value: 0.10-0.25
+    common_errors:
+    - Assuming zero label noise
+    - Not quantifying noise rate before training
+    importance: high
+    difficulty: advanced
+    first_chapter: 12
+    tags:
+    - machine-learning
+    - label-noise
+    - training-quality
+  x_signal:
+    symbol: x
+    symbol_display: $x$
+    name: Raw signal input
+    alt_names:
+    - electrical current trace
+    - pulse trace
+    - raw data
+    description: Time-series signal measured by sequencing instrument (current for
+      ONT, pulses for PacBio)
+    physical_meaning: Direct physical measurement from which sequence must be inferred
+    units: picoamperes (ONT), photon counts (PacBio), ADC units (raw)
+    domain: time-series array, typically 1000-100000 measurements per read
+    typical_range: platform-specific voltage/current ranges
+    measurement_methods:
+    - instrument ADC
+    - stored in FAST5/POD5/BAM files
+    determination: Directly recorded by sequencing hardware during data acquisition
+    examples:
+    - context: ONT R9.4.1 read
+      value: x = [current measurements at 4 kHz for 2 seconds]
+      interpretation: ~8000 current measurements
+    related_variables:
+    - s_true
+    - s_hat
+    - theta
+    appears_in_equations: []
+    typical_values:
+    - condition: ONT current range
+      value: 40-120 pA
+    - condition: PacBio pulse intensity
+      value: 0-4095 ADC counts
+    common_errors:
+    - Not normalizing signals before training
+    - Losing calibration metadata during preprocessing
+    importance: high
+    difficulty: intermediate
+    first_chapter: 12
+    tags:
+    - signal-processing
+    - basecalling
+    - raw-data
+  s_true:
+    symbol: s_true
+    symbol_display: $s_{\text{true}}$
+    name: True sequence (ground truth)
+    alt_names:
+    - verified sequence
+    - gold standard
+    - reference sequence
+    description: Known correct nucleotide sequence of physical standard or reference
+    physical_meaning: The actual DNA sequence present in sample, verified through
+      orthogonal methods
+    units: nucleotide string (A, C, G, T)
+    domain: strings over alphabet {A, C, G, T}
+    typical_range: 100 bp to 100 kb depending on read length
+    measurement_methods:
+    - Sanger sequencing
+    - synthesis verification
+    - multiple platform consensus
+    determination: Independently verified via non-sequencing methods or high-confidence
+      consensus
+    examples:
+    - context: Plasmid standard
+      value: s_true = ACGTACGT... (4383 bp)
+      interpretation: Known CYP2D6*1 sequence from Sanger
+    related_variables:
+    - s_hat
+    - x_signal
+    - theta
+    appears_in_equations: []
+    typical_values:
+    - condition: Physical standard
+      value: Verified to >99.9% accuracy
+    common_errors:
+    - Treating reference genome as perfect ground truth
+    - Not independently verifying training labels
+    importance: critical
+    difficulty: basic
+    first_chapter: 12
+    tags:
+    - ground-truth
+    - training-data
+    - sequence-verification
+  s_hat:
+    symbol: s_hat
+    symbol_display: $\hat{s}$
+    name: Basecalled sequence
+    alt_names:
+    - predicted sequence
+    - called bases
+    - model output
+    description: Nucleotide sequence predicted by basecaller from raw signal
+    physical_meaning: Model's best estimate of true sequence given observed signal
+      and learned parameters
+    units: nucleotide string (A, C, G, T)
+    domain: strings over alphabet {A, C, G, T}
+    typical_range: 100 bp to 100 kb depending on read length
+    measurement_methods:
+    - computed by basecaller neural network
+    determination: Output of f_basecaller(x; θ) where x is signal and θ are model
+      parameters
+    examples:
+    - context: Basecaller output
+      value: s_hat = ACGTACCT... (98% identity to s_true)
+      interpretation: Called sequence with 2% error rate
+    related_variables:
+    - s_true
+    - x_signal
+    - theta
+    appears_in_equations:
+    - '13.3'
+    - '4.3'
+    typical_values:
+    - condition: Modern ONT basecaller
+      value: 95-99% identity to s_true
+    - condition: PacBio HiFi
+      value: '>99.9% identity (Q30+)'
+    common_errors:
+    - Using s_hat as training label (circular reasoning)
+    - Not comparing s_hat to s_true for validation
+    importance: high
+    difficulty: basic
+    first_chapter: 12
+    tags:
+    - basecalling
+    - model-output
+    - sequence-prediction
+  K_kmers:
+    symbol: K
+    symbol_display: $K$
+    name: Number of distinct k-mers
+    alt_names:
+    - k-mer space size
+    - context diversity
+    description: Total count of unique k-mer sequences in target sequence space
+    physical_meaning: Number of different sequence contexts that model must learn
+    units: count (dimensionless)
+    domain: positive integers, typically 4^k for k-mer length k
+    typical_range: '[1024, 262144] (k=5 to k=9)'
+    measurement_methods:
+    - calculated from k-mer length
+    - empirical count in training data
+    determination: K = 4^k for all possible k-mers of length k, or counted from actual
+      sequences
+    examples:
+    - context: 5-mer space
+      value: K = 4^5 = 1024
+      interpretation: 1024 possible 5-mers (AAAAA to TTTTT)
+    related_variables:
+    - C_coverage
+    - M_k
+    - N_min
+    appears_in_equations: []
+    typical_values:
+    - condition: ONT R9.4.1 (5-mer model)
+      value: '1024'
+    - condition: ONT R10.4.1 (9-mer model)
+      value: 262,144
+    common_errors:
+    - Not accounting for k-mer imbalance in training data
+    - Assuming uniform k-mer distribution
+    importance: high
+    difficulty: intermediate
+    first_chapter: 12
+    tags:
+    - k-mers
+    - sequence-context
+    - training-data
+  C_coverage:
+    symbol: C
+    symbol_display: $C$
+    name: Mean coverage per k-mer
+    alt_names:
+    - k-mer depth
+    - training examples per context
+    description: Average number of training examples containing each k-mer
+    physical_meaning: How many times each sequence context appears in training data
+    units: count (reads or occurrences)
+    domain: non-negative integers
+    typical_range: '[10, 1000]'
+    measurement_methods:
+    - counted from training database
+    - calculated from coverage targets
+    determination: C = total k-mer occurrences / number of distinct k-mers
+    examples:
+    - context: Target 100× k-mer coverage
+      value: C = 100
+      interpretation: Each k-mer appears ~100 times in training
+    related_variables:
+    - K_kmers
+    - M_k
+    - N_min
+    appears_in_equations: []
+    typical_values:
+    - condition: Minimum for training
+      value: 10-50 per k-mer
+    - condition: Well-powered training
+      value: 100-1000 per k-mer
+    common_errors:
+    - Not ensuring minimum coverage for rare k-mers
+    - Averaging over imbalanced k-mer distributions
+    importance: high
+    difficulty: intermediate
+    first_chapter: 12
+    tags:
+    - training-data
+    - coverage
+    - k-mers
+  eta_finetune:
+    symbol: eta_finetune
+    symbol_display: $\eta_{\text{fine-tune}}$
+    name: Fine-tuning learning rate
+    alt_names:
+    - adapted learning rate
+    - transfer learning rate
+    description: Learning rate used when fine-tuning pretrained basecaller model
+    physical_meaning: Step size for gradient descent updates during fine-tuning (smaller
+      than initial training)
+    units: dimensionless (typically 10^-5 to 10^-3)
+    domain: (0, ∞), practically (10^-6, 10^-2)
+    typical_range: '[1e-5, 1e-3]'
+    measurement_methods:
+    - hyperparameter tuning
+    - learning rate schedules
+    determination: Set to α × η_pretrain where α ∈ [0.01, 0.1] is reduction factor
+    examples:
+    - context: Fine-tuning ONT basecaller
+      value: η_finetune = 1e-4
+      interpretation: 0.0001 learning rate for stable fine-tuning
+    related_variables:
+    - eta_pretrain
+    - alpha_lr
+    appears_in_equations: []
+    typical_values:
+    - condition: Top layers only
+      value: 1e-4 to 1e-3
+    - condition: Full network fine-tuning
+      value: 1e-5 to 1e-4
+    - condition: Small training set
+      value: 1e-6 to 1e-5
+    common_errors:
+    - Using pretrain learning rate without reduction (catastrophic forgetting)
+    - Learning rate too small (no adaptation)
+    importance: high
+    difficulty: advanced
+    first_chapter: 13
+    tags:
+    - machine-learning
+    - fine-tuning
+    - optimization
+    - hyperparameters
+  eta_pretrain:
+    symbol: eta_pretrain
+    symbol_display: $\eta_{\text{pretrain}}$
+    name: Pretraining learning rate
+    alt_names:
+    - initial learning rate
+    - from-scratch learning rate
+    description: Learning rate used during original training of base model from scratch
+    physical_meaning: Original step size for gradient descent when model had random
+      initialization
+    units: dimensionless (typically 10^-4 to 10^-2)
+    domain: (0, ∞), practically (10^-5, 10^-1)
+    typical_range: '[1e-4, 1e-2]'
+    measurement_methods:
+    - from pretrained model documentation
+    - vendor specifications
+    determination: Provided by model vendor or determined during initial training
+    examples:
+    - context: ONT basecaller pretraining
+      value: η_pretrain = 1e-3
+      interpretation: 0.001 learning rate for scratch training
+    related_variables:
+    - eta_finetune
+    - alpha_lr
+    appears_in_equations: []
+    typical_values:
+    - condition: Adam optimizer
+      value: 1e-3 to 1e-4
+    - condition: SGD with momentum
+      value: 1e-2 to 1e-3
+    common_errors:
+    - Not documenting pretrain learning rate from base model
+    - Assuming same learning rate for all layers
+    importance: medium
+    difficulty: intermediate
+    first_chapter: 13
+    tags:
+    - machine-learning
+    - training
+    - optimization
+  alpha_lr:
+    symbol: alpha
+    symbol_display: $\alpha$
+    name: Learning rate reduction factor
+    alt_names:
+    - learning rate scale
+    - fine-tune multiplier
+    description: Multiplicative factor to reduce pretrain learning rate for fine-tuning
+    physical_meaning: How much to scale down learning rate to prevent catastrophic
+      forgetting
+    units: dimensionless ratio
+    domain: (0, 1]
+    typical_range: '[0.01, 0.1]'
+    measurement_methods:
+    - hyperparameter tuning
+    - validation performance
+    determination: Empirically optimized via grid search or learning rate finder
+    examples:
+    - context: Conservative fine-tuning
+      value: α = 0.01
+      interpretation: Reduce learning rate by 100×
+    related_variables:
+    - eta_finetune
+    - eta_pretrain
+    appears_in_equations: []
+    typical_values:
+    - condition: Top layers only
+      value: '0.1'
+    - condition: Full network
+      value: '0.01'
+    - condition: Very small dataset
+      value: '0.001'
+    common_errors:
+    - α too large (catastrophic forgetting)
+    - α too small (no meaningful adaptation)
+    importance: high
+    difficulty: advanced
+    first_chapter: 13
+    tags:
+    - machine-learning
+    - fine-tuning
+    - hyperparameters
+  lambda_hat:
+    symbol: lambda_hat
+    symbol_display: $\hat{\lambda}$
+    name: Estimated mixture proportion
+    alt_names:
+    - observed mixture fraction
+    - empirical proportion
+    description: Observed fraction of reads assigned to first haplotype in mixture
+    physical_meaning: Empirical estimate of true mixture proportion from sequencing
+      data
+    units: fraction (0-1)
+    domain: '[0, 1]'
+    typical_range: '[0, 1]'
+    measurement_methods:
+    - read counting
+    - posterior classification
+    determination: lambda_hat = (number of reads assigned to h_1) / (total reads)
+    examples:
+    - context: 1:1 heterozygote validation
+      value: lambda_hat = 0.52
+      interpretation: Observed 52% vs expected 50%, within error
+    related_variables:
+    - lambda
+    - lambda_min
+    - epsilon
+    appears_in_equations:
+    - '14.2'
+    typical_values:
+    - condition: Perfect 1:1 mixture
+      value: ~0.50 ± sampling error
+    - condition: 2:1 duplication
+      value: ~0.67 ± sampling error
+    common_errors:
+    - Not accounting for sampling variance
+    - Using uninformative reads in calculation
+    importance: high
+    difficulty: intermediate
+    first_chapter: 14
+    tags:
+    - mixtures
+    - diplotype
+    - experimental-validation
+  lambda_min:
+    symbol: lambda_min
+    symbol_display: $\lambda_{\text{min}}$
+    name: Minimum detectable mixture fraction
+    alt_names:
+    - detection limit
+    - sensitivity threshold
+    description: Smallest minority haplotype fraction that can be reliably detected
+    physical_meaning: Lower bound on mixture proportion for statistically significant
+      detection
+    units: fraction (0-1)
+    domain: (0, 0.5]
+    typical_range: '[0.01, 0.10]'
+    measurement_methods:
+    - calculated from power analysis
+    - empirical detection experiments
+    determination: 'From Equation 14.4: depends on N, α, β via lambda_min = sqrt((z_α
+      + z_β)^2 / N)'
+    examples:
+    - context: Contamination detection
+      value: lambda_min = 0.01
+      interpretation: Can detect 1% minority haplotype
+    related_variables:
+    - lambda_hat
+    - N_reads
+    - alpha_sig
+    - beta_power
+    appears_in_equations:
+    - '14.4'
+    - '14.8'
+    typical_values:
+    - condition: Moderate coverage (1000 reads)
+      value: ~0.05 (5%)
+    - condition: Deep sequencing (10000 reads)
+      value: ~0.01 (1%)
+    common_errors:
+    - Claiming detection below statistically supported limit
+    - Not accounting for false positive rate
+    importance: high
+    difficulty: advanced
+    first_chapter: 14
+    tags:
+    - mixtures
+    - detection-limit
+    - statistical-power
+  z_score:
+    symbol: z
+    symbol_display: $z_{1-\delta/2}$
+    name: Standard normal quantile
+    alt_names:
+    - z-value
+    - critical value
+    description: Quantile of standard normal distribution for confidence interval
+    physical_meaning: Number of standard deviations from mean for desired confidence
+      level
+    units: dimensionless
+    domain: (-∞, ∞), practically [1.645, 3.0]
+    typical_range: '[1.645, 2.576]'
+    measurement_methods:
+    - looked up from z-table
+    - calculated from normal CDF
+    determination: 'From standard normal distribution: z_{1-δ/2} = Φ^{-1}(1-δ/2)'
+    examples:
+    - context: 95% confidence (δ=0.05)
+      value: z_{0.975} = 1.96
+      interpretation: 1.96 standard deviations for 95% CI
+    related_variables:
+    - delta
+    - epsilon
+    - lambda_hat
+    appears_in_equations: []
+    typical_values:
+    - condition: 90% confidence
+      value: '1.645'
+    - condition: 95% confidence
+      value: '1.960'
+    - condition: 99% confidence
+      value: '2.576'
+    common_errors:
+    - Using one-sided z when two-sided is needed
+    - Not matching z-value to stated confidence level
+    importance: medium
+    difficulty: basic
+    first_chapter: 14
+    tags:
+    - statistics
+    - normal-distribution
+  f_i:
+    symbol: f_i
+    symbol_display: $f_i$
+    name: Designed fraction of haplotype i
+    alt_names:
+    - target proportion
+    - mixing ratio
+    description: Intended proportion of haplotype i in prepared mixture
+    physical_meaning: Fraction of total DNA molecules from standard i
+    units: fraction (0-1)
+    domain: '[0, 1]'
+    typical_range: '[0, 1]'
+    measurement_methods:
+    - calculated from mixing volumes and concentrations
+    determination: f_i = V_i × C_i / (sum of all V_j × C_j)
+    examples:
+    - context: 1:1 heterozygote mixture
+      value: f_1 = 0.5, f_2 = 0.5
+      interpretation: Equal proportions of both haplotypes
+    related_variables:
+    - V_i
+    - C_i
+    - lambda
+    appears_in_equations: []
+    typical_values:
+    - condition: Heterozygote (1:1)
+      value: 0.50, 0.50
+    - condition: Duplication (2:1)
+      value: 0.67, 0.33
+    - condition: Contamination (95:5)
+      value: 0.95, 0.05
+    common_errors:
+    - Not verifying f_i sum to 1.0
+    - Confusing designed f_i with observed lambda_hat
+    importance: high
+    difficulty: basic
+    first_chapter: 14
+    tags:
+    - mixtures
+    - experimental-design
+    - laboratory-protocol
+  alpha_sig:
+    symbol: alpha
+    symbol_display: $\alpha$
+    name: Significance level
+    alt_names:
+    - Type I error rate
+    - false positive rate
+    description: Probability of rejecting null hypothesis when it is actually true
+    physical_meaning: Risk of falsely detecting minority haplotype when absent
+    units: probability (0-1)
+    domain: (0, 1)
+    typical_range: '[0.001, 0.05]'
+    measurement_methods:
+    - specified by user based on risk tolerance
+    determination: Conventionally set to 0.05 (5%) or 0.01 (1%) for hypothesis testing
+    examples:
+    - context: Detection threshold
+      value: α = 0.05
+      interpretation: 5% false positive rate acceptable
+    related_variables:
+    - beta_power
+    - lambda_min
+    - z_score
+    appears_in_equations: []
+    typical_values:
+    - condition: Standard testing
+      value: '0.05'
+    - condition: Stringent testing
+      value: '0.01'
+    - condition: Very conservative
+      value: '0.001'
+    common_errors:
+    - Confusing α (significance) with α (learning rate)
+    - Not adjusting α for multiple testing
+    importance: high
+    difficulty: intermediate
+    first_chapter: 14
+    tags:
+    - statistics
+    - hypothesis-testing
+    - error-rates
+  beta_power:
+    symbol: beta
+    symbol_display: $\beta$
+    name: Type II error rate
+    alt_names:
+    - false negative rate
+    - 1 - power
+    description: Probability of failing to reject null when alternative is true
+    physical_meaning: Risk of missing minority haplotype when present at lambda_min
+    units: probability (0-1)
+    domain: (0, 1)
+    typical_range: '[0.05, 0.20]'
+    measurement_methods:
+    - specified by user
+    - calculated from power requirement
+    determination: 'Set based on power requirement: Power = 1 - β (typically 80% power
+      ⇒ β = 0.20)'
+    examples:
+    - context: 80% power requirement
+      value: β = 0.20
+      interpretation: 20% chance of missing true effect
+    related_variables:
+    - alpha_sig
+    - lambda_min
+    - N_reads
+    appears_in_equations: []
+    typical_values:
+    - condition: Standard power (80%)
+      value: '0.20'
+    - condition: High power (90%)
+      value: '0.10'
+    - condition: Very high power (95%)
+      value: '0.05'
+    common_errors:
+    - Confusing β with confidence level δ
+    - Not considering power when designing experiments
+    importance: high
+    difficulty: intermediate
+    first_chapter: 14
+    tags:
+    - statistics
+    - hypothesis-testing
+    - statistical-power
+  N:
+    symbol: N
+    symbol_display: $N$
+    name: Sample size
+    alt_names:
+    - number of reads
+    - number of samples
+    - total reads
+    description: Total number of sequencing reads, samples, or observations in dataset
+    physical_meaning: Size of dataset used for statistical inference or coverage calculations
+    units: count
+    domain: positive integers
+    typical_range: '[100, 1000000]'
+    measurement_methods:
+    - Sequencing run output
+    - Read counter
+    - Dataset size
+    determination: N = total number of reads/samples in analysis
+    examples:
+    - context: Whole genome sequencing
+      value: N = 50,000
+      interpretation: 50,000 reads sequenced for the locus
+    - context: Targeted amplicon
+      value: N = 5,000
+      interpretation: 5,000 reads covering target region
+    related_variables:
+    - C
+    - L
+    - theta
+    appears_in_equations:
+    - '10.1'
+    - '11.3'
+    - '11.6'
+    - '11.7'
+    - '12.10'
+    - '13.11'
+    - '13.7'
+    - '14.1'
+    - '14.2'
+    - '14.3'
+    - '14.4'
+    - '14.8'
+    - '6.1'
+    - '7.2'
+    - '7.5'
+    - '7.6'
+    importance: critical
+    difficulty: basic
+    first_chapter: 7
+    tags:
+    - sample-size
+    - statistics
+    - coverage
+  z:
+    symbol: z
+    symbol_display: $z$
+    name: Z-score
+    alt_names:
+    - standard normal quantile
+    - critical value
+    description: Standard normal distribution quantile for statistical hypothesis
+      testing
+    physical_meaning: Number of standard deviations from mean corresponding to desired
+      confidence level
+    units: dimensionless
+    domain: real numbers
+    typical_range: '[-3, 3]'
+    measurement_methods:
+    - Standard normal table lookup
+    - Statistical software (qnorm, scipy.stats.norm.ppf)
+    determination: z = Φ⁻¹(1 - α/2) for two-tailed test at significance level α
+    examples:
+    - context: 95% confidence interval
+      value: z = 1.96
+      interpretation: 97.5th percentile of standard normal
+    - context: 99% confidence interval
+      value: z = 2.576
+      interpretation: 99.5th percentile of standard normal
+    related_variables:
+    - alpha
+    - beta
+    - CI
+    - p_hat
+    appears_in_equations:
+    - '11.16'
+    - '14.1'
+    - '14.4'
+    - '14.7'
+    - '14.8'
+    - '7.4'
+    - '7.6'
+    importance: critical
+    difficulty: intermediate
+    first_chapter: 7
+    tags:
+    - statistics
+    - hypothesis-testing
+    - confidence-intervals
+  n:
+    symbol: n
+    symbol_display: $n$
+    name: Sample size (context-specific)
+    alt_names:
+    - number of trials
+    - number of observations
+    description: Number of trials, observations, or samples in a specific statistical
+      context
+    physical_meaning: Size of sample used for proportion estimation or hypothesis
+      testing
+    units: count
+    domain: positive integers
+    typical_range: '[10, 10000]'
+    measurement_methods:
+    - Count of observations
+    - Number of trials in experiment
+    determination: n = number of observations in sample
+    examples:
+    - context: Binomial experiment
+      value: n = 100
+      interpretation: 100 independent trials
+    - context: Proportion estimation
+      value: n = 50
+      interpretation: 50 samples for estimating proportion
+    related_variables:
+    - N
+    - p_hat
+    - CI
+    appears_in_equations:
+    - '11.16'
+    - '12.7'
+    - '13.7'
+    - '14.7'
+    - '7.4'
+    importance: high
+    difficulty: basic
+    first_chapter: 7
+    tags:
+    - sample-size
+    - statistics
+  CI:
+    symbol: CI
+    symbol_display: $\text{CI}$
+    name: Confidence interval
+    alt_names:
+    - interval estimate
+    description: Range of values likely to contain true parameter with specified confidence
+      level
+    physical_meaning: Interval estimate providing range of plausible values for unknown
+      parameter
+    units: same as parameter being estimated
+    domain: interval [L, U]
+    typical_range: depends on parameter
+    measurement_methods:
+    - Normal approximation
+    - Bootstrap methods
+    - Exact binomial calculation
+    determination: CI = [estimate - z×SE, estimate + z×SE] for normal approximation
+    examples:
+    - context: Proportion with 95% confidence
+      value: CI = [0.45, 0.55]
+      interpretation: True proportion likely between 45% and 55%
+    related_variables:
+    - z
+    - p_hat
+    - n
+    - alpha
+    appears_in_equations:
+    - '11.16'
+    - '14.7'
+    importance: high
+    difficulty: intermediate
+    first_chapter: 14
+    tags:
+    - statistics
+    - confidence-intervals
+    - uncertainty
+  p_hat:
+    symbol: p_hat
+    symbol_display: $\hat{p}$
+    name: Sample proportion
+    alt_names:
+    - estimated proportion
+    - observed proportion
+    description: Proportion observed in sample, estimator of true population proportion
+    physical_meaning: Fraction of successes in sample, used to estimate population
+      parameter
+    units: probability (0-1)
+    domain: '[0, 1]'
+    typical_range: '[0, 1]'
+    measurement_methods:
+    - Count successes divided by sample size
+    determination: p̂ = (number of successes) / n
+    examples:
+    - context: 30 successes in 100 trials
+      value: p̂ = 0.30
+      interpretation: Observed success rate is 30%
+    related_variables:
+    - n
+    - CI
+    - z
+    - p
+    appears_in_equations:
+    - '14.7'
+    importance: high
+    difficulty: basic
+    first_chapter: 14
+    tags:
+    - statistics
+    - proportion
+    - estimation

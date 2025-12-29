@@ -1,0 +1,474 @@
+name: ONT RNA Sequencing Tasks
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'RNA task'
+        required: true
+        type: choice
+        options:
+          - overview
+          - direct-rna
+          - cdna-workflow
+          - isoform-analysis
+          - fusion-detection
+          - poly-a-estimation
+          - differential-expression
+          - single-cell
+      kit:
+        description: 'Library kit'
+        required: false
+        type: choice
+        default: 'SQK-RNA004'
+        options:
+          - SQK-RNA004
+          - SQK-PCB114
+          - SQK-PCS114
+          - SQK-NBD114
+
+env:
+  PYTHONPATH: ${{ github.workspace }}/bin:${{ github.workspace }}
+
+jobs:
+  rna:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install numpy pandas matplotlib
+          mkdir -p outputs
+
+      - name: RNA Overview
+        if: inputs.task == 'overview'
+        run: |
+          echo "## ONT RNA Sequencing Overview" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### RNA Sequencing Methods')
+          print('')
+          print('| Method | Input | Advantages | Limitations |')
+          print('|--------|-------|------------|-------------|')
+          print('| Direct RNA | Native RNA | No amplification bias, modifications | Lower yield |')
+          print('| cDNA (PCR) | mRNA | High yield, multiplexing | PCR bias |')
+          print('| cDNA (PCR-free) | mRNA | Less bias | Moderate yield |')
+          print('')
+
+          print('### Library Kits')
+          print('')
+          print('| Kit | Type | Yield | Best For |')
+          print('|-----|------|-------|----------|')
+          print('| SQK-RNA004 | Direct RNA | Low | Modifications, native |')
+          print('| SQK-PCB114 | cDNA PCR | High | Isoforms, DE |')
+          print('| SQK-PCS114 | cDNA PCR-free | Medium | Low bias |')
+          print('')
+
+          print('### Key Advantages over Short-Read')
+          print('')
+          print('- Full-length transcripts (no assembly needed)')
+          print('- Direct isoform identification')
+          print('- RNA modifications (m6A, pseudouridine)')
+          print('- Poly(A) tail length measurement')
+          print('- Allele-specific expression')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Direct RNA
+        if: inputs.task == 'direct-rna'
+        run: |
+          echo "## Direct RNA Sequencing" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### What is Direct RNA?')
+          print('')
+          print('- Sequences native RNA molecules (no cDNA conversion)')
+          print('- Preserves RNA modifications')
+          print('- Motor protein controls translocation')
+          print('')
+
+          print('### Workflow')
+          print('')
+          print('\`\`\`')
+          print('Poly(A)+ RNA → Adapter ligation → Sequencing → Basecalling')
+          print('                                              ↓')
+          print('                                    Modification calling')
+          print('\`\`\`')
+          print('')
+
+          print('### Basecalling')
+          print('')
+          print('\`\`\`bash')
+          print('# Direct RNA basecalling')
+          print('dorado basecaller rna004_130bps_sup@v5.0.0 pod5/ \\\\')
+          print('  --emit-fastq > reads.fastq')
+          print('')
+          print('# With modification calling (m6A)')
+          print('dorado basecaller rna004_130bps_sup@v5.0.0,m6A pod5/ \\\\')
+          print('  > reads.bam')
+          print('\`\`\`')
+          print('')
+
+          print('### RNA Modifications Detectable')
+          print('')
+          print('| Modification | Symbol | Detection |')
+          print('|--------------|--------|-----------|')
+          print('| N6-methyladenosine | m6A | Good |')
+          print('| Pseudouridine | Ψ | Moderate |')
+          print('| Inosine | I | Research |')
+          print('')
+
+          print('### Input Requirements')
+          print('')
+          print('| Parameter | Recommendation |')
+          print('|-----------|----------------|')
+          print('| RNA input | 500 ng poly(A)+ |')
+          print('| RIN | >8 |')
+          print('| Expected yield | 100k-500k reads |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: cDNA Workflow
+        if: inputs.task == 'cdna-workflow'
+        run: |
+          echo "## cDNA Sequencing Workflow" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### cDNA Library Preparation')
+          print('')
+          print('\`\`\`')
+          print('mRNA → RT (strand-switching) → PCR amplification → Sequencing')
+          print('\`\`\`')
+          print('')
+
+          print('### Basecalling')
+          print('')
+          print('\`\`\`bash')
+          print('# cDNA basecalling (DNA model)')
+          print('dorado basecaller sup pod5/ > reads.bam')
+          print('')
+          print('# Alignment to transcriptome')
+          print('minimap2 -ax splice -uf \\\\')
+          print('         -k14 --secondary=no \\\\')
+          print('         transcriptome.fa reads.fastq > aligned.sam')
+          print('')
+          print('# Alignment to genome')
+          print('minimap2 -ax splice -uf \\\\')
+          print('         --junc-bed junctions.bed \\\\')
+          print('         genome.fa reads.fastq > genome_aligned.sam')
+          print('\`\`\`')
+          print('')
+
+          print('### Strand Orientation')
+          print('')
+          print('| Kit | Orientation | Notes |')
+          print('|-----|-------------|-------|')
+          print('| PCB114 | Forward | cDNA matches mRNA |')
+          print('| PCS114 | Forward | PCR-free |')
+          print('')
+
+          print('### Expected Metrics')
+          print('')
+          print('| Metric | cDNA PCR | cDNA PCR-free |')
+          print('|--------|----------|---------------|')
+          print('| Reads | 2-10M | 500k-2M |')
+          print('| Read length | 1-10 kb | 1-10 kb |')
+          print('| Full-length | 60-80% | 70-85% |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Isoform Analysis
+        if: inputs.task == 'isoform-analysis'
+        run: |
+          echo "## Isoform Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Isoform Detection Tools')
+          print('')
+          print('| Tool | Method | Output |')
+          print('|------|--------|--------|')
+          print('| StringTie2 | Assembly | GTF |')
+          print('| FLAIR | Correction + collapse | GTF, counts |')
+          print('| Bambu | Transcript discovery | GTF, counts |')
+          print('| IsoQuant | Classification | GTF, counts |')
+          print('| TALON | Database-guided | GTF, counts |')
+          print('')
+
+          print('### FLAIR Pipeline')
+          print('')
+          print('\`\`\`bash')
+          print('# 1. Align')
+          print('minimap2 -ax splice -uf genome.fa reads.fq > aligned.sam')
+          print('')
+          print('# 2. Correct')
+          print('flair correct -q aligned.bed12 \\\\')
+          print('              -g genome.fa \\\\')
+          print('              -f annotation.gtf')
+          print('')
+          print('# 3. Collapse')
+          print('flair collapse -g genome.fa \\\\')
+          print('               -r reads.fq \\\\')
+          print('               -q corrected.bed \\\\')
+          print('               -f annotation.gtf')
+          print('')
+          print('# 4. Quantify')
+          print('flair quantify -r reads_manifest.tsv \\\\')
+          print('               -i isoforms.fa')
+          print('\`\`\`')
+          print('')
+
+          print('### IsoQuant Pipeline')
+          print('')
+          print('\`\`\`bash')
+          print('isoquant.py \\\\')
+          print('  --reference genome.fa \\\\')
+          print('  --genedb annotation.gtf \\\\')
+          print('  --fastq reads.fastq \\\\')
+          print('  --data_type nanopore \\\\')
+          print('  -o isoquant_output')
+          print('\`\`\`')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Fusion Detection
+        if: inputs.task == 'fusion-detection'
+        run: |
+          echo "## Fusion Gene Detection" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Fusion Detection Tools')
+          print('')
+          print('| Tool | Method | Validated |')
+          print('|------|--------|-----------|')
+          print('| JAFFAL | Long-read specific | Yes |')
+          print('| LongGF | Split-read | Yes |')
+          print('| FLAIR-fusion | FLAIR extension | Research |')
+          print('')
+
+          print('### JAFFAL Pipeline')
+          print('')
+          print('\`\`\`bash')
+          print('# Run JAFFAL')
+          print('bpipe run -p refBase=reference_dir \\\\')
+          print('          -p genome=hg38 \\\\')
+          print('          -p fastqInputFormat=\"*.fastq\" \\\\')
+          print('          JAFFAL.groovy reads.fastq')
+          print('\`\`\`')
+          print('')
+
+          print('### Output Interpretation')
+          print('')
+          print('| Column | Description |')
+          print('|--------|-------------|')
+          print('| fusion | Gene1--Gene2 |')
+          print('| chrom1, chrom2 | Chromosomes |')
+          print('| base1, base2 | Breakpoints |')
+          print('| spanning_reads | Supporting reads |')
+          print('| classification | Known/novel |')
+          print('')
+
+          print('### Clinical Fusions')
+          print('')
+          print('| Fusion | Cancer | Therapy |')
+          print('|--------|--------|---------|')
+          print('| BCR-ABL1 | CML | TKIs |')
+          print('| EML4-ALK | NSCLC | ALK inhibitors |')
+          print('| TMPRSS2-ERG | Prostate | Diagnostic |')
+          print('| PML-RARA | APL | ATRA |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Poly-A Estimation
+        if: inputs.task == 'poly-a-estimation'
+        run: |
+          echo "## Poly(A) Tail Length Estimation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Why Measure Poly(A)?')
+          print('')
+          print('- mRNA stability indicator')
+          print('- Translation efficiency')
+          print('- Developmental timing')
+          print('- Disease biomarker')
+          print('')
+
+          print('### Tools')
+          print('')
+          print('| Tool | Method | Input |')
+          print('|------|--------|-------|')
+          print('| nanopolish polya | Signal analysis | FAST5 |')
+          print('| tailfindr | Signal analysis | FAST5/POD5 |')
+          print('| dorado | Integrated | POD5 |')
+          print('')
+
+          print('### Dorado Poly(A) Estimation')
+          print('')
+          print('\`\`\`bash')
+          print('# Direct RNA with poly(A) estimation')
+          print('dorado basecaller rna004_130bps_sup@v5.0.0 pod5/ \\\\')
+          print('  --estimate-poly-a > reads.bam')
+          print('')
+          print('# Extract poly(A) lengths')
+          print('samtools view reads.bam | \\\\')
+          print('  awk \\'{for(i=12;i<=NF;i++) if($i~/^pt:i:/) print $1, $i}\\' > polya.tsv')
+          print('\`\`\`')
+          print('')
+
+          print('### Expected Distributions')
+          print('')
+          print('| RNA Type | Typical Length | Range |')
+          print('|----------|----------------|-------|')
+          print('| mRNA (new) | 200-250 nt | 150-300 |')
+          print('| mRNA (old) | 50-100 nt | 20-150 |')
+          print('| Deadenylated | <20 nt | 0-30 |')
+          print('')
+
+          print('### Analysis')
+          print('')
+          print('\`\`\`python')
+          print('import pandas as pd')
+          print('import matplotlib.pyplot as plt')
+          print('')
+          print('# Load poly(A) data')
+          print('df = pd.read_csv(\"polya.tsv\", sep=\"\\\\t\")')
+          print('')
+          print('# Plot distribution')
+          print('plt.hist(df[\"polya_length\"], bins=50)')
+          print('plt.xlabel(\"Poly(A) length (nt)\")')
+          print('plt.ylabel(\"Count\")')
+          print('\`\`\`')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Differential Expression
+        if: inputs.task == 'differential-expression'
+        run: |
+          echo "## Differential Expression Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### DE Workflow')
+          print('')
+          print('\`\`\`')
+          print('Reads → Alignment → Quantification → Normalization → DE testing')
+          print('\`\`\`')
+          print('')
+
+          print('### Quantification')
+          print('')
+          print('\`\`\`bash')
+          print('# Using Salmon with minimap2')
+          print('minimap2 -ax map-ont -N 100 transcriptome.fa reads.fq | \\\\')
+          print('  samtools view -bS > aligned.bam')
+          print('')
+          print('# Using IsoQuant (recommended)')
+          print('isoquant.py --reference genome.fa \\\\')
+          print('            --genedb annotation.gtf \\\\')
+          print('            --fastq sample1.fq sample2.fq \\\\')
+          print('            --labels sample1 sample2 \\\\')
+          print('            -o quant_output')
+          print('\`\`\`')
+          print('')
+
+          print('### DESeq2 Analysis')
+          print('')
+          print('\`\`\`R')
+          print('library(DESeq2)')
+          print('')
+          print('# Create DESeq object')
+          print('dds <- DESeqDataSetFromMatrix(countData = counts,')
+          print('                              colData = coldata,')
+          print('                              design = ~ condition)')
+          print('')
+          print('# Run DE analysis')
+          print('dds <- DESeq(dds)')
+          print('res <- results(dds)')
+          print('')
+          print('# Filter significant')
+          print('sig <- subset(res, padj < 0.05 & abs(log2FoldChange) > 1)')
+          print('\`\`\`')
+          print('')
+
+          print('### Sample Size Recommendations')
+          print('')
+          print('| Comparison | Min Replicates | Recommended |')
+          print('|------------|----------------|-------------|')
+          print('| Large effects | 3 | 4-5 |')
+          print('| Moderate effects | 4 | 6-8 |')
+          print('| Small effects | 6+ | 10+ |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Single Cell
+        if: inputs.task == 'single-cell'
+        run: |
+          echo "## Single-Cell Long-Read RNA-seq" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### Methods')
+          print('')
+          print('| Method | Platform | Throughput |')
+          print('|--------|----------|------------|')
+          print('| ScNaUmi-seq | ONT + UMI | Medium |')
+          print('| RAGE-seq | ONT + 10x | High |')
+          print('| LR-Split-seq | ONT | Medium |')
+          print('')
+
+          print('### Workflow (10x + ONT)')
+          print('')
+          print('\`\`\`')
+          print('10x Chromium → cDNA → ONT library → Sequencing')
+          print('                                       ↓')
+          print('                              Barcode assignment')
+          print('                                       ↓')
+          print('                              Isoform analysis per cell')
+          print('\`\`\`')
+          print('')
+
+          print('### Tools')
+          print('')
+          print('| Tool | Function |')
+          print('|------|----------|')
+          print('| FLAMES | Full pipeline |')
+          print('| Sicelore | Barcode assignment |')
+          print('| scNanoGPS | Processing |')
+          print('')
+
+          print('### FLAMES Pipeline')
+          print('')
+          print('\`\`\`R')
+          print('library(FLAMES)')
+          print('')
+          print('# Run FLAMES pipeline')
+          print('flames_out <- sc_long_pipeline(')
+          print('  annotation = \"annotation.gtf\",')
+          print('  genome_fa = \"genome.fa\",')
+          print('  fastq = \"reads.fastq\",')
+          print('  outdir = \"flames_output\",')
+          print('  config_file = \"config.json\"')
+          print(')')
+          print('\`\`\`')
+          print('')
+
+          print('### Expected Metrics')
+          print('')
+          print('| Metric | Typical |')
+          print('|--------|---------|')
+          print('| Reads per cell | 1,000-10,000 |')
+          print('| Genes per cell | 2,000-5,000 |')
+          print('| Isoforms per gene | 2-5 |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rna-output-${{ inputs.task }}
+          path: outputs/
+          if-no-files-found: ignore

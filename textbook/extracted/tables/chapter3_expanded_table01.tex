@@ -1,0 +1,15 @@
+\begin{table}[h]
+\centering
+\caption{Representative ONT metadata patterns and framework usage}
+\label{tab:ch3-ont-metadata}
+\begin{tabular}{lll}
+\toprule
+\textbf{Field} & \textbf{Regex Pattern} & \textbf{Framework Application} \\
+\midrule
+\texttt{asic\_id} & \texttt{[A-F0-9]+} & Associates reads with flow-cell QC checks (Chapter~\ref{chap:qc-gates}) \\
+\texttt{flow\_cell\_id} & \texttt{[A-Z0-9\_-]+} & Selects chemistry-specific emission parameters (Chapter~\ref{chap:basecaller}) \\
+\texttt{run\_id} & \texttt{[0-9a-f-]{36}} & Seeds provenance graph for audit trails (Chapter~\ref{chap:workflow}) \\
+\texttt{sample\_id} & \texttt{[A-Za-z0-9\_-]{1,32}} & Links sequencing output to LIS accession identifiers \\
+\bottomrule
+\end{tabular}
+\end{table}

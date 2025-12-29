@@ -1,0 +1,17 @@
+\begin{table}[!htbp]
+\centering
+\caption{Troubleshooting guide for accuracy discrepancies}
+\label{tab:troubleshooting}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.25\linewidth}lll}
+\toprule
+\textbf{Observation} & \textbf{Likely Cause} & \textbf{Diagnostic Test} & \textbf{Corrective Action} \\
+\midrule
+Predicted > Observed & Quality overstatement & Check QC Gate 2 & Recalibrate basecaller \\
+Predicted < Observed & Conservative model & Review threshold setting & Adjust posterior cutoff \\
+Haplotype asymmetry & Reference bias & Analyze GC content & Balance training data \\
+Ratio-dependent error & Amplification bias & Test different ratios & Optimize PCR conditions \\
+Coverage-dependent & Sampling variance & Bootstrap analysis & Increase sequencing depth \\
+Batch effects & Technical variation & Run technical replicates & Standardize protocol \\
+\bottomrule
+\end{tabular}
+\end{table}

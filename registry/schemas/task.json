@@ -1,0 +1,78 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://ont-ecosystem.sms-lab.org/schemas/task.json",
+  "title": "Domain Memory Task",
+  "description": "Schema for experiment tasks in the domain memory system",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Task identifier (snake_case)",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "minLength": 2,
+      "maxLength": 50
+    },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "in_progress", "passing", "failing", "skipped", "blocked"],
+      "description": "Current task status"
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable task description",
+      "minLength": 3
+    },
+    "created": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Task creation timestamp"
+    },
+    "updated": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last update timestamp"
+    },
+    "last_run": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "Last execution timestamp"
+    },
+    "last_event_id": {
+      "type": ["string", "null"],
+      "description": "Reference to Event that last updated this task"
+    },
+    "error": {
+      "type": ["string", "null"],
+      "description": "Error message if status is failing"
+    },
+    "attempts": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of execution attempts"
+    },
+    "pipeline_stage": {
+      "type": "string",
+      "enum": ["h", "g", "u", "d", "l", "sigma", "r", "C", "A"],
+      "description": "Associated pipeline stage"
+    },
+    "skill": {
+      "type": "string",
+      "description": "Associated ONT Ecosystem skill name"
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Task names that must complete before this task"
+    },
+    "priority": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5,
+      "description": "Task priority (1=highest, 5=lowest)"
+    }
+  },
+  "required": ["name", "status", "description"],
+  "additionalProperties": true
+}
