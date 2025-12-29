@@ -27,6 +27,7 @@ SKILLS=(
     "ont-experiments-v2"
     "ont-monitor"
     "ont-pipeline"
+    "skill-maker"
 )
 
 # Install each skill

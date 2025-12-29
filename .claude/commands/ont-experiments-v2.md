@@ -1,101 +1,35 @@
 ---
-description: Oxford Nanopore experiment management with event-sourced registry and provenance tracking. Use when discovering experiments, registering runs, tracking analysis history, or orchestrating multi-step pipelines with full audit trails.
+description: Enhanced Oxford Nanopore experiment management with event-sourced registry, pipeline orchestration, unified QC aggregation, and GitHub-synced storage. Discover, track, and orchestrate nanopore sequencing experiments with full provenance tracking. Works both on HPC (full read/write) and remotely via GitHub (read-only fallback). This is the core skill that other ONT analysis skills integrate with via Pattern B orchestration.
 ---
 
 # /ont-experiments-v2
 
-Enhanced Oxford Nanopore experiment management with event-sourced registry and pipeline orchestration.
+Enhanced Oxford Nanopore experiment management with event-sourced registry, pipeline orchestration, unified QC aggregation, and GitHub-synced storage. Discover, track, and orchestrate nanopore sequencing experiments with full provenance tracking. Works both on HPC (full read/write) and remotely via GitHub (read-only fallback). This is the core skill that other ONT analysis skills integrate with via Pattern B orchestration..
 
 ## Usage
-
-Manage experiments with full provenance tracking:
 
 $ARGUMENTS
 
 ## Quick Start
 
 ```bash
-# Initialize registry
-ont_experiments.py init --git --pipelines
+# Basic usage
+python skills/ont-experiments-v2/scripts/ont_experiments_v2.py [input]
 
-# Discover experiments
-ont_experiments.py discover /path/to/data --register
-
-# Run analysis with provenance
-ont_experiments.py run end_reasons exp-abc123 --json qc.json --plot qc.png
-
-# View experiment history
-ont_experiments.py history exp-abc123
-
-# List experiments
-ont_experiments.py list --tag clinical --status active
+# With provenance tracking
+ont_experiments.py run ont_experiments_v2 exp-001 [options]
 ```
 
-## Core Commands
+## Options
 
-| Command | Description |
-|---------|-------------|
-| `init` | Initialize registry |
-| `discover <dir>` | Scan for experiments |
-| `register <dir>` | Add single experiment |
-| `list` | List experiments |
-| `info <id>` | Show details |
-| `run <analysis> <id>` | Run analysis |
-| `history <id>` | Show event history |
+See `/ont-experiments-v2 --help` for all available options.
 
-## Pipeline Commands
+## Installation
 
-| Command | Description |
-|---------|-------------|
-| `pipeline list` | List pipelines |
-| `pipeline run <name> <id>` | Execute pipeline |
-| `pipeline resume <id>` | Resume from checkpoint |
-| `pipeline status <id>` | Show status |
-
-## Analysis Skills
-
-Run any skill with provenance:
 ```bash
-ont_experiments.py run end_reasons exp-abc123 --json qc.json
-ont_experiments.py run basecalling exp-abc123 --model sup --output calls.bam
-ont_experiments.py run alignment exp-abc123 --reference GRCh38
-ont_experiments.py run variant_calling exp-abc123 --caller clair3
+# Clone repository
+git clone https://github.com/Single-Molecule-Sequencing/ont-ecosystem.git
+
+# Install to Claude commands
+cp ont-ecosystem/installable-skills/ont-experiments-v2/ont-experiments-v2.md ~/.claude/commands/
 ```
-
-## Dual-Mode Operation
-
-### HPC Mode (Full Features)
-- Full read/write to local registry
-- Experiment discovery and registration
-- Pipeline execution
-
-### GitHub Mode (Read-Only)
-```bash
-# Force GitHub mode
-ont_experiments.py list --github
-ont_experiments.py info exp-abc123 --github
-```
-
-## Event Tracking
-
-All operations are logged:
-```yaml
-events:
-  - timestamp: "2024-01-15T12:00:00Z"
-    type: "analysis"
-    analysis: "basecalling"
-    command: "dorado basecaller..."
-    results:
-      total_reads: 15000000
-      mean_qscore: 18.5
-    hpc:
-      job_id: "12345678"
-      partition: "sigbio-a40"
-```
-
-## Dependencies
-
-- pyyaml
-- pod5
-- h5py (optional)
-- gitpython (optional)
