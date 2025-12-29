@@ -517,3 +517,359 @@ def test_lib_exports_validation():
     assert hasattr(lib, 'validate_experiment_id')
     assert hasattr(lib, 'Schema')
     assert hasattr(lib, 'Validator')
+
+
+# =============================================================================
+# lib/cli.py Tests
+# =============================================================================
+
+def test_cli_imports():
+    """Test that cli.py can be imported"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "cli",
+        lib_dir / "cli.py"
+    )
+    cli = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cli)
+
+    assert hasattr(cli, 'add_common_args')
+    assert hasattr(cli, 'print_header')
+    assert hasattr(cli, 'print_table')
+    assert hasattr(cli, 'ProgressBar')
+    assert hasattr(cli, 'Spinner')
+    assert hasattr(cli, 'format_size')
+
+
+def test_cli_add_common_args():
+    """Test add_common_args adds expected arguments"""
+    import importlib.util
+    import argparse
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "cli",
+        lib_dir / "cli.py"
+    )
+    cli = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cli)
+
+    parser = argparse.ArgumentParser()
+    cli.add_common_args(parser)
+
+    # Parse empty args should work
+    args = parser.parse_args([])
+    assert hasattr(args, 'verbose')
+    assert hasattr(args, 'quiet')
+    assert hasattr(args, 'debug')
+
+
+def test_cli_format_size():
+    """Test format_size function"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "cli",
+        lib_dir / "cli.py"
+    )
+    cli = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cli)
+
+    assert "B" in cli.format_size(500)
+    assert "KB" in cli.format_size(1500)
+    assert "MB" in cli.format_size(1500000)
+    assert "GB" in cli.format_size(1500000000)
+
+
+def test_cli_format_duration():
+    """Test format_duration function"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "cli",
+        lib_dir / "cli.py"
+    )
+    cli = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cli)
+
+    assert "µs" in cli.format_duration(0.0001)
+    assert "ms" in cli.format_duration(0.1)
+    assert "s" in cli.format_duration(5)
+    assert "m" in cli.format_duration(90)
+    assert "h" in cli.format_duration(3700)
+
+
+def test_cli_format_number():
+    """Test format_number function"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "cli",
+        lib_dir / "cli.py"
+    )
+    cli = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cli)
+
+    assert cli.format_number(500) == "500"
+    assert "K" in cli.format_number(1500)
+    assert "M" in cli.format_number(1500000)
+    assert "G" in cli.format_number(1500000000)
+
+
+def test_cli_truncate():
+    """Test truncate function"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "cli",
+        lib_dir / "cli.py"
+    )
+    cli = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cli)
+
+    assert cli.truncate("short", 10) == "short"
+    assert cli.truncate("this is a long string", 10) == "this is..."
+    assert len(cli.truncate("this is a long string", 10)) == 10
+
+
+def test_cli_colors():
+    """Test Colors class"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "cli",
+        lib_dir / "cli.py"
+    )
+    cli = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cli)
+
+    # Colors class should exist
+    assert hasattr(cli, 'Colors')
+    assert hasattr(cli.Colors, 'RED')
+    assert hasattr(cli.Colors, 'GREEN')
+    assert hasattr(cli.Colors, 'RESET')
+
+
+# =============================================================================
+# lib/io.py Tests
+# =============================================================================
+
+def test_io_imports():
+    """Test that io.py can be imported"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "io_mod",
+        lib_dir / "io.py"
+    )
+    io_mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(io_mod)
+
+    assert hasattr(io_mod, 'load_json')
+    assert hasattr(io_mod, 'save_json')
+    assert hasattr(io_mod, 'atomic_write')
+    assert hasattr(io_mod, 'checksum')
+    assert hasattr(io_mod, 'find_files')
+
+
+def test_io_json_operations():
+    """Test JSON load/save"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "io_mod",
+        lib_dir / "io.py"
+    )
+    io_mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(io_mod)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        test_file = Path(tmpdir) / "test.json"
+        data = {"key": "value", "number": 42}
+
+        # Save
+        io_mod.save_json(test_file, data)
+        assert test_file.exists()
+
+        # Load
+        loaded = io_mod.load_json(test_file)
+        assert loaded == data
+
+
+def test_io_json_default():
+    """Test JSON load with default value"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "io_mod",
+        lib_dir / "io.py"
+    )
+    io_mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(io_mod)
+
+    # Non-existent file with default
+    result = io_mod.load_json("/nonexistent/file.json", default={"default": True})
+    assert result == {"default": True}
+
+
+def test_io_atomic_write():
+    """Test atomic write context manager"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "io_mod",
+        lib_dir / "io.py"
+    )
+    io_mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(io_mod)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        test_file = Path(tmpdir) / "test.txt"
+
+        with io_mod.atomic_write(test_file) as f:
+            f.write("test content")
+
+        assert test_file.exists()
+        assert test_file.read_text() == "test content"
+
+
+def test_io_checksum():
+    """Test checksum function"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "io_mod",
+        lib_dir / "io.py"
+    )
+    io_mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(io_mod)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        test_file = Path(tmpdir) / "test.txt"
+        test_file.write_text("test content")
+
+        # Calculate checksum
+        cs = io_mod.checksum(test_file, algorithm="sha256")
+        assert isinstance(cs, str)
+        assert len(cs) == 64  # SHA256 hex digest length
+
+        # Verify checksum
+        assert io_mod.verify_checksum(test_file, cs)
+
+
+def test_io_find_files():
+    """Test find_files function"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "io_mod",
+        lib_dir / "io.py"
+    )
+    io_mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(io_mod)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Create test files
+        (Path(tmpdir) / "file1.txt").touch()
+        (Path(tmpdir) / "file2.txt").touch()
+        (Path(tmpdir) / "file3.py").touch()
+
+        # Find txt files
+        files = io_mod.find_files("*.txt", path=tmpdir)
+        assert len(files) == 2
+
+
+def test_io_temp_file():
+    """Test temp_file context manager"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "io_mod",
+        lib_dir / "io.py"
+    )
+    io_mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(io_mod)
+
+    with io_mod.temp_file(suffix=".txt") as tmp:
+        assert isinstance(tmp, Path)
+        tmp.write_text("test")
+        assert tmp.exists()
+
+    # Should be deleted after context
+    assert not tmp.exists()
+
+
+def test_io_temp_dir():
+    """Test temp_dir context manager"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "io_mod",
+        lib_dir / "io.py"
+    )
+    io_mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(io_mod)
+
+    with io_mod.temp_dir() as tmpdir:
+        assert isinstance(tmpdir, Path)
+        assert tmpdir.exists()
+        (tmpdir / "test.txt").touch()
+
+    # Should be deleted after context
+    assert not tmpdir.exists()
+
+
+def test_io_read_lines():
+    """Test read_lines function"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "io_mod",
+        lib_dir / "io.py"
+    )
+    io_mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(io_mod)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        test_file = Path(tmpdir) / "test.txt"
+        test_file.write_text("line1\nline2\n# comment\n\nline3")
+
+        # Read all lines
+        lines = io_mod.read_lines(test_file)
+        assert len(lines) == 5
+
+        # Skip empty and comments
+        lines = io_mod.read_lines(test_file, skip_empty=True, skip_comments=True)
+        assert len(lines) == 3
+
+
+def test_lib_exports_cli():
+    """Test that lib exports CLI utilities"""
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    sys.path.insert(0, str(lib_dir.parent))
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("lib", lib_dir / "__init__.py")
+    lib = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(lib)
+
+    assert hasattr(lib, 'add_common_args')
+    assert hasattr(lib, 'print_header')
+    assert hasattr(lib, 'print_table')
+    assert hasattr(lib, 'ProgressBar')
+
+
+def test_lib_exports_io():
+    """Test that lib exports I/O utilities"""
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    sys.path.insert(0, str(lib_dir.parent))
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("lib", lib_dir / "__init__.py")
+    lib = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(lib)
+
+    assert hasattr(lib, 'load_json')
+    assert hasattr(lib, 'save_json')
+    assert hasattr(lib, 'atomic_write')
+    assert hasattr(lib, 'checksum')

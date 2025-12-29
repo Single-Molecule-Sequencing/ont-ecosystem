@@ -124,3 +124,65 @@ def Validator(data):
     """Chainable validator. Lazy import to avoid startup overhead."""
     from .validation import Validator as _Validator
     return _Validator(data)
+
+
+# CLI utilities - import on demand
+def add_common_args(parser):
+    """Add common CLI arguments. Lazy import to avoid startup overhead."""
+    from .cli import add_common_args as _add_common_args
+    return _add_common_args(parser)
+
+
+def print_header(title, **kwargs):
+    """Print formatted header. Lazy import to avoid startup overhead."""
+    from .cli import print_header as _print_header
+    return _print_header(title, **kwargs)
+
+
+def print_table(headers, rows, **kwargs):
+    """Print formatted table. Lazy import to avoid startup overhead."""
+    from .cli import print_table as _print_table
+    return _print_table(headers, rows, **kwargs)
+
+
+def ProgressBar(total, **kwargs):
+    """Progress bar. Lazy import to avoid startup overhead."""
+    from .cli import ProgressBar as _ProgressBar
+    return _ProgressBar(total, **kwargs)
+
+
+# I/O utilities - import on demand
+def load_json(path, **kwargs):
+    """Load JSON file. Lazy import to avoid startup overhead."""
+    from .io import load_json as _load_json
+    return _load_json(path, **kwargs)
+
+
+def save_json(path, data, **kwargs):
+    """Save JSON file. Lazy import to avoid startup overhead."""
+    from .io import save_json as _save_json
+    return _save_json(path, data, **kwargs)
+
+
+def load_yaml(path, **kwargs):
+    """Load YAML file. Lazy import to avoid startup overhead."""
+    from .io import load_yaml as _load_yaml
+    return _load_yaml(path, **kwargs)
+
+
+def save_yaml(path, data, **kwargs):
+    """Save YAML file. Lazy import to avoid startup overhead."""
+    from .io import save_yaml as _save_yaml
+    return _save_yaml(path, data, **kwargs)
+
+
+def atomic_write(path, **kwargs):
+    """Atomic file write. Lazy import to avoid startup overhead."""
+    from .io import atomic_write as _atomic_write
+    return _atomic_write(path, **kwargs)
+
+
+def checksum(path, **kwargs):
+    """Calculate file checksum. Lazy import to avoid startup overhead."""
+    from .io import checksum as _checksum
+    return _checksum(path, **kwargs)
