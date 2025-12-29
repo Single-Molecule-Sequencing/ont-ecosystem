@@ -44,6 +44,7 @@ MAX_SAMPLE_READS = 50000
 S3_BUCKET = "s3://ont-open-data"
 HTTPS_BASE = "https://ont-open-data.s3.amazonaws.com"
 LANDING_PAGE_BASE = "https://labs.epi2me.io"
+BROWSER_BASE = "https://42basepairs.com/browse/s3/ont-open-data"  # Visual S3 browser
 
 # Dataset landing pages (known mappings)
 DATASET_LANDING_PAGES = {
@@ -689,9 +690,14 @@ class PublicDataExtractor:
 
     def build_urls(self, dataset: str, s3_path: str) -> Dict[str, str]:
         """Build all access URLs for an experiment."""
+        # Get parent directory for browser link
+        path_parts = s3_path.split('/')
+        parent_path = '/'.join(path_parts[:-1]) if len(path_parts) > 1 else dataset
+
         urls = {
             "s3": f"{self.S3_BUCKET}/{s3_path}",
             "https": f"{self.HTTPS_BASE}/{s3_path}",
+            "browser": f"{BROWSER_BASE}/{parent_path}",  # 42basepairs visual browser
         }
 
         # Add landing page if known
