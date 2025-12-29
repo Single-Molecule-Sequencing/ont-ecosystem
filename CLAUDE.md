@@ -10,7 +10,7 @@ ONT Ecosystem (v3.0) is a consolidated monorepo for Oxford Nanopore sequencing e
 
 Skills are automatically installed to `~/.claude/commands/`. List available skills: `make skills-list`
 
-Key skills: `/comprehensive-analysis`, `/end-reason`, `/ont-experiments-v2`, `/ont-align`, `/ont-pipeline`, `/ont-monitor`, `/dorado-bench-v2`, `/experiment-db`, `/manuscript`, `/skill-maker`, `/ont-public-data`, `/registry-browser`
+Key skills: `/comprehensive-analysis`, `/end-reason`, `/ont-experiments-v2`, `/ont-align`, `/ont-pipeline`, `/ont-monitor`, `/dorado-bench-v2`, `/experiment-db`, `/manuscript`, `/skill-maker`, `/ont-public-data`, `/registry-browser`, `/greatlakes-sync`
 
 ```bash
 # Quick analysis with sampling (30s)
@@ -21,6 +21,11 @@ Key skills: `/comprehensive-analysis`, `/end-reason`, `/ont-experiments-v2`, `/o
 
 # Run with provenance tracking (Pattern B - preferred)
 ont_experiments.py run end_reasons exp-001 --json qc.json
+
+# Great Lakes discovery and sync
+greatlakes_sync.py discover --submit     # Submit SLURM discovery job
+greatlakes_sync.py review --latest       # Review discovered experiments
+greatlakes_sync.py apply --latest --commit --push  # Apply and sync to GitHub
 ```
 
 See `.claude/skills.md` for complete documentation. Skills auto-sync from `installable-skills/`.

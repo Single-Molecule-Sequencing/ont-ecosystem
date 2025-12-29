@@ -153,6 +153,17 @@ ANALYSIS_SKILLS = {
         "pipeline_stage": "r",
         "skill_dir": "ont-align",
     },
+
+    # Data Management
+    "greatlakes_sync": {
+        "script": "greatlakes_sync.py",
+        "description": "Great Lakes HPC discovery and database sync",
+        "result_fields": ["total_discovered", "new_count", "updated_count", "removed_count"],
+        "input_mode": "none",  # Uses configured scan paths
+        "default_args": ["discover", "--submit"],
+        "pipeline_stage": None,  # Not a pipeline stage, standalone tool
+        "skill_dir": "greatlakes-sync",
+    },
 }
 
 # Public datasets catalog (merged from ont-data-access-v2)
