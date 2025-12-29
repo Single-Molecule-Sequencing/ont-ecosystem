@@ -1,0 +1,101 @@
+# Labeler configuration for auto-labeling PRs based on changed files
+# See: https://github.com/actions/labeler
+
+# Core components
+core:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'bin/ont_experiments.py'
+          - 'bin/ont_context.py'
+          - 'bin/ont_manuscript.py'
+          - 'bin/ont_pipeline.py'
+
+# Library changes
+library:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'lib/**/*.py'
+
+# Skills
+skills:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'skills/**/*'
+
+# Documentation
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '*.md'
+          - 'docs/**/*'
+          - 'CLAUDE.md'
+
+# Tests
+tests:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'tests/**/*'
+          - 'pytest.ini'
+          - 'conftest.py'
+
+# CI/CD
+ci:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '.github/**/*'
+          - 'Makefile'
+          - '.pre-commit-config.yaml'
+
+# Configuration
+config:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'pyproject.toml'
+          - 'setup.py'
+          - 'setup.cfg'
+          - 'requirements*.txt'
+          - '*.yaml'
+          - '*.yml'
+
+# Analysis tools
+analysis:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'bin/end_reason.py'
+          - 'bin/ont_align.py'
+          - 'bin/ont_monitor.py'
+          - 'bin/dorado_basecall.py'
+          - 'skills/end-reason/**/*'
+          - 'skills/ont-align/**/*'
+          - 'skills/ont-monitor/**/*'
+          - 'skills/dorado-bench-v2/**/*'
+
+# Manuscript/figures
+manuscript:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'skills/manuscript/**/*'
+          - 'bin/ont_manuscript.py'
+          - 'manuscripts/**/*'
+
+# Registry/database
+registry:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'registry/**/*'
+          - 'data/**/*'
+          - 'bin/experiment_db.py'
+
+# Textbook/equations
+textbook:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'textbook/**/*'
+
+# HPC/SLURM
+hpc:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'bin/calculate_resources.py'
+          - 'bin/make_sbatch_from_cmdtxt.py'
+          - 'examples/configs/*.yaml'

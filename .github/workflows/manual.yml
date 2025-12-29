@@ -1,0 +1,188 @@
+name: Manual Tasks
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Task to run'
+        required: true
+        type: choice
+        options:
+          - doctor
+          - report
+          - stats
+          - check
+          - validate-all
+          - test-full
+          - benchmark
+          - update-deps
+      format:
+        description: 'Output format (for report/stats)'
+        required: false
+        type: choice
+        default: 'markdown'
+        options:
+          - text
+          - markdown
+          - json
+      fix:
+        description: 'Apply fixes (for doctor)'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  run-task:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml pytest pytest-cov jsonschema
+          pip install pysam edlib numpy pandas matplotlib || true
+
+      - name: Run Doctor
+        if: inputs.task == 'doctor'
+        run: |
+          if [ "${{ inputs.fix }}" = "true" ]; then
+            python bin/ont_doctor.py --fix
+          else
+            python bin/ont_doctor.py
+          fi
+
+      - name: Run Report
+        if: inputs.task == 'report'
+        run: |
+          python bin/ont_report.py --format ${{ inputs.format }} > report.${{ inputs.format == 'json' && 'json' || 'md' }}
+          cat report.*
+
+      - name: Run Stats
+        if: inputs.task == 'stats'
+        run: |
+          if [ "${{ inputs.format }}" = "json" ]; then
+            python bin/ont_stats.py --json
+          else
+            python bin/ont_stats.py
+          fi
+
+      - name: Run Check
+        if: inputs.task == 'check'
+        run: python bin/ont_check.py
+
+      - name: Validate All
+        if: inputs.task == 'validate-all'
+        run: |
+          echo "## Validation Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Python Syntax" >> $GITHUB_STEP_SUMMARY
+          for script in bin/*.py; do
+            python -m py_compile "$script" && echo "- $script" >> $GITHUB_STEP_SUMMARY
+          done
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Skill Frontmatter" >> $GITHUB_STEP_SUMMARY
+          python -c "
+          import yaml
+          import re
+          from pathlib import Path
+
+          for skill_dir in sorted(Path('skills').iterdir()):
+              if not skill_dir.is_dir():
+                  continue
+              skill_md = skill_dir / 'SKILL.md'
+              if skill_md.exists():
+                  content = skill_md.read_text()
+                  match = re.match(r'^---\n(.*?)\n---', content, re.DOTALL)
+                  if match:
+                      print(f'- {skill_dir.name}')
+          " >> $GITHUB_STEP_SUMMARY
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Library Modules" >> $GITHUB_STEP_SUMMARY
+          python -c "
+          from pathlib import Path
+          import ast
+
+          for module in sorted(Path('lib').glob('*.py')):
+              if module.name.startswith('_'):
+                  continue
+              try:
+                  ast.parse(module.read_text())
+                  print(f'- lib/{module.name}')
+              except:
+                  print(f'- lib/{module.name} (ERROR)')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Full Test Suite
+        if: inputs.task == 'test-full'
+        run: |
+          pytest tests/ -v --cov=bin --cov=lib --cov-report=term-missing --cov-report=html
+          echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Full test suite completed. See artifacts for coverage report." >> $GITHUB_STEP_SUMMARY
+
+      - name: Benchmark
+        if: inputs.task == 'benchmark'
+        run: |
+          echo "## Benchmark Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import time
+          import subprocess
+          import sys
+
+          benchmarks = [
+              ('Import lib', 'from lib import __version__'),
+              ('Import ont_experiments', 'import sys; sys.path.insert(0, \"bin\"); import ont_experiments'),
+              ('Load equations', 'import sys; sys.path.insert(0, \"bin\"); from ont_context import load_equations; load_equations()'),
+              ('Run ont_check', None),
+              ('Run ont_stats', None),
+          ]
+
+          print('| Task | Time (ms) |')
+          print('|------|-----------|')
+
+          for name, code in benchmarks:
+              if code:
+                  start = time.perf_counter()
+                  exec(code)
+                  elapsed = (time.perf_counter() - start) * 1000
+              else:
+                  script = name.split()[1]
+                  start = time.perf_counter()
+                  subprocess.run([sys.executable, f'bin/{script}.py'], capture_output=True)
+                  elapsed = (time.perf_counter() - start) * 1000
+
+              print(f'| {name} | {elapsed:.1f} |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Update Dependencies
+        if: inputs.task == 'update-deps'
+        run: |
+          pip install pip-tools
+          pip-compile --upgrade pyproject.toml -o requirements.txt || true
+          echo "## Dependency Updates" >> $GITHUB_STEP_SUMMARY
+          pip list --outdated >> $GITHUB_STEP_SUMMARY || true
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: task-output-${{ inputs.task }}
+          path: |
+            report.*
+            htmlcov/
+            *.json
+          if-no-files-found: ignore

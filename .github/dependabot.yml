@@ -1,0 +1,64 @@
+version: 2
+updates:
+  # Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "America/Detroit"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "farnum248"
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      numpy-scipy:
+        patterns:
+          - "numpy"
+          - "scipy"
+          - "pandas"
+      testing:
+        patterns:
+          - "pytest*"
+          - "coverage"
+      linting:
+        patterns:
+          - "ruff"
+          - "black"
+          - "isort"
+          - "mypy"
+      bioinformatics:
+        patterns:
+          - "pysam"
+          - "edlib"
+          - "pod5"
+          - "h5py"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "America/Detroit"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "farnum248"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "chore(ci)"
+    groups:
+      actions:
+        patterns:
+          - "actions/*"
+      github:
+        patterns:
+          - "github/*"
