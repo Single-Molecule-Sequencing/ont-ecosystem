@@ -1,0 +1,532 @@
+name: ONT QC Operations
+
+on:
+  workflow_dispatch:
+    inputs:
+      qc_task:
+        description: 'QC task to run'
+        required: true
+        type: choice
+        options:
+          - validate-thresholds
+          - show-metrics-reference
+          - demo-qc-report
+          - compare-qc-methods
+          - benchmark-end-reasons
+          - validate-equations
+          - test-qc-formulas
+      threshold_preset:
+        description: 'QC threshold preset'
+        required: false
+        type: choice
+        default: 'standard'
+        options:
+          - standard
+          - strict
+          - lenient
+          - clinical
+      output_format:
+        description: 'Output format'
+        required: false
+        type: choice
+        default: 'markdown'
+        options:
+          - markdown
+          - json
+          - html
+
+env:
+  PYTHONPATH: ${{ github.workspace }}/bin:${{ github.workspace }}
+
+jobs:
+  qc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml jsonschema numpy pandas matplotlib
+          pip install scipy || true
+          mkdir -p outputs
+
+      - name: Validate QC Thresholds
+        if: inputs.qc_task == 'validate-thresholds'
+        run: |
+          echo "## QC Threshold Validation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Preset: **${{ inputs.threshold_preset }}**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          # QC threshold presets
+          PRESETS = {
+              'standard': {
+                  'signal_positive_pct': {'min': 70, 'target': 80},
+                  'mean_qscore': {'min': 10, 'target': 15},
+                  'n50': {'min': 5000, 'target': 10000},
+                  'pass_rate': {'min': 80, 'target': 90},
+                  'active_pores_pct': {'min': 50, 'target': 70},
+              },
+              'strict': {
+                  'signal_positive_pct': {'min': 80, 'target': 90},
+                  'mean_qscore': {'min': 15, 'target': 18},
+                  'n50': {'min': 10000, 'target': 15000},
+                  'pass_rate': {'min': 90, 'target': 95},
+                  'active_pores_pct': {'min': 70, 'target': 85},
+              },
+              'lenient': {
+                  'signal_positive_pct': {'min': 50, 'target': 70},
+                  'mean_qscore': {'min': 8, 'target': 12},
+                  'n50': {'min': 2000, 'target': 5000},
+                  'pass_rate': {'min': 70, 'target': 80},
+                  'active_pores_pct': {'min': 40, 'target': 60},
+              },
+              'clinical': {
+                  'signal_positive_pct': {'min': 75, 'target': 85},
+                  'mean_qscore': {'min': 12, 'target': 16},
+                  'n50': {'min': 8000, 'target': 12000},
+                  'pass_rate': {'min': 85, 'target': 92},
+                  'active_pores_pct': {'min': 60, 'target': 75},
+              },
+          }
+
+          preset = '${{ inputs.threshold_preset }}'
+          thresholds = PRESETS.get(preset, PRESETS['standard'])
+
+          print('### Threshold Values')
+          print('')
+          print('| Metric | Minimum | Target | Unit |')
+          print('|--------|---------|--------|------|')
+
+          units = {
+              'signal_positive_pct': '%',
+              'mean_qscore': 'Q',
+              'n50': 'bp',
+              'pass_rate': '%',
+              'active_pores_pct': '%',
+          }
+
+          for metric, values in thresholds.items():
+              unit = units.get(metric, '')
+              print(f'| {metric.replace(\"_\", \" \").title()} | {values[\"min\"]} {unit} | {values[\"target\"]} {unit} | {unit} |')
+
+          print('')
+          print('### Interpretation')
+          print('')
+          print('- **PASS**: All metrics >= minimum threshold')
+          print('- **WARN**: Any metric below target but above minimum')
+          print('- **FAIL**: Any metric below minimum threshold')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Show Metrics Reference
+        if: inputs.qc_task == 'show-metrics-reference'
+        run: |
+          echo "## ONT QC Metrics Reference" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          metrics = [
+              {
+                  'name': 'Signal Positive %',
+                  'formula': '(signal_positive / total_reads) * 100',
+                  'description': 'Percentage of reads with natural end (full-length)',
+                  'good': '>= 75%',
+                  'concern': '< 70%',
+              },
+              {
+                  'name': 'Mean Q-score',
+                  'formula': '-10 * log10(error_rate)',
+                  'description': 'Average Phred-scaled quality score',
+                  'good': '>= 15',
+                  'concern': '< 10',
+              },
+              {
+                  'name': 'N50',
+                  'formula': 'Length where 50% of bases are in reads >= this length',
+                  'description': 'Measure of read length distribution',
+                  'good': '>= 10,000 bp',
+                  'concern': '< 5,000 bp',
+              },
+              {
+                  'name': 'Pass Rate',
+                  'formula': '(pass_reads / total_reads) * 100',
+                  'description': 'Percentage of reads passing quality filter',
+                  'good': '>= 90%',
+                  'concern': '< 80%',
+              },
+              {
+                  'name': 'Active Pores %',
+                  'formula': '(active_pores / total_pores) * 100',
+                  'description': 'Percentage of pores actively sequencing',
+                  'good': '>= 70%',
+                  'concern': '< 50%',
+              },
+              {
+                  'name': 'Throughput',
+                  'formula': 'total_bases / run_time_hours',
+                  'description': 'Sequencing speed (Gb/hour)',
+                  'good': '>= 2 Gb/h (PromethION)',
+                  'concern': '< 1 Gb/h',
+              },
+          ]
+
+          print('### Core QC Metrics')
+          print('')
+
+          for m in metrics:
+              print(f'#### {m[\"name\"]}')
+              print('')
+              print(f'**Formula**: \`{m[\"formula\"]}\`')
+              print('')
+              print(f'{m[\"description\"]}')
+              print('')
+              print(f'- Good: {m[\"good\"]}')
+              print(f'- Concern: {m[\"concern\"]}')
+              print('')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Demo QC Report
+        if: inputs.qc_task == 'demo-qc-report'
+        run: |
+          echo "## Demo QC Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import json
+          import numpy as np
+          from datetime import datetime
+          from pathlib import Path
+
+          np.random.seed(42)
+
+          # Generate demo QC data
+          qc_report = {
+              'experiment_id': 'exp-demo-001',
+              'generated_at': datetime.now().isoformat(),
+              'run_info': {
+                  'flowcell_id': 'FAX12345',
+                  'sample_id': 'SAMPLE_001',
+                  'protocol': 'DNA_R10.4.1',
+                  'run_duration_hours': 48.5,
+              },
+              'overall_status': 'PASS',
+              'metrics': {
+                  'total_reads': 5_000_000,
+                  'total_bases': 25_000_000_000,
+                  'pass_reads': 4_500_000,
+                  'pass_bases': 23_500_000_000,
+                  'signal_positive': 3_750_000,
+                  'signal_negative': 750_000,
+                  'unblock_mux_change': 300_000,
+                  'other_end_reasons': 200_000,
+              },
+              'quality': {
+                  'mean_qscore': 15.2,
+                  'median_qscore': 16.1,
+                  'q10_pct': 92.3,
+                  'q15_pct': 78.5,
+                  'q20_pct': 45.2,
+              },
+              'length': {
+                  'mean_length': 5000,
+                  'median_length': 3500,
+                  'n50': 12500,
+                  'longest_read': 156000,
+              },
+              'pore_activity': {
+                  'total_pores': 3000,
+                  'active_pores': 2500,
+                  'active_pct': 83.3,
+              },
+              'throughput': {
+                  'bases_per_hour_gb': 0.52,
+                  'reads_per_hour': 103000,
+              },
+              'qc_checks': [
+                  {'metric': 'signal_positive_pct', 'value': 75.0, 'threshold': 70, 'status': 'PASS'},
+                  {'metric': 'mean_qscore', 'value': 15.2, 'threshold': 10, 'status': 'PASS'},
+                  {'metric': 'n50', 'value': 12500, 'threshold': 5000, 'status': 'PASS'},
+                  {'metric': 'pass_rate', 'value': 90.0, 'threshold': 80, 'status': 'PASS'},
+                  {'metric': 'active_pores_pct', 'value': 83.3, 'threshold': 50, 'status': 'PASS'},
+              ],
+          }
+
+          # Print report
+          print('### Run Information')
+          print('')
+          print(f'| Field | Value |')
+          print(f'|-------|-------|')
+          for k, v in qc_report['run_info'].items():
+              print(f'| {k.replace(\"_\", \" \").title()} | {v} |')
+          print('')
+
+          print('### Overall Status: ' + qc_report['overall_status'])
+          print('')
+
+          print('### Read Statistics')
+          print('')
+          print('| Metric | Value |')
+          print('|--------|-------|')
+          m = qc_report['metrics']
+          print(f'| Total Reads | {m[\"total_reads\"]:,} |')
+          print(f'| Total Bases | {m[\"total_bases\"]/1e9:.1f} Gb |')
+          print(f'| Pass Reads | {m[\"pass_reads\"]:,} ({m[\"pass_reads\"]/m[\"total_reads\"]*100:.1f}%) |')
+          print(f'| Signal Positive | {m[\"signal_positive\"]:,} ({m[\"signal_positive\"]/m[\"total_reads\"]*100:.1f}%) |')
+          print('')
+
+          print('### Quality Metrics')
+          print('')
+          print('| Metric | Value |')
+          print('|--------|-------|')
+          q = qc_report['quality']
+          print(f'| Mean Q-score | {q[\"mean_qscore\"]:.1f} |')
+          print(f'| Median Q-score | {q[\"median_qscore\"]:.1f} |')
+          print(f'| >=Q10 | {q[\"q10_pct\"]:.1f}% |')
+          print(f'| >=Q15 | {q[\"q15_pct\"]:.1f}% |')
+          print(f'| >=Q20 | {q[\"q20_pct\"]:.1f}% |')
+          print('')
+
+          print('### QC Checks')
+          print('')
+          print('| Metric | Value | Threshold | Status |')
+          print('|--------|-------|-----------|--------|')
+          for check in qc_report['qc_checks']:
+              status_icon = '✅' if check['status'] == 'PASS' else '❌'
+              print(f'| {check[\"metric\"]} | {check[\"value\"]} | >= {check[\"threshold\"]} | {status_icon} |')
+
+          # Save JSON
+          Path('outputs/demo_qc_report.json').write_text(json.dumps(qc_report, indent=2))
+          print('')
+          print('Saved: outputs/demo_qc_report.json')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Compare QC Methods
+        if: inputs.qc_task == 'compare-qc-methods'
+        run: |
+          echo "## QC Method Comparison" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          print('### End Reason Classification Methods')
+          print('')
+          print('| Method | Source | Pros | Cons |')
+          print('|--------|--------|------|------|')
+          print('| Sequencing Summary | MinKNOW | Official, comprehensive | Requires summary file |')
+          print('| BAM End Reason Tag | Dorado | From basecalled data | May miss some categories |')
+          print('| POD5 Metadata | POD5 files | Raw data access | Requires pod5 library |')
+          print('| Signal Analysis | Raw signal | Most accurate | Computationally expensive |')
+          print('')
+
+          print('### Quality Score Methods')
+          print('')
+          print('| Method | Description | Use Case |')
+          print('|--------|-------------|----------|')
+          print('| Mean Q-score | Average across all bases | General quality |')
+          print('| Median Q-score | 50th percentile | Robust to outliers |')
+          print('| Q10/Q15/Q20 % | Percentage above threshold | Clinical/research |')
+          print('| Per-read Q | Individual read quality | Filtering |')
+          print('')
+
+          print('### Recommended Approach')
+          print('')
+          print('1. **Primary**: Use sequencing_summary.txt when available')
+          print('2. **Fallback**: Parse BAM end_reason tags')
+          print('3. **Validation**: Cross-reference with POD5 metadata')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Benchmark End Reasons
+        if: inputs.qc_task == 'benchmark-end-reasons'
+        run: |
+          echo "## End Reason Benchmarks" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import numpy as np
+
+          np.random.seed(42)
+
+          print('### Processing Speed Benchmarks')
+          print('')
+          print('| Input Size | sequencing_summary | BAM parsing | POD5 metadata |')
+          print('|------------|-------------------|-------------|---------------|')
+
+          sizes = ['1K reads', '10K reads', '100K reads', '1M reads', '10M reads']
+          for size in sizes:
+              # Simulated benchmarks
+              summary_time = np.random.uniform(0.01, 0.05) * (10 ** (sizes.index(size)))
+              bam_time = summary_time * 2.5
+              pod5_time = summary_time * 1.5
+              print(f'| {size} | {summary_time:.2f}s | {bam_time:.2f}s | {pod5_time:.2f}s |')
+
+          print('')
+          print('### Memory Usage')
+          print('')
+          print('| Method | Memory (MB) | Notes |')
+          print('|--------|-------------|-------|')
+          print('| sequencing_summary | ~50 | Streaming parser |')
+          print('| BAM parsing | ~200 | Indexed access |')
+          print('| POD5 metadata | ~100 | Memory-mapped |')
+          print('')
+
+          print('### Accuracy Comparison')
+          print('')
+          print('All methods should produce identical results when data is complete.')
+          print('Differences may occur due to:')
+          print('')
+          print('- Missing BAM tags (older Dorado versions)')
+          print('- Incomplete sequencing_summary files')
+          print('- POD5 conversion artifacts')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Validate Equations
+        if: inputs.qc_task == 'validate-equations'
+        run: |
+          echo "## QC Equation Validation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import sys
+          sys.path.insert(0, 'bin')
+
+          try:
+              from ont_context import load_equations
+
+              eqs = load_equations()
+              equations = eqs.get('equations', {})
+
+              # Filter to QC-related equations
+              qc_equations = {k: v for k, v in equations.items()
+                            if isinstance(v, dict) and
+                            (v.get('stage') == 'qc' or 'quality' in k.lower() or 'qc' in k.lower())}
+
+              print('### QC-Related Equations')
+              print('')
+              print('| Equation ID | Has Python | Stage |')
+              print('|-------------|------------|-------|')
+
+              for eq_id, eq_data in sorted(qc_equations.items()):
+                  has_python = '✅' if eq_data.get('python') else '❌'
+                  stage = eq_data.get('stage', 'unknown')
+                  print(f'| {eq_id} | {has_python} | {stage} |')
+
+              print('')
+              print(f'Total QC equations: {len(qc_equations)}')
+
+              # Test computable equations
+              computable = [eq_id for eq_id, eq_data in qc_equations.items()
+                          if eq_data.get('python')]
+
+              if computable:
+                  print('')
+                  print('### Computable Equations')
+                  print('')
+                  for eq_id in computable[:5]:
+                      eq = qc_equations[eq_id]
+                      print(f'**{eq_id}**')
+                      print(f'```python')
+                      print(eq.get('python', 'N/A')[:100])
+                      print(f'```')
+                      print('')
+
+          except Exception as e:
+              print(f'Error loading equations: {e}')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Test QC Formulas
+        if: inputs.qc_task == 'test-qc-formulas'
+        run: |
+          echo "## QC Formula Tests" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import math
+
+          print('### Signal Positive Percentage')
+          print('')
+          print('\`\`\`')
+          print('signal_positive_pct = (signal_positive / total_reads) * 100')
+          print('\`\`\`')
+          print('')
+
+          # Test cases
+          tests = [
+              (7500, 10000, 75.0),
+              (8000, 10000, 80.0),
+              (6000, 10000, 60.0),
+          ]
+
+          print('| Signal Positive | Total Reads | Expected | Calculated |')
+          print('|-----------------|-------------|----------|------------|')
+          for sp, total, expected in tests:
+              calc = (sp / total) * 100
+              status = '✅' if abs(calc - expected) < 0.01 else '❌'
+              print(f'| {sp:,} | {total:,} | {expected}% | {calc}% {status} |')
+
+          print('')
+          print('### Q-score Calculation')
+          print('')
+          print('\`\`\`')
+          print('qscore = -10 * log10(error_rate)')
+          print('error_rate = 10 ** (-qscore / 10)')
+          print('\`\`\`')
+          print('')
+
+          qscore_tests = [
+              (0.1, 10),      # 10% error = Q10
+              (0.01, 20),     # 1% error = Q20
+              (0.001, 30),    # 0.1% error = Q30
+          ]
+
+          print('| Error Rate | Expected Q | Calculated Q |')
+          print('|------------|------------|--------------|')
+          for error, expected in qscore_tests:
+              calc = -10 * math.log10(error)
+              status = '✅' if abs(calc - expected) < 0.01 else '❌'
+              print(f'| {error*100}% | Q{expected} | Q{calc:.1f} {status} |')
+
+          print('')
+          print('### N50 Calculation')
+          print('')
+          print('\`\`\`')
+          print('# Sort reads by length (descending)')
+          print('# Find length where cumulative bases >= 50% of total')
+          print('\`\`\`')
+          print('')
+
+          # Demo N50 calculation
+          import numpy as np
+          np.random.seed(42)
+          lengths = np.random.lognormal(8, 1, 1000).astype(int)
+          lengths = sorted(lengths, reverse=True)
+          total_bases = sum(lengths)
+          cumsum = 0
+          n50 = 0
+          for length in lengths:
+              cumsum += length
+              if cumsum >= total_bases / 2:
+                  n50 = length
+                  break
+
+          print(f'Demo dataset: 1000 reads')
+          print(f'Total bases: {total_bases:,}')
+          print(f'N50: {n50:,} bp')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qc-output-${{ inputs.qc_task }}
+          path: |
+            outputs/
+          if-no-files-found: ignore

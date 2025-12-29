@@ -1,10 +1,10 @@
 # ONT Ecosystem Makefile
 # Version 3.0.0
 
-.PHONY: install install-dev test test-quick test-coverage test-lib lint validate clean package dashboard help
+.PHONY: install install-dev install-skills test test-quick test-coverage test-lib lint validate clean package dashboard help
 .PHONY: validate-skills validate-registry validate-equations pre-commit pre-commit-install
 .PHONY: list-figures list-tables list-pipes version stats check docs
-.PHONY: doctor report hooks init-project
+.PHONY: doctor report hooks init-project skills-check skills-list
 
 PYTHON := python3
 PIP := pip3
@@ -16,6 +16,11 @@ help:
 	@echo "Setup:"
 	@echo "  install         Install core dependencies"
 	@echo "  install-dev     Install with development dependencies"
+	@echo "  install-skills  Install Claude Code skills to .claude/skills/"
+	@echo ""
+	@echo "Skills Management:"
+	@echo "  skills-list     List available skills"
+	@echo "  skills-check    Check installed skills status"
 	@echo ""
 	@echo "Testing:"
 	@echo "  test            Run all tests (180 tests)"
@@ -236,3 +241,19 @@ init-project:
 ifdef NAME
 	@$(PYTHON) bin/ont_init.py project $(NAME) --template $(or $(TEMPLATE),standard)
 endif
+
+# Skills management
+install-skills:
+	@$(PYTHON) bin/ont_install_skills.py --force
+	@echo ""
+	@echo "Skills are now available in Claude Code."
+	@echo "Use 'make skills-check' to verify installation."
+
+install-skills-user:
+	@$(PYTHON) bin/ont_install_skills.py --user --force
+
+skills-list:
+	@$(PYTHON) bin/ont_install_skills.py --list
+
+skills-check:
+	@$(PYTHON) bin/ont_install_skills.py --check
