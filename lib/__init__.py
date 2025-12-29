@@ -217,3 +217,34 @@ def Config(config=None, defaults=None):
     """Configuration manager. Lazy import to avoid startup overhead."""
     from .config import Config as _Config
     return _Config(config, defaults)
+
+
+# Parallel processing utilities - import on demand
+def parallel_map(func, items, **kwargs):
+    """Parallel map function. Lazy import to avoid startup overhead."""
+    from .parallel import parallel_map as _parallel_map
+    return _parallel_map(func, items, **kwargs)
+
+
+def parallel_process_files(files, processor, **kwargs):
+    """Process files in parallel. Lazy import to avoid startup overhead."""
+    from .parallel import parallel_process_files as _parallel_process_files
+    return _parallel_process_files(files, processor, **kwargs)
+
+
+def TaskQueue(workers=None, **kwargs):
+    """Task queue for parallel execution. Lazy import to avoid startup overhead."""
+    from .parallel import TaskQueue as _TaskQueue
+    return _TaskQueue(workers, **kwargs)
+
+
+def chunked(items, chunk_size):
+    """Split items into chunks. Lazy import to avoid startup overhead."""
+    from .parallel import chunked as _chunked
+    return _chunked(items, chunk_size)
+
+
+def with_retry(func, **kwargs):
+    """Wrap function with retry logic. Lazy import to avoid startup overhead."""
+    from .parallel import with_retry as _with_retry
+    return _with_retry(func, **kwargs)

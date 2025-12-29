@@ -1012,3 +1012,161 @@ def test_lib_exports_config():
     assert hasattr(lib, 'load_config')
     assert hasattr(lib, 'save_config')
     assert hasattr(lib, 'Config')
+
+
+# =============================================================================
+# lib/parallel.py Tests
+# =============================================================================
+
+def test_parallel_imports():
+    """Test that parallel.py can be imported"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "parallel",
+        lib_dir / "parallel.py"
+    )
+    parallel = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(parallel)
+
+    assert hasattr(parallel, 'parallel_map')
+    assert hasattr(parallel, 'parallel_process_files')
+    assert hasattr(parallel, 'TaskQueue')
+    assert hasattr(parallel, 'chunked')
+    assert hasattr(parallel, 'with_retry')
+
+
+def test_parallel_map():
+    """Test parallel_map function"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "parallel",
+        lib_dir / "parallel.py"
+    )
+    parallel = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(parallel)
+
+    # Simple test
+    def square(x):
+        return x * x
+
+    items = [1, 2, 3, 4, 5]
+    results = parallel.parallel_map(square, items, workers=2)
+
+    assert results == [1, 4, 9, 16, 25]
+
+
+def test_parallel_chunked():
+    """Test chunked function"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "parallel",
+        lib_dir / "parallel.py"
+    )
+    parallel = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(parallel)
+
+    items = [1, 2, 3, 4, 5, 6, 7]
+    chunks = list(parallel.chunked(items, 3))
+
+    assert len(chunks) == 3
+    assert chunks[0] == [1, 2, 3]
+    assert chunks[1] == [4, 5, 6]
+    assert chunks[2] == [7]
+
+
+def test_parallel_task_result():
+    """Test TaskResult dataclass"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "parallel",
+        lib_dir / "parallel.py"
+    )
+    parallel = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(parallel)
+
+    # Success result
+    result = parallel.TaskResult(task_id="test", success=True, result=42)
+    assert bool(result) is True
+    assert result.result == 42
+
+    # Failed result
+    result = parallel.TaskResult(task_id="test", success=False, error=ValueError("test"))
+    assert bool(result) is False
+
+
+def test_parallel_batch_result():
+    """Test BatchResult dataclass"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "parallel",
+        lib_dir / "parallel.py"
+    )
+    parallel = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(parallel)
+
+    results = [
+        parallel.TaskResult(task_id="1", success=True),
+        parallel.TaskResult(task_id="2", success=True),
+        parallel.TaskResult(task_id="3", success=False),
+    ]
+
+    batch = parallel.BatchResult(
+        total=3,
+        succeeded=2,
+        failed=1,
+        results=results,
+        duration=1.5
+    )
+
+    assert batch.success_rate == 2/3
+    assert len(batch.failures()) == 1
+    assert len(batch.successes()) == 2
+
+
+def test_parallel_with_retry():
+    """Test with_retry wrapper"""
+    import importlib.util
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    spec = importlib.util.spec_from_file_location(
+        "parallel",
+        lib_dir / "parallel.py"
+    )
+    parallel = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(parallel)
+
+    call_count = 0
+
+    def flaky_function():
+        nonlocal call_count
+        call_count += 1
+        if call_count < 3:
+            raise ValueError("Flaky!")
+        return "success"
+
+    wrapped = parallel.with_retry(flaky_function, max_retries=3, delay=0.01)
+    result = wrapped()
+
+    assert result == "success"
+    assert call_count == 3
+
+
+def test_lib_exports_parallel():
+    """Test that lib exports parallel utilities"""
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    sys.path.insert(0, str(lib_dir.parent))
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("lib", lib_dir / "__init__.py")
+    lib = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(lib)
+
+    assert hasattr(lib, 'parallel_map')
+    assert hasattr(lib, 'parallel_process_files')
+    assert hasattr(lib, 'TaskQueue')
+    assert hasattr(lib, 'chunked')
+    assert hasattr(lib, 'with_retry')

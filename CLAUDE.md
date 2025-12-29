@@ -10,10 +10,10 @@ ONT Ecosystem (v3.0) is a consolidated monorepo for Oxford Nanopore sequencing e
 
 ```bash
 # Run tests
-pytest tests/ -v                                    # All 44 tests
+pytest tests/ -v                                    # All 177 tests
 pytest tests/test_core.py -v                        # Core tests only
 pytest tests/test_core.py::test_edit_distance_basic -v  # Single test
-pytest tests/test_integration.py -v                 # Integration tests
+pytest tests/test_lib.py -v                         # Library module tests
 
 # Lint/validate
 make lint             # Check Python syntax for all bin/*.py
@@ -23,14 +23,15 @@ make validate         # Validate skill frontmatter (YAML in SKILL.md files)
 make install          # Core dependencies only
 make install-dev      # Full dev environment
 
-# Manuscript generation
-ont_manuscript.py list-figures                      # List 10 figure generators
-ont_manuscript.py list-tables                       # List 5 table generators
-ont_manuscript.py list-pipelines                    # List 4 pipelines
-
-# Equation system
-ont_context.py equations                            # List all 101 equations
-ont_context.py equations --computable               # List 14 computable equations
+# Project utilities
+ont_doctor.py                    # Diagnose issues, suggest fixes
+ont_doctor.py --fix              # Auto-fix common issues
+ont_report.py --format markdown  # Generate project report
+ont_version.py --skills          # Show all skill versions
+ont_init.py project my-proj      # Create new project from template
+ont_help.py                      # List all commands with examples
+ont_changelog.py                 # Generate changelog from git history
+ont_changelog.py stats           # Show commit statistics
 ```
 
 ## Architecture
@@ -40,6 +41,7 @@ ont_context.py equations --computable               # List 14 computable equatio
 Skills in `skills/*/scripts/` are the authoritative source. Scripts in `bin/` are either:
 - **Orchestrators**: `ont_experiments.py`, `ont_manuscript.py`, `ont_context.py` (original code)
 - **Wrappers**: Import from skills (e.g., `end_reason.py` → `skills/end-reason/scripts/end_reason.py`)
+- **Utilities**: Standalone tools (`ont_doctor.py`, `ont_init.py`, `ont_version.py`, etc.)
 
 ### Pattern B Orchestration
 
@@ -53,6 +55,24 @@ ont_experiments.py run <skill_name> <experiment_id> [options]
 end_reason.py /data/exp --json results.json
 ```
 
+### Library Modules (`lib/`)
+
+Shared utilities with lazy imports to minimize startup overhead:
+
+| Module | Purpose |
+|--------|---------|
+| `lib.cli` | Terminal colors, progress bars, table formatting |
+| `lib.io` | JSON/YAML I/O, atomic writes, checksums, file discovery |
+| `lib.cache` | Memory and file-based caching with TTL |
+| `lib.validation` | Schema validation, path validation, chainable validators |
+| `lib.errors` | Standardized error classes with severity/category |
+| `lib.timing` | Timer context manager, timing decorators |
+| `lib.logging_config` | Logging setup and configuration |
+| `lib.config` | Layered configuration (user/project), env overrides, HPC detection |
+| `lib.parallel` | Thread/process pools, parallel_map, TaskQueue, retry wrappers |
+
+Usage: `from lib import load_json, ProgressBar, ValidationError, Config, parallel_map`
+
 ### Key Components
 
 | Component | Location | Purpose |
@@ -61,91 +81,34 @@ end_reason.py /data/exp --json results.json
 | `ont_manuscript.py` | bin/ | Figure/table generation, versioned artifacts |
 | `ont_context.py` | bin/ | Unified experiment context, equation execution |
 | `experiment_db.py` | bin/ | SQLite database operations |
+| `ont_init.py` | bin/ | Project/experiment initialization wizard |
+| `ont_doctor.py` | bin/ | Diagnostic tool with fix suggestions |
+| `ont_version.py` | bin/ | Version management and bumping |
+| `ont_changelog.py` | bin/ | Changelog generation from git history |
 | Skills | skills/*/scripts/ | Authoritative analysis implementations |
 | Equations | textbook/equations.yaml | 101 equations (14 computable with Python) |
-| Variables | textbook/variables.yaml | 3532 variable definitions |
 
 ### Figure/Table Generation
 
 11 generators in `skills/manuscript/generators/`:
+- **Figures (10)**: fig_end_reason_kde, fig_end_reason_pie, fig_quality_dist, fig_read_length, fig_yield_timeline, fig_n50_barplot, fig_metrics_heatmap, fig_coverage, fig_alignment_stats, fig_comparison
+- **Tables (5)**: tbl_qc_summary, tbl_basecalling, tbl_alignment, tbl_comparison, tbl_experiment_summary
 
-```bash
-# Figure generators (10)
-fig_end_reason_kde      # KDE plot by end reason
-fig_end_reason_pie      # End reason pie/donut chart
-fig_quality_dist        # Q-score distribution
-fig_read_length         # Read length distribution
-fig_yield_timeline      # Cumulative yield over time
-fig_n50_barplot         # N50 comparison bar chart
-fig_metrics_heatmap     # QC metrics heatmap
-fig_coverage            # Coverage depth plot
-fig_alignment_stats     # Alignment statistics
-fig_comparison          # Multi-experiment comparison
+## Adding a New CLI Tool
 
-# Table generators (5)
-tbl_qc_summary, tbl_basecalling, tbl_alignment, tbl_comparison, tbl_experiment_summary
-```
-
-### Equation Execution System
-
-Equations in `textbook/equations.yaml` with Python implementations can be computed:
-
-```python
-# In ont_context.py
-from ont_context import load_equations, compute_equation, Equation
-
-equations = load_equations()
-# QC.1-12, STAT.1-2 have Python implementations
-```
-
-Safe eval with restricted builtins (abs, min, max, sum, sqrt, log, log10).
-
-## Directory Structure
-
-```
-ont-ecosystem/
-├── bin/                          # Scripts (orchestrators + wrappers)
-├── skills/                       # AUTHORITATIVE analysis code
-│   ├── end-reason/scripts/       # End reason QC
-│   ├── ont-align/scripts/        # Alignment
-│   ├── dorado-bench-v2/scripts/  # Basecalling
-│   ├── ont-monitor/scripts/      # Monitoring
-│   ├── ont-pipeline/scripts/     # Workflow orchestration
-│   ├── experiment-db/scripts/    # Database
-│   └── manuscript/generators/    # 11 figure/table generators
-├── textbook/                     # SMS Haplotype Framework
-│   ├── equations.yaml            # 4087 lines, 101 equations
-│   ├── variables.yaml            # 3532 lines
-│   └── src/chapters/             # 24 LaTeX chapter files
-├── data/
-│   ├── experiment_registry.json  # 145 experiments
-│   └── math/All_Math.pdf         # Reference (takes precedence on conflicts)
-├── registry/                     # Schemas and index
-├── tests/                        # 44 pytest tests
-└── examples/                     # Pipelines + HPC configs
-```
+1. Create script in `bin/ont_mytool.py` following the argparse pattern
+2. Add tests to `tests/test_utilities.py`
+3. Add to `pyproject.toml` scripts section: `ont-mytool = "bin.ont_mytool:main"`
+4. Add shell completion to `completions/ont-completion.bash`
+5. Register in `bin/ont_help.py` COMMANDS dict
 
 ## Adding a New Skill
 
-1. Create `skills/my-skill/SKILL.md` with YAML frontmatter:
-   ```yaml
-   ---
-   name: my-skill
-   description: Brief description
-   ---
-   ```
+1. Create `skills/my-skill/SKILL.md` with YAML frontmatter
 2. Add implementation in `skills/my-skill/scripts/`
 3. Register in `ANALYSIS_SKILLS` dict in `bin/ont_experiments.py:75`
 4. Add wrapper in `bin/` if needed (import from skills/)
 5. Add tests in `tests/`
-
-## Adding a New Generator
-
-1. Create `skills/manuscript/generators/gen_my_figure.py`
-2. Implement `generate_*()` function following existing patterns
-3. Register in `FIGURE_GENERATORS` or `TABLE_GENERATORS` in `bin/ont_manuscript.py`
-4. Update `skills/manuscript/SKILL.md` documentation
-5. Add import test to `.github/workflows/ci.yml`
 
 ## Adding Computable Equations
 
@@ -168,6 +131,7 @@ Variables available: `total_reads`, `total_bases`, `mean_qscore`, `median_qscore
 - **Event sourcing**: All operations logged in `~/.ont-registry/`
 - **HPC integration**: Captures SLURM metadata (job ID, nodes, GPUs)
 - **Artifact versioning**: Figures/tables stored with version history in `~/.ont-manuscript/artifacts/`
+- **Lazy imports**: Library modules use lazy imports in `lib/__init__.py`
 
 ## Dependencies
 
@@ -179,7 +143,8 @@ Variables available: `total_reads`, `total_bases`, `mean_qscore`, `median_qscore
 
 - CI runs Python 3.9, 3.10, 3.11, 3.12
 - Tests skip gracefully when optional deps not installed
-- Integration tests use real experiment registry data
+- Use `tmp_path` fixture for file-based tests
+- Import scripts via `importlib.util.spec_from_file_location` pattern
 
 ## Core Frameworks (SMS Haplotype Textbook)
 
@@ -189,11 +154,6 @@ P(h,g,u,d,l,σ,r) = P(h)·P(g|h)·P(u|g)·P(d|u)·P(l|d)·P(σ|l)·P(r|σ)
 ```
 
 Nine pipeline stages: h (Haplotype), g (Standard), u (Guide), d (Fragmentation), ℓ (Library), σ (Signal), r (Basecalling), C (Cas9 toggle), A (Adaptive toggle)
-
-**Key Equations**:
-- `eq_6_6`: Bayesian Posterior - P(h|r) = P(r|h)P(h) / ΣP(r|h')P(h')
-- `eq_phred`: Phred Score - Q = -10 log₁₀(P_error)
-- `QC.3`: Error probability - 10^(-Q/10)
 
 ## Private Repository Installation
 
