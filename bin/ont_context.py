@@ -643,6 +643,205 @@ def load_experiment_context(exp_id: str, db_path: Optional[str] = None) -> Optio
 
 
 # =============================================================================
+# Equation Execution System
+# =============================================================================
+
+def load_equations() -> Dict[str, Any]:
+    """Load equations from textbook/equations.yaml"""
+    if not HAS_YAML:
+        return {}
+
+    # Look for equations.yaml in textbook/
+    script_dir = Path(__file__).parent.parent
+    equations_path = script_dir / "textbook" / "equations.yaml"
+
+    if not equations_path.exists():
+        return {}
+
+    with open(equations_path) as f:
+        return yaml.safe_load(f) or {}
+
+
+def get_applicable_equations(ctx: ExperimentContext) -> List[Equation]:
+    """
+    Find equations applicable to an experiment based on available data.
+
+    Args:
+        ctx: ExperimentContext
+
+    Returns:
+        List of applicable Equation objects
+    """
+    equations_db = load_equations()
+    applicable = []
+
+    for eq_id, eq_data in equations_db.get("equations", {}).items():
+        if not isinstance(eq_data, dict):
+            continue
+
+        # Check if we have the required data for this equation
+        required_stage = eq_data.get("pipeline_stage", "")
+        variables = eq_data.get("variables", [])
+
+        can_compute = True
+
+        # Check based on pipeline stage
+        if required_stage == "end_reasons" and not ctx.has_qc:
+            can_compute = False
+        elif required_stage == "basecalling" and not ctx.has_basecalling:
+            can_compute = False
+
+        if can_compute:
+            applicable.append(Equation(
+                id=eq_id,
+                name=eq_data.get("name", eq_id),
+                latex=eq_data.get("latex", ""),
+                description=eq_data.get("description", ""),
+                variables=variables if isinstance(variables, list) else [],
+                python=eq_data.get("python"),
+                pipeline_stage=required_stage,
+            ))
+
+    return applicable
+
+
+def bind_variables(equation: Equation, ctx: ExperimentContext) -> Dict[str, Any]:
+    """
+    Bind equation variables to experiment context values.
+
+    Args:
+        equation: Equation to bind
+        ctx: ExperimentContext with data
+
+    Returns:
+        Dict of variable name -> value
+    """
+    bindings = {}
+
+    # Common variable mappings
+    var_mapping = {
+        # Read statistics
+        "N": lambda c: c.statistics.total_reads if c.statistics else None,
+        "total_reads": lambda c: c.statistics.total_reads if c.statistics else None,
+        "total_bases": lambda c: c.statistics.total_bases if c.statistics else None,
+        "n50": lambda c: c.statistics.n50 if c.statistics else None,
+        "mean_length": lambda c: c.statistics.mean_length if c.statistics else None,
+        "mean_qscore": lambda c: c.statistics.mean_qscore if c.statistics else None,
+        "median_qscore": lambda c: c.statistics.median_qscore if c.statistics else None,
+        "pass_reads": lambda c: c.statistics.pass_reads if c.statistics else None,
+        "fail_reads": lambda c: c.statistics.fail_reads if c.statistics else None,
+
+        # End reason metrics
+        "signal_positive": lambda c: c.end_reasons.signal_positive if c.end_reasons else None,
+        "signal_positive_pct": lambda c: c.end_reasons.signal_positive_pct if c.end_reasons else None,
+        "unblock_pct": lambda c: c.end_reasons.unblock_pct if c.end_reasons else None,
+    }
+
+    for var in equation.variables:
+        var_name = var if isinstance(var, str) else var.get("name", "")
+        if var_name in var_mapping:
+            bindings[var_name] = var_mapping[var_name](ctx)
+
+    return bindings
+
+
+def compute_equation(equation: Equation, ctx: ExperimentContext) -> EquationResult:
+    """
+    Execute an equation with experiment data as inputs.
+
+    Args:
+        equation: Equation to compute
+        ctx: ExperimentContext with data
+
+    Returns:
+        EquationResult with computed value
+    """
+    inputs = bind_variables(equation, ctx)
+    computed_at = datetime.now().isoformat()
+
+    # Check if we have a Python implementation
+    if not equation.python:
+        return EquationResult(
+            equation_id=equation.id,
+            inputs=inputs,
+            output=None,
+            computed_at=computed_at,
+            success=False,
+            error="No Python implementation available",
+        )
+
+    # Check if all required inputs are available
+    missing = [k for k, v in inputs.items() if v is None]
+    if missing:
+        return EquationResult(
+            equation_id=equation.id,
+            inputs=inputs,
+            output=None,
+            computed_at=computed_at,
+            success=False,
+            error=f"Missing inputs: {', '.join(missing)}",
+        )
+
+    try:
+        # Create safe execution environment
+        safe_globals = {
+            "__builtins__": {},
+            "abs": abs,
+            "min": min,
+            "max": max,
+            "sum": sum,
+            "len": len,
+            "round": round,
+            "pow": pow,
+            "sqrt": lambda x: x ** 0.5,
+            "log": lambda x: __import__('math').log(x),
+            "log10": lambda x: __import__('math').log10(x),
+            "exp": lambda x: __import__('math').exp(x),
+        }
+        safe_globals.update(inputs)
+
+        result = eval(equation.python, safe_globals)
+
+        return EquationResult(
+            equation_id=equation.id,
+            inputs=inputs,
+            output=result,
+            computed_at=computed_at,
+            success=True,
+        )
+
+    except Exception as e:
+        return EquationResult(
+            equation_id=equation.id,
+            inputs=inputs,
+            output=None,
+            computed_at=computed_at,
+            success=False,
+            error=str(e),
+        )
+
+
+def compute_all_equations(ctx: ExperimentContext) -> Dict[str, EquationResult]:
+    """
+    Compute all applicable equations for an experiment.
+
+    Args:
+        ctx: ExperimentContext
+
+    Returns:
+        Dict of equation_id -> EquationResult
+    """
+    results = {}
+    applicable = get_applicable_equations(ctx)
+
+    for equation in applicable:
+        if equation.python:  # Only compute if we have implementation
+            results[equation.id] = compute_equation(equation, ctx)
+
+    return results
+
+
+# =============================================================================
 # Utility Functions
 # =============================================================================
 

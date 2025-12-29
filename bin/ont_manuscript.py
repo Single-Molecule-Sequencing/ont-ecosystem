@@ -123,6 +123,13 @@ FIGURE_GENERATORS = {
         "requires": ["basecalling"],
         "caption": "Quality score distribution",
     },
+    "fig_read_length": {
+        "generator": "gen_read_length_distribution.py",
+        "description": "Read length distribution with log scale",
+        "formats": ["pdf", "png"],
+        "requires": [],
+        "caption": "Read length distribution",
+    },
     "fig_coverage": {
         "generator": "gen_coverage_plot.py",
         "description": "Coverage depth plot",
@@ -137,21 +144,13 @@ FIGURE_GENERATORS = {
         "requires": ["alignment"],
         "caption": "Alignment quality metrics",
     },
-    "fig_comparison_overlay": {
-        "generator": "gen_comparison_overlay.py",
-        "description": "Overlay plots comparing multiple experiments",
+    "fig_comparison": {
+        "generator": "gen_comparison_plot.py",
+        "description": "Multi-panel comparison of experiments",
         "formats": ["pdf", "png"],
         "requires": [],
         "multi_experiment": True,
-        "caption": "Experiment comparison overlay",
-    },
-    "fig_box_comparison": {
-        "generator": "gen_box_comparison.py",
-        "description": "Box plots comparing experiments",
-        "formats": ["pdf", "png"],
-        "requires": [],
-        "multi_experiment": True,
-        "caption": "Experiment metric comparison",
+        "caption": "Experiment comparison",
     },
 }
 
