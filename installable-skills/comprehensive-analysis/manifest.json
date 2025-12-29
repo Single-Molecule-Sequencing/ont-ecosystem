@@ -1,0 +1,45 @@
+{
+  "name": "comprehensive-analysis",
+  "version": "2.0.0",
+  "description": "Comprehensive ONT sequencing analysis with 9 publication-quality figures, KDE distributions, end-reason overlays, and intelligent data sampling",
+  "command": "/comprehensive-analysis",
+  "author": "ONT Ecosystem",
+  "category": "analysis",
+  "tags": [
+    "visualization",
+    "quality-control",
+    "kde",
+    "publication",
+    "end-reason",
+    "sampling",
+    "nanopore",
+    "sequencing"
+  ],
+  "dependencies": {
+    "python": ">=3.9",
+    "packages": [
+      "numpy",
+      "pandas",
+      "matplotlib",
+      "scipy"
+    ]
+  },
+  "inputs": [
+    "sequencing_summary.txt"
+  ],
+  "outputs": [
+    "figures/*.png",
+    "statistics.json",
+    "dashboard.html"
+  ],
+  "features": [
+    "9 publication-quality figures",
+    "Data sampling (50K default)",
+    "Runtime estimation",
+    "Stratified sampling by end_reason",
+    "Interactive HTML dashboard",
+    "Consistent end-reason color scheme"
+  ],
+  "repository": "https://github.com/Single-Molecule-Sequencing/ont-ecosystem",
+  "install_path": "skills/comprehensive-analysis/scripts/comprehensive_analysis.py"
+}

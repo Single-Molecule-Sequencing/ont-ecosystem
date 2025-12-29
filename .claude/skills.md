@@ -89,11 +89,23 @@ ont_manuscript.py export <exp_id> ./paper --target latex
 ```
 
 ### /comprehensive-analysis
-**Purpose**: Full analysis pipeline with visualization
-**When to use**: Running complete analysis workflows, generating comprehensive reports
+**Purpose**: Complete ONT experiment analysis with 9 publication-quality figures, KDE distributions, end-reason overlays, and data sampling
+**When to use**: Generating publication figures, comprehensive QC reports, experiment dashboards, visualizing end-reason patterns
+**Features**:
+- Data sampling (50K reads default) with runtime estimation for full analysis
+- Stratified sampling by end_reason to maintain proportions
+- Consistent end-reason color scheme across all figures
+- Interactive HTML dashboard with modal viewing
 **Key commands**:
 ```bash
-python3 comprehensive_analysis.py /path/to/data --output report/
+# Quick analysis (sampled, ~30s)
+python3 comprehensive_analysis.py /path/to/data -o report/
+
+# Full analysis (all reads, for publication)
+python3 comprehensive_analysis.py /path/to/data -o report/ --full --dpi 600
+
+# Custom sample size
+python3 comprehensive_analysis.py /path/to/data -o report/ --sample-size 100000
 ```
 
 ## Skill Invocation
