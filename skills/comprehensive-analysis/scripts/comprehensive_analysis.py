@@ -39,6 +39,12 @@ try:
         plot_length_kde_by_end_reason,
         plot_quality_kde_by_end_reason,
         plot_publication_summary,
+        plot_temporal_evolution,
+        plot_channel_analysis,
+        plot_quality_length_correlation,
+        plot_hourly_evolution,
+        plot_overview_summary,
+        plot_2d_density_by_end_reason,
         calculate_n50,
         format_bp,
         q_to_accuracy,
@@ -165,27 +171,87 @@ class ComprehensiveAnalyzer:
             print("Warning: matplotlib not available, skipping figures")
             return
 
-        # Generate end-reason comparison plots
+        # 1. Quick overview summary (first for immediate viewing)
+        if self.length_col and self.qscore_col and self.end_reason_col:
+            output = plot_overview_summary(
+                self.df, self.figures_path / '01_overview_summary.png',
+                self.length_col, self.qscore_col, self.end_reason_col,
+                time_col=self.time_col, channel_col=self.channel_col,
+                title=title or "Experiment Overview", dpi=self.dpi
+            )
+            if output:
+                print(f"  Generated: {output.name}")
+
+        # 2. Read length KDE by end reason
         if self.end_reason_col and self.length_col:
             output = plot_length_kde_by_end_reason(
-                self.df, self.figures_path / 'length_by_end_reason.png',
+                self.df, self.figures_path / '02_length_by_end_reason.png',
                 self.length_col, self.end_reason_col, dpi=self.dpi
             )
             if output:
                 print(f"  Generated: {output.name}")
 
+        # 3. Quality KDE by end reason
         if self.end_reason_col and self.qscore_col:
             output = plot_quality_kde_by_end_reason(
-                self.df, self.figures_path / 'quality_by_end_reason.png',
+                self.df, self.figures_path / '03_quality_by_end_reason.png',
                 self.qscore_col, self.end_reason_col, dpi=self.dpi
             )
             if output:
                 print(f"  Generated: {output.name}")
 
-        # Publication summary
+        # 4. Quality-length correlation analysis
+        if self.length_col and self.qscore_col and self.end_reason_col:
+            output = plot_quality_length_correlation(
+                self.df, self.figures_path / '04_quality_length_correlation.png',
+                self.length_col, self.qscore_col, self.end_reason_col, dpi=self.dpi
+            )
+            if output:
+                print(f"  Generated: {output.name}")
+
+        # 5. 2D density by end reason
+        if self.length_col and self.qscore_col and self.end_reason_col:
+            output = plot_2d_density_by_end_reason(
+                self.df, self.figures_path / '05_2d_density_by_end_reason.png',
+                self.length_col, self.qscore_col, self.end_reason_col, dpi=self.dpi
+            )
+            if output:
+                print(f"  Generated: {output.name}")
+
+        # 6. Temporal evolution (if time data available)
+        if self.time_col and self.length_col and self.qscore_col and self.end_reason_col:
+            output = plot_temporal_evolution(
+                self.df, self.figures_path / '06_temporal_evolution.png',
+                self.length_col, self.qscore_col, self.end_reason_col,
+                self.time_col, dpi=self.dpi
+            )
+            if output:
+                print(f"  Generated: {output.name}")
+
+        # 7. Hourly evolution (if time data available)
+        if self.time_col and self.length_col and self.qscore_col and self.end_reason_col:
+            output = plot_hourly_evolution(
+                self.df, self.figures_path / '07_hourly_evolution.png',
+                self.length_col, self.qscore_col, self.end_reason_col,
+                self.time_col, dpi=self.dpi
+            )
+            if output:
+                print(f"  Generated: {output.name}")
+
+        # 8. Channel analysis (if channel data available)
+        if self.channel_col and self.length_col and self.qscore_col and self.end_reason_col:
+            output = plot_channel_analysis(
+                self.df, self.figures_path / '08_channel_analysis.png',
+                self.length_col, self.qscore_col, self.end_reason_col,
+                self.channel_col, dpi=self.dpi
+            )
+            if output:
+                print(f"  Generated: {output.name}")
+
+        # 9. Publication-ready summary (high DPI)
         if self.length_col and self.qscore_col and self.end_reason_col:
             output = plot_publication_summary(
-                self.df, self.figures_path / 'publication_summary.png',
+                self.df, self.figures_path / '09_publication_summary.png',
                 self.length_col, self.qscore_col, self.end_reason_col,
                 time_col=self.time_col, title=title or "Sequencing Analysis",
                 dpi=min(self.dpi, 600)  # Cap at 600 for publication
