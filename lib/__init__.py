@@ -40,7 +40,8 @@ SKILL_VERSIONS = {
     "dorado-bench-v2": "2.0.0",
     "ont-monitor": "1.0.0",
     "experiment-db": "2.0.0",
-    "manuscript": "1.0.0"  # Figure/table generation
+    "manuscript": "1.0.0",  # Figure/table generation
+    "ont-public-data": "1.0.0"  # Stream & analyze public ONT datasets
 }
 
 # Logging configuration - import on demand to avoid circular imports

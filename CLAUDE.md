@@ -22,6 +22,7 @@ Skills are automatically installed to `~/.claude/commands/`. Invoke with `/<skil
 | `/experiment-db` | SQLite database for experiments |
 | `/manuscript` | Publication figures and tables |
 | `/skill-maker` | Create and manage Claude skills |
+| `/ont-public-data` | Stream & analyze public ONT datasets from S3 (50K reads sampling) |
 
 ### Quick Examples
 
@@ -37,6 +38,10 @@ Skills are automatically installed to `~/.claude/commands/`. Invoke with `/<skil
 
 # Run with provenance tracking
 ont_experiments.py run end_reasons exp-001 --json qc.json
+
+# Stream and analyze public ONT data (no full download)
+/ont-public-data list                                    # List available datasets
+/ont-public-data analyze giab_2025.01 --max-experiments 5  # Analyze with 50K reads
 ```
 
 See `.claude/skills.md` for complete documentation. Skills auto-sync from `installable-skills/`.
@@ -73,6 +78,15 @@ ont_experiments.py init --git              # Initialize registry with git tracki
 ont_experiments.py discover /path --register  # Find and register experiments
 ont_experiments.py run end_reasons exp-001 --json qc.json  # Run with provenance
 ont_experiments.py history exp-001         # View experiment event history
+
+# Makefile shortcuts
+make help                        # Show all available targets
+make doctor                      # Run diagnostics
+make report                      # Generate project report
+make stats                       # Show ecosystem statistics
+make check                       # Run health check
+make skills-list                 # List available skills
+make package                     # Create .skill packages for distribution
 ```
 
 ## Architecture
@@ -111,6 +125,8 @@ Shared utilities with lazy imports to minimize startup overhead:
 | `lib.logging_config` | Logging setup and configuration |
 | `lib.config` | Layered configuration (user/project), env overrides, HPC detection |
 | `lib.parallel` | Thread/process pools, parallel_map, TaskQueue, retry wrappers |
+| `lib.discovery_report` | Experiment discovery reporting utilities |
+| `lib.quick_analysis` | Fast analysis helpers for common operations |
 
 Usage: `from lib import load_json, ProgressBar, ValidationError, Config, parallel_map`
 
@@ -134,6 +150,8 @@ Usage: `from lib import load_json, ProgressBar, ValidationError, Config, paralle
 15 generators in `skills/manuscript/generators/`:
 - **Figures (10)**: fig_end_reason_kde, fig_end_reason_pie, fig_quality_dist, fig_read_length, fig_yield_timeline, fig_n50_barplot, fig_metrics_heatmap, fig_coverage, fig_alignment_stats, fig_comparison
 - **Tables (5)**: tbl_qc_summary, tbl_basecalling, tbl_alignment, tbl_comparison, tbl_experiment_summary
+
+List available generators: `make list-figures` or `make list-tables`
 
 ## Adding a New CLI Tool
 
@@ -173,6 +191,7 @@ Variables available: `total_reads`, `total_bases`, `mean_qscore`, `median_qscore
 - **HPC integration**: Captures SLURM metadata (job ID, nodes, GPUs)
 - **Artifact versioning**: Figures/tables stored with version history in `~/.ont-manuscript/artifacts/`
 - **Lazy imports**: Library modules use lazy imports in `lib/__init__.py`
+- **Wrapper pattern**: `bin/` wrappers import from `skills/*/scripts/` to maintain SSOT
 
 ## Dependencies
 
@@ -182,10 +201,18 @@ Variables available: `total_reads`, `total_bases`, `mean_qscore`, `median_qscore
 
 ## Testing
 
-- CI runs Python 3.9, 3.10, 3.11, 3.12
+- CI runs Python 3.9, 3.10, 3.11, 3.12, 3.13
 - Tests skip gracefully when optional deps not installed
 - Use `tmp_path` fixture for file-based tests
 - Import scripts via `importlib.util.spec_from_file_location` pattern
+
+Test files:
+- `test_core.py` - Core functionality (experiment registry, provenance)
+- `test_lib.py` - Library module tests
+- `test_utilities.py` - CLI tool tests
+- `test_generators.py` - Figure/table generator tests
+- `test_integration.py` - End-to-end workflows
+- `test_endreason_qc.py` - End reason QC specific tests
 
 ## Core Frameworks (SMS Haplotype Textbook)
 
