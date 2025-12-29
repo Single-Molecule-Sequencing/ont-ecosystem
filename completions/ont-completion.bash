@@ -317,7 +317,7 @@ _ont_make() {
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
 
-    targets="help install install-dev test test-quick test-coverage lint validate validate-skills validate-registry validate-equations pre-commit pre-commit-install package clean dashboard list-figures list-tables list-pipes version"
+    targets="help install install-dev install-skills test test-quick test-coverage lint validate validate-skills validate-registry validate-equations pre-commit pre-commit-install package clean dashboard list-figures list-tables list-pipes version stats check doctor report hooks skills-list skills-check"
 
     COMPREPLY=( $(compgen -W "${targets}" -- ${cur}) )
 }
@@ -412,5 +412,19 @@ _ont_changelog() {
 }
 complete -F _ont_changelog ont_changelog.py
 complete -F _ont_changelog ont-changelog
+
+# ont_install_skills.py completion
+_ont_install_skills() {
+    local cur
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+
+    if [[ ${cur} == -* ]]; then
+        COMPREPLY=( $(compgen -W "--help --user --both --force --list --check" -- ${cur}) )
+        return 0
+    fi
+}
+complete -F _ont_install_skills ont_install_skills.py
+complete -F _ont_install_skills ont-install-skills
 
 echo "ONT Ecosystem shell completion loaded"

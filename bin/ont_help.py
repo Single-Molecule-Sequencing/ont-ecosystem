@@ -171,6 +171,16 @@ COMMANDS = {
                 "ont_changelog.py tags",
             ]
         },
+        "ont_install_skills.py": {
+            "description": "Install Claude Code skills for discovery",
+            "examples": [
+                "ont_install_skills.py",
+                "ont_install_skills.py --user",
+                "ont_install_skills.py --list",
+                "ont_install_skills.py --check",
+                "ont_install_skills.py --both --force",
+            ]
+        },
         "ont_context.py": {
             "description": "Unified experiment context and equation execution",
             "examples": [
