@@ -1,0 +1,82 @@
+\documentclass[11pt,a4paper]{article}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{hyperref}
+\usepackage[margin=1in]{geometry}
+\usepackage{natbib}
+\usepackage{lineno}
+\usepackage{setspace}
+
+% Line numbers for review
+\linenumbers
+\doublespacing
+
+% Title
+\title{A Comprehensive Registry Framework for Oxford Nanopore Sequencing Experiments: \\
+Metadata Management, Quality Tracking, and Institutional Standardization}
+
+\author{
+Author One$^{1,*}$, Author Two$^{1}$, Author Three$^{2}$ \\
+\\
+\small $^{1}$Department of Computational Medicine and Bioinformatics, \\
+\small University of Michigan, Ann Arbor, MI, USA \\
+\small $^{2}$Department of Human Genetics, University of Michigan, Ann Arbor, MI, USA \\
+\\
+\small $^{*}$Corresponding author: email@umich.edu
+}
+
+\date{}
+
+\begin{document}
+
+\maketitle
+
+% Abstract
+\input{abstract_registry.tex}
+
+% Main text
+\input{introduction_registry.tex}
+\input{methods_registry.tex}
+\input{results_registry.tex}
+\input{discussion_registry.tex}
+
+% Additional sections
+\input{acknowledgments.tex}
+\input{author_contributions.tex}
+\input{data_availability.tex}
+\input{competing_interests.tex}
+
+% References
+\bibliographystyle{plos}
+\bibliography{references_registry}
+
+% Figures (at end for submission)
+\clearpage
+\input{fig_registry_overview_caption.tex}
+\clearpage
+\input{fig_qc_distributions_caption.tex}
+\clearpage
+\input{fig_device_model_heatmap_caption.tex}
+\clearpage
+\input{fig_category_by_device_caption.tex}
+\clearpage
+\input{fig_temporal_analysis_caption.tex}
+
+% Tables
+\clearpage
+\input{tbl_registry_stats.tex}
+\clearpage
+\input{tbl_registry_summary.tex}
+
+% Supplementary
+\clearpage
+\section*{Supplementary Materials}
+\input{tbl_supp_experiments.tex}
+
+\end{document}
