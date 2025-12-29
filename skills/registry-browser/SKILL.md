@@ -1,27 +1,6 @@
 ---
 name: registry-browser
-description: Interactive registry browser with validation, re-analysis, and completeness
-  tracking for ONT experiments. Features 42basepairs.com integration, audit logging,
-  metadata validation, and publication-ready data access.
-metadata:
-  version: 3.0.0
-  author: Single Molecule Sequencing Lab
-  slash_command: registry-browser
-  user_invocable: true
-  tags:
-  - ont
-  - registry
-  - visualization
-  - metadata
-  - browser
-  - validation
-  - audit
-  - bam-header
-  - filtering
-  - provenance
-  dependencies:
-  - pyyaml
-  - jinja2 (optional, for HTML reports)
+description: Interactive HTML browser for the ONT experiment registry with filtering, sorting, and detailed experiment views.
 ---
 
 # Registry Browser Skill v3.0

@@ -1,6 +1,6 @@
 ---
 name: dorado-bench-v2
-description: Oxford Nanopore basecalling with Dorado on University of Michigan HPC clusters (ARMIS2 and Great Lakes). Use when running dorado basecalling, generating SLURM jobs for basecalling, benchmarking models, optimizing GPU resources, or processing POD5 data. Captures model paths, GPU allocations, and job metadata. Integrates with ont-experiments for provenance tracking. Supports fast/hac/sup models, methylation calling, and automatic resource calculation.
+description: Oxford Nanopore basecalling with Dorado on University of Michigan HPC clusters (ARMIS2 and Great Lakes). Use when running dorado basecalling, generating SLURM jobs for basecalling, benchmarking models, optimizing GPU resources, or processing POD5 data.
 ---
 
 # Dorado-Bench v2 - ONT Basecalling

@@ -1,30 +1,6 @@
 ---
 name: skill-maker
-description: Create, update, and manage Claude skills automatically. Use when developing
-  new analysis functions, fixing skill bugs, improving existing skills, or packaging
-  skills for distribution. Handles SKILL.md creation, slash commands, ZIP packaging,
-  and ecosystem integration.
-metadata:
-  version: 1.0.0
-  author: ONT Ecosystem
-  category: meta
-  command: /skill-maker
-  tags:
-  - meta
-  - automation
-  - skill-creation
-  - packaging
-  - integration
-  dependencies:
-  - pyyaml
-  inputs:
-  - skill name
-  - skill description
-  - script files
-  outputs:
-  - SKILL.md
-  - slash command (.md)
-  - ZIP file for Desktop/Web
+description: Create, update, and manage Claude skills automatically. Use when developing new analysis functions, fixing skill bugs, improving existing skills, or packaging skills for distribution.
 ---
 
 # Skill Maker

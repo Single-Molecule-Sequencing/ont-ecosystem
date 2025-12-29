@@ -1,23 +1,6 @@
 ---
 name: ont-public-data
-description: Discover, stream, and analyze public ONT datasets from S3 without full
-  downloads
-metadata:
-  version: 1.0.0
-  author: Single Molecule Sequencing Lab
-  slash_command: ont-public-data
-  user_invocable: true
-  tags:
-  - ont
-  - public-data
-  - streaming
-  - s3
-  - analysis
-  dependencies:
-  - matplotlib
-  - numpy
-  - samtools (system)
-  - aws-cli (system)
+description: Discover, stream, and analyze public ONT datasets from S3 without full downloads. Analyzes reads via byte-range requests, generates statistics and publication plots.
 ---
 
 # ONT Public Data Skill

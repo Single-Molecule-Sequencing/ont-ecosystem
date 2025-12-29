@@ -1,17 +1,6 @@
 ---
 name: experiment-db
-description: SQLite database for tracking nanopore experiments with fast SQL queries
-  and statistics
-metadata:
-  version: 1.0.0
-  author: Single Molecule Sequencing Lab
-  category: data-management
-  tags:
-  - nanopore
-  - database
-  - sqlite
-  - experiments
-  - end-reason
+description: SQLite database for tracking nanopore experiments with fast SQL queries and statistics.
 ---
 
 # Experiment Database Skill

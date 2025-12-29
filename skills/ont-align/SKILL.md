@@ -1,6 +1,6 @@
 ---
 name: ont-align
-description: Oxford Nanopore alignment with minimap2/dorado, reference genome management, BAM QC, and Levenshtein edit distance computation using edlib. Use when aligning ONT reads to reference genomes, managing reference genome registries, computing alignment statistics, generating coverage metrics, performing BAM quality control, or computing edit distances between sequences. Integrates with ont-experiments for provenance tracking via Pattern B orchestration.
+description: Oxford Nanopore alignment with minimap2/dorado, reference genome management, BAM QC, and Levenshtein edit distance computation using edlib.
 ---
 
 # ONT Align - Alignment & Edit Distance

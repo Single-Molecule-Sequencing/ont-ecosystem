@@ -1,6 +1,6 @@
 ---
 name: ont-experiments-v2
-description: Enhanced Oxford Nanopore experiment management with event-sourced registry, pipeline orchestration, unified QC aggregation, and GitHub-synced storage. Discover, track, and orchestrate nanopore sequencing experiments with full provenance tracking. Works both on HPC (full read/write) and remotely via GitHub (read-only fallback). This is the core skill that other ONT analysis skills integrate with via Pattern B orchestration.
+description: Enhanced Oxford Nanopore experiment management with event-sourced registry, pipeline orchestration, unified QC aggregation, and GitHub-synced storage.
 ---
 
 # ONT Experiments v2 - Enhanced Registry
