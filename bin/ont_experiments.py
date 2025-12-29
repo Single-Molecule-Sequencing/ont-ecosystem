@@ -1110,10 +1110,24 @@ def generate_experiment_id(path: Path, run_id: Optional[str] = None) -> str:
 
 
 def extract_pod5_metadata(pod5_file: Path) -> Dict[str, Any]:
-    """Extract metadata from POD5 file"""
+    """Extract metadata from POD5 file.
+
+    POD5 RunInfo attributes:
+        - acquisition_id: UUID for the acquisition
+        - acquisition_start_time: datetime when acquisition started
+        - experiment_name: name of experiment
+        - flow_cell_id: flow cell identifier
+        - flow_cell_product_code: product code (e.g., FLO-MIN114)
+        - sample_id: sample name
+        - sequencing_kit: kit identifier (e.g., SQK-LSK114)
+        - system_name: instrument hostname
+        - system_type: operating system (e.g., 'ubuntu 22.04')
+        - context_tags: dict with basecall_model, experiment_type, etc.
+        - tracking_id: dict with device_id, run_id, protocol details
+    """
     if not HAS_POD5:
         return {}
-    
+
     metadata = {}
     try:
         with pod5.Reader(pod5_file) as reader:
@@ -1125,44 +1139,103 @@ def extract_pod5_metadata(pod5_file: Path) -> Dict[str, Any]:
                 metadata['flowcell_id'] = run_info.flow_cell_id
                 metadata['flowcell_type'] = run_info.flow_cell_product_code
                 metadata['kit'] = run_info.sequencing_kit
-                metadata['platform'] = run_info.system_type
-                
-                # Extract chemistry from context tags
-                for tag in run_info.context_tags:
-                    if 'basecall_model' in tag[0].lower():
-                        metadata['basecall_model'] = tag[1]
-                
+
+                # Extract device ID from tracking_id (device_id is the MinION/PromethION serial)
+                # system_name is the hostname, system_type is the OS
+                if hasattr(run_info, 'tracking_id') and run_info.tracking_id:
+                    tracking = dict(run_info.tracking_id)
+                    metadata['platform'] = tracking.get('device_id', run_info.system_name)
+                else:
+                    metadata['platform'] = run_info.system_name
+
+                # Extract basecall model from context tags
+                if hasattr(run_info, 'context_tags') and run_info.context_tags:
+                    for tag in run_info.context_tags:
+                        if 'basecall_model' in tag[0].lower():
+                            metadata['basecall_model'] = tag[1]
+                            break
+
+                # Extract start time
+                if run_info.acquisition_start_time:
+                    metadata['run_started'] = run_info.acquisition_start_time.isoformat()
+
                 break  # Only need first read
     except Exception as e:
         pass
-    
+
     return metadata
 
 
 def extract_fast5_metadata(fast5_file: Path) -> Dict[str, Any]:
-    """Extract metadata from Fast5 file"""
+    """Extract metadata from Fast5 file.
+
+    Fast5 tracking_id attributes:
+        - run_id: unique run identifier
+        - flow_cell_id: flow cell identifier
+        - flow_cell_product_code: product code (e.g., FLO-MIN114)
+        - sample_id: sample name
+        - device_id: device serial number (e.g., MD-100098)
+        - device_type: device type (e.g., minion_mk1d)
+        - exp_start_time: experiment start time
+        - protocol_group_id: experiment name
+        - sequencing_kit: kit identifier
+    """
     if not HAS_H5PY:
         return {}
-    
+
+    def decode_attr(attr):
+        """Decode HDF5 attribute value (handles bytes)."""
+        if attr is None:
+            return None
+        if isinstance(attr, bytes):
+            return attr.decode('utf-8', errors='replace')
+        if hasattr(attr, 'item'):  # numpy types
+            return attr.item()
+        return str(attr) if attr else None
+
     metadata = {}
     try:
         with h5py.File(fast5_file, 'r') as f:
             # Check for multi-read format
-            if 'read_' in str(list(f.keys())):
-                read_group = list(f.keys())[0]
-                tracking = f[f'{read_group}/tracking_id']
-            else:
-                tracking = f.get('UniqueGlobalKey/tracking_id', {})
-            
+            tracking = None
+            context = None
+            keys = list(f.keys())
+
+            if any(k.startswith('read_') for k in keys):
+                # Multi-read fast5
+                read_group = [k for k in keys if k.startswith('read_')][0]
+                if 'tracking_id' in f[read_group]:
+                    tracking = f[f'{read_group}/tracking_id']
+                if 'context_tags' in f[read_group]:
+                    context = f[f'{read_group}/context_tags']
+            elif 'UniqueGlobalKey' in keys:
+                # Single-read fast5
+                ugk = f['UniqueGlobalKey']
+                if 'tracking_id' in ugk:
+                    tracking = ugk['tracking_id']
+                if 'context_tags' in ugk:
+                    context = ugk['context_tags']
+
             if tracking:
-                attrs = dict(tracking.attrs)
-                metadata['run_id'] = attrs.get('run_id', b'').decode() if isinstance(attrs.get('run_id'), bytes) else attrs.get('run_id')
-                metadata['sample_id'] = attrs.get('sample_id', b'').decode() if isinstance(attrs.get('sample_id'), bytes) else attrs.get('sample_id')
-                metadata['flowcell_id'] = attrs.get('flow_cell_id', b'').decode() if isinstance(attrs.get('flow_cell_id'), bytes) else attrs.get('flow_cell_id')
-                metadata['platform'] = attrs.get('device_type', b'').decode() if isinstance(attrs.get('device_type'), bytes) else attrs.get('device_type')
+                attrs = tracking.attrs
+                metadata['run_id'] = decode_attr(attrs.get('run_id'))
+                metadata['sample_id'] = decode_attr(attrs.get('sample_id'))
+                metadata['flowcell_id'] = decode_attr(attrs.get('flow_cell_id'))
+                metadata['flowcell_type'] = decode_attr(attrs.get('flow_cell_product_code'))
+                metadata['experiment_id'] = decode_attr(attrs.get('protocol_group_id'))
+                # Use device_id (serial) if available, otherwise device_type
+                device_id = decode_attr(attrs.get('device_id'))
+                device_type = decode_attr(attrs.get('device_type'))
+                metadata['platform'] = device_id or device_type
+                metadata['run_started'] = decode_attr(attrs.get('exp_start_time'))
+
+            if context:
+                attrs = context.attrs
+                metadata['kit'] = decode_attr(attrs.get('sequencing_kit'))
+                metadata['basecall_model'] = decode_attr(attrs.get('basecall_model_version_id'))
     except Exception as e:
         pass
-    
+
     return metadata
 
 

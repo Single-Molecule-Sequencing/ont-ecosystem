@@ -183,7 +183,7 @@ def test_version():
     spec.loader.exec_module(lib)
 
     assert lib.__version__ == "3.0.0"
-    assert len(lib.SKILL_VERSIONS) == 8  # Added manuscript skill
+    assert len(lib.SKILL_VERSIONS) == 10  # Added ont-public-data, registry-browser skills
 
 
 def test_dashboards_exist():
