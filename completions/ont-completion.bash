@@ -153,7 +153,7 @@ _ont_help() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    commands="ont_experiments ont_pipeline ont_manuscript end_reason ont_align dorado_basecall ont_monitor ont_stats ont_check ont_update ont_backup ont_doctor ont_report ont_hooks ont_context experiment_db calculate_resources make_sbatch_from_cmdtxt"
+    commands="ont_experiments ont_pipeline ont_manuscript end_reason ont_align dorado_basecall ont_monitor ont_stats ont_check ont_update ont_backup ont_doctor ont_report ont_hooks ont_version ont_context experiment_db calculate_resources make_sbatch_from_cmdtxt"
 
     case "${prev}" in
         ont_help.py|ont-help)
@@ -284,6 +284,32 @@ _ont_hooks() {
 }
 complete -F _ont_hooks ont_hooks.py
 complete -F _ont_hooks ont-hooks
+
+# ont_version.py completion
+_ont_version() {
+    local cur prev commands
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    case "${prev}" in
+        ont_version.py|ont-version)
+            COMPREPLY=( $(compgen -W "bump --full --json --skills --check --deps" -- ${cur}) )
+            return 0
+            ;;
+        bump)
+            COMPREPLY=( $(compgen -W "major minor patch --dry-run" -- ${cur}) )
+            return 0
+            ;;
+    esac
+
+    if [[ ${cur} == -* ]]; then
+        COMPREPLY=( $(compgen -W "--help --full --json --skills --check --deps" -- ${cur}) )
+        return 0
+    fi
+}
+complete -F _ont_version ont_version.py
+complete -F _ont_version ont-version
 
 # make completion for ont-ecosystem targets
 _ont_make() {

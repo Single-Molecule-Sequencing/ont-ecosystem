@@ -142,6 +142,15 @@ COMMANDS = {
                 "ont_hooks.py run pre-commit",
             ]
         },
+        "ont_version.py": {
+            "description": "Version information and management",
+            "examples": [
+                "ont_version.py",
+                "ont_version.py --full",
+                "ont_version.py --skills",
+                "ont_version.py bump patch",
+            ]
+        },
         "ont_context.py": {
             "description": "Unified experiment context and equation execution",
             "examples": [

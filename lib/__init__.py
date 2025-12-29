@@ -67,3 +67,60 @@ def timed(func=None, **kwargs):
     """Timing decorator. Lazy import to avoid startup overhead."""
     from .timing import timed as _timed
     return _timed(func, **kwargs)
+
+
+# Error handling utilities - import on demand
+def ONTError(*args, **kwargs):
+    """Base exception class. Lazy import to avoid startup overhead."""
+    from .errors import ONTError as _ONTError
+    return _ONTError(*args, **kwargs)
+
+
+def handle_error(exc, **kwargs):
+    """Standard error handler. Lazy import to avoid startup overhead."""
+    from .errors import handle_error as _handle_error
+    return _handle_error(exc, **kwargs)
+
+
+# Cache utilities - import on demand
+def FileCache(namespace: str, **kwargs):
+    """File-based cache. Lazy import to avoid startup overhead."""
+    from .cache import FileCache as _FileCache
+    return _FileCache(namespace, **kwargs)
+
+
+def MemoryCache(**kwargs):
+    """Memory-based cache. Lazy import to avoid startup overhead."""
+    from .cache import MemoryCache as _MemoryCache
+    return _MemoryCache(**kwargs)
+
+
+def memoize(func):
+    """Memoization decorator. Lazy import to avoid startup overhead."""
+    from .cache import memoize as _memoize
+    return _memoize(func)
+
+
+# Validation utilities - import on demand
+def validate_path(path, **kwargs):
+    """Validate a file path. Lazy import to avoid startup overhead."""
+    from .validation import validate_path as _validate_path
+    return _validate_path(path, **kwargs)
+
+
+def validate_experiment_id(exp_id):
+    """Validate experiment ID. Lazy import to avoid startup overhead."""
+    from .validation import validate_experiment_id as _validate_experiment_id
+    return _validate_experiment_id(exp_id)
+
+
+def Schema(schema):
+    """Schema-based validator. Lazy import to avoid startup overhead."""
+    from .validation import Schema as _Schema
+    return _Schema(schema)
+
+
+def Validator(data):
+    """Chainable validator. Lazy import to avoid startup overhead."""
+    from .validation import Validator as _Validator
+    return _Validator(data)

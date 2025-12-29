@@ -953,3 +953,102 @@ def test_hooks_get_installed_hooks():
     for hook_name in ont_hooks.HOOKS:
         assert hook_name in installed
         assert isinstance(installed[hook_name], bool)
+
+
+# =============================================================================
+# ont_version.py Tests
+# =============================================================================
+
+def test_version_imports():
+    """Test that ont_version.py can be imported"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_version",
+        bin_dir / "ont_version.py"
+    )
+    ont_version = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_version)
+
+    assert hasattr(ont_version, 'VersionInfo')
+    assert hasattr(ont_version, 'get_version_info')
+    assert hasattr(ont_version, 'get_git_info')
+    assert hasattr(ont_version, 'get_dependency_versions')
+    assert hasattr(ont_version, 'bump_version')
+
+
+def test_version_info():
+    """Test get_version_info function"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_version",
+        bin_dir / "ont_version.py"
+    )
+    ont_version = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_version)
+
+    info = ont_version.get_version_info()
+    assert info.version is not None
+    assert info.major >= 0
+    assert info.minor >= 0
+    assert info.patch >= 0
+    assert info.python_version is not None
+
+
+def test_version_to_dict():
+    """Test VersionInfo.to_dict()"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_version",
+        bin_dir / "ont_version.py"
+    )
+    ont_version = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_version)
+
+    info = ont_version.get_version_info()
+    d = info.to_dict()
+
+    assert "version" in d
+    assert "major" in d
+    assert "minor" in d
+    assert "patch" in d
+    assert "python_version" in d
+
+
+def test_bump_version():
+    """Test bump_version function"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_version",
+        bin_dir / "ont_version.py"
+    )
+    ont_version = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_version)
+
+    # Test patch bump
+    old, new = ont_version.bump_version("patch")
+    assert old is not None
+    assert new is not None
+
+    old_parts = [int(x) for x in old.split(".")]
+    new_parts = [int(x) for x in new.split(".")]
+    assert new_parts[2] == old_parts[2] + 1
+
+
+def test_get_dependency_versions():
+    """Test get_dependency_versions function"""
+    import importlib.util
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    spec = importlib.util.spec_from_file_location(
+        "ont_version",
+        bin_dir / "ont_version.py"
+    )
+    ont_version = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_version)
+
+    deps = ont_version.get_dependency_versions()
+    assert isinstance(deps, dict)
+    assert "pyyaml" in deps
