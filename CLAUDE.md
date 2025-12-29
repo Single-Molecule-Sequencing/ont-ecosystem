@@ -10,7 +10,7 @@ ONT Ecosystem (v3.0) is a consolidated monorepo for Oxford Nanopore sequencing e
 
 ```bash
 # Run tests
-pytest tests/ -v                                    # All 177 tests
+pytest tests/ -v                                    # All 180 tests
 pytest tests/test_core.py -v                        # Core tests only
 pytest tests/test_core.py::test_edit_distance_basic -v  # Single test
 pytest tests/test_lib.py -v                         # Library module tests

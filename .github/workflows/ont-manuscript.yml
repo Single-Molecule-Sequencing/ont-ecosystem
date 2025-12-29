@@ -1,0 +1,574 @@
+name: ONT Manuscript Tasks
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Manuscript task to run'
+        required: true
+        type: choice
+        options:
+          - list-figures
+          - list-tables
+          - list-generators
+          - validate-generators
+          - demo-figure-kde
+          - demo-figure-pie
+          - demo-table-qc
+          - generate-all-demos
+      output_format:
+        description: 'Output format for figures'
+        required: false
+        type: choice
+        default: 'png'
+        options:
+          - png
+          - pdf
+          - svg
+      dpi:
+        description: 'DPI for raster output'
+        required: false
+        type: number
+        default: 150
+
+env:
+  PYTHONPATH: ${{ github.workspace }}/bin:${{ github.workspace }}
+
+jobs:
+  manuscript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml jsonschema numpy pandas matplotlib seaborn
+          pip install scipy || true
+          mkdir -p outputs
+
+      - name: List Available Figures
+        if: inputs.task == 'list-figures'
+        run: |
+          echo "## Available Figure Generators" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          from pathlib import Path
+
+          generators_dir = Path('skills/manuscript/generators')
+
+          print('| Generator | Description | Formats |')
+          print('|-----------|-------------|---------|')
+
+          for gen in sorted(generators_dir.glob('gen_*.py')):
+              name = gen.stem.replace('gen_', 'fig_')
+
+              # Try to extract description from docstring
+              content = gen.read_text()
+              desc = 'Figure generator'
+              if '\"\"\"' in content:
+                  start = content.find('\"\"\"') + 3
+                  end = content.find('\"\"\"', start)
+                  if end > start:
+                      desc = content[start:end].strip().split('\n')[0][:50]
+
+              # Determine supported formats
+              formats = 'png, pdf'
+              if 'svg' in content.lower():
+                  formats = 'png, pdf, svg'
+
+              print(f'| {name} | {desc} | {formats} |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: List Available Tables
+        if: inputs.task == 'list-tables'
+        run: |
+          echo "## Available Table Generators" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          from pathlib import Path
+
+          generators_dir = Path('skills/manuscript/generators')
+
+          print('| Generator | Description | Formats |')
+          print('|-----------|-------------|---------|')
+
+          for gen in sorted(generators_dir.glob('gen_*table*.py')):
+              name = gen.stem.replace('gen_', 'tbl_')
+
+              # Try to extract description
+              content = gen.read_text()
+              desc = 'Table generator'
+              if '\"\"\"' in content:
+                  start = content.find('\"\"\"') + 3
+                  end = content.find('\"\"\"', start)
+                  if end > start:
+                      desc = content[start:end].strip().split('\n')[0][:50]
+
+              print(f'| {name} | {desc} | tex, csv, json |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: List All Generators
+        if: inputs.task == 'list-generators'
+        run: |
+          echo "## All Manuscript Generators" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          from pathlib import Path
+          import ast
+
+          generators_dir = Path('skills/manuscript/generators')
+
+          print('### Figure Generators')
+          print('')
+
+          figures = []
+          tables = []
+
+          for gen in sorted(generators_dir.glob('gen_*.py')):
+              name = gen.stem
+
+              # Parse to find the generate function
+              try:
+                  tree = ast.parse(gen.read_text())
+                  has_generate = any(
+                      isinstance(node, ast.FunctionDef) and node.name == 'generate'
+                      for node in ast.walk(tree)
+                  )
+              except:
+                  has_generate = False
+
+              status = '✅' if has_generate else '⚠️'
+
+              if 'table' in name:
+                  tables.append((name, status))
+              else:
+                  figures.append((name, status))
+
+          for name, status in figures:
+              print(f'- {status} {name}')
+
+          print('')
+          print('### Table Generators')
+          print('')
+
+          for name, status in tables:
+              print(f'- {status} {name}')
+
+          print('')
+          print(f'Total: {len(figures)} figures, {len(tables)} tables')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Validate Generators
+        if: inputs.task == 'validate-generators'
+        run: |
+          echo "## Generator Validation Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          from pathlib import Path
+          import ast
+          import sys
+
+          generators_dir = Path('skills/manuscript/generators')
+
+          results = []
+
+          for gen in sorted(generators_dir.glob('gen_*.py')):
+              errors = []
+
+              try:
+                  content = gen.read_text()
+                  tree = ast.parse(content)
+
+                  # Check for generate function
+                  generate_func = None
+                  for node in ast.walk(tree):
+                      if isinstance(node, ast.FunctionDef) and node.name == 'generate':
+                          generate_func = node
+                          break
+
+                  if not generate_func:
+                      errors.append('Missing generate() function')
+                  else:
+                      # Check arguments
+                      args = [a.arg for a in generate_func.args.args]
+                      if 'context' not in args and 'data' not in args:
+                          errors.append('generate() missing context/data parameter')
+                      if 'output_path' not in args and 'output' not in args:
+                          errors.append('generate() missing output parameter')
+
+                  # Check for docstring
+                  if not ast.get_docstring(tree):
+                      errors.append('Missing module docstring')
+
+              except SyntaxError as e:
+                  errors.append(f'Syntax error: {e}')
+              except Exception as e:
+                  errors.append(f'Parse error: {e}')
+
+              status = '✅' if not errors else '❌'
+              results.append((gen.stem, status, errors))
+
+          print('| Generator | Status | Issues |')
+          print('|-----------|--------|--------|')
+
+          for name, status, errors in results:
+              issues = errors[0] if errors else 'Valid'
+              print(f'| {name} | {status} | {issues} |')
+
+          print('')
+          valid = sum(1 for r in results if r[1] == '✅')
+          print(f'**{valid}/{len(results)}** generators valid')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Demo KDE Figure
+        if: inputs.task == 'demo-figure-kde'
+        run: |
+          echo "## End Reason KDE Demo" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import numpy as np
+          import matplotlib.pyplot as plt
+          from scipy import stats
+          import json
+
+          # Generate demo data
+          np.random.seed(42)
+
+          # Simulate read lengths for different end reasons
+          end_reasons = {
+              'signal_positive': np.random.lognormal(8.5, 0.8, 5000),
+              'signal_negative': np.random.lognormal(7.5, 1.0, 1000),
+              'unblock_mux_change': np.random.lognormal(6.0, 0.5, 300),
+              'data_service_unblock': np.random.lognormal(5.5, 0.6, 200),
+          }
+
+          # Create figure
+          fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+
+          colors = ['#2ecc71', '#e74c3c', '#3498db', '#9b59b6']
+
+          # Main KDE plot
+          ax = axes[0, 0]
+          for (reason, lengths), color in zip(end_reasons.items(), colors):
+              lengths_clipped = lengths[lengths < 50000]
+              if len(lengths_clipped) > 10:
+                  kde = stats.gaussian_kde(np.log10(lengths_clipped))
+                  x = np.linspace(2, 5, 200)
+                  ax.fill_between(x, kde(x), alpha=0.3, color=color, label=reason)
+                  ax.plot(x, kde(x), color=color, linewidth=2)
+
+          ax.set_xlabel('log10(Read Length)')
+          ax.set_ylabel('Density')
+          ax.set_title('Read Length Distribution by End Reason')
+          ax.legend()
+
+          # Bar plot of counts
+          ax = axes[0, 1]
+          reasons = list(end_reasons.keys())
+          counts = [len(v) for v in end_reasons.values()]
+          bars = ax.bar(range(len(reasons)), counts, color=colors)
+          ax.set_xticks(range(len(reasons)))
+          ax.set_xticklabels([r.replace('_', '\n') for r in reasons], fontsize=8)
+          ax.set_ylabel('Read Count')
+          ax.set_title('Read Counts by End Reason')
+
+          # Box plot
+          ax = axes[1, 0]
+          data = [np.log10(v[v < 50000]) for v in end_reasons.values()]
+          bp = ax.boxplot(data, patch_artist=True)
+          for patch, color in zip(bp['boxes'], colors):
+              patch.set_facecolor(color)
+              patch.set_alpha(0.5)
+          ax.set_xticklabels([r.replace('_', '\n') for r in reasons], fontsize=8)
+          ax.set_ylabel('log10(Read Length)')
+          ax.set_title('Read Length Distribution')
+
+          # Pie chart
+          ax = axes[1, 1]
+          ax.pie(counts, labels=reasons, colors=colors, autopct='%1.1f%%')
+          ax.set_title('End Reason Distribution')
+
+          plt.tight_layout()
+          plt.savefig('outputs/demo_kde.${{ inputs.output_format }}', dpi=${{ inputs.dpi }})
+          plt.close()
+
+          print('Generated: outputs/demo_kde.${{ inputs.output_format }}')
+
+          # Save stats
+          stats_data = {
+              'total_reads': sum(counts),
+              'by_end_reason': {k: len(v) for k, v in end_reasons.items()},
+              'mean_lengths': {k: float(np.mean(v)) for k, v in end_reasons.items()},
+              'median_lengths': {k: float(np.median(v)) for k, v in end_reasons.items()},
+          }
+          with open('outputs/demo_kde_stats.json', 'w') as f:
+              json.dump(stats_data, f, indent=2)
+          "
+
+          echo "![KDE Demo](outputs/demo_kde.${{ inputs.output_format }})" >> $GITHUB_STEP_SUMMARY
+
+      - name: Demo Pie Figure
+        if: inputs.task == 'demo-figure-pie'
+        run: |
+          echo "## End Reason Pie Chart Demo" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import matplotlib.pyplot as plt
+          import numpy as np
+
+          # Demo data
+          labels = ['Signal Positive', 'Signal Negative', 'Unblock Mux Change',
+                   'Data Service Unblock', 'Other']
+          sizes = [75, 15, 5, 3, 2]
+          colors = ['#2ecc71', '#e74c3c', '#3498db', '#9b59b6', '#95a5a6']
+          explode = (0.05, 0, 0, 0, 0)
+
+          fig, ax = plt.subplots(figsize=(10, 8))
+
+          wedges, texts, autotexts = ax.pie(
+              sizes, explode=explode, labels=labels, colors=colors,
+              autopct='%1.1f%%', shadow=True, startangle=90
+          )
+
+          ax.set_title('End Reason Distribution\n(Demo Data)', fontsize=14)
+
+          # Add legend
+          ax.legend(wedges, labels, title='End Reasons', loc='center left',
+                   bbox_to_anchor=(1, 0, 0.5, 1))
+
+          plt.tight_layout()
+          plt.savefig('outputs/demo_pie.${{ inputs.output_format }}', dpi=${{ inputs.dpi }})
+          plt.close()
+
+          print('Generated: outputs/demo_pie.${{ inputs.output_format }}')
+          "
+
+          echo "![Pie Demo](outputs/demo_pie.${{ inputs.output_format }})" >> $GITHUB_STEP_SUMMARY
+
+      - name: Demo QC Table
+        if: inputs.task == 'demo-table-qc'
+        run: |
+          echo "## QC Summary Table Demo" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import json
+          from pathlib import Path
+
+          # Demo QC data
+          qc_data = {
+              'experiment_id': 'exp-demo-001',
+              'quality_status': 'PASS',
+              'metrics': {
+                  'total_reads': 5000000,
+                  'total_bases': 25000000000,
+                  'signal_positive_pct': 78.5,
+                  'mean_qscore': 15.2,
+                  'median_qscore': 16.1,
+                  'n50': 12500,
+                  'longest_read': 156000,
+                  'pass_rate': 92.3,
+              },
+              'thresholds': {
+                  'signal_positive_pct': {'min': 70, 'status': 'PASS'},
+                  'mean_qscore': {'min': 10, 'status': 'PASS'},
+                  'n50': {'min': 5000, 'status': 'PASS'},
+              }
+          }
+
+          # Generate Markdown table
+          print('### QC Summary')
+          print('')
+          print('| Metric | Value | Threshold | Status |')
+          print('|--------|-------|-----------|--------|')
+
+          metrics = qc_data['metrics']
+          thresholds = qc_data['thresholds']
+
+          rows = [
+              ('Total Reads', f'{metrics[\"total_reads\"]:,}', '-', '-'),
+              ('Total Bases', f'{metrics[\"total_bases\"]/1e9:.1f} Gb', '-', '-'),
+              ('Signal Positive %', f'{metrics[\"signal_positive_pct\"]:.1f}%', '>=70%', '✅'),
+              ('Mean Q-score', f'{metrics[\"mean_qscore\"]:.1f}', '>=10', '✅'),
+              ('Median Q-score', f'{metrics[\"median_qscore\"]:.1f}', '-', '-'),
+              ('N50', f'{metrics[\"n50\"]:,} bp', '>=5,000', '✅'),
+              ('Longest Read', f'{metrics[\"longest_read\"]:,} bp', '-', '-'),
+              ('Pass Rate', f'{metrics[\"pass_rate\"]:.1f}%', '-', '-'),
+          ]
+
+          for row in rows:
+              print(f'| {row[0]} | {row[1]} | {row[2]} | {row[3]} |')
+
+          print('')
+          print(f'**Overall Status**: {qc_data[\"quality_status\"]}')
+
+          # Save as JSON
+          Path('outputs/demo_qc_table.json').write_text(json.dumps(qc_data, indent=2))
+
+          # Save as LaTeX
+          latex = r'''\\begin{table}[h]
+          \\centering
+          \\caption{QC Summary for exp-demo-001}
+          \\begin{tabular}{lrrr}
+          \\toprule
+          Metric & Value & Threshold & Status \\\\
+          \\midrule
+          Total Reads & 5,000,000 & - & - \\\\
+          Total Bases & 25.0 Gb & - & - \\\\
+          Signal Positive \\% & 78.5\\% & $\\geq$70\\% & PASS \\\\
+          Mean Q-score & 15.2 & $\\geq$10 & PASS \\\\
+          N50 & 12,500 bp & $\\geq$5,000 & PASS \\\\
+          \\bottomrule
+          \\end{tabular}
+          \\end{table}'''
+
+          Path('outputs/demo_qc_table.tex').write_text(latex)
+          print('')
+          print('Generated: outputs/demo_qc_table.json, outputs/demo_qc_table.tex')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Generate All Demos
+        if: inputs.task == 'generate-all-demos'
+        run: |
+          echo "## All Demo Outputs" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python -c "
+          import numpy as np
+          import matplotlib.pyplot as plt
+          from scipy import stats
+          import json
+          from pathlib import Path
+
+          np.random.seed(42)
+          outputs_dir = Path('outputs')
+          outputs_dir.mkdir(exist_ok=True)
+
+          print('### Generated Files')
+          print('')
+
+          # 1. KDE Plot
+          end_reasons = {
+              'signal_positive': np.random.lognormal(8.5, 0.8, 5000),
+              'signal_negative': np.random.lognormal(7.5, 1.0, 1000),
+              'unblock_mux_change': np.random.lognormal(6.0, 0.5, 300),
+          }
+
+          fig, ax = plt.subplots(figsize=(10, 6))
+          colors = ['#2ecc71', '#e74c3c', '#3498db']
+          for (reason, lengths), color in zip(end_reasons.items(), colors):
+              lengths_clipped = lengths[lengths < 50000]
+              kde = stats.gaussian_kde(np.log10(lengths_clipped))
+              x = np.linspace(2, 5, 200)
+              ax.fill_between(x, kde(x), alpha=0.3, color=color, label=reason)
+          ax.set_xlabel('log10(Read Length)')
+          ax.set_ylabel('Density')
+          ax.legend()
+          ax.set_title('Read Length KDE by End Reason')
+          plt.savefig(outputs_dir / 'fig_kde.png', dpi=150)
+          plt.close()
+          print('- fig_kde.png')
+
+          # 2. Pie Chart
+          fig, ax = plt.subplots(figsize=(8, 8))
+          sizes = [75, 15, 10]
+          ax.pie(sizes, labels=list(end_reasons.keys()), colors=colors, autopct='%1.1f%%')
+          ax.set_title('End Reason Distribution')
+          plt.savefig(outputs_dir / 'fig_pie.png', dpi=150)
+          plt.close()
+          print('- fig_pie.png')
+
+          # 3. Box Plot
+          fig, ax = plt.subplots(figsize=(10, 6))
+          data = [np.log10(v[v < 50000]) for v in end_reasons.values()]
+          bp = ax.boxplot(data, patch_artist=True)
+          for patch, color in zip(bp['boxes'], colors):
+              patch.set_facecolor(color)
+              patch.set_alpha(0.5)
+          ax.set_xticklabels(list(end_reasons.keys()))
+          ax.set_ylabel('log10(Read Length)')
+          ax.set_title('Read Length Distribution')
+          plt.savefig(outputs_dir / 'fig_boxplot.png', dpi=150)
+          plt.close()
+          print('- fig_boxplot.png')
+
+          # 4. Quality Distribution
+          fig, ax = plt.subplots(figsize=(10, 6))
+          qscores = np.random.normal(15, 3, 10000)
+          qscores = qscores[qscores > 0]
+          ax.hist(qscores, bins=50, color='#3498db', alpha=0.7, edgecolor='black')
+          ax.axvline(x=10, color='red', linestyle='--', label='Q10 threshold')
+          ax.set_xlabel('Q-score')
+          ax.set_ylabel('Count')
+          ax.set_title('Q-score Distribution')
+          ax.legend()
+          plt.savefig(outputs_dir / 'fig_qscore.png', dpi=150)
+          plt.close()
+          print('- fig_qscore.png')
+
+          # 5. N50 Bar Plot
+          fig, ax = plt.subplots(figsize=(10, 6))
+          samples = ['Sample A', 'Sample B', 'Sample C', 'Sample D']
+          n50_values = [12500, 15000, 8500, 18000]
+          bars = ax.bar(samples, n50_values, color=['#2ecc71', '#3498db', '#e74c3c', '#9b59b6'])
+          ax.axhline(y=10000, color='gray', linestyle='--', label='Target N50')
+          ax.set_ylabel('N50 (bp)')
+          ax.set_title('N50 Comparison')
+          ax.legend()
+          plt.savefig(outputs_dir / 'fig_n50.png', dpi=150)
+          plt.close()
+          print('- fig_n50.png')
+
+          # 6. QC Summary JSON
+          qc_summary = {
+              'experiment': 'demo-exp-001',
+              'status': 'PASS',
+              'metrics': {
+                  'total_reads': 5000000,
+                  'signal_positive_pct': 78.5,
+                  'mean_qscore': 15.2,
+                  'n50': 12500
+              }
+          }
+          (outputs_dir / 'tbl_qc_summary.json').write_text(json.dumps(qc_summary, indent=2))
+          print('- tbl_qc_summary.json')
+
+          # 7. Comparison table
+          comparison = {
+              'samples': ['Sample A', 'Sample B', 'Sample C'],
+              'metrics': {
+                  'n50': [12500, 15000, 8500],
+                  'mean_qscore': [15.2, 16.1, 14.5],
+                  'signal_positive_pct': [78.5, 82.3, 71.2]
+              }
+          }
+          (outputs_dir / 'tbl_comparison.json').write_text(json.dumps(comparison, indent=2))
+          print('- tbl_comparison.json')
+
+          print('')
+          print(f'Total: 7 files generated')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: manuscript-output-${{ inputs.task }}
+          path: |
+            outputs/
+          if-no-files-found: ignore

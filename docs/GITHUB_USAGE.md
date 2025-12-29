@@ -147,7 +147,7 @@ PR Created → GitHub Actions → Tests Run → Results Posted
 ```
 MAJOR.MINOR.PATCH
 
-Current: v2.3.0
+Current: v3.0.0
 - MAJOR: Breaking API changes
 - MINOR: New features (e.g., KDE visualization)
 - PATCH: Bug fixes

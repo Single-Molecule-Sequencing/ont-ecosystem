@@ -260,6 +260,14 @@ class ReportGenerator:
 
         return info
 
+    def _get_package_version(self, package_name: str) -> Optional[str]:
+        """Get package version using importlib.metadata (future-proof method)"""
+        try:
+            import importlib.metadata
+            return importlib.metadata.version(package_name)
+        except Exception:
+            return None
+
     def _get_dependencies_info(self) -> Dict[str, Any]:
         """Get Python dependencies info"""
         dependencies = {
@@ -268,51 +276,29 @@ class ReportGenerator:
         }
 
         # Core dependencies
-        core_packages = [
-            ("pyyaml", "yaml"),
-            ("jsonschema", "jsonschema"),
-        ]
+        core_packages = ["pyyaml", "jsonschema"]
 
-        for package, module in core_packages:
-            try:
-                mod = __import__(module)
-                version = getattr(mod, "__version__", "unknown")
-                dependencies["core"].append({
-                    "name": package,
-                    "installed": True,
-                    "version": version,
-                })
-            except ImportError:
-                dependencies["core"].append({
-                    "name": package,
-                    "installed": False,
-                })
+        for package in core_packages:
+            version = self._get_package_version(package)
+            dependencies["core"].append({
+                "name": package,
+                "installed": version is not None,
+                "version": version or "unknown",
+            })
 
         # Optional dependencies
         optional_packages = [
-            ("numpy", "numpy"),
-            ("pandas", "pandas"),
-            ("matplotlib", "matplotlib"),
-            ("pysam", "pysam"),
-            ("edlib", "edlib"),
-            ("pod5", "pod5"),
-            ("h5py", "h5py"),
+            "numpy", "pandas", "matplotlib", "pysam",
+            "edlib", "pod5", "h5py"
         ]
 
-        for package, module in optional_packages:
-            try:
-                mod = __import__(module)
-                version = getattr(mod, "__version__", "unknown")
-                dependencies["optional"].append({
-                    "name": package,
-                    "installed": True,
-                    "version": version,
-                })
-            except ImportError:
-                dependencies["optional"].append({
-                    "name": package,
-                    "installed": False,
-                })
+        for package in optional_packages:
+            version = self._get_package_version(package)
+            dependencies["optional"].append({
+                "name": package,
+                "installed": version is not None,
+                "version": version or "not installed",
+            })
 
         return dependencies
 
