@@ -1,0 +1,1983 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>ONT Registry - 275 Experiments</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f5f5f5;padding:20px}
+.container{max-width:1600px;margin:0 auto}
+header{background:linear-gradient(135deg,#1a237e,#311b92);color:#fff;padding:25px;border-radius:10px;margin-bottom:20px}
+h1{font-size:1.8rem}
+.stats{display:flex;gap:30px;margin-top:10px;font-size:0.95rem;opacity:0.9}
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.sum-card{background:#fff;padding:15px;border-radius:8px;text-align:center}
+.sum-card .num{font-size:2rem;font-weight:700;color:#1a237e}
+.sum-card .lbl{font-size:0.8rem;color:#666;text-transform:uppercase}
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px;padding:12px;background:#fff;border-radius:8px}
+.btn{padding:6px 14px;border:2px solid #ddd;border-radius:18px;background:#fff;cursor:pointer;font-size:0.85rem}
+.btn:hover{border-color:#999}
+.btn.active{background:#1a237e;color:#fff;border-color:#1a237e}
+.search{flex:1;min-width:200px;padding:8px 14px;border:2px solid #ddd;border-radius:18px;font-size:0.9rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px}
+.card{background:#fff;border-radius:8px;overflow:hidden;border-left:3px solid #1a237e}
+.card-head{padding:10px 12px;background:#f8f9fa;display:flex;justify-content:space-between;align-items:center}
+.name{font-weight:600;font-size:0.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.badge{padding:2px 8px;border-radius:10px;font-size:0.7rem;font-weight:600;color:#fff}
+.badge.promethion{background:#1565c0}
+.badge.minion{background:#2e7d32}
+.badge.unknown{background:#9e9e9e}
+.card-body{padding:10px 12px}
+.row{display:flex;gap:8px;font-size:0.85rem;margin-bottom:4px}
+.lbl{color:#888;min-width:45px}
+.val{font-family:monospace;font-size:0.8rem}
+.files{font-size:0.8rem;color:#666;padding:6px 0;border-top:1px solid #eee;margin-top:6px}
+.loc{display:flex;align-items:center;gap:6px;font-size:0.75rem;color:#888;margin-top:4px}
+.src{padding:1px 6px;border-radius:6px;font-size:0.65rem;font-weight:600;color:#fff}
+.src.greatlakes{background:#0277bd}
+.src.local{background:#2e7d32}
+footer{margin-top:30px;text-align:center;color:#888;font-size:0.85rem}
+</style></head>
+<body><div class="container">
+<header><h1>ONT Experiment Registry</h1>
+<div class="stats"><span>275 experiments</span><span>265 Great Lakes</span><span>15 Local</span><span>Updated 2025-12-29</span></div></header>
+<div class="summary">
+<div class="sum-card"><div class="num">275</div><div class="lbl">Total</div></div>
+<div class="sum-card"><div class="num">265</div><div class="lbl">Great Lakes</div></div>
+<div class="sum-card"><div class="num">15</div><div class="lbl">Local</div></div>
+</div>
+<div class="controls">
+<input type="text" class="search" placeholder="Search..." onkeyup="search(this.value)">
+<button class="btn active" onclick="filter('all',this)">All</button>
+<button class="btn" onclick="filter('greatlakes',this)">Great Lakes</button>
+<button class="btn" onclick="filter('local',this)">Local</button>
+</div>
+<div class="grid" id="grid"><div class="card" data-source="local" data-platform="minion">
+<div class="card-head"><span class="name">12282025_IF_DoubleBC_SMA_seq</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD69411</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-12-28T21:01</span></div>
+<div class="files">POD5:12 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src local">LOCAL</span>~/12282025_IF_DoubleBC_SMA_seq</div>
+</div></div><div class="card" data-source="local" data-platform="minion">
+<div class="card-head"><span class="name">12232025_IF_DoubleBC_SMA_seq</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD71150</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-12-23T19:19</span></div>
+<div class="files">POD5:875 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src local">LOCAL</span>~/12232025_IF_DoubleBC_SMA_seq</div>
+</div></div><div class="card" data-source="local" data-platform="minion">
+<div class="card-head"><span class="name">12182025_IF_NewBCPart4_Ex3_SMA_seq</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD41125</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-12-18T23:09</span></div>
+<div class="files">POD5:510 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src local">LOCAL</span>~/12182025_IF_NewBCPart4_Ex3_SMA_seq</div>
+</div></div><div class="card" data-source="local" data-platform="minion">
+<div class="card-head"><span class="name">12182025_IF_NewBCPart4_Ex2_SMA_seq</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD68979</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-12-18T23:08</span></div>
+<div class="files">POD5:460 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src local">LOCAL</span>~/12182025_IF_NewBCPart4_Ex2_SMA_seq</div>
+</div></div><div class="card" data-source="local" data-platform="minion">
+<div class="card-head"><span class="name">12182025_IF_NewBCPart4_Ex1_SMA_seq</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD69036</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-12-18T23:07</span></div>
+<div class="files">POD5:497 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src local">LOCAL</span>~/12182025_IF_NewBCPart4_Ex1_SMA_seq</div>
+</div></div><div class="card" data-source="local" data-platform="minion">
+<div class="card-head"><span class="name">12082025_IF_NewBCPart4_SMA_seq</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD70608</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-12-08T21:40</span></div>
+<div class="files">POD5:510 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src local">LOCAL</span>~/12082025_IF_NewBCPart4_SMA_seq</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">12082025_IF_NewBCPart4_SMA_seq</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD70608</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-12-08T21:40</span></div>
+<div class="files">POD5:510 Fast5:0 FASTQ:437 BAM:437</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/12082</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">11242025_IF_Part4_CIP_Treated_SMA_seq</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD68976</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-11-24T20:40</span></div>
+<div class="files">POD5:1280 Fast5:0 FASTQ:1288 BAM:1288</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/11242</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">11242025_IF_Part4_CIP_Treated_SMA_seq</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD68976</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-11-24T20:40</span></div>
+<div class="files">POD5:1280 Fast5:0 FASTQ:1288 BAM:1288</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/11242025_IF_Pa</div>
+</div></div><div class="card" data-source="local" data-platform="minion">
+<div class="card-head"><span class="name">11242025_IF_Part4_SMA_seq</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD64739</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-11-24T20:37</span></div>
+<div class="files">POD5:1386 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src local">LOCAL</span>~/11242025_IF_Part4_SMA_seq</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">11242025_IF_Part4_SMA_seq</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD64739</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-11-24T20:37</span></div>
+<div class="files">POD5:1386 Fast5:0 FASTQ:1314 BAM:1314</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/11242</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">10092025_IF_methyl_minus_SMA_seq</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD68986</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-10-09T18:47</span></div>
+<div class="files">POD5:743 Fast5:0 FASTQ:676 BAM:676</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/10092025_IF_me</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">IF_SMAseq_9_11_continuted</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD70249</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-09-15T08:40</span></div>
+<div class="files">POD5:550 Fast5:0 FASTQ:525 BAM:525</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/IF_SMAseq_9_11</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">IF_SMAseq_9_11_continuted</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD70249</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-09-15T08:40</span></div>
+<div class="files">POD5:550 Fast5:0 FASTQ:525 BAM:525</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/IF_SM</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">IF_SMAseq_09112025</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD70249</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-09-11T18:48</span></div>
+<div class="files">POD5:1612 Fast5:0 FASTQ:1541 BAM:1541</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/IF_SM</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">IF_SMAseq_09112025</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD70249</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-09-11T18:48</span></div>
+<div class="files">POD5:1612 Fast5:0 FASTQ:1541 BAM:1541</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/IF_SMAseq_0911</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="unknown">
+<div class="card-head"><span class="name">promA-439</span><span class="badge unknown">Unkn</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">PBE94194</span><span class="lbl">Dev:</span><span class="val">PCA100175</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-09-11T11:40</span></div>
+<div class="files">POD5:1394 Fast5:0 FASTQ:1347 BAM:1347</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/AGC/14400-CZ-4/20250911_1134_2H_PBE94194_a</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="unknown">
+<div class="card-head"><span class="name">promA-438</span><span class="badge unknown">Unkn</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">PBE94171</span><span class="lbl">Dev:</span><span class="val">PCA100175</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-09-11T11:39</span></div>
+<div class="files">POD5:1221 Fast5:0 FASTQ:1164 BAM:1164</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/AGC/14400-CZ-3/20250911_1133_2F_PBE94171_b</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="unknown">
+<div class="card-head"><span class="name">PromA-437</span><span class="badge unknown">Unkn</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">PBE79024</span><span class="lbl">Dev:</span><span class="val">PCA100175</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-09-11T11:38</span></div>
+<div class="files">POD5:1318 Fast5:0 FASTQ:1264 BAM:1264</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/AGC/14400-CZ-2/20250911_1132_2D_PBE79024_a</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="unknown">
+<div class="card-head"><span class="name">promA-436</span><span class="badge unknown">Unkn</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">PBE83775</span><span class="lbl">Dev:</span><span class="val">PCA100175</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-09-11T11:37</span></div>
+<div class="files">POD5:1621 Fast5:0 FASTQ:1590 BAM:1590</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/AGC/14400-CZ-1/20250911_1131_2B_PBE83775_c</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">Sept_9_GFMH_Multiplex_600ng</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD66370</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-09-09T15:58</span></div>
+<div class="files">POD5:531 Fast5:0 FASTQ:2467 BAM:2467</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/Sept_</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">Sept_9_GFMH_Multiplex_600ng</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD66370</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-09-09T15:58</span></div>
+<div class="files">POD5:531 Fast5:0 FASTQ:7247 BAM:7247</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Sept_9_GFMH_Mu</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">GF_MH_8plex_600ng_sept8</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD68942</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-09-08T17:10</span></div>
+<div class="files">POD5:256 Fast5:0 FASTQ:1228 BAM:1228</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/GF_MH</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">GF_MH_8plex_600ng_sept8</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD68942</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-09-08T17:10</span></div>
+<div class="files">POD5:256 Fast5:0 FASTQ:1228 BAM:1228</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/GF_MH_8plex_60</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">GF_MH_8plex_600ng_sept8</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD68942</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-09-08T16:50</span></div>
+<div class="files">POD5:0 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/GF_MH</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">GF_MH_8plex_600ng_sept8</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD68942</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-09-08T16:50</span></div>
+<div class="files">POD5:0 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/GF_MH_8plex_60</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">GF_MH_8plex_600ng_sept8</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD68942</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-09-08T16:36</span></div>
+<div class="files">POD5:0 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/GF_MH</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">GF_MH_8plex_600ng_sept8</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD68942</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-09-08T16:36</span></div>
+<div class="files">POD5:0 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/GF_MH_8plex_60</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">09042025_IF_SMA_seq</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD71401</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-09-04T20:07</span></div>
+<div class="files">POD5:1604 Fast5:0 FASTQ:1533 BAM:1533</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/09042</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="unknown">
+<div class="card-head"><span class="name">promA-434</span><span class="badge unknown">Unkn</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">PBE83786</span><span class="lbl">Dev:</span><span class="val">PCA100175</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-09-03T14:08</span></div>
+<div class="files">POD5:44 Fast5:0 FASTQ:856 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/AGC/14309-CZ-2/20250903_1402_1H_PBE83786_4</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="unknown">
+<div class="card-head"><span class="name">promA-434</span><span class="badge unknown">Unkn</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">PBE83786</span><span class="lbl">Dev:</span><span class="val">PCA100175</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-09-03T14:08</span></div>
+<div class="files">POD5:44 Fast5:0 FASTQ:856 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/AGC/1</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="unknown">
+<div class="card-head"><span class="name">promA-434</span><span class="badge unknown">Unkn</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">PBE83786</span><span class="lbl">Dev:</span><span class="val">PCA100175</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-09-02T12:29</span></div>
+<div class="files">POD5:41 Fast5:0 FASTQ:598 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/AGC/14309-CZ-2/20250902_1223_1H_PBE83786_d</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="unknown">
+<div class="card-head"><span class="name">promA-434</span><span class="badge unknown">Unkn</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">PBE83786</span><span class="lbl">Dev:</span><span class="val">PCA100175</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-09-02T12:29</span></div>
+<div class="files">POD5:41 Fast5:0 FASTQ:598 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/AGC/1</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="unknown">
+<div class="card-head"><span class="name">promA-433</span><span class="badge unknown">Unkn</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">PBE83770</span><span class="lbl">Dev:</span><span class="val">PCA100175</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-09-02T12:28</span></div>
+<div class="files">POD5:90 Fast5:0 FASTQ:1647 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/AGC/14309-CZ-1/20250902_1221_1F_PBE83770_2</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="unknown">
+<div class="card-head"><span class="name">promA-433</span><span class="badge unknown">Unkn</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">PBE83770</span><span class="lbl">Dev:</span><span class="val">PCA100175</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-09-02T12:28</span></div>
+<div class="files">POD5:90 Fast5:0 FASTQ:1647 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/AGC/1</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">PGx_AS_8plex_1ug_4greg_4monica</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD66456</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-25T17:43</span></div>
+<div class="files">POD5:761 Fast5:0 FASTQ:3711 BAM:3711</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/PGx_A</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">PGx_AS_8plex_1ug_4greg_4monica</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD66456</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-25T17:43</span></div>
+<div class="files">POD5:761 Fast5:0 FASTQ:3711 BAM:3711</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/PGx_AS_8plex_1</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">081920205_IF_Pilot_SMA_seq</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD65978</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-22T20:27</span></div>
+<div class="files">POD5:0 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/081920205_IF_P</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">081920205_IF_Pilot_SMA_seq</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD65978</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-22T20:27</span></div>
+<div class="files">POD5:0 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/08192</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">081920205_IF_Pilot_SMA_seq</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD65978</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-21T19:13</span></div>
+<div class="files">POD5:146 Fast5:0 FASTQ:753 BAM:753</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/081920205_IF_P</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">081920205_IF_Pilot_SMA_seq</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD65978</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-21T19:13</span></div>
+<div class="files">POD5:146 Fast5:0 FASTQ:753 BAM:753</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/08192</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">081920205_IF_Pilot_SMA_seq</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD65978</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-19T20:57</span></div>
+<div class="files">POD5:528 Fast5:0 FASTQ:482 BAM:469</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/081920205_IF_P</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">081920205_IF_Pilot_SMA_seq</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD65978</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-19T20:57</span></div>
+<div class="files">POD5:528 Fast5:0 FASTQ:482 BAM:469</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/08192</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD41116</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-12T04:37</span></div>
+<div class="files">POD5:57 Fast5:0 FASTQ:510 BAM:482</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/human_targeted</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD41116</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-12T04:37</span></div>
+<div class="files">POD5:57 Fast5:0 FASTQ:510 BAM:482</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD41116</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-12T00:45</span></div>
+<div class="files">POD5:3 Fast5:0 FASTQ:17 BAM:17</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/human_targeted</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD41116</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-12T00:45</span></div>
+<div class="files">POD5:3 Fast5:0 FASTQ:17 BAM:17</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD41116</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-11T13:48</span></div>
+<div class="files">POD5:11 Fast5:0 FASTQ:11 BAM:11</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/human_targeted</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD41116</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-11T13:48</span></div>
+<div class="files">POD5:11 Fast5:0 FASTQ:11 BAM:11</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD41116</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-11T13:48</span></div>
+<div class="files">POD5:11 Fast5:0 FASTQ:11 BAM:11</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/2025_aug_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD59608</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-08T17:49</span></div>
+<div class="files">POD5:66 Fast5:0 FASTQ:64 BAM:64</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/human_targeted</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD59608</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-08T17:49</span></div>
+<div class="files">POD5:66 Fast5:0 FASTQ:64 BAM:64</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD59608</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-08T17:49</span></div>
+<div class="files">POD5:66 Fast5:0 FASTQ:64 BAM:64</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/2025_aug_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD42617</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-08T17:49</span></div>
+<div class="files">POD5:65 Fast5:0 FASTQ:64 BAM:64</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/human_targeted</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD42617</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-08T17:49</span></div>
+<div class="files">POD5:65 Fast5:0 FASTQ:64 BAM:64</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD42617</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-08T17:49</span></div>
+<div class="files">POD5:65 Fast5:0 FASTQ:64 BAM:64</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/2025_aug_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD43923</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-08T17:49</span></div>
+<div class="files">POD5:66 Fast5:0 FASTQ:64 BAM:64</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/human_targeted</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD43923</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-08T17:49</span></div>
+<div class="files">POD5:66 Fast5:0 FASTQ:64 BAM:64</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD43923</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-08T17:49</span></div>
+<div class="files">POD5:66 Fast5:0 FASTQ:64 BAM:64</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/2025_aug_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD42617</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-08T12:20</span></div>
+<div class="files">POD5:7 Fast5:0 FASTQ:6 BAM:6</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/human_targeted</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD42617</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-08T12:20</span></div>
+<div class="files">POD5:7 Fast5:0 FASTQ:6 BAM:6</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD42617</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-08T12:20</span></div>
+<div class="files">POD5:7 Fast5:0 FASTQ:6 BAM:6</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/2025_aug_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD43923</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-08T12:20</span></div>
+<div class="files">POD5:7 Fast5:0 FASTQ:6 BAM:6</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/human_targeted</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD43923</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-08T12:20</span></div>
+<div class="files">POD5:7 Fast5:0 FASTQ:6 BAM:6</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD43923</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-08T12:20</span></div>
+<div class="files">POD5:7 Fast5:0 FASTQ:6 BAM:6</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/2025_aug_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="unknown">
+<div class="card-head"><span class="name">promA-419</span><span class="badge unknown">Unkn</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">PBE94856</span><span class="lbl">Dev:</span><span class="val">PCA100175</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-05T11:31</span></div>
+<div class="files">POD5:72 Fast5:0 FASTQ:146 BAM:146</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/AGC/14136-CZ-2/20250805_1125_2E_PBE94856_5</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="unknown">
+<div class="card-head"><span class="name">promA-419</span><span class="badge unknown">Unkn</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">PBE94856</span><span class="lbl">Dev:</span><span class="val">PCA100175</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-05T11:31</span></div>
+<div class="files">POD5:72 Fast5:0 FASTQ:146 BAM:158</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/14136-CZ-2/202</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="unknown">
+<div class="card-head"><span class="name">promA-419</span><span class="badge unknown">Unkn</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">PBE94856</span><span class="lbl">Dev:</span><span class="val">PCA100175</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-05T11:31</span></div>
+<div class="files">POD5:72 Fast5:0 FASTQ:146 BAM:146</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/AGC/1</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="unknown">
+<div class="card-head"><span class="name">promA-418</span><span class="badge unknown">Unkn</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">PBE95110</span><span class="lbl">Dev:</span><span class="val">PCA100175</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-05T11:30</span></div>
+<div class="files">POD5:72 Fast5:0 FASTQ:146 BAM:296</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/AGC/14136-CZ-1/20250805_1124_1E_PBE95110_a</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="unknown">
+<div class="card-head"><span class="name">promA-418</span><span class="badge unknown">Unkn</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">PBE95110</span><span class="lbl">Dev:</span><span class="val">PCA100175</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-05T11:30</span></div>
+<div class="files">POD5:72 Fast5:0 FASTQ:146 BAM:296</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/AGC/1</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="unknown">
+<div class="card-head"><span class="name">promA-418</span><span class="badge unknown">Unkn</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">PBE95110</span><span class="lbl">Dev:</span><span class="val">PCA100175</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-05T11:30</span></div>
+<div class="files">POD5:72 Fast5:0 FASTQ:146 BAM:308</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/14136-CZ-1/202</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_sequencing_human_CYP2D6</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD19324</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-01T10:36</span></div>
+<div class="files">POD5:35 Fast5:0 FASTQ:207 BAM:207</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/targe</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_sequencing_human_CYP2D6</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD19324</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-01T10:36</span></div>
+<div class="files">POD5:35 Fast5:0 FASTQ:207 BAM:207</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/2025_aug_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_sequencing_human_CYP2D6</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD14190</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-01T10:36</span></div>
+<div class="files">POD5:35 Fast5:0 FASTQ:207 BAM:207</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/targe</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_sequencing_human_CYP2D6</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD14190</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-08-01T10:36</span></div>
+<div class="files">POD5:35 Fast5:0 FASTQ:207 BAM:207</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/2025_aug_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD19324</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-31T11:35</span></div>
+<div class="files">POD5:0 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/human_targeted</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD19324</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-31T11:35</span></div>
+<div class="files">POD5:0 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD19324</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-31T11:35</span></div>
+<div class="files">POD5:0 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/2025_aug_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD19324</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-30T18:24</span></div>
+<div class="files">POD5:13 Fast5:0 FASTQ:13 BAM:13</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/human_targeted</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD19324</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-30T18:24</span></div>
+<div class="files">POD5:13 Fast5:0 FASTQ:13 BAM:13</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD19324</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-30T18:24</span></div>
+<div class="files">POD5:13 Fast5:0 FASTQ:13 BAM:15</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/2025_aug_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD21037</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-25T16:42</span></div>
+<div class="files">POD5:30 Fast5:0 FASTQ:30 BAM:30</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/human_targeted</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD21037</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-25T16:42</span></div>
+<div class="files">POD5:30 Fast5:0 FASTQ:30 BAM:30</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD21037</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-25T16:42</span></div>
+<div class="files">POD5:30 Fast5:0 FASTQ:30 BAM:30</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/2025_aug_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD23216</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-24T17:03</span></div>
+<div class="files">POD5:23 Fast5:0 FASTQ:23 BAM:23</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD23216</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-24T17:03</span></div>
+<div class="files">POD5:23 Fast5:0 FASTQ:23 BAM:23</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/2025_aug_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD23216</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-24T17:03</span></div>
+<div class="files">POD5:23 Fast5:0 FASTQ:23 BAM:23</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/greg_4x_L1_jul</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD20720</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-24T17:03</span></div>
+<div class="files">POD5:54 Fast5:0 FASTQ:54 BAM:54</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD20720</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-24T17:03</span></div>
+<div class="files">POD5:54 Fast5:0 FASTQ:54 BAM:54</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/greg_4x_L1_sva</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD20720</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-24T17:03</span></div>
+<div class="files">POD5:54 Fast5:0 FASTQ:54 BAM:54</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/2025_aug_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD20746</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-24T17:03</span></div>
+<div class="files">POD5:54 Fast5:0 FASTQ:54 BAM:54</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD20746</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-24T17:03</span></div>
+<div class="files">POD5:54 Fast5:0 FASTQ:54 BAM:54</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/monica_2_15_ju</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD20746</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-24T17:03</span></div>
+<div class="files">POD5:54 Fast5:0 FASTQ:54 BAM:54</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/2025_aug_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD32305</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-22T13:52</span></div>
+<div class="files">POD5:47 Fast5:0 FASTQ:47 BAM:47</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/human_targeted</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD32305</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-22T13:52</span></div>
+<div class="files">POD5:47 Fast5:0 FASTQ:47 BAM:47</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD32305</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-22T13:52</span></div>
+<div class="files">POD5:47 Fast5:0 FASTQ:47 BAM:47</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/2025_aug_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD16857</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-22T13:52</span></div>
+<div class="files">POD5:47 Fast5:0 FASTQ:47 BAM:47</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/human_targeted</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD16857</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-22T13:52</span></div>
+<div class="files">POD5:47 Fast5:0 FASTQ:47 BAM:47</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD16857</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-22T13:52</span></div>
+<div class="files">POD5:47 Fast5:0 FASTQ:47 BAM:47</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/2025_aug_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD32310</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-22T13:52</span></div>
+<div class="files">POD5:47 Fast5:0 FASTQ:47 BAM:47</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/human_targeted</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD32310</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-22T13:52</span></div>
+<div class="files">POD5:47 Fast5:0 FASTQ:47 BAM:47</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">human_targeted_seq_cyp</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD32310</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-22T13:52</span></div>
+<div class="files">POD5:47 Fast5:0 FASTQ:47 BAM:47</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/2025_aug_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_sequencing_human_CYP2D6</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD20887</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-17T15:57</span></div>
+<div class="files">POD5:23 Fast5:0 FASTQ:138 BAM:138</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/targe</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_sequencing_human_CYP2D6</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD20887</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-17T15:57</span></div>
+<div class="files">POD5:23 Fast5:0 FASTQ:138 BAM:138</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/2025_aug_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_sequencing_human_CYP2D6</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD16702</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-17T15:57</span></div>
+<div class="files">POD5:14 Fast5:0 FASTQ:138 BAM:138</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/targe</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_sequencing_human_CYP2D6</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD16702</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-17T15:57</span></div>
+<div class="files">POD5:14 Fast5:0 FASTQ:138 BAM:138</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/2025_aug_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_sequencing_human_CYP2D6</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD16671</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-16T16:00</span></div>
+<div class="files">POD5:23 Fast5:0 FASTQ:136 BAM:136</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/targe</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_sequencing_human_CYP2D6</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD16671</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-16T16:00</span></div>
+<div class="files">POD5:23 Fast5:0 FASTQ:136 BAM:136</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/2025_aug_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_sequencing_human_CYP2D6</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBC98609</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-16T16:00</span></div>
+<div class="files">POD5:21 Fast5:0 FASTQ:126 BAM:126</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/targe</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_sequencing_human_CYP2D6</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBC98609</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-16T16:00</span></div>
+<div class="files">POD5:21 Fast5:0 FASTQ:126 BAM:126</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/2025_aug_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_sequencing_human_CYP2D6</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD09105</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-16T16:00</span></div>
+<div class="files">POD5:23 Fast5:0 FASTQ:136 BAM:136</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/targe</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_sequencing_human_CYP2D6</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD09105</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-16T16:00</span></div>
+<div class="files">POD5:23 Fast5:0 FASTQ:136 BAM:136</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/2025_aug_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_sequencing_human_CYP2D6</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD10988</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-14T22:09</span></div>
+<div class="files">POD5:16 Fast5:0 FASTQ:93 BAM:93</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/targe</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_sequencing_human_CYP2D6</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD10988</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-14T22:09</span></div>
+<div class="files">POD5:16 Fast5:0 FASTQ:93 BAM:93</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/2025_aug_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_sequencing_human_CYP2D6</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBC97882</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-14T22:09</span></div>
+<div class="files">POD5:16 Fast5:0 FASTQ:94 BAM:94</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/targe</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_sequencing_human_CYP2D6</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBC97882</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-14T22:09</span></div>
+<div class="files">POD5:16 Fast5:0 FASTQ:94 BAM:94</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/2025_aug_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_sequencing_human_CYP2D6</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD10988</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-14T14:57</span></div>
+<div class="files">POD5:4 Fast5:0 FASTQ:21 BAM:21</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/targe</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_sequencing_human_CYP2D6</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD10988</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-14T14:57</span></div>
+<div class="files">POD5:4 Fast5:0 FASTQ:21 BAM:21</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/2025_aug_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_sequencing_human_CYP2D6</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD10988</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-14T14:57</span></div>
+<div class="files">POD5:4 Fast5:0 FASTQ:21 BAM:21</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/targeted_seque</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_sequencing_human_CYP2D6</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBC97882</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-14T14:57</span></div>
+<div class="files">POD5:4 Fast5:0 FASTQ:21 BAM:21</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/targe</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_sequencing_human_CYP2D6</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBC97882</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-14T14:57</span></div>
+<div class="files">POD5:4 Fast5:0 FASTQ:21 BAM:21</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/2025_aug_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_sequencing_human_CYP2D6</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBC97882</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-14T14:57</span></div>
+<div class="files">POD5:4 Fast5:0 FASTQ:21 BAM:21</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/targeted_seque</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">WGS_LSK_human</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBC98389</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-14T00:55</span></div>
+<div class="files">POD5:1 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/WGS_L</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">WGS_LSK_human</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBC98389</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-14T00:55</span></div>
+<div class="files">POD5:1 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/WGS_LSK_human/</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">WGS_LSK_human</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBC98389</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-14T00:55</span></div>
+<div class="files">POD5:1 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/2025_aug_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">WGS_LSK_human</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD19495</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-14T00:54</span></div>
+<div class="files">POD5:60 Fast5:0 FASTQ:359 BAM:359</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/WGS_L</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">WGS_LSK_human</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD19495</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-14T00:54</span></div>
+<div class="files">POD5:60 Fast5:0 FASTQ:359 BAM:359</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/2025_aug_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">WGS_LSK_human</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD19495</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-14T00:52</span></div>
+<div class="files">POD5:0 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/WGS_L</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">WGS_LSK_human</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD19495</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-14T00:52</span></div>
+<div class="files">POD5:0 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/WGS_LSK_human/</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">WGS_LSK_human</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD19495</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-14T00:52</span></div>
+<div class="files">POD5:0 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/2025_aug_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">WGS_LSK_human</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD19495</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-13T21:18</span></div>
+<div class="files">POD5:4 Fast5:0 FASTQ:17 BAM:17</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/WGS_L</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">WGS_LSK_human</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD19495</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-13T21:18</span></div>
+<div class="files">POD5:4 Fast5:0 FASTQ:17 BAM:17</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/WGS_LSK_human/</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">WGS_LSK_human</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD19495</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-13T21:18</span></div>
+<div class="files">POD5:4 Fast5:0 FASTQ:17 BAM:17</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/2025_aug_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_sequencing_human_CYP2D6</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD20303</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-10T16:10</span></div>
+<div class="files">POD5:60 Fast5:0 FASTQ:356 BAM:356</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/targe</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_sequencing_human_CYP2D6</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD20303</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-10T16:10</span></div>
+<div class="files">POD5:60 Fast5:0 FASTQ:356 BAM:356</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/2025_aug_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_sequencing_human_CYP2D6</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBD20303</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-10T16:10</span></div>
+<div class="files">POD5:60 Fast5:0 FASTQ:356 BAM:356</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/targeted_seque</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_sequencing_human_CYP2D6</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBC98389</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-10T16:10</span></div>
+<div class="files">POD5:60 Fast5:0 FASTQ:356 BAM:356</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Fall2025/targe</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_sequencing_human_CYP2D6</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBC98389</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-10T16:10</span></div>
+<div class="files">POD5:60 Fast5:0 FASTQ:356 BAM:356</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/2025_aug_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_sequencing_human_CYP2D6</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBC98389</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-10T16:10</span></div>
+<div class="files">POD5:60 Fast5:0 FASTQ:356 BAM:356</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/targeted_seque</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_sequencing_flongles_CZ_NS</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AWF169</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-09T17:41</span></div>
+<div class="files">POD5:12 Fast5:0 FASTQ:54 BAM:54</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/targeted_seque</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_sequencing_flongles_CZ_NS</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AZL278</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-09T17:41</span></div>
+<div class="files">POD5:22 Fast5:0 FASTQ:129 BAM:129</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/targeted_seque</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_sequencing_flongles_CZ_NS</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AWG220</span><span class="lbl">Dev:</span><span class="val">MD-102066</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-09T17:41</span></div>
+<div class="files">POD5:0 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/targeted_seque</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">rapid_barcode_plasmid_24</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBB32599</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-07-03T16:44</span></div>
+<div class="files">POD5:1897 Fast5:0 FASTQ:10824 BAM:10824</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/rapid_barcode_</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_human_CYP2D6_gRNA_3_9</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBB40965</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-06-30T16:53</span></div>
+<div class="files">POD5:73 Fast5:0 FASTQ:433 BAM:433</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/targeted_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">SMS_RC_Eco53KI_PvuII</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBB33029</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-06-27T14:03</span></div>
+<div class="files">POD5:31 Fast5:0 FASTQ:184 BAM:184</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/SMA-seq_experi</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">SMS_RC_Eco53KI_PvuII</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBB33029</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-06-27T14:03</span></div>
+<div class="files">POD5:31 Fast5:0 FASTQ:184 BAM:184</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/SMS_RC_Eco53KI</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">SMS_RC_Eco53KI_PvuII</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBB32999</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-06-27T14:03</span></div>
+<div class="files">POD5:31 Fast5:0 FASTQ:184 BAM:184</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/SMA-seq_experi</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">SMS_RC_Eco53KI_PvuII</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBB32999</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-06-27T14:03</span></div>
+<div class="files">POD5:31 Fast5:0 FASTQ:184 BAM:184</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/SMS_RC_Eco53KI</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">SMS_RC_Eco53KI_PvuII</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBB32999</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-06-27T14:03</span></div>
+<div class="files">POD5:31 Fast5:0 FASTQ:184 BAM:184</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/miamon/sandbox/your-pipeline/data/20250627_1402_MD-100098_</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">SMS_RC_Eco53KI_PvuII</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBB32999</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-06-27T14:03</span></div>
+<div class="files">POD5:11 Fast5:0 FASTQ:184 BAM:184</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/miamon/20250627_1402_MD-100098_FBB32999_ac91bc0c</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">SMS_RC_Eco53KI_PvuII</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBB32999</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-06-27T14:03</span></div>
+<div class="files">POD5:31 Fast5:0 FASTQ:184 BAM:184</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/miamon/data/20250627_1402_MD-100098_FBB32999_ac91bc0c</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">targeted_human_CYP2D6_gRNA_3_9</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBB33098</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-06-25T18:38</span></div>
+<div class="files">POD5:44 Fast5:0 FASTQ:258 BAM:258</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/targeted_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_human_CYP2D6_gRNA_3_9</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBB37666</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-06-25T18:33</span></div>
+<div class="files">POD5:44 Fast5:0 FASTQ:258 BAM:258</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/targeted_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">targeted_human_CYP2D6_gRNA_3_9</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBB32961</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-06-25T18:33</span></div>
+<div class="files">POD5:44 Fast5:0 FASTQ:258 BAM:258</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/targeted_human</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">2925_1mg_Ligation_Sequencing_DNAv14</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBB32603</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-06-20T16:08</span></div>
+<div class="files">POD5:72 Fast5:0 FASTQ:866 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/2925_1mg_Ligat</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">2925_1mg_Ligation_Sequencing_DNAv14</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBB32603</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-06-20T16:08</span></div>
+<div class="files">POD5:72 Fast5:0 FASTQ:866 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop~/2925_1mg_Ligat</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">2925_2mg_Ligation_Sequencing_DNAv14</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBC43854</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-06-20T15:44</span></div>
+<div class="files">POD5:72 Fast5:0 FASTQ:866 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/2925_2mg_Ligat</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">2925_2mg_Ligation_Sequencing_DNAv14</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBC43854</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-06-20T15:44</span></div>
+<div class="files">POD5:72 Fast5:0 FASTQ:866 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop~/2925_2mg_Ligat</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">3040_Ligation_Sequencing_DNAv14</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBC37399</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-06-20T15:15</span></div>
+<div class="files">POD5:72 Fast5:0 FASTQ:866 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/3040_Ligation_</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">3040_Ligation_Sequencing_DNAv14</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBC37399</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-06-20T15:15</span></div>
+<div class="files">POD5:72 Fast5:0 FASTQ:866 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/3040_Liga</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">3040_Ligation_Sequencing_DNAv14</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBC37399</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-06-20T15:15</span></div>
+<div class="files">POD5:72 Fast5:0 FASTQ:866 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop~/3040_Ligation_</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">rapid_barcode_plasmid_24</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBC47047</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-06-15T04:37</span></div>
+<div class="files">POD5:1013 Fast5:0 FASTQ:5649 BAM:5649</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/rapid_barcode_</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">rapid_sequencing_barcoding_experiment</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBC53168</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-06-06T17:54</span></div>
+<div class="files">POD5:943 Fast5:0 FASTQ:3733 BAM:3733</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/rapid_sequenci</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">rapid_sequencing_barcoding_experiment</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBC34397</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-05-27T11:34</span></div>
+<div class="files">POD5:0 Fast5:1600 FASTQ:433 BAM:433</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/rapid_sequenci</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">pCYP_ecoli_rapid_kit</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AYI507</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-05-23T17:54</span></div>
+<div class="files">POD5:6 Fast5:0 FASTQ:36 BAM:36</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/pCYP_ecoli_rap</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">pCYP_ecoli_rapid_kit</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AYI507</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-05-23T17:54</span></div>
+<div class="files">POD5:6 Fast5:0 FASTQ:36 BAM:36</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/sequencin</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">pCYP_ecoli_rapid_kit</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AZL268</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-05-23T17:47</span></div>
+<div class="files">POD5:7 Fast5:0 FASTQ:37 BAM:37</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/pCYP_ecoli_rap</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">pCYP_ecoli_rapid_kit</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AZL268</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-05-23T17:47</span></div>
+<div class="files">POD5:7 Fast5:0 FASTQ:37 BAM:37</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/sequencin</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">pCYP_ecoli_rapid_kit</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AZL268</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-05-23T17:43</span></div>
+<div class="files">POD5:0 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/pCYP_ecoli_rap</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">pCYP_ecoli_rapid_kit</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AZL268</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-05-23T17:43</span></div>
+<div class="files">POD5:0 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/sequencin</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">Single_Molecule_Seqeuncing_Cutting_Res_E</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AYJ384</span><span class="lbl">Dev:</span><span class="val">MN48328</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-05-19T10:46</span></div>
+<div class="files">POD5:25 Fast5:0 FASTQ:145 BAM:145</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Single_Molecul</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">Single_Molecule_Seqeuncing_Cutting_Res_E</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AYJ384</span><span class="lbl">Dev:</span><span class="val">MN48328</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-05-19T10:46</span></div>
+<div class="files">POD5:25 Fast5:0 FASTQ:145 BAM:145</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/sequencin</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">Single_Molecule_Seqeuncing_Cutting_Res_E</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AZF147</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-05-19T10:39</span></div>
+<div class="files">POD5:25 Fast5:0 FASTQ:145 BAM:145</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Single_Molecul</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">Single_Molecule_Seqeuncing_Cutting_Res_E</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AZF147</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-05-19T10:39</span></div>
+<div class="files">POD5:25 Fast5:0 FASTQ:145 BAM:145</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/sequencin</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">Single_Molecule_Seqeuncing_Cutting_Res_E</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AZF087</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-05-19T10:38</span></div>
+<div class="files">POD5:24 Fast5:0 FASTQ:145 BAM:145</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Single_Molecul</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">Single_Molecule_Seqeuncing_Cutting_Res_E</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AZF087</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-05-19T10:38</span></div>
+<div class="files">POD5:24 Fast5:0 FASTQ:145 BAM:145</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/sequencin</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">Single_MOlecule_Species_Eco53KI</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AZL258</span><span class="lbl">Dev:</span><span class="val">MN48328</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-05-15T11:00</span></div>
+<div class="files">POD5:24 Fast5:0 FASTQ:145 BAM:145</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Single_MOlecul</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">Single_MOlecule_Species_Eco53KI</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AZL258</span><span class="lbl">Dev:</span><span class="val">MN48328</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-05-15T11:00</span></div>
+<div class="files">POD5:24 Fast5:0 FASTQ:145 BAM:145</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/sequencin</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">Single_MOlecule_Species_Eco53KI</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AYI506</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-05-15T10:53</span></div>
+<div class="files">POD5:25 Fast5:0 FASTQ:145 BAM:145</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Single_MOlecul</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">Single_MOlecule_Species_Eco53KI</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AYI506</span><span class="lbl">Dev:</span><span class="val">MD-100098</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-05-15T10:53</span></div>
+<div class="files">POD5:25 Fast5:0 FASTQ:145 BAM:145</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/sequencin</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">Single_MOlecule_Species_Eco53KI</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AZF074</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-05-15T09:14</span></div>
+<div class="files">POD5:25 Fast5:0 FASTQ:145 BAM:145</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Single_MOlecul</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">Single_MOlecule_Species_Eco53KI</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AZF074</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-05-15T09:14</span></div>
+<div class="files">POD5:25 Fast5:0 FASTQ:145 BAM:145</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/sequencin</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">Restriction_enzyme_cutting_plasmids</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AZL237</span><span class="lbl">Dev:</span><span class="val">MN48328</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-05-14T11:59</span></div>
+<div class="files">POD5:11 Fast5:0 FASTQ:54 BAM:104</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Restriction_en</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">Restriction_enzyme_cutting_plasmids</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AZL237</span><span class="lbl">Dev:</span><span class="val">MN48328</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-05-14T11:59</span></div>
+<div class="files">POD5:11 Fast5:0 FASTQ:54 BAM:104</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Restriction_en</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">Restriction_enzyme_cutting_plasmids</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AZL237</span><span class="lbl">Dev:</span><span class="val">MN48328</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-05-14T11:59</span></div>
+<div class="files">POD5:11 Fast5:0 FASTQ:54 BAM:52</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/Restricti</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">Restriction_enzyme_cutting_plasmids</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AZL237</span><span class="lbl">Dev:</span><span class="val">MN48328</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-05-14T11:59</span></div>
+<div class="files">POD5:11 Fast5:0 FASTQ:54 BAM:52</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/sequencin</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">Restriction_enzyme_cutting_plasmids</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AZF062</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-05-14T11:55</span></div>
+<div class="files">POD5:11 Fast5:0 FASTQ:53 BAM:53</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Restriction_en</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">Restriction_enzyme_cutting_plasmids</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AZF062</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-05-14T11:55</span></div>
+<div class="files">POD5:11 Fast5:0 FASTQ:53 BAM:53</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/Restricti</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">Restriction_enzyme_cutting_plasmids</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AZF062</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-05-14T11:55</span></div>
+<div class="files">POD5:11 Fast5:0 FASTQ:53 BAM:53</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/sequencin</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">Restriction_enzyme_cutting_plasmids</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AZL177</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-05-14T11:53</span></div>
+<div class="files">POD5:11 Fast5:0 FASTQ:53 BAM:53</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Restriction_en</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">Restriction_enzyme_cutting_plasmids</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AZL177</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-05-14T11:53</span></div>
+<div class="files">POD5:11 Fast5:0 FASTQ:53 BAM:53</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/Restricti</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">Restriction_enzyme_cutting_plasmids</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AZL177</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-05-14T11:53</span></div>
+<div class="files">POD5:11 Fast5:0 FASTQ:53 BAM:53</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/sequencin</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">3040_Plasmid_pCYP_exon2</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AWF391</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-04-10T14:59</span></div>
+<div class="files">POD5:25 Fast5:0 FASTQ:145 BAM:145</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/3040_Plasmid_p</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">3040_Plasmid_pCYP_exon2</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AWF391</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-04-10T14:59</span></div>
+<div class="files">POD5:0 Fast5:0 FASTQ:0 BAM:765</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/3040_Plas</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">3040_Plasmid_pCYP_exon2</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AWF391</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-04-10T14:59</span></div>
+<div class="files">POD5:25 Fast5:0 FASTQ:145 BAM:145</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop~/3040_Plasmid_p</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">3040_Plasmid_pCYP_exon2</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AWG074</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-04-06T16:49</span></div>
+<div class="files">POD5:24 Fast5:0 FASTQ:141 BAM:141</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/3040_Plasmid_p</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">3040_Plasmid_pCYP_exon2</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AWG074</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-04-06T16:49</span></div>
+<div class="files">POD5:0 Fast5:0 FASTQ:0 BAM:1453</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/3040_Plas</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">3040_Plasmid_pCYP_exon2</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AWG074</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-04-06T16:49</span></div>
+<div class="files">POD5:24 Fast5:0 FASTQ:141 BAM:141</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop~/3040_Plasmid_p</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">Ecoli_gDNA_pCYP_rRNA_gRNAcut</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBB35243</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-04-04T18:23</span></div>
+<div class="files">POD5:43 Fast5:0 FASTQ:257 BAM:257</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Ecoli_gDNA_pCY</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">Ecoli_gDNA_pCYP_rRNA_gRNAcut</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBB35243</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-04-04T18:23</span></div>
+<div class="files">POD5:43 Fast5:0 FASTQ:257 BAM:257</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/sequencin</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">Ecoli_gDNA_pCYP_rRNA_gRNAcut</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBB35243</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-04-04T17:31</span></div>
+<div class="files">POD5:0 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Ecoli_gDNA_pCY</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">Ecoli_gDNA_pCYP_rRNA_gRNAcut</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBB35243</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-04-04T17:31</span></div>
+<div class="files">POD5:0 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/sequencin</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">Ecoli_gDNA_pCYP_rRNA_gRNAcut</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBB36033</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-04-01T15:55</span></div>
+<div class="files">POD5:68 Fast5:0 FASTQ:407 BAM:407</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Ecoli_gDNA_pCY</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">Ecoli_gDNA_pCYP_rRNA_gRNAcut</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBB36033</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-04-01T15:55</span></div>
+<div class="files">POD5:68 Fast5:0 FASTQ:407 BAM:407</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/sequencin</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">Ecoli_gDNA_pCYP_rRNA_gRNAcut</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBB36033</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-04-01T12:04</span></div>
+<div class="files">POD5:0 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Ecoli_gDNA_pCY</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">Ecoli_gDNA_pCYP_rRNA_gRNAcut</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBB36033</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-04-01T12:04</span></div>
+<div class="files">POD5:0 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/sequencin</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">Ecoli_gDNA_pCYP_rRNA_gRNAcut</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBB35330</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-04-01T12:04</span></div>
+<div class="files">POD5:72 Fast5:0 FASTQ:431 BAM:431</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Ecoli_gDNA_pCY</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">Ecoli_gDNA_pCYP_rRNA_gRNAcut</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBB35330</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-04-01T12:04</span></div>
+<div class="files">POD5:72 Fast5:0 FASTQ:431 BAM:431</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/sequencin</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">Ecoli_gDNA_pCYP_rRNA_gRNAcut</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBB36138</span><span class="lbl">Dev:</span><span class="val">MN48328</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-04-01T11:57</span></div>
+<div class="files">POD5:72 Fast5:0 FASTQ:432 BAM:432</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Ecoli_gDNA_pCY</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">Ecoli_gDNA_pCYP_rRNA_gRNAcut</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBB36138</span><span class="lbl">Dev:</span><span class="val">MN48328</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-04-01T11:57</span></div>
+<div class="files">POD5:72 Fast5:0 FASTQ:432 BAM:432</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/sequencin</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">Ecoli_gDNA_pCYP_rRNA_gRNAcut</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBB35426</span><span class="lbl">Dev:</span><span class="val">MN48004</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-04-01T11:48</span></div>
+<div class="files">POD5:72 Fast5:0 FASTQ:432 BAM:432</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/Ecoli_gDNA_pCY</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">Ecoli_gDNA_pCYP_rRNA_gRNAcut</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBB35426</span><span class="lbl">Dev:</span><span class="val">MN48004</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-04-01T11:48</span></div>
+<div class="files">POD5:72 Fast5:0 FASTQ:432 BAM:432</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/sequencin</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">WholeEColiGenomeAssembly</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBA70225</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-03-29T14:32</span></div>
+<div class="files">POD5:73 Fast5:0 FASTQ:280 BAM:280</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/WholeEColiGeno</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="promethion">
+<div class="card-head"><span class="name">WholeEColiGenomeAssembly</span><span class="badge promethion">Prom</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBA70225</span><span class="lbl">Dev:</span><span class="val">MD-101527</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-03-29T14:32</span></div>
+<div class="files">POD5:73 Fast5:0 FASTQ:280 BAM:280</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/sequencin</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">WholeEColiGenomeAssembly</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBA45795</span><span class="lbl">Dev:</span><span class="val">MN48004</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-03-28T17:35</span></div>
+<div class="files">POD5:188 Fast5:0 FASTQ:406 BAM:406</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/WholeEColiGeno</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">WholeEColiGenomeAssembly</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBA45795</span><span class="lbl">Dev:</span><span class="val">MN48004</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-03-28T17:35</span></div>
+<div class="files">POD5:188 Fast5:0 FASTQ:406 BAM:406</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/sequencin</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">WholeEColiGenomeAssembly</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBA46097</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-03-28T17:09</span></div>
+<div class="files">POD5:165 Fast5:0 FASTQ:405 BAM:405</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/WholeEColiGeno</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">WholeEColiGenomeAssembly</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBA46097</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2025-03-28T17:09</span></div>
+<div class="files">POD5:165 Fast5:0 FASTQ:405 BAM:405</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/sequencin</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_proteinaseK_experiment</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AWD171</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-16T12:52</span></div>
+<div class="files">POD5:24 Fast5:0 FASTQ:131 BAM:131</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/pCYP_proteinas</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_proteinaseK_experiment</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AWD171</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-16T12:52</span></div>
+<div class="files">POD5:24 Fast5:0 FASTQ:131 BAM:131</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/sequencin</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_proteinaseK_experiment</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AWD929</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-15T16:20</span></div>
+<div class="files">POD5:19 Fast5:0 FASTQ:112 BAM:112</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/pCYP_proteinas</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_proteinaseK_experiment</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AWD929</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-15T16:20</span></div>
+<div class="files">POD5:19 Fast5:0 FASTQ:112 BAM:112</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/sequencin</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_proteinaseK_experiment</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AWD929</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-15T14:54</span></div>
+<div class="files">POD5:1 Fast5:0 FASTQ:1 BAM:1</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/pCYP_proteinas</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_proteinaseK_experiment</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AWD929</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-15T14:54</span></div>
+<div class="files">POD5:1 Fast5:0 FASTQ:1 BAM:1</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/sequencin</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_proteinaseK_experiment</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AWD929</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-15T14:08</span></div>
+<div class="files">POD5:1 Fast5:0 FASTQ:3 BAM:3</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/pCYP_proteinas</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_proteinaseK_experiment</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AWD929</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-15T14:08</span></div>
+<div class="files">POD5:1 Fast5:0 FASTQ:3 BAM:3</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/sequencin</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_proteinaseK_dA_tailing</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AWD929</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-15T13:24</span></div>
+<div class="files">POD5:0 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/pCYP_proteinas</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_proteinaseK_dA_tailing</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AWD929</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-15T13:10</span></div>
+<div class="files">POD5:0 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/pCYP_proteinas</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_proteinaseK_dA_tailing</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AWD929</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-14T18:13</span></div>
+<div class="files">POD5:0 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_linux_desktop_lab/pCYP_proteinas</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_dA_tailing</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AWC372</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-07T13:17</span></div>
+<div class="files">POD5:4 Fast5:0 FASTQ:20 BAM:20</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_laptop_LTBIN049/pCYP_dA_tailing/</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_dA_tailing</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AWC372</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-07T13:17</span></div>
+<div class="files">POD5:2 Fast5:0 FASTQ:20 BAM:20</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_laptop_LTBIN049/pCYP_dA_tailing </div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_dA_tailing</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBA16764</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-01T17:37</span></div>
+<div class="files">POD5:10 Fast5:0 FASTQ:56 BAM:56</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_desktop_WSCMB029/pCYP_dA_tailing</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_dA_tailing</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBA16764</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-01T17:37</span></div>
+<div class="files">POD5:10 Fast5:0 FASTQ:56 BAM:56</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/data_from_desktop_WSCMB029/pCYP_dA_tai</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_dA_tailing</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBA16764</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-01T17:37</span></div>
+<div class="files">POD5:10 Fast5:0 FASTQ:56 BAM:56</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/data_from</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_dA_tailing</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBA16764</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-01T17:37</span></div>
+<div class="files">POD5:10 Fast5:0 FASTQ:56 BAM:56</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/data/pCYP_dA_tailing/Eco53KI_pCYP_dA_t</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_dA_tailing</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBA23062</span><span class="lbl">Dev:</span><span class="val">MN48004</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-01T17:36</span></div>
+<div class="files">POD5:2 Fast5:0 FASTQ:10 BAM:10</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_desktop_WSCMB029/pCYP_dA_tailing</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_dA_tailing</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBA23062</span><span class="lbl">Dev:</span><span class="val">MN48004</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-01T17:36</span></div>
+<div class="files">POD5:2 Fast5:0 FASTQ:10 BAM:10</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/data_from_desktop_WSCMB029/pCYP_dA_tai</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_dA_tailing</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBA23062</span><span class="lbl">Dev:</span><span class="val">MN48004</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-01T17:36</span></div>
+<div class="files">POD5:2 Fast5:0 FASTQ:10 BAM:10</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/data_from</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_dA_tailing</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBA23062</span><span class="lbl">Dev:</span><span class="val">MN48004</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-01T17:36</span></div>
+<div class="files">POD5:2 Fast5:0 FASTQ:10 BAM:10</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/data/pCYP_dA_tailing/Cas9_exon2_pCYP_d</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_dA_tailing</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBA16764</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-01T17:04</span></div>
+<div class="files">POD5:1 Fast5:0 FASTQ:1 BAM:1</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_desktop_WSCMB029/pCYP_dA_tailing</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_dA_tailing</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBA16764</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-01T17:04</span></div>
+<div class="files">POD5:1 Fast5:0 FASTQ:1 BAM:1</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/data_from_desktop_WSCMB029/pCYP_dA_tai</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_dA_tailing</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBA16764</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-01T17:04</span></div>
+<div class="files">POD5:1 Fast5:0 FASTQ:1 BAM:1</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/data_from</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_dA_tailing</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBA16764</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-01T17:04</span></div>
+<div class="files">POD5:1 Fast5:0 FASTQ:1 BAM:1</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/data/pCYP_dA_tailing/Eco53KI_pCYP_dA_t</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_dA_tailing</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBA16764</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-01T14:35</span></div>
+<div class="files">POD5:1 Fast5:0 FASTQ:4 BAM:4</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_desktop_WSCMB029/pCYP_dA_tailing</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_dA_tailing</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBA16764</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-01T14:35</span></div>
+<div class="files">POD5:1 Fast5:0 FASTQ:4 BAM:4</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/data_from_desktop_WSCMB029/pCYP_dA_tai</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_dA_tailing</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBA16764</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-01T14:35</span></div>
+<div class="files">POD5:1 Fast5:0 FASTQ:4 BAM:4</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/data_from</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_dA_tailing</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBA16764</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-01T14:35</span></div>
+<div class="files">POD5:1 Fast5:0 FASTQ:4 BAM:4</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/data/pCYP_dA_tailing/Eco53KI_pCYP_dA_t</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_dA_tailing</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBA23062</span><span class="lbl">Dev:</span><span class="val">MN48004</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-01T14:21</span></div>
+<div class="files">POD5:3 Fast5:0 FASTQ:18 BAM:18</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_desktop_WSCMB029/pCYP_dA_tailing</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_dA_tailing</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBA23062</span><span class="lbl">Dev:</span><span class="val">MN48004</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-01T14:21</span></div>
+<div class="files">POD5:3 Fast5:0 FASTQ:18 BAM:18</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/data_from_desktop_WSCMB029/pCYP_dA_tai</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_dA_tailing</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBA23062</span><span class="lbl">Dev:</span><span class="val">MN48004</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-01T14:21</span></div>
+<div class="files">POD5:3 Fast5:0 FASTQ:18 BAM:18</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/data_from</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_dA_tailing</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBA23062</span><span class="lbl">Dev:</span><span class="val">MN48004</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-01T14:21</span></div>
+<div class="files">POD5:3 Fast5:0 FASTQ:18 BAM:18</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/data/pCYP_dA_tailing/Cas9_exon2_pCYP_d</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_dA_tailing</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBA23062</span><span class="lbl">Dev:</span><span class="val">MN48004</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-01T13:54</span></div>
+<div class="files">POD5:1 Fast5:0 FASTQ:2 BAM:2</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_desktop_WSCMB029/pCYP_dA_tailing</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_dA_tailing</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBA23062</span><span class="lbl">Dev:</span><span class="val">MN48004</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-01T13:54</span></div>
+<div class="files">POD5:1 Fast5:0 FASTQ:2 BAM:2</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/data_from_desktop_WSCMB029/pCYP_dA_tai</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_dA_tailing</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBA23062</span><span class="lbl">Dev:</span><span class="val">MN48004</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-01T13:54</span></div>
+<div class="files">POD5:1 Fast5:0 FASTQ:2 BAM:2</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/Files_On_Linux_Desktop/data2/data_from</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">pCYP_dA_tailing</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">FBA23062</span><span class="lbl">Dev:</span><span class="val">MN48004</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-11-01T13:54</span></div>
+<div class="files">POD5:1 Fast5:0 FASTQ:2 BAM:2</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/backup_from_desktop/data/pCYP_dA_tailing/Cas9_exon2_pCYP_d</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">cas9_hifi_NEB_exon2gRNA_pCYP</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">AWD455</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-10-22T11:17</span></div>
+<div class="files">POD5:4 Fast5:1 FASTQ:20 BAM:20</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_laptop_LTBIN049/cas9_hifi_NEB_ex</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">PvuII_pCellFreeCYP</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">ATP988</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-10-08T11:26</span></div>
+<div class="files">POD5:7 Fast5:0 FASTQ:40 BAM:40</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_laptop_LTBIN049/PvuII_pCellFreeC</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">PvuII_pCellFreeCYP</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">ATP988</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-10-07T16:09</span></div>
+<div class="files">POD5:2 Fast5:0 FASTQ:12 BAM:12</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_laptop_LTBIN049/PvuII_pCellFreeC</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">BciVI_pCellFreeCYP</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">ATR331</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-10-04T10:39</span></div>
+<div class="files">POD5:6 Fast5:0 FASTQ:311 BAM:311</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_laptop_LTBIN049/BciVI_pCellFreeC</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">BciVI_pCellFreeCYP</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">ATS581</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-10-02T17:43</span></div>
+<div class="files">POD5:4 Fast5:0 FASTQ:20 BAM:20</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_laptop_LTBIN049/BciVI_pCellFreeC</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">BciVI_pCellFreeCYP</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">ATQ006</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-10-02T12:31</span></div>
+<div class="files">POD5:6 Fast5:0 FASTQ:31 BAM:31</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_laptop_LTBIN049/BciVI_pCellFreeC</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">BciVI_pCellFreeCYP</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">ATS581</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-10-02T11:47</span></div>
+<div class="files">POD5:1 Fast5:0 FASTQ:2 BAM:2</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_laptop_LTBIN049/BciVI_pCellFreeC</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="minion">
+<div class="card-head"><span class="name">CYP1</span><span class="badge minion">MinI</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">ATS547</span><span class="lbl">Dev:</span><span class="val">MN47455</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2024-09-23T11:31</span></div>
+<div class="files">POD5:25 Fast5:0 FASTQ:61 BAM:171</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/data_from_laptop_LTBIN049/CYP1/CYP/2024092</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="unknown">
+<div class="card-head"><span class="name">20220510_ULK114_CB</span><span class="badge unknown">Unkn</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">PAM63167</span><span class="lbl">Dev:</span><span class="val">PC48-PROTO01</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2022-05-10T11:28</span></div>
+<div class="files">POD5:0 Fast5:392 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/external_data/cliveome_kit14_2022.05/gdna/</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="unknown">
+<div class="card-head"><span class="name">20220510_ULK114_CB</span><span class="badge unknown">Unkn</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">PAM63114</span><span class="lbl">Dev:</span><span class="val">PC48-PROTO01</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2022-05-10T11:28</span></div>
+<div class="files">POD5:0 Fast5:734 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/external_data/cliveome_kit14_2022.05/gdna/</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="unknown">
+<div class="card-head"><span class="name">20220510_ULK114_CB</span><span class="badge unknown">Unkn</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">PAM63974</span><span class="lbl">Dev:</span><span class="val">PC48-PROTO01</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2022-05-10T11:28</span></div>
+<div class="files">POD5:0 Fast5:690 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/external_data/cliveome_kit14_2022.05/gdna/</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="unknown">
+<div class="card-head"><span class="name">LSK114_cfDNA_CB</span><span class="badge unknown">Unkn</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">PAM63103</span><span class="lbl">Dev:</span><span class="val">TestPromP49</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2022-05-03T17:14</span></div>
+<div class="files">POD5:0 Fast5:32671 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/external_data/cliveome_kit14_2022.05/cfdna</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="unknown">
+<div class="card-head"><span class="name">Q20_ULK_Cliveome</span><span class="badge unknown">Unkn</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">PAG53244</span><span class="lbl">Dev:</span><span class="val">jadep48</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2021-04-01T17:10</span></div>
+<div class="files">POD5:0 Fast5:84 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/external_data/Q20_ULK_Cliveome/ONLA29102_3</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="unknown">
+<div class="card-head"><span class="name">Q20_ULK_Cliveome</span><span class="badge unknown">Unkn</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">PAG53358</span><span class="lbl">Dev:</span><span class="val">jadep48</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2021-04-01T17:10</span></div>
+<div class="files">POD5:0 Fast5:99 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/external_data/Q20_ULK_Cliveome/ONLA29101_5</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="unknown">
+<div class="card-head"><span class="name">Q20_ULK_Cliveome</span><span class="badge unknown">Unkn</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">PAG51911</span><span class="lbl">Dev:</span><span class="val">jadep48</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2021-04-01T17:10</span></div>
+<div class="files">POD5:0 Fast5:167 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/external_data/Q20_ULK_Cliveome/ONLA29096_5</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="unknown">
+<div class="card-head"><span class="name">Q20_ULK_Cliveome</span><span class="badge unknown">Unkn</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">PAG53223</span><span class="lbl">Dev:</span><span class="val">jadep48</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2021-04-01T17:10</span></div>
+<div class="files">POD5:0 Fast5:110 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/external_data/Q20_ULK_Cliveome/ONLA29097_3</div>
+</div></div><div class="card" data-source="greatlakes" data-platform="unknown">
+<div class="card-head"><span class="name">Q20_ULK_Cliveome</span><span class="badge unknown">Unkn</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">PAG28333</span><span class="lbl">Dev:</span><span class="val">PC48-PROTO01</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">2021-03-31T17:20</span></div>
+<div class="files">POD5:0 Fast5:190 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src greatlakes">GREATLAKES</span>~/sequencing_data/external_data/Q20_ULK_Cliveome/ONLA29100_6</div>
+</div></div><div class="card" data-source="local" data-platform="unknown">
+<div class="card-head"><span class="name">12282025_IF_DoubleBC_SMA_seq_no_trim</span><span class="badge unknown">Unkn</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">N/A</span><span class="lbl">Dev:</span><span class="val">N/A</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">N/A</span></div>
+<div class="files">POD5:17 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src local">LOCAL</span>~/12282025_IF_DoubleBC_SMA_seq_no_trim</div>
+</div></div><div class="card" data-source="local" data-platform="unknown">
+<div class="card-head"><span class="name">PGx_AS_8plex_1ug_4greg_4monica</span><span class="badge unknown">Unkn</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">N/A</span><span class="lbl">Dev:</span><span class="val">N/A</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">N/A</span></div>
+<div class="files">POD5:0 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src local">LOCAL</span>~/PGx_AS_8plex_1ug_4greg_4monica</div>
+</div></div><div class="card" data-source="local" data-platform="unknown">
+<div class="card-head"><span class="name">targeted_analysis_20250730_113931</span><span class="badge unknown">Unkn</span></div>
+<div class="card-body">
+<div class="row"><span class="lbl">FC:</span><span class="val">N/A</span><span class="lbl">Dev:</span><span class="val">N/A</span></div>
+<div class="row"><span class="lbl">Started:</span><span class="val">N/A</span></div>
+<div class="files">POD5:0 Fast5:0 FASTQ:0 BAM:0</div>
+<div class="loc"><span class="src local">LOCAL</span>~/targeted_analysis_20250730_113931</div>
+</div></div></div>
+<footer>Generated 2025-12-29 11:25</footer>
+</div>
+<script>
+function filter(f,btn){document.querySelectorAll('.btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.querySelectorAll('.card').forEach(c=>c.style.display=(f==='all'||c.dataset.source===f)?'':'none')}
+function search(q){q=q.toLowerCase();document.querySelectorAll('.card').forEach(c=>c.style.display=c.textContent.toLowerCase().includes(q)?'':'none')}
+</script></body></html>

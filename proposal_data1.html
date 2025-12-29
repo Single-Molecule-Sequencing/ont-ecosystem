@@ -1,0 +1,1923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Great Lakes Discovery Proposal - 2025-12-29</title>
+    <style>
+        :root {
+            --color-new: #2e7d32;
+            --color-new-bg: #e8f5e9;
+            --color-updated: #f57c00;
+            --color-updated-bg: #fff3e0;
+            --color-removed: #c62828;
+            --color-removed-bg: #ffebee;
+            --color-unchanged: #9e9e9e;
+            --color-unchanged-bg: #f5f5f5;
+            --border-radius: 8px;
+            --shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+            color: white;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            text-align: center;
+            border-left: 4px solid #ccc;
+        }
+
+        .summary-card.new { border-left-color: var(--color-new); }
+        .summary-card.updated { border-left-color: var(--color-updated); }
+        .summary-card.removed { border-left-color: var(--color-removed); }
+        .summary-card.unchanged { border-left-color: var(--color-unchanged); }
+        .summary-card.total { border-left-color: #1a237e; }
+
+        .summary-card .count {
+            font-size: 2.5rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .summary-card.new .count { color: var(--color-new); }
+        .summary-card.updated .count { color: var(--color-updated); }
+        .summary-card.removed .count { color: var(--color-removed); }
+        .summary-card.unchanged .count { color: var(--color-unchanged); }
+        .summary-card.total .count { color: #1a237e; }
+
+        .summary-card .label {
+            font-size: 0.85rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid #ddd;
+            border-radius: 20px;
+            background: white;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            border-color: #999;
+        }
+
+        .filter-btn.active {
+            background: #1a237e;
+            color: white;
+            border-color: #1a237e;
+        }
+
+        .filter-btn.new.active { background: var(--color-new); border-color: var(--color-new); }
+        .filter-btn.updated.active { background: var(--color-updated); border-color: var(--color-updated); }
+        .filter-btn.removed.active { background: var(--color-removed); border-color: var(--color-removed); }
+
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+            padding: 8px 16px;
+            border: 2px solid #ddd;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #1a237e;
+        }
+
+        .experiments-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 15px;
+        }
+
+        .experiment-card {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .experiment-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .experiment-card.new { border-left: 4px solid var(--color-new); }
+        .experiment-card.updated { border-left: 4px solid var(--color-updated); }
+        .experiment-card.removed { border-left: 4px solid var(--color-removed); }
+        .experiment-card.unchanged { border-left: 4px solid var(--color-unchanged); }
+
+        .card-header {
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .experiment-card.new .card-header { background: var(--color-new-bg); }
+        .experiment-card.updated .card-header { background: var(--color-updated-bg); }
+        .experiment-card.removed .card-header { background: var(--color-removed-bg); }
+        .experiment-card.unchanged .card-header { background: var(--color-unchanged-bg); }
+
+        .sample-id {
+            font-weight: 600;
+            font-size: 1.1rem;
+            word-break: break-all;
+        }
+
+        .change-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .change-badge.new { background: var(--color-new); color: white; }
+        .change-badge.updated { background: var(--color-updated); color: white; }
+        .change-badge.removed { background: var(--color-removed); color: white; }
+        .change-badge.unchanged { background: var(--color-unchanged); color: white; }
+
+        .card-body {
+            padding: 15px;
+        }
+
+        .field {
+            display: flex;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .field-label {
+            min-width: 100px;
+            color: #666;
+        }
+
+        .field-value {
+            flex: 1;
+            word-break: break-all;
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 0.85rem;
+        }
+
+        .file-counts {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            padding: 10px 15px;
+            background: #f8f9fa;
+            border-top: 1px solid #eee;
+        }
+
+        .file-count {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.85rem;
+        }
+
+        .file-count .count {
+            font-weight: 600;
+        }
+
+        .file-count.pod5 .count { color: #7b1fa2; }
+        .file-count.fast5 .count { color: #0277bd; }
+        .file-count.fastq .count { color: #00695c; }
+        .file-count.bam .count { color: #c62828; }
+
+        .changes-list {
+            padding: 10px 15px;
+            background: #fff8e1;
+            border-top: 1px solid #ffe082;
+        }
+
+        .change-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            padding: 4px 0;
+        }
+
+        .change-field {
+            font-weight: 600;
+            min-width: 80px;
+        }
+
+        .change-arrow {
+            color: #999;
+        }
+
+        .change-old {
+            color: var(--color-removed);
+            text-decoration: line-through;
+        }
+
+        .change-new {
+            color: var(--color-new);
+            font-weight: 600;
+        }
+
+        .removal-reason {
+            padding: 10px 15px;
+            background: var(--color-removed-bg);
+            border-top: 1px solid #ef9a9a;
+            font-size: 0.85rem;
+            color: var(--color-removed);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 30px 0 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .section-count {
+            background: #eee;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .approval-banner {
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: var(--border-radius);
+            text-align: center;
+        }
+
+        .approval-banner.pending {
+            background: #fff3e0;
+            border: 2px solid var(--color-updated);
+        }
+
+        .approval-banner.approved {
+            background: var(--color-new-bg);
+            border: 2px solid var(--color-new);
+        }
+
+        .approval-banner.applied {
+            background: #e3f2fd;
+            border: 2px solid #1976d2;
+        }
+
+        footer {
+            margin-top: 40px;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 600px) {
+            .experiments-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .summary-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Great Lakes Discovery Proposal</h1>
+            <div class="meta">
+                <div class="meta-item">
+                    <span>Generated:</span>
+                    <strong>2025-12-29T15:03:17.792986+00:00</strong>
+                </div>
+                
+                
+            </div>
+        </header>
+
+        
+            <div class="approval-banner pending">
+                <strong>Pending Approval</strong> - Review the changes below and run
+                <code>greatlakes_sync.py apply --latest</code> to apply.
+            </div>
+        
+
+        <div class="summary-cards">
+            <div class="summary-card total">
+                <div class="count">23</div>
+                <div class="label">Total Discovered</div>
+            </div>
+            <div class="summary-card new">
+                <div class="count">5</div>
+                <div class="label">New</div>
+            </div>
+            <div class="summary-card updated">
+                <div class="count">18</div>
+                <div class="label">Updated</div>
+            </div>
+            <div class="summary-card removed">
+                <div class="count">0</div>
+                <div class="label">Removed</div>
+            </div>
+            <div class="summary-card unchanged">
+                <div class="count">0</div>
+                <div class="label">Unchanged</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="filter-btn active" data-filter="all">All Changes</button>
+            <button class="filter-btn new" data-filter="new">New (5)</button>
+            <button class="filter-btn updated" data-filter="updated">Updated (18)</button>
+            <button class="filter-btn removed" data-filter="removed">Removed (0)</button>
+            <input type="text" class="search-box" placeholder="Search by sample, flowcell, or path..." id="searchBox">
+        </div>
+
+        
+    <div class="section-header">
+        <h2 class="section-title">New Experiments</h2>
+        <span class="section-count">5</span>
+    </div>
+    <div class="experiments-grid">
+        
+    <div class="experiment-card new" data-type="new">
+        <div class="card-header">
+            <span class="sample-id">Unknown Sample</span>
+            <span class="change-badge new">new</span>
+        </div>
+        <div class="card-body">
+            <div class="field">
+                <span class="field-label">Flow Cell:</span>
+                <span class="field-value">FBD41125</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Instrument:</span>
+                <span class="field-value">MD-102066</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Path:</span>
+                <span class="field-value">/data1/12182025_IF_NewBCPart4_Ex3_SMA_seq/no_sample_id/20251218_2308_MD-102066_FBD41125_f4137e4b</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Started:</span>
+                <span class="field-value">2025-12-18T23:09:27.313810-05:00</span>
+            </div>
+        </div>
+        <div class="file-counts">
+            <div class="file-count pod5">
+                <span>POD5:</span>
+                <span class="count">510</span>
+            </div>
+            <div class="file-count fast5">
+                <span>Fast5:</span>
+                <span class="count">0</span>
+            </div>
+            <div class="file-count fastq">
+                <span>FASTQ:</span>
+                <span class="count">438</span>
+            </div>
+            <div class="file-count bam">
+                <span>BAM:</span>
+                <span class="count">438</span>
+            </div>
+        </div>
+        
+        
+    </div>
+    
+
+    <div class="experiment-card new" data-type="new">
+        <div class="card-header">
+            <span class="sample-id">Unknown Sample</span>
+            <span class="change-badge new">new</span>
+        </div>
+        <div class="card-body">
+            <div class="field">
+                <span class="field-label">Flow Cell:</span>
+                <span class="field-value">FBD71150</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Instrument:</span>
+                <span class="field-value">MD-100098</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Path:</span>
+                <span class="field-value">/data1/12232025_IF_DoubleBC_SMA_seq/no_sample_id/20251223_1919_MD-100098_FBD71150_ccaaf379</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Started:</span>
+                <span class="field-value">2025-12-23T19:19:55.412053-05:00</span>
+            </div>
+        </div>
+        <div class="file-counts">
+            <div class="file-count pod5">
+                <span>POD5:</span>
+                <span class="count">875</span>
+            </div>
+            <div class="file-count fast5">
+                <span>Fast5:</span>
+                <span class="count">0</span>
+            </div>
+            <div class="file-count fastq">
+                <span>FASTQ:</span>
+                <span class="count">803</span>
+            </div>
+            <div class="file-count bam">
+                <span>BAM:</span>
+                <span class="count">803</span>
+            </div>
+        </div>
+        
+        
+    </div>
+    
+
+    <div class="experiment-card new" data-type="new">
+        <div class="card-header">
+            <span class="sample-id">Unknown Sample</span>
+            <span class="change-badge new">new</span>
+        </div>
+        <div class="card-body">
+            <div class="field">
+                <span class="field-label">Flow Cell:</span>
+                <span class="field-value">FBD68979</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Instrument:</span>
+                <span class="field-value">MD-101527</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Path:</span>
+                <span class="field-value">/data1/12182025_IF_NewBCPart4_Ex2_SMA_seq/no_sample_id/20251218_2307_MD-101527_FBD68979_d514c905</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Started:</span>
+                <span class="field-value">2025-12-18T23:08:36.533706-05:00</span>
+            </div>
+        </div>
+        <div class="file-counts">
+            <div class="file-count pod5">
+                <span>POD5:</span>
+                <span class="count">460</span>
+            </div>
+            <div class="file-count fast5">
+                <span>Fast5:</span>
+                <span class="count">0</span>
+            </div>
+            <div class="file-count fastq">
+                <span>FASTQ:</span>
+                <span class="count">438</span>
+            </div>
+            <div class="file-count bam">
+                <span>BAM:</span>
+                <span class="count">438</span>
+            </div>
+        </div>
+        
+        
+    </div>
+    
+
+    <div class="experiment-card new" data-type="new">
+        <div class="card-header">
+            <span class="sample-id">Unknown Sample</span>
+            <span class="change-badge new">new</span>
+        </div>
+        <div class="card-body">
+            <div class="field">
+                <span class="field-label">Flow Cell:</span>
+                <span class="field-value">FBD69036</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Instrument:</span>
+                <span class="field-value">MD-100098</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Path:</span>
+                <span class="field-value">/data1/12182025_IF_NewBCPart4_Ex1_SMA_seq/no_sample_id/20251218_2306_MD-100098_FBD69036_333a4c4a</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Started:</span>
+                <span class="field-value">2025-12-18T23:07:43.417511-05:00</span>
+            </div>
+        </div>
+        <div class="file-counts">
+            <div class="file-count pod5">
+                <span>POD5:</span>
+                <span class="count">497</span>
+            </div>
+            <div class="file-count fast5">
+                <span>Fast5:</span>
+                <span class="count">0</span>
+            </div>
+            <div class="file-count fastq">
+                <span>FASTQ:</span>
+                <span class="count">438</span>
+            </div>
+            <div class="file-count bam">
+                <span>BAM:</span>
+                <span class="count">438</span>
+            </div>
+        </div>
+        
+        
+    </div>
+    
+
+    <div class="experiment-card new" data-type="new">
+        <div class="card-header">
+            <span class="sample-id">Unknown Sample</span>
+            <span class="change-badge new">new</span>
+        </div>
+        <div class="card-body">
+            <div class="field">
+                <span class="field-label">Flow Cell:</span>
+                <span class="field-value">FBD69411</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Instrument:</span>
+                <span class="field-value">MD-100098</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Path:</span>
+                <span class="field-value">/data1/12282025_IF_DoubleBC_SMA_seq/no_sample_id/20251228_2100_MD-100098_FBD69411_7c69187c</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Started:</span>
+                <span class="field-value">2025-12-28T21:01:00.335763-05:00</span>
+            </div>
+        </div>
+        <div class="file-counts">
+            <div class="file-count pod5">
+                <span>POD5:</span>
+                <span class="count">14</span>
+            </div>
+            <div class="file-count fast5">
+                <span>Fast5:</span>
+                <span class="count">0</span>
+            </div>
+            <div class="file-count fastq">
+                <span>FASTQ:</span>
+                <span class="count">10</span>
+            </div>
+            <div class="file-count bam">
+                <span>BAM:</span>
+                <span class="count">10</span>
+            </div>
+        </div>
+        
+        
+    </div>
+    
+    </div>
+    
+
+    <div class="section-header">
+        <h2 class="section-title">Updated Experiments</h2>
+        <span class="section-count">18</span>
+    </div>
+    <div class="experiments-grid">
+        
+    <div class="experiment-card updated" data-type="updated">
+        <div class="card-header">
+            <span class="sample-id">greg_DNA_sample3_NS_continued4</span>
+            <span class="change-badge updated">updated</span>
+        </div>
+        <div class="card-body">
+            <div class="field">
+                <span class="field-label">Flow Cell:</span>
+                <span class="field-value">FBD19495</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Instrument:</span>
+                <span class="field-value">MD-102066</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Path:</span>
+                <span class="field-value">/data1/WGS_LSK_human/greg_DNA_sample3_NS_continued4/20250714_0053_MD-102066_FBD19495_5ad40d91</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Started:</span>
+                <span class="field-value">2025-07-14T00:54:43.011588-04:00</span>
+            </div>
+        </div>
+        <div class="file-counts">
+            <div class="file-count pod5">
+                <span>POD5:</span>
+                <span class="count">56</span>
+            </div>
+            <div class="file-count fast5">
+                <span>Fast5:</span>
+                <span class="count">0</span>
+            </div>
+            <div class="file-count fastq">
+                <span>FASTQ:</span>
+                <span class="count">334</span>
+            </div>
+            <div class="file-count bam">
+                <span>BAM:</span>
+                <span class="count">334</span>
+            </div>
+        </div>
+        <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-field">pod5_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">56</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">fastq_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">334</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">bam_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">334</span>
+                </div>
+            </div>
+        
+    </div>
+    
+
+    <div class="experiment-card updated" data-type="updated">
+        <div class="card-header">
+            <span class="sample-id">Unknown Sample</span>
+            <span class="change-badge updated">updated</span>
+        </div>
+        <div class="card-body">
+            <div class="field">
+                <span class="field-label">Flow Cell:</span>
+                <span class="field-value">FBD64739</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Instrument:</span>
+                <span class="field-value">MD-100098</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Path:</span>
+                <span class="field-value">/data1/11242025_IF_Part4_SMA_seq/no_sample_id/20251124_2036_MD-100098_FBD64739_c03969a2</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Started:</span>
+                <span class="field-value">2025-11-24T20:37:26.111070-05:00</span>
+            </div>
+        </div>
+        <div class="file-counts">
+            <div class="file-count pod5">
+                <span>POD5:</span>
+                <span class="count">1386</span>
+            </div>
+            <div class="file-count fast5">
+                <span>Fast5:</span>
+                <span class="count">0</span>
+            </div>
+            <div class="file-count fastq">
+                <span>FASTQ:</span>
+                <span class="count">1314</span>
+            </div>
+            <div class="file-count bam">
+                <span>BAM:</span>
+                <span class="count">1314</span>
+            </div>
+        </div>
+        <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-field">pod5_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">1386</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">fastq_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">1314</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">bam_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">1314</span>
+                </div>
+            </div>
+        
+    </div>
+    
+
+    <div class="experiment-card updated" data-type="updated">
+        <div class="card-header">
+            <span class="sample-id">greg_LA_WGS_jul31_try2</span>
+            <span class="change-badge updated">updated</span>
+        </div>
+        <div class="card-body">
+            <div class="field">
+                <span class="field-label">Flow Cell:</span>
+                <span class="field-value">FBD14190</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Instrument:</span>
+                <span class="field-value">MD-100098</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Path:</span>
+                <span class="field-value">/data1/targeted_sequencing_human_CYP2D6/greg_LA_WGS_jul31_try2/20250801_1035_MD-100098_FBD14190_e527aee0</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Started:</span>
+                <span class="field-value">2025-08-01T10:36:21.310693-04:00</span>
+            </div>
+        </div>
+        <div class="file-counts">
+            <div class="file-count pod5">
+                <span>POD5:</span>
+                <span class="count">35</span>
+            </div>
+            <div class="file-count fast5">
+                <span>Fast5:</span>
+                <span class="count">0</span>
+            </div>
+            <div class="file-count fastq">
+                <span>FASTQ:</span>
+                <span class="count">207</span>
+            </div>
+            <div class="file-count bam">
+                <span>BAM:</span>
+                <span class="count">207</span>
+            </div>
+        </div>
+        <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-field">pod5_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">35</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">fastq_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">207</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">bam_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">207</span>
+                </div>
+            </div>
+        
+    </div>
+    
+
+    <div class="experiment-card updated" data-type="updated">
+        <div class="card-header">
+            <span class="sample-id">greg_2_15_jul16</span>
+            <span class="change-badge updated">updated</span>
+        </div>
+        <div class="card-body">
+            <div class="field">
+                <span class="field-label">Flow Cell:</span>
+                <span class="field-value">FBD16671</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Instrument:</span>
+                <span class="field-value">MD-100098</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Path:</span>
+                <span class="field-value">/data1/targeted_sequencing_human_CYP2D6/greg_2_15_jul16/20250716_1559_MD-100098_FBD16671_eadff6e8</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Started:</span>
+                <span class="field-value">2025-07-16T16:00:36.396677-04:00</span>
+            </div>
+        </div>
+        <div class="file-counts">
+            <div class="file-count pod5">
+                <span>POD5:</span>
+                <span class="count">23</span>
+            </div>
+            <div class="file-count fast5">
+                <span>Fast5:</span>
+                <span class="count">0</span>
+            </div>
+            <div class="file-count fastq">
+                <span>FASTQ:</span>
+                <span class="count">136</span>
+            </div>
+            <div class="file-count bam">
+                <span>BAM:</span>
+                <span class="count">136</span>
+            </div>
+        </div>
+        <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-field">pod5_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">23</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">fastq_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">136</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">bam_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">136</span>
+                </div>
+            </div>
+        
+    </div>
+    
+
+    <div class="experiment-card updated" data-type="updated">
+        <div class="card-header">
+            <span class="sample-id">Greg_DNA_exon2_Jul14_restart</span>
+            <span class="change-badge updated">updated</span>
+        </div>
+        <div class="card-body">
+            <div class="field">
+                <span class="field-label">Flow Cell:</span>
+                <span class="field-value">FBC97882</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Instrument:</span>
+                <span class="field-value">MD-101527</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Path:</span>
+                <span class="field-value">/data1/targeted_sequencing_human_CYP2D6/Greg_DNA_exon2_Jul14_restart/20250714_2208_MD-101527_FBC97882_b8addb7d</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Started:</span>
+                <span class="field-value">2025-07-14T22:09:12.118679-04:00</span>
+            </div>
+        </div>
+        <div class="file-counts">
+            <div class="file-count pod5">
+                <span>POD5:</span>
+                <span class="count">16</span>
+            </div>
+            <div class="file-count fast5">
+                <span>Fast5:</span>
+                <span class="count">0</span>
+            </div>
+            <div class="file-count fastq">
+                <span>FASTQ:</span>
+                <span class="count">94</span>
+            </div>
+            <div class="file-count bam">
+                <span>BAM:</span>
+                <span class="count">94</span>
+            </div>
+        </div>
+        <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-field">pod5_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">16</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">fastq_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">94</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">bam_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">94</span>
+                </div>
+            </div>
+        
+    </div>
+    
+
+    <div class="experiment-card updated" data-type="updated">
+        <div class="card-header">
+            <span class="sample-id">greg_3_15_jul16</span>
+            <span class="change-badge updated">updated</span>
+        </div>
+        <div class="card-body">
+            <div class="field">
+                <span class="field-label">Flow Cell:</span>
+                <span class="field-value">FBC98609</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Instrument:</span>
+                <span class="field-value">MD-101527</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Path:</span>
+                <span class="field-value">/data1/targeted_sequencing_human_CYP2D6/greg_3_15_jul16/20250716_1559_MD-101527_FBC98609_a317d1d1</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Started:</span>
+                <span class="field-value">2025-07-16T16:00:36.257892-04:00</span>
+            </div>
+        </div>
+        <div class="file-counts">
+            <div class="file-count pod5">
+                <span>POD5:</span>
+                <span class="count">21</span>
+            </div>
+            <div class="file-count fast5">
+                <span>Fast5:</span>
+                <span class="count">0</span>
+            </div>
+            <div class="file-count fastq">
+                <span>FASTQ:</span>
+                <span class="count">126</span>
+            </div>
+            <div class="file-count bam">
+                <span>BAM:</span>
+                <span class="count">126</span>
+            </div>
+        </div>
+        <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-field">pod5_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">21</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">fastq_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">126</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">bam_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">126</span>
+                </div>
+            </div>
+        
+    </div>
+    
+
+    <div class="experiment-card updated" data-type="updated">
+        <div class="card-header">
+            <span class="sample-id">gregcipLAtry4</span>
+            <span class="change-badge updated">updated</span>
+        </div>
+        <div class="card-body">
+            <div class="field">
+                <span class="field-label">Flow Cell:</span>
+                <span class="field-value">FBD19324</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Instrument:</span>
+                <span class="field-value">MD-102066</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Path:</span>
+                <span class="field-value">/data1/targeted_sequencing_human_CYP2D6/gregcipLAtry4/20250801_1035_MD-102066_FBD19324_b0df2ac6</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Started:</span>
+                <span class="field-value">2025-08-01T10:36:22.296278-04:00</span>
+            </div>
+        </div>
+        <div class="file-counts">
+            <div class="file-count pod5">
+                <span>POD5:</span>
+                <span class="count">35</span>
+            </div>
+            <div class="file-count fast5">
+                <span>Fast5:</span>
+                <span class="count">0</span>
+            </div>
+            <div class="file-count fastq">
+                <span>FASTQ:</span>
+                <span class="count">207</span>
+            </div>
+            <div class="file-count bam">
+                <span>BAM:</span>
+                <span class="count">207</span>
+            </div>
+        </div>
+        <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-field">pod5_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">35</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">fastq_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">207</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">bam_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">207</span>
+                </div>
+            </div>
+        
+    </div>
+    
+
+    <div class="experiment-card updated" data-type="updated">
+        <div class="card-header">
+            <span class="sample-id">monica_2_15_jul16</span>
+            <span class="change-badge updated">updated</span>
+        </div>
+        <div class="card-body">
+            <div class="field">
+                <span class="field-label">Flow Cell:</span>
+                <span class="field-value">FBD09105</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Instrument:</span>
+                <span class="field-value">MD-102066</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Path:</span>
+                <span class="field-value">/data1/targeted_sequencing_human_CYP2D6/monica_2_15_jul16/20250716_1559_MD-102066_FBD09105_76255021</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Started:</span>
+                <span class="field-value">2025-07-16T16:00:22.330284-04:00</span>
+            </div>
+        </div>
+        <div class="file-counts">
+            <div class="file-count pod5">
+                <span>POD5:</span>
+                <span class="count">23</span>
+            </div>
+            <div class="file-count fast5">
+                <span>Fast5:</span>
+                <span class="count">0</span>
+            </div>
+            <div class="file-count fastq">
+                <span>FASTQ:</span>
+                <span class="count">136</span>
+            </div>
+            <div class="file-count bam">
+                <span>BAM:</span>
+                <span class="count">136</span>
+            </div>
+        </div>
+        <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-field">pod5_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">23</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">fastq_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">136</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">bam_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">136</span>
+                </div>
+            </div>
+        
+    </div>
+    
+
+    <div class="experiment-card updated" data-type="updated">
+        <div class="card-header">
+            <span class="sample-id">Storebought_3_4_jul14_restart</span>
+            <span class="change-badge updated">updated</span>
+        </div>
+        <div class="card-body">
+            <div class="field">
+                <span class="field-label">Flow Cell:</span>
+                <span class="field-value">FBD10988</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Instrument:</span>
+                <span class="field-value">MD-100098</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Path:</span>
+                <span class="field-value">/data1/targeted_sequencing_human_CYP2D6/Storebought_3_4_jul14_restart/20250714_2208_MD-100098_FBD10988_f394c3e1</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Started:</span>
+                <span class="field-value">2025-07-14T22:09:12.127207-04:00</span>
+            </div>
+        </div>
+        <div class="file-counts">
+            <div class="file-count pod5">
+                <span>POD5:</span>
+                <span class="count">16</span>
+            </div>
+            <div class="file-count fast5">
+                <span>Fast5:</span>
+                <span class="count">0</span>
+            </div>
+            <div class="file-count fastq">
+                <span>FASTQ:</span>
+                <span class="count">93</span>
+            </div>
+            <div class="file-count bam">
+                <span>BAM:</span>
+                <span class="count">93</span>
+            </div>
+        </div>
+        <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-field">pod5_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">16</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">fastq_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">93</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">bam_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">93</span>
+                </div>
+            </div>
+        
+    </div>
+    
+
+    <div class="experiment-card updated" data-type="updated">
+        <div class="card-header">
+            <span class="sample-id">monica_2_15_jul17_recovered</span>
+            <span class="change-badge updated">updated</span>
+        </div>
+        <div class="card-body">
+            <div class="field">
+                <span class="field-label">Flow Cell:</span>
+                <span class="field-value">FBD20887</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Instrument:</span>
+                <span class="field-value">MD-102066</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Path:</span>
+                <span class="field-value">/data1/targeted_sequencing_human_CYP2D6/monica_2_15_jul17_recovered/20250717_1557_MD-102066_FBD20887_4f5a5594</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Started:</span>
+                <span class="field-value">2025-07-17T15:57:58.836919-04:00</span>
+            </div>
+        </div>
+        <div class="file-counts">
+            <div class="file-count pod5">
+                <span>POD5:</span>
+                <span class="count">23</span>
+            </div>
+            <div class="file-count fast5">
+                <span>Fast5:</span>
+                <span class="count">0</span>
+            </div>
+            <div class="file-count fastq">
+                <span>FASTQ:</span>
+                <span class="count">138</span>
+            </div>
+            <div class="file-count bam">
+                <span>BAM:</span>
+                <span class="count">138</span>
+            </div>
+        </div>
+        <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-field">pod5_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">23</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">fastq_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">138</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">bam_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">138</span>
+                </div>
+            </div>
+        
+    </div>
+    
+
+    <div class="experiment-card updated" data-type="updated">
+        <div class="card-header">
+            <span class="sample-id">monica_3_15_jul17</span>
+            <span class="change-badge updated">updated</span>
+        </div>
+        <div class="card-body">
+            <div class="field">
+                <span class="field-label">Flow Cell:</span>
+                <span class="field-value">FBD16702</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Instrument:</span>
+                <span class="field-value">MD-101527</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Path:</span>
+                <span class="field-value">/data1/targeted_sequencing_human_CYP2D6/monica_3_15_jul17/20250717_1557_MD-101527_FBD16702_7e97de64</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Started:</span>
+                <span class="field-value">2025-07-17T15:57:58.743598-04:00</span>
+            </div>
+        </div>
+        <div class="file-counts">
+            <div class="file-count pod5">
+                <span>POD5:</span>
+                <span class="count">14</span>
+            </div>
+            <div class="file-count fast5">
+                <span>Fast5:</span>
+                <span class="count">0</span>
+            </div>
+            <div class="file-count fastq">
+                <span>FASTQ:</span>
+                <span class="count">138</span>
+            </div>
+            <div class="file-count bam">
+                <span>BAM:</span>
+                <span class="count">138</span>
+            </div>
+        </div>
+        <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-field">pod5_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">14</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">fastq_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">138</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">bam_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">138</span>
+                </div>
+            </div>
+        
+    </div>
+    
+
+    <div class="experiment-card updated" data-type="updated">
+        <div class="card-header">
+            <span class="sample-id">Unknown Sample</span>
+            <span class="change-badge updated">updated</span>
+        </div>
+        <div class="card-body">
+            <div class="field">
+                <span class="field-label">Flow Cell:</span>
+                <span class="field-value">FBD70608</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Instrument:</span>
+                <span class="field-value">MD-100098</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Path:</span>
+                <span class="field-value">/data1/12082025_IF_NewBCPart4_SMA_seq/no_sample_id/20251208_2139_MD-100098_FBD70608_2272e10f</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Started:</span>
+                <span class="field-value">2025-12-08T21:40:21.170412-05:00</span>
+            </div>
+        </div>
+        <div class="file-counts">
+            <div class="file-count pod5">
+                <span>POD5:</span>
+                <span class="count">510</span>
+            </div>
+            <div class="file-count fast5">
+                <span>Fast5:</span>
+                <span class="count">0</span>
+            </div>
+            <div class="file-count fastq">
+                <span>FASTQ:</span>
+                <span class="count">437</span>
+            </div>
+            <div class="file-count bam">
+                <span>BAM:</span>
+                <span class="count">437</span>
+            </div>
+        </div>
+        <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-field">pod5_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">510</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">fastq_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">437</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">bam_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">437</span>
+                </div>
+            </div>
+        
+    </div>
+    
+
+    <div class="experiment-card updated" data-type="updated">
+        <div class="card-header">
+            <span class="sample-id">greg_4x_L1_jul24</span>
+            <span class="change-badge updated">updated</span>
+        </div>
+        <div class="card-body">
+            <div class="field">
+                <span class="field-label">Flow Cell:</span>
+                <span class="field-value">FBD23216</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Instrument:</span>
+                <span class="field-value">MD-102066</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Path:</span>
+                <span class="field-value">/data1/human_targeted_seq_cyp/greg_4x_L1_jul24/20250724_1702_MD-102066_FBD23216_887671d4</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Started:</span>
+                <span class="field-value">2025-07-24T17:03:06.449055-04:00</span>
+            </div>
+        </div>
+        <div class="file-counts">
+            <div class="file-count pod5">
+                <span>POD5:</span>
+                <span class="count">19</span>
+            </div>
+            <div class="file-count fast5">
+                <span>Fast5:</span>
+                <span class="count">0</span>
+            </div>
+            <div class="file-count fastq">
+                <span>FASTQ:</span>
+                <span class="count">23</span>
+            </div>
+            <div class="file-count bam">
+                <span>BAM:</span>
+                <span class="count">19</span>
+            </div>
+        </div>
+        <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-field">pod5_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">19</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">fastq_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">23</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">bam_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">19</span>
+                </div>
+            </div>
+        
+    </div>
+    
+
+    <div class="experiment-card updated" data-type="updated">
+        <div class="card-header">
+            <span class="sample-id">greg_4x_L1_sva_jul24</span>
+            <span class="change-badge updated">updated</span>
+        </div>
+        <div class="card-body">
+            <div class="field">
+                <span class="field-label">Flow Cell:</span>
+                <span class="field-value">FBD20720</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Instrument:</span>
+                <span class="field-value">MD-101527</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Path:</span>
+                <span class="field-value">/data1/human_targeted_seq_cyp/greg_4x_L1_sva_jul24/20250724_1702_MD-101527_FBD20720_b60cc4c4</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Started:</span>
+                <span class="field-value">2025-07-24T17:03:05.628886-04:00</span>
+            </div>
+        </div>
+        <div class="file-counts">
+            <div class="file-count pod5">
+                <span>POD5:</span>
+                <span class="count">50</span>
+            </div>
+            <div class="file-count fast5">
+                <span>Fast5:</span>
+                <span class="count">0</span>
+            </div>
+            <div class="file-count fastq">
+                <span>FASTQ:</span>
+                <span class="count">54</span>
+            </div>
+            <div class="file-count bam">
+                <span>BAM:</span>
+                <span class="count">50</span>
+            </div>
+        </div>
+        <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-field">pod5_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">50</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">fastq_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">54</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">bam_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">50</span>
+                </div>
+            </div>
+        
+    </div>
+    
+
+    <div class="experiment-card updated" data-type="updated">
+        <div class="card-header">
+            <span class="sample-id">monica_2_15_jul24</span>
+            <span class="change-badge updated">updated</span>
+        </div>
+        <div class="card-body">
+            <div class="field">
+                <span class="field-label">Flow Cell:</span>
+                <span class="field-value">FBD20746</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Instrument:</span>
+                <span class="field-value">MD-100098</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Path:</span>
+                <span class="field-value">/data1/human_targeted_seq_cyp/monica_2_15_jul24/20250724_1702_MD-100098_FBD20746_ce2f3c1b</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Started:</span>
+                <span class="field-value">2025-07-24T17:03:05.558976-04:00</span>
+            </div>
+        </div>
+        <div class="file-counts">
+            <div class="file-count pod5">
+                <span>POD5:</span>
+                <span class="count">50</span>
+            </div>
+            <div class="file-count fast5">
+                <span>Fast5:</span>
+                <span class="count">0</span>
+            </div>
+            <div class="file-count fastq">
+                <span>FASTQ:</span>
+                <span class="count">54</span>
+            </div>
+            <div class="file-count bam">
+                <span>BAM:</span>
+                <span class="count">50</span>
+            </div>
+        </div>
+        <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-field">pod5_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">50</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">fastq_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">54</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">bam_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">50</span>
+                </div>
+            </div>
+        
+    </div>
+    
+
+    <div class="experiment-card updated" data-type="updated">
+        <div class="card-header">
+            <span class="sample-id">Cas9cutgDNA_5ug_10162025</span>
+            <span class="change-badge updated">updated</span>
+        </div>
+        <div class="card-body">
+            <div class="field">
+                <span class="field-label">Flow Cell:</span>
+                <span class="field-value">FBD71065</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Instrument:</span>
+                <span class="field-value">MD-101527</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Path:</span>
+                <span class="field-value">/data1/Cas9cutting_gRNAs2_3_15_17_MT5_10162025/Cas9cutgDNA_5ug_10162025/20251016_1906_MD-101527_FBD71065_01f9b9a0</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Started:</span>
+                <span class="field-value">2025-10-16T19:07:52.859002-04:00</span>
+            </div>
+        </div>
+        <div class="file-counts">
+            <div class="file-count pod5">
+                <span>POD5:</span>
+                <span class="count">13</span>
+            </div>
+            <div class="file-count fast5">
+                <span>Fast5:</span>
+                <span class="count">0</span>
+            </div>
+            <div class="file-count fastq">
+                <span>FASTQ:</span>
+                <span class="count">13</span>
+            </div>
+            <div class="file-count bam">
+                <span>BAM:</span>
+                <span class="count">13</span>
+            </div>
+        </div>
+        <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-field">pod5_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">13</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">fastq_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">13</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">bam_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">13</span>
+                </div>
+            </div>
+        
+    </div>
+    
+
+    <div class="experiment-card updated" data-type="updated">
+        <div class="card-header">
+            <span class="sample-id">Cas9cutgDNA_10ug_10162025</span>
+            <span class="change-badge updated">updated</span>
+        </div>
+        <div class="card-body">
+            <div class="field">
+                <span class="field-label">Flow Cell:</span>
+                <span class="field-value">FBD71295</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Instrument:</span>
+                <span class="field-value">MD-102066</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Path:</span>
+                <span class="field-value">/data1/Cas9cutting_gRNAs2_3_15_17_MT5_10162025/Cas9cutgDNA_10ug_10162025/20251016_1906_MD-102066_FBD71295_83128859</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Started:</span>
+                <span class="field-value">2025-10-16T19:07:37.710785-04:00</span>
+            </div>
+        </div>
+        <div class="file-counts">
+            <div class="file-count pod5">
+                <span>POD5:</span>
+                <span class="count">13</span>
+            </div>
+            <div class="file-count fast5">
+                <span>Fast5:</span>
+                <span class="count">0</span>
+            </div>
+            <div class="file-count fastq">
+                <span>FASTQ:</span>
+                <span class="count">13</span>
+            </div>
+            <div class="file-count bam">
+                <span>BAM:</span>
+                <span class="count">13</span>
+            </div>
+        </div>
+        <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-field">pod5_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">13</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">fastq_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">13</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">bam_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">13</span>
+                </div>
+            </div>
+        
+    </div>
+    
+
+    <div class="experiment-card updated" data-type="updated">
+        <div class="card-header">
+            <span class="sample-id">Cas9cutgDNA_1ug_10162025</span>
+            <span class="change-badge updated">updated</span>
+        </div>
+        <div class="card-body">
+            <div class="field">
+                <span class="field-label">Flow Cell:</span>
+                <span class="field-value">FBD71450</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Instrument:</span>
+                <span class="field-value">MD-100098</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Path:</span>
+                <span class="field-value">/data1/Cas9cutting_gRNAs2_3_15_17_MT5_10162025/Cas9cutgDNA_1ug_10162025/20251016_1906_MD-100098_FBD71450_ce4013c9</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Started:</span>
+                <span class="field-value">2025-10-16T19:07:37.834533-04:00</span>
+            </div>
+        </div>
+        <div class="file-counts">
+            <div class="file-count pod5">
+                <span>POD5:</span>
+                <span class="count">13</span>
+            </div>
+            <div class="file-count fast5">
+                <span>Fast5:</span>
+                <span class="count">0</span>
+            </div>
+            <div class="file-count fastq">
+                <span>FASTQ:</span>
+                <span class="count">13</span>
+            </div>
+            <div class="file-count bam">
+                <span>BAM:</span>
+                <span class="count">13</span>
+            </div>
+        </div>
+        <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-field">pod5_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">13</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">fastq_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">13</span>
+                </div>
+            
+                <div class="change-item">
+                    <span class="change-field">bam_files:</span>
+                    <span class="change-old"></span>
+                    <span class="change-arrow">&rarr;</span>
+                    <span class="change-new">13</span>
+                </div>
+            </div>
+        
+    </div>
+    
+    </div>
+    
+
+        <footer>
+            <p>Generated by greatlakes-sync v1.0.0</p>
+            <p>ONT Ecosystem - Single Molecule Sequencing Lab</p>
+        </footer>
+    </div>
+
+    <script>
+        // Filter functionality
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const filter = btn.dataset.filter;
+
+                // Update active button
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                // Filter cards
+                document.querySelectorAll('.experiment-card').forEach(card => {
+                    if (filter === 'all' || card.classList.contains(filter)) {
+                        card.style.display = '';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+
+                // Update section visibility
+                document.querySelectorAll('.section-header').forEach(header => {
+                    const section = header.nextElementSibling;
+                    const visibleCards = section.querySelectorAll('.experiment-card:not([style*="display: none"])');
+                    header.style.display = visibleCards.length ? '' : 'none';
+                    section.style.display = visibleCards.length ? '' : 'none';
+                });
+            });
+        });
+
+        // Search functionality
+        document.getElementById('searchBox').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+
+            document.querySelectorAll('.experiment-card').forEach(card => {
+                const text = card.textContent.toLowerCase();
+                card.style.display = text.includes(query) ? '' : 'none';
+            });
+        });
+    </script>
+</body>
+</html>
