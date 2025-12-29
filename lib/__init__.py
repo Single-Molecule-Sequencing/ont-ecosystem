@@ -42,3 +42,15 @@ SKILL_VERSIONS = {
     "experiment-db": "2.0.0",
     "manuscript": "1.0.0"  # Figure/table generation
 }
+
+# Logging configuration - import on demand to avoid circular imports
+def get_logger(name: str):
+    """Get a logger for a module. Lazy import to avoid startup overhead."""
+    from .logging_config import get_logger as _get_logger
+    return _get_logger(name)
+
+
+def setup_logging(**kwargs):
+    """Setup logging configuration. Lazy import to avoid startup overhead."""
+    from .logging_config import setup_logging as _setup_logging
+    return _setup_logging(**kwargs)

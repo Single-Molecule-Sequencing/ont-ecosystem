@@ -335,3 +335,83 @@ def test_help_core_commands_exist():
     assert 'ont_stats.py' in all_commands
     assert 'ont_check.py' in all_commands
     assert 'end_reason.py' in all_commands
+
+
+# =============================================================================
+# lib/logging_config.py Tests
+# =============================================================================
+
+def test_logging_config_imports():
+    """Test that logging_config.py can be imported"""
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    sys.path.insert(0, str(lib_dir.parent))
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "logging_config",
+        lib_dir / "logging_config.py"
+    )
+    logging_config = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(logging_config)
+
+    assert hasattr(logging_config, 'setup_logging')
+    assert hasattr(logging_config, 'get_logger')
+    assert hasattr(logging_config, 'add_logging_args')
+    assert hasattr(logging_config, 'LogContext')
+
+
+def test_logging_get_logger():
+    """Test get_logger returns a logger"""
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    sys.path.insert(0, str(lib_dir.parent))
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "logging_config",
+        lib_dir / "logging_config.py"
+    )
+    logging_config = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(logging_config)
+
+    import logging
+    logger = logging_config.get_logger("test_module")
+    assert isinstance(logger, logging.Logger)
+    assert "ont" in logger.name
+
+
+def test_logging_setup():
+    """Test setup_logging configures handlers"""
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    sys.path.insert(0, str(lib_dir.parent))
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "logging_config",
+        lib_dir / "logging_config.py"
+    )
+    logging_config = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(logging_config)
+
+    # Test verbose mode
+    logger = logging_config.setup_logging(verbose=True, name="test_ont")
+    assert len(logger.handlers) >= 1
+
+    # Test quiet mode
+    logger = logging_config.setup_logging(quiet=True, name="test_ont_quiet")
+    assert len(logger.handlers) >= 1
+
+
+def test_lib_exports_logging():
+    """Test that lib exports logging functions"""
+    lib_dir = Path(__file__).parent.parent / 'lib'
+    sys.path.insert(0, str(lib_dir.parent))
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("lib", lib_dir / "__init__.py")
+    lib = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(lib)
+
+    assert hasattr(lib, 'get_logger')
+    assert hasattr(lib, 'setup_logging')
+    assert callable(lib.get_logger)
+    assert callable(lib.setup_logging)

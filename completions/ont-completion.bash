@@ -132,6 +132,44 @@ _ont_stats() {
 complete -F _ont_stats ont_stats.py
 complete -F _ont_stats ont-stats
 
+# ont_check.py completion
+_ont_check() {
+    local cur
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+
+    if [[ ${cur} == -* ]]; then
+        COMPREPLY=( $(compgen -W "--help --json --fix" -- ${cur}) )
+        return 0
+    fi
+}
+complete -F _ont_check ont_check.py
+complete -F _ont_check ont-check
+
+# ont_help.py completion
+_ont_help() {
+    local cur prev commands
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    commands="ont_experiments ont_pipeline ont_manuscript end_reason ont_align dorado_basecall ont_monitor ont_stats ont_check ont_context experiment_db calculate_resources make_sbatch_from_cmdtxt"
+
+    case "${prev}" in
+        ont_help.py|ont-help)
+            COMPREPLY=( $(compgen -W "${commands} --examples --version" -- ${cur}) )
+            return 0
+            ;;
+    esac
+
+    if [[ ${cur} == -* ]]; then
+        COMPREPLY=( $(compgen -W "--help --examples --version" -- ${cur}) )
+        return 0
+    fi
+}
+complete -F _ont_help ont_help.py
+complete -F _ont_help ont-help
+
 # make completion for ont-ecosystem targets
 _ont_make() {
     local cur targets
