@@ -24,6 +24,7 @@ Skills are automatically installed to `~/.claude/commands/`. Invoke with `/<skil
 | `/manuscript` | Publication figures and tables |
 | `/skill-maker` | Create and manage Claude skills |
 | `/ont-public-data` | Stream & analyze public ONT datasets from S3 (50K reads sampling) |
+| `/registry-browser` | Interactive registry browser with metadata extraction |
 
 ### Quick Examples
 
@@ -167,7 +168,7 @@ List available generators: `make list-figures` or `make list-tables`
 
 1. Create `skills/my-skill/SKILL.md` with YAML frontmatter
 2. Add implementation in `skills/my-skill/scripts/`
-3. Register in `ANALYSIS_SKILLS` dict in `bin/ont_experiments.py:75`
+3. Register in `ANALYSIS_SKILLS` dict in `bin/ont_experiments.py:95`
 4. Add wrapper in `bin/` if needed (import from skills/)
 5. Add tests in `tests/`
 
@@ -223,6 +224,17 @@ from lib import weighted_mean_qscore, qscore_to_probability, probability_to_qsco
 
 **This rule applies to all current and future code in this project.**
 
+## Environment Variables
+
+Key variables (see `docs/ENVIRONMENT.md` for full list):
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `ONT_REGISTRY_DIR` | `~/.ont-registry` | Experiment registry location |
+| `ONT_GITHUB_SYNC` | `0` | Enable GitHub sync (set to `1` for public repos) |
+| `ONT_LOG_LEVEL` | `WARNING` | Log level (DEBUG/INFO/WARNING/ERROR) |
+| `SLURM_JOB_ID` | - | Auto-captured for HPC provenance |
+
 ## Dependencies
 
 - **Required**: Python 3.9+, pyyaml
@@ -252,6 +264,22 @@ P(h,g,u,d,l,σ,r) = P(h)·P(g|h)·P(u|g)·P(d|u)·P(l|d)·P(σ|l)·P(r|σ)
 ```
 
 Nine pipeline stages: h (Haplotype), g (Standard), u (Guide), d (Fragmentation), ℓ (Library), σ (Signal), r (Basecalling), C (Cas9 toggle), A (Adaptive toggle)
+
+## Debugging
+
+```bash
+# Enable verbose logging
+ONT_LOG_LEVEL=DEBUG ont_experiments.py discover /path
+
+# Run doctor to diagnose issues
+ont_doctor.py --fix
+
+# Check health
+ont_check.py --json
+
+# Validate all components
+make validate
+```
 
 ## Skill Installation
 
