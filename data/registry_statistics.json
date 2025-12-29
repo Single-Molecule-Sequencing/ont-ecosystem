@@ -1,18 +1,24 @@
 {
-  "generated_at": "2025-12-29T10:41:37.564204",
+  "generated_at": "2025-12-29T10:48:40.545164",
   "total_experiments": 166,
+  "completeness": {
+    "good": 149,
+    "warning": 16,
+    "poor": 1
+  },
   "by_source": {
     "ont-open-data": 21,
     "local": 145
-  },
-  "by_status": {
-    "analyzed": 21,
-    "discovered": 145
   },
   "by_chemistry": {
     "R10.4.1": 154,
     "Unknown": 4,
     "R10.4": 8
+  },
+  "by_basecaller": {
+    "Unknown": 19,
+    "guppy": 14,
+    "dorado": 133
   },
   "by_model": {
     "hac": 146,
@@ -37,26 +43,11 @@
     "Plasmid": 70,
     "Human": 13
   },
-  "quality_stats": {
-    "qscore": {
-      "count": 147,
-      "mean": 14.32,
-      "median": 14.4,
-      "min": 2.9,
-      "max": 26.4,
-      "stdev": 5.4
-    },
-    "n50_bp": {
-      "count": 147,
-      "mean": 9870.0,
-      "median": 4829,
-      "min": 110,
-      "max": 95808
-    }
-  },
-  "completeness": {
-    "good": 150,
-    "warning": 12,
-    "poor": 4
+  "by_experiment_type": {
+    "Unknown": 78,
+    "Metagenomic": 5,
+    "Plasmid Sequencing": 70,
+    "WGS": 4,
+    "Sequencing": 9
   }
 }
