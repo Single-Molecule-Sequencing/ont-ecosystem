@@ -43,14 +43,14 @@ cd ont-ecosystem
 
 ## Skills Overview
 
-| Skill | Description | Key Features |
-|-------|-------------|--------------|
-| **ont-experiments-v2** | Core registry & orchestration | Event sourcing, Pattern B, pipeline integration |
-| **ont-align** | Alignment & edit distance | minimap2/dorado, reference mgmt, Levenshtein |
-| **ont-pipeline** | Workflow orchestration | Multi-step pipelines, unified QC, batch processing |
-| **end-reason** | Read end reason QC | Adaptive sampling analysis, quality thresholds |
-| **dorado-bench-v2** | Basecalling workflows | Model management, SLURM generation, GPU optimization |
-| **ont-monitor** | Run monitoring | Live dashboard, time-series, alerts |
+| Skill                  | Description                   | Key Features                                         |
+| ---------------------- | ----------------------------- | ---------------------------------------------------- |
+| **ont-experiments-v2** | Core registry & orchestration | Event sourcing, Pattern B, pipeline integration      |
+| **ont-align**          | Alignment & edit distance     | minimap2/dorado, reference mgmt, Levenshtein         |
+| **ont-pipeline**       | Workflow orchestration        | Multi-step pipelines, unified QC, batch processing   |
+| **end-reason**         | Read end reason QC            | Adaptive sampling analysis, quality thresholds       |
+| **dorado-bench-v2**    | Basecalling workflows         | Model management, SLURM generation, GPU optimization |
+| **ont-monitor**        | Run monitoring                | Live dashboard, time-series, alerts                  |
 
 ## Architecture
 
@@ -332,9 +332,9 @@ Single Molecule Sequencing Lab, University of Michigan
 
 ## Related Repositories
 
-| Repository | Description |
-|------------|-------------|
-| [dorado-bench](https://github.com/Single-Molecule-Sequencing/dorado-bench) | Dorado model benchmarking |
-| [dorado-run](https://github.com/Single-Molecule-Sequencing/dorado-run) | Dorado execution tool |
-| [End_Reason_nf](https://github.com/Single-Molecule-Sequencing/End_Reason_nf) | End reason Nextflow |
-| [PGx-prep](https://github.com/Single-Molecule-Sequencing/PGx-prep) | PGx BAM preprocessing |
+| Repository                                                                   | Description               |
+| ---------------------------------------------------------------------------- | ------------------------- |
+| [dorado-bench](https://github.com/Single-Molecule-Sequencing/dorado-bench)   | Dorado model benchmarking |
+| [dorado-run](https://github.com/Single-Molecule-Sequencing/dorado-run)       | Dorado execution tool     |
+| [End_Reason_nf](https://github.com/Single-Molecule-Sequencing/End_Reason_nf) | End reason Nextflow       |
+| [PGx-prep](https://github.com/Single-Molecule-Sequencing/PGx-prep)           | PGx BAM preprocessing     |
