@@ -106,6 +106,18 @@ def truncate(s: str, max_len: int) -> str:
     return s[:max_len-2] + ".."
 
 
+def format_duration(hours: Optional[float]) -> str:
+    """Format duration in hours to human readable string."""
+    if hours is None:
+        return "?"
+    if hours < 1:
+        return f"{int(hours * 60)}m"
+    if hours < 24:
+        return f"{hours:.1f}h"
+    days = hours / 24
+    return f"{days:.1f}d"
+
+
 def display_terminal_summary(
     summaries: List[QuickSummary],
     source_dir: str = "",
@@ -127,36 +139,67 @@ def display_terminal_summary(
 
     agg = aggregate_summaries(summaries)
 
+    # Calculate total reads and bases
+    total_reads = sum(s.total_reads or 0 for s in summaries)
+    total_bases = sum(s.total_bases or 0 for s in summaries)
+
     # Header
     print()
-    print(colorize("=" * 78, 'dim'))
+    print(colorize("=" * 120, 'dim'))
     print(colorize(f"  Discovery Analysis: {source_dir}", 'bold'))
     print(colorize(f"  Found: {len(summaries)} experiments | "
                    f"Total: {format_size(agg['total_size_gb'])} | "
+                   f"{format_number(total_reads)} reads | "
+                   f"{format_number(total_bases)} bases | "
                    f"Analyzed in {elapsed_time:.1f}s", 'dim'))
-    print(colorize("=" * 78, 'dim'))
+    print(colorize("=" * 120, 'dim'))
     print()
 
-    # Table header
-    headers = ["ID", "Name", "Reads", "Bases", "Q", "N50", "Grade"]
-    widths = [16, 25, 8, 8, 5, 7, 5]
+    # Table header - expanded with new columns
+    headers = ["Name", "Started", "Duration", "Reads", "Bases", "Q", "N50", "Device", "Grade"]
+    widths = [28, 16, 8, 10, 10, 5, 8, 12, 5]
 
     header_line = "  "
     for h, w in zip(headers, widths):
         header_line += h.ljust(w) + " "
     print(colorize(header_line, 'bold'))
-    print("  " + colorize("-" * 16 + " " + "-" * 25 + " " + "-" * 8 + " " +
-                          "-" * 8 + " " + "-" * 5 + " " + "-" * 7 + " " + "-" * 5, 'dim'))
+
+    # Separator
+    sep_line = "  "
+    for w in widths:
+        sep_line += "-" * w + " "
+    print(colorize(sep_line, 'dim'))
 
     # Table rows
     for s in summaries:
         row = "  "
-        row += truncate(s.experiment_id, 16).ljust(16) + " "
-        row += truncate(s.name, 25).ljust(25) + " "
-        row += format_number(s.total_reads).rjust(8) + " "
-        row += format_number(s.total_bases).rjust(8) + " "
+        row += truncate(s.name, 28).ljust(28) + " "
+
+        # Started date/time
+        if s.start_date and s.start_time:
+            # Show just month-day and time
+            date_short = s.start_date[5:] if s.start_date else "?"  # MM-DD
+            started_str = f"{date_short} {s.start_time}"
+        else:
+            started_str = "?"
+        row += started_str.ljust(16) + " "
+
+        # Duration
+        row += format_duration(s.duration_hours).rjust(8) + " "
+
+        # Reads and bases
+        row += format_number(s.total_reads).rjust(10) + " "
+        row += format_number(s.total_bases).rjust(10) + " "
+
+        # Q-score
         row += format_float(s.mean_qscore).rjust(5) + " "
-        row += format_number(s.n50).rjust(7) + " "
+
+        # N50
+        row += format_number(s.n50).rjust(8) + " "
+
+        # Device/Flow cell
+        device_str = s.device_id or s.flow_cell_id or "?"
+        row += truncate(device_str, 12).ljust(12) + " "
 
         # Print row (without grade color)
         print(row, end="")
@@ -167,7 +210,7 @@ def display_terminal_summary(
 
     # Summary line
     grade_summary = []
-    for grade in ['A', 'B', 'C', 'D', 'F']:
+    for grade in ['A', 'B', 'C', 'D', 'F', 'S']:
         count = agg.get(f'grade_{grade.lower()}_count', 0)
         if count > 0:
             grade_summary.append(f"{count} Grade {grade_colored(grade)}")
@@ -381,13 +424,15 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
         <table id="experimentTable">
             <thead>
                 <tr>
-                    <th onclick="sortTable(0)">ID</th>
-                    <th onclick="sortTable(1)">Name</th>
-                    <th onclick="sortTable(2)">Reads</th>
-                    <th onclick="sortTable(3)">Bases</th>
-                    <th onclick="sortTable(4)">Q-Score</th>
-                    <th onclick="sortTable(5)">N50</th>
-                    <th onclick="sortTable(6)">Grade</th>
+                    <th onclick="sortTable(0)">Name</th>
+                    <th onclick="sortTable(1)">Started</th>
+                    <th onclick="sortTable(2)">Duration</th>
+                    <th onclick="sortTable(3)">Reads</th>
+                    <th onclick="sortTable(4)">Bases</th>
+                    <th onclick="sortTable(5)">Q-Score</th>
+                    <th onclick="sortTable(6)">N50</th>
+                    <th onclick="sortTable(7)">Device</th>
+                    <th onclick="sortTable(8)">Grade</th>
                     <th>Completeness</th>
                     <th>Issues</th>
                 </tr>
@@ -490,13 +535,27 @@ def generate_html_dashboard(
         else:
             issues_html = '<span class="no-issues">-</span>'
 
+        # Format started time
+        if s.start_date and s.start_time:
+            started = f"{s.start_date[5:]} {s.start_time}"  # MM-DD HH:MM
+        else:
+            started = "?"
+
+        # Format duration
+        duration = format_duration(s.duration_hours)
+
+        # Device ID
+        device = s.device_id or "?"
+
         row = f'''<tr>
-            <td>{html.escape(s.experiment_id[:16])}</td>
-            <td>{html.escape(s.name[:30])}</td>
+            <td>{html.escape(s.name[:35])}</td>
+            <td>{html.escape(started)}</td>
+            <td>{duration}</td>
             <td>{format_number(s.total_reads)}</td>
             <td>{format_number(s.total_bases)}</td>
             <td>{format_float(s.mean_qscore)}</td>
             <td>{format_number(s.n50)}</td>
+            <td>{html.escape(device)}</td>
             <td><span class="grade-badge grade-{s.quality_grade}">{s.quality_grade}</span></td>
             <td>{completeness}</td>
             <td>{issues_html}</td>
@@ -559,11 +618,15 @@ def generate_comparison_table(
             data.append({
                 'id': s.experiment_id,
                 'name': s.name,
+                'start_date': s.start_date,
+                'start_time': s.start_time,
+                'duration_hours': s.duration_hours,
                 'reads': s.total_reads,
                 'bases': s.total_bases,
                 'qscore': s.mean_qscore,
                 'n50': s.n50,
                 'pass_rate': s.pass_rate,
+                'device_id': s.device_id,
                 'grade': s.quality_grade,
             })
         with open(output_path, 'w') as f:
@@ -571,16 +634,27 @@ def generate_comparison_table(
     else:
         sep = '\t' if format == 'tsv' else ','
         with open(output_path, 'w') as f:
-            f.write(sep.join(['ID', 'Name', 'Reads', 'Bases', 'Q-Score', 'N50', 'Pass Rate', 'Grade']) + '\n')
+            f.write(sep.join(['ID', 'Name', 'Started', 'Duration', 'Reads', 'Bases', 'Q-Score', 'N50', 'Pass Rate', 'Device', 'Grade']) + '\n')
             for s in summaries:
+                # Format started
+                if s.start_date and s.start_time:
+                    started = f"{s.start_date} {s.start_time}"
+                else:
+                    started = ''
+                # Format duration
+                duration = format_duration(s.duration_hours) if s.duration_hours else ''
+
                 row = [
                     s.experiment_id,
                     s.name,
+                    started,
+                    duration,
                     str(s.total_reads or ''),
                     str(s.total_bases or ''),
                     format_float(s.mean_qscore) if s.mean_qscore else '',
                     str(s.n50 or ''),
                     format_pct(s.pass_rate) if s.pass_rate else '',
+                    s.device_id or '',
                     s.quality_grade,
                 ]
                 f.write(sep.join(row) + '\n')
