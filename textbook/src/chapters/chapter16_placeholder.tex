@@ -1,0 +1,166 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Chapter 16: Bacterial Strain Typing and Microbial Genomics
+%% Part VI: Clinical Applications and Case Studies
+%% Status: FORTHCOMING
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{Bacterial Strain Typing and Microbial Genomics}
+\label{chap:bacterial}
+\label{chap:clinical-applications}
+
+\ChapterForthcomingNotice{This chapter will demonstrate framework application to bacterial genomics and highlight assay adaptations required for microbial laboratories.}{%
+\item 16S and 23S rRNA haplotyping for strain discrimination
+\item Clinical microbiology workflows and reporting
+\item Antibiotic resistance gene phasing and catalog integration
+\item Validation results on bacterial reference standards
+\item Performance comparison with traditional culture and sequencing
+\item Case studies: \textit{E.~coli}, \textit{S.~aureus}, \textit{M.~tuberculosis}
+\item Public health surveillance applications and outbreak tracing
+}{5--7}
+
+\noindent\textbf{Chapter Objectives}
+\begin{itemize}
+\item Apply framework to bacterial genomics applications
+\item Demonstrate strain-level discrimination capability
+\item Validate methodology on microbial reference materials
+\item Show clinical utility beyond human pharmacogenomics
+\item Establish performance benchmarks for microbial applications
+\end{itemize}
+
+\noindent\textbf{Integration with Framework} The methods developed in Parts~II--V generalize beyond pharmacogenes to microbial applications. SMA-seq procedures (Part~IV) and validation protocols (Part~V) apply directly to bacterial reference standards, enabling rigorous accuracy assessment within CLIA-aligned microbiology laboratories.
+
+\section{Bacterial Target Selection and Panel Design}
+\label{sec:ch16-panel-design}
+\noindent\textbf{Status: Outline.} Specify how to choose loci (16S, 23S, AMR genes) and design assays compatible with the framework. Plan inclusion of tables mapping targets to clinical use cases.
+\begin{itemize}
+\item Enumerate priority pathogens (CLSI, CDC threat lists) and associated genetic markers.
+\item Outline design criteria for amplicon vs. adaptive sampling workflows.
+\item Flag requirement to include references to Chapter~\ref{chap:workflow} for pipeline adaptations.
+\end{itemize}
+
+\begin{definition}[Microbial Panel Variables]
+\textit{Placeholder: Define $C_{\text{strain}}$ (strain identifier), $R_{g}$ (resistance presence indicator), and $D_{\text{AMR}}$ (coverage depth for antimicrobial resistance loci) using the notation rules in Appendix~\ref{app:notation}. Document where each variable is captured in Appendix~\ref{app:protocols} intake forms and what thresholds align with \CEref{11}.}
+\end{definition}
+
+\begin{table}[htbp]
+\centering
+\caption{Placeholder --- Candidate Targets and Validation Requirements}
+\label{tab:ch16-target-summary}
+\begin{tabular}{lll}
+\toprule
+\textbf{Target} & \textbf{Clinical Use Case} & \textbf{Planned Actions} \\
+\midrule
+\textit{16S Hypervariable Loci} & \textit{Baseline strain discrimination} & \textit{Document primer scheme; link to Appendix~\ref{app:protocols}} \\
+\textit{AMR Gene $g$} & \textit{Resistance phenotype confirmation} & \textit{Capture QC thresholds via \CEref{11}} \\
+\textit{Plasmid Marker $p$} & \textit{Outbreak tracing support} & \textit{Add coverage simulations referencing Chapter~\ref{chap:workflow}} \\
+\bottomrule
+\end{tabular}
+\begin{flushleft}\footnotesize\textit{Replace italics with validated entries after assay design review concludes.}\end{flushleft}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Placeholder --- Variable Reference Map}
+\label{tab:ch16-variable-map}
+\begin{tabular}{llll}
+\toprule
+\textbf{Variable} & \textbf{Meaning} & \textbf{Appendix Link} & \textbf{Outstanding Task} \\
+\midrule
+\textit{$C_{\text{strain}}$} & \textit{Strain-level identifier used in concordance tables} & \textit{Appendix~\ref{app:notation}} & \textit{Align with epidemiology codes} \\
+\textit{$D_{\text{AMR}}$} & \textit{Depth threshold for AMR locus acceptance} & \textit{Appendix~\ref{app:core-equations}} & \textit{Simulate depth across replicates} \\
+\textit{$Q_{\text{workflow}}$} & \textit{Pipeline QC score derived from \CEref{11}} & \textit{Appendix~\ref{app:protocols}} & \textit{Publish calculation checklist} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\section{Analytical Validation Strategy}
+\label{sec:ch16-validation}
+\noindent\textbf{Status: Drafting.} Describe reference materials (ATCC strains, NIST microbial standards), experimental design, and performance metrics (strain-level accuracy, AMR detection sensitivity).
+\begin{itemize}
+\item Lay out replicate structure (biological vs. technical) and tie accuracy thresholds to Appendix~\ref{app:protocols} QC checkpoints.
+\item Specify statistical tests (paired concordance, confidence interval calculations) reusing \CEref{11} likelihood framing for per-strain agreement.
+\item Plan tables summarizing AMR gene detection sensitivity with hyperlinks to Appendix~\ref{app:notation} for symbol consistency.
+\item Reserve figure slots for Bland--Altman plots and confusion matrices comparing against Chapter~\ref{chap:workflow} pipeline outputs.
+\end{itemize}
+
+\begin{eqbox}{Tutorial Placeholder --- Extending \CEref{11} to Strain Concordance}
+\textit{Describe how to parameterize likelihood ratios for microbial haplotypes, outlining steps for computing $\Prob(\text{correct strain}\mid D)$ and mapping each term back to Appendix~\ref{app:core-equations}. Include reminder to document variable definitions in Table~\ref{tab:ch16-variable-map}.}
+\end{eqbox}
+
+\begin{table}[htbp]
+\centering
+\caption{Placeholder --- Validation Metric Summary}
+\label{tab:ch16-validation-metrics}
+\begin{tabular}{llll}
+\toprule
+\textbf{Metric} & \textbf{Definition Reference} & \textbf{Target Value} & \textbf{Status} \\
+\midrule
+\textit{Strain Concordance} & \textit{Appendix~\ref{app:notation}, \CEref{11}} & \textit{$\geq 0.95$} & \textit{Pending hybrid validation} \\
+\textit{AMR Gene Sensitivity} & \textit{Appendix~\ref{app:core-equations}} & \textit{$\geq 0.98$} & \textit{Add SIR panel data} \\
+\textit{Run-to-Run Reproducibility} & \textit{Appendix~\ref{app:protocols}} & \textit{$\leq 5\%$ variance} & \textit{Collect replicate runs} \\
+\bottomrule
+\end{tabular}
+\begin{flushleft}\footnotesize\textit{Update target thresholds once regulatory acceptance criteria are finalized.}\end{flushleft}
+\end{table}
+
+\begin{example}[Resistance Coverage Walkthrough]
+\textit{Placeholder: Provide a worked example computing $D_{\text{AMR}}$ for a \textit{Klebsiella} isolate, showing each step from raw pileup to Appendix~\ref{app:core-equations} derived confidence intervals.}
+\end{example}
+\noindent\textbf{Pending Inputs:} Finalize strain manifest, obtain sequencing run metadata from validation teams, and confirm acceptance criteria with clinical microbiology stakeholders.
+
+\section{Clinical and Public Health Case Studies}
+\label{sec:ch16-case-studies}
+\noindent\textbf{Status: Outline.} Plan narrative vignettes covering hospital outbreak investigation, TB resistance profiling, and foodborne surveillance. Identify figures and tables to summarize timelines and actionable outcomes.
+\begin{itemize}
+\item Draft subsections for each case study with data requirements (coverage, turnaround, concordance).
+\item Note dependencies on forthcoming figures illustrating phylogenetic resolution.
+\item Highlight regulatory reporting considerations (CLIA, public health notifications).
+\end{itemize}
+
+\begin{table}[htbp]
+\centering
+\caption{Placeholder --- Case Study Timeline Snapshot}
+\label{tab:ch16-case-timeline}
+\begin{tabular}{llll}
+\toprule
+\textbf{Scenario} & \textbf{Key Milestone} & \textbf{Data Artifact} & \textbf{Owner} \\
+\midrule
+\textit{Hospital Outbreak} & \textit{Day 3 cluster report} & \textit{Phylogenetic tree (Chapter~\ref{chap:workflow})} & \textit{Infection prevention} \\
+\textit{TB Resistance} & \textit{Resistance profile sign-out} & \textit{Appendix~\ref{app:protocols} QC log} & \textit{Clinical lab director} \\
+\textit{Foodborne Surveillance} & \textit{Regulatory notification} & \textit{Appendix~\ref{app:notation} coding} & \textit{Public health liaison} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Operational Considerations for Microbiology Labs}
+\label{sec:ch16-operations}
+\noindent\textbf{Status: Outline.} Detail workflow modifications, biosafety requirements, and integration with LIMS systems specific to microbiology labs. Reserve tables for SOP alignment with Chapter~\ref{chap:sops}.
+\begin{itemize}
+\item Draft subsections for biosafety level mapping, contamination control, and waste handling protocols referencing Appendix~\ref{app:protocols} checklists.
+\item Capture LIMS interface requirements, including data fields necessary for Appendix~\ref{app:core-equations} driven metrics (coverage, error rates).
+\item Prepare staffing matrices linking competencies to Chapter~\ref{chap:sops} training modules.
+\end{itemize}
+\noindent\textbf{Action Items:} Coordinate with infection prevention to validate biosafety notes and gather example LIMS screenshots for inclusion.
+
+\section{Reference Standards and Appendix Integration}
+\label{sec:ch16-standards}
+\noindent\textbf{Status: Outline.} List the microbial reference materials, plasmid constructs, and resistance gene panels necessary for validation. Cross-reference Appendix~\ref{app:protocols} for QC checkpoints and Appendix~\ref{app:notation} for symbol consistency when extending \CEref{11} likelihood calculations to microbial targets.
+\begin{itemize}
+\item Document source repositories (ATCC, BEI Resources) and accession metadata.
+\item Plan data tables linking loci to resistance phenotypes and interpretive categories.
+\item Track outstanding tasks such as sequencing additional reference strains and validating pipeline parameter presets.
+\end{itemize}
+
+\section{Outstanding Tasks and Data Dependencies}
+\label{sec:ch16-tasks}
+\noindent\textbf{Status: Tracking.} Summarize remaining work items including figure drafts for Section~\ref{sec:ch16-case-studies}, collaboration with infection prevention teams, and gap analyses for appendix cross-links. Maintain a rolling timeline to ensure content readiness aligns with Part VI publication milestones.
+\begin{enumerate}[label=\textbf{T\arabic*}]
+\item Draft phylogenetic resolution figure (Section~\ref{sec:ch16-case-studies}); assign data scientist and due date.
+\item Compile biosafety documentation outlined in Section~\ref{sec:ch16-operations}; confirm with compliance officer.
+\item Verify appendix hyperlinks (\CEref{11}, Appendix~\ref{app:protocols}, Appendix~\ref{app:notation}) once content is populated.
+\item Collect turnaround-time metrics from pilot sites to populate operational tables.
+\end{enumerate}
+\noindent\textbf{Risks:} Outstanding IRB approval for hospital outbreak case study and pending delivery of additional reference strain sequencing runs.
+
+\clearpage

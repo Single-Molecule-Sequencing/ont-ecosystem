@@ -50,6 +50,17 @@ htmlcov/
 .ont-registry/
 .ont-references/
 
+# Manuscript repos (created via ont_integrate.py, should be independent repos)
+# But keep templates which are part of the repo
+manuscripts/*
+!manuscripts/templates/
+
+# VSCode local history
+.history/
+
+# Snapshots (build/test artifacts)
+.snapshots/
+
 # Large data files
 *.pod5
 *.fast5

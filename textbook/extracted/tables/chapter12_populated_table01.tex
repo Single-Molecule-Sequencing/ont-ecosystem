@@ -1,0 +1,23 @@
+\begin{table}[!htbp]
+\centering
+\caption{Signal Database Schema}
+\label{tab:signal-db-schema}
+\begin{tabular}{p{3cm}p{3cm}p{6cm}}
+\toprule
+\textbf{Field} & \textbf{Type} & \textbf{Description} \\
+\midrule
+\texttt{signal\_id} & UUID & Unique identifier for this signal \\
+\texttt{raw\_signal} & Binary blob & FAST5/POD5/BAM file or extracted array \\
+\texttt{standard\_id} & String & Identifier for source physical standard \\
+\texttt{true\_sequence} & String & Verified sequence from standard \\
+\texttt{platform} & Enum & ONT R9.4.1, R10.4.1, PacBio Revio, etc. \\
+\texttt{flowcell\_id} & String & Hardware identifier for traceability \\
+\texttt{run\_date} & Timestamp & Sequencing date for temporal QC \\
+\texttt{basecaller\_version} & String & Model used to generate comparison calls \\
+\texttt{basecalled\_seq} & String & Sequence from initial basecalling \\
+\texttt{quality\_scores} & Array & Per-base Q-scores from initial basecalling \\
+\texttt{edit\_distance} & Integer & Levenshtein distance to true sequence \\
+\texttt{qc\_flags} & Bitfield & Pass/fail flags for various QC criteria \\
+\bottomrule
+\end{tabular}
+\end{table}

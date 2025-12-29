@@ -1,0 +1,479 @@
+% CHAPTER 4 - POPULATED VERSION
+% This content replaces the skeleton Chapter 4 in haplotype_math_framework_v6.tex
+
+\chapter{Confusion Matrix Framework: The Classification Model}
+\label{chap:classification-model}
+\label{chap:classification}
+
+This chapter establishes the mathematical foundations for modeling the complete single-molecule sequencing pipeline. We develop probabilistic descriptions of each transformation from biological haplotype through signal generation to basecalled sequences. The state space hierarchy provides a rigorous framework for understanding information flow, while the confusion matrix formalism captures empirical error patterns essential for accurate likelihood calculations.
+
+\begin{learningobjectives}
+By the end of this chapter, you will be able to:
+\begin{itemize}
+\item Describe the complete sequencing pipeline as a hierarchy of measurable spaces with conditional probability distributions
+\item Apply the Pipeline Factorization Theorem to decompose complex likelihood calculations into modular components
+\item Distinguish between signal-level and basecall-level modeling approaches
+\item Construct confusion matrices from empirical error measurements
+\item Compute per-read likelihoods using quality scores and confusion matrices
+\item Understand how the state space formalism enables rigorous Bayesian inference
+\end{itemize}
+\end{learningobjectives}
+
+\section{Measurable Spaces and Pipeline Architecture}
+
+Single-molecule sequencing transforms biological molecules through multiple physical and computational stages. We formalize this process using measurable spaces and conditional probability distributions, providing the mathematical infrastructure for rigorous likelihood computation.
+
+\begin{definition}[State Space Hierarchy]
+\label{def:state-space-hierarchy}
+The single-molecule sequencing pipeline operates on a hierarchy of measurable spaces:
+\begin{align}
+\mathcal{H} &= \{h_1, h_2, \ldots, h_P\} && \text{(Haplotype space)} \\
+\mathcal{G}_i &= \{g_1^{(i)}, g_2^{(i)}, \ldots, g_{v_i}^{(i)}\} && \text{(Genomic molecules for $h_i$)} \\
+\mathcal{U}_i &= \{u_1^{(i)}, u_2^{(i)}, \ldots, u_{x_i}^{(i)}\} && \text{(Post-mutation sequences)} \\
+\mathcal{D}_i &= \{d_1^{(i)}, d_2^{(i)}, \ldots, d_{y_i}^{(i)}\} && \text{(DNA fragments)} \\
+\mathcal{L}_i &= \{l_1^{(i)}, l_2^{(i)}, \ldots, l_{z_i}^{(i)}\} && \text{(Library molecules)} \\
+\mathcal{S} &= \{\sigma_1, \sigma_2, \ldots, \sigma_n\} && \text{(Signal space)} \\
+\mathcal{R} &= \{r_1, r_2, \ldots, r_n\} && \text{(Read space)}
+\end{align}
+\end{definition}
+
+The haplotype space $\mathcal{H}$ contains all candidate sequences under consideration, typically determined by prior knowledge of genomic variation. For each haplotype $h_i$, we define associated spaces of genomic molecules ($\mathcal{G}_i$), post-mutation sequences ($\mathcal{U}_i$) accounting for somatic variation, DNA fragments ($\mathcal{D}_i$) after physical shearing, library molecules ($\mathcal{L}_i$) following adapter ligation and enrichment, sequencing signals ($\mathcal{S}$), and finally observed reads ($\mathcal{R}$).
+
+Each transformation between spaces is characterized by a conditional probability distribution that captures the stochastic nature of the physical or computational process:
+
+\begin{theorem}[Pipeline Factorization]
+\label{thm:pipeline-factorization}
+The joint probability distribution over all variables in the sequencing pipeline factorizes as shown in the following key equation:
+\end{theorem}
+
+\begin{eqbox}{Pipeline Factorization Theorem}
+\begin{align}
+\Prob(h, \mathbf{g}, \mathbf{u}, \mathbf{d}, \mathbf{l}, \boldsymbol{\sigma}, \mathbf{r}) = {}&\Prob(h) \cdot \Prob(\mathbf{g}|h) \cdot \Prob(\mathbf{u}|\mathbf{g}) \cdot \Prob(\mathbf{d}|\mathbf{u}) \nonumber \\
+&\cdot \Prob(\mathbf{l}|\mathbf{d}) \cdot \Prob(\boldsymbol{\sigma}|\mathbf{l}) \cdot \Prob(\mathbf{r}|\boldsymbol{\sigma})
+\label{eq:pipeline-factorization}
+\end{align}
+\end{eqbox}
+
+This factorization embodies the Markov property of the sequencing pipeline: each stage depends only on its immediate predecessor. This structure enables efficient computation through dynamic programming while maintaining full probabilistic rigor. The prior $\Prob(h)$ reflects population-level haplotype frequencies, while conditional distributions model biological processes (mutation, fragmentation) and technical operations (library preparation, sequencing, basecalling).
+
+\begin{figure}[!htbp]
+\centering
+\pipelineClassificationFigure
+\caption{Complete haplotype classification pipeline showing the flow from candidate haplotypes through genomic molecules, fragmentation, library preparation, sequencing, and basecalling to observed reads. Each arrow represents a conditional probability distribution. The confusion matrix (bottom) captures empirical error patterns measured via SMA-seq (Chapter~\ref{chap:sma-seq}).}
+\label{fig:classification-pipeline}
+\end{figure}
+
+\subsection{Pipeline Factorization and Modular Modeling}
+\label{sec:pipeline-factorization-modular}
+
+The state-space hierarchy in Definition~\ref{def:state-space-hierarchy} admits a natural Markov structure. Denoting
+\begin{equation}
+(h,g,u,d,l,\sigma,r) \in
+\mathcal{H}\times\mathcal{G}\times\mathcal{U}\times\mathcal{D}\times\mathcal{L}\times\mathcal{S}\times\mathcal{R},
+\end{equation}
+the joint distribution over all pipeline variables factorizes as given in Theorem~\ref{thm:app-f-pipeline-factorization}:
+\begin{equation}
+\Prob(h,g,u,d,l,\sigma,r)
+=
+\Prob(h)\,
+\Prob(g\mid h)\,
+\Prob(u\mid g)\,
+\Prob(d\mid u)\,
+\Prob(l\mid d)\,
+\Prob(\sigma\mid l)\,
+\Prob(r\mid \sigma).
+\end{equation}
+
+This \textbf{Pipeline Factorization Theorem} reflects the physical reality that each stage depends only on its immediate predecessor. It is the mathematical backbone of the framework: it decomposes an intractable high-dimensional inference problem into modular components that can be studied, calibrated, and improved independently (fragmentation dynamics, library preparation bias, signal generation, basecalling) and recombined in the likelihood $\Prob(R\mid h)$.
+
+The factorization makes explicit that improving classification accuracy requires understanding and optimizing each conditional distribution in the chain. In particular:
+\begin{itemize}
+\item \textbf{Fragmentation $\Prob(d\mid u)$}: Chapter~\ref{chap:experimental-design} develops models for fragment length distributions and Cas9 cutting efficiency
+\item \textbf{Library preparation $\Prob(l\mid d)$}: Adapter ligation, size selection, and amplification biases (Chapter~\ref{chap:experimental-design})
+\item \textbf{Signal generation $\Prob(\sigma\mid l)$}: Nanopore current traces or PacBio fluorescence pulses; modeled through segmentation (this section)
+\item \textbf{Basecalling $\Prob(r\mid \sigma)$}: Neural network decoding with quality scores; the primary target for SMA-seq calibration (Chapter~\ref{chap:sma-seq})
+\end{itemize}
+
+Operationally, segmentation and basecalling implement the composite map $\Prob(\sigma\mid l) \circ \Prob(r\mid \sigma)$, realizing the last two factors in the factorization. This makes explicit that ``improving the model'' is largely equivalent to improving the basecaller and its error model $\Prob(r\mid \sigma)$---a central goal of the SMA-seq / SEER loop in Part~IV (Chapter~\ref{chap:sma-seq}).
+
+\begin{conceptbox}{Modular Pipeline Optimization}
+The Pipeline Factorization Theorem's decomposition into seven conditional distributions has profound practical implications: \textbf{each stage can be studied, calibrated, and improved independently}. This modularity enables:
+\begin{itemize}
+\item \textbf{Targeted optimization:} Improve basecalling accuracy without changing wet-lab protocols
+\item \textbf{Experimental control:} Measure fragmentation bias independently from sequencing error
+\item \textbf{Error budgeting:} Quantify which stages dominate the error rate
+\item \textbf{Technology substitution:} Replace one sequencing platform with another while preserving the overall framework
+\end{itemize}
+In practice, the basecalling factor $\Prob(r\mid\sigma)$ dominates the error budget for modern platforms, making it the primary target for the SMA-seq calibration methodology developed in Part~\ref{part:sma-seq}.
+\end{conceptbox}
+
+\subsection{From Factorization to the SMA-SEER Feedback Loop}
+\label{sec:factorization-to-sma-seer}
+
+The Pipeline Factorization Theorem (Appendix~\ref{app:mathematical-models}) decomposes the generative model for single-molecule sequencing into seven conditional distributions,
+\begin{equation}
+\Prob(h,g,u,d,l,\sigma,r) = \Prob(h)\,\Prob(g\mid h)\,\Prob(u\mid g)\,\Prob(d\mid u)\,\Prob(l\mid d)\,\Prob(\sigma\mid l)\,\Prob(r\mid\sigma).
+\label{eq_4_3}
+\end{equation}
+Conceptually, each factor corresponds to a distinct physical or computational transformation: genome replication and mutation, fragmentation, library preparation, signal generation, and basecalling. This decomposition is essential for both mathematical tractability and experimental design: it isolates the mechanisms that can be controlled in the laboratory from those that must be modelled statistically.
+
+In practice, however, the factor $\Prob(r\mid\sigma)$ dominates the error budget. It encapsulates the entire complexity of the basecaller: a deep neural network with multiple operating modes (``fast'', ``hac'', ``sup'') and non-trivial calibration properties. The SEER framework and the SMA-seq protocol are explicitly designed to empirically characterize this term. SMA-seq creates a controlled setting where the true generating sequence is known for every read, and SEER constructs confusion matrices and per-base error models that approximate
+\begin{equation}
+\Prob(\hat{s} = s_j \mid s_i) \approx C_{ij}/N_i,\qquad \text{for standards } s_i,
+\end{equation}
+and related per-base matrices for substitutions and indels. These empirical probabilities populate the likelihoods used in haplotype and diplotype classification.
+
+The same decomposition clarifies where physical constraints enter. Mutation and replication models ($\Prob(u\mid g)$) and fragmentation models ($\Prob(d\mid u)$) impose hard upper bounds on achievable true positive rates (Purity Constraint, Chapter~\ref{chap:purity}) and determine coverage distributions. Library preparation and dual Cas9 enrichment ($\Prob(l\mid d)$) govern the probability of capturing entire genes and thus the effective coverage for long targets. These components are treated in detail in Appendices~\ref{app:core-equations} and \ref{app:mathematical-models} and in the experimental design chapters.
+
+Viewed through this lens, the SMA-SEER feedback loop can be interpreted as an iterative refinement of selected factors in the pipeline:
+\begin{itemize}
+\item SMA-seq experiments constrain $\Prob(d\mid u)$ and $\Prob(l\mid d)$ via empirical fragment length and coverage distributions;
+\item SEER characterizes $\Prob(r\mid\sigma)$ through confusion matrices and calibration curves;
+\item Basecaller retraining and recalibration directly modify $\Prob(r\mid\sigma)$, and therefore the induced likelihoods $\Prob(r\mid h)$ used in Chapter~\ref{chap:posteriors};
+\item Updated models are then validated against new standards, closing the loop.
+\end{itemize}
+
+This explicit mapping between the abstract factorization and the empirical SMA-SEER machinery provides a unifying perspective for Parts II--V: every equation and experiment can be located within the hierarchy $h \to g \to u \to d \to l \to \sigma \to r$, and improvements in any component can be propagated mathematically through to the final posterior over haplotypes.
+
+\section{Signal Generation and Segmentation}
+
+For nanopore sequencing, a labeled library molecule $l$ passes through a biological pore, generating a continuous electrical signal. For PacBio sequencing, fluorescent nucleotide incorporations produce optical pulses. In both cases, the signal generation process depends on local sequence context and instrument-specific parameters.
+
+\begin{definition}[Signal Emission Process]
+\label{def:signal-emission}
+For a library molecule $l$ transiting through a sensor, the signal generation follows:
+\begin{equation}
+\Prob(\sigma|l; \boldsymbol{\phi}) = \prod_{t=1}^{T} \Prob(x_t|s_t; \boldsymbol{\phi})
+\end{equation}
+where $x_t$ is the observed signal at time $t$, $s_t$ is the sequence context at that time, and $\boldsymbol{\phi}$ encompasses instrument parameters including noise characteristics, drift, and context-dependent effects.
+\end{definition}
+
+The signal $\sigma = (x_1, x_2, \ldots, x_T)$ is a time series of measurements sampled at regular intervals. For nanopore sequencing, $x_t$ represents current measurements (typically in picoamperes), while for PacBio, $x_t$ comprises fluorescence intensities across multiple color channels. The sequence context $s_t$ includes not just the base at position $t$ but also neighboring bases (k-mer context), as signal levels depend on multiple consecutive nucleotides.
+
+Signal segmentation identifies boundaries between bases, transforming the continuous signal into discrete observations aligned with genomic positions. Modern basecallers perform this segmentation implicitly through recurrent neural network architectures that integrate temporal information.
+
+\section{Basecalling as Stochastic Decoding}
+
+Basecalling algorithms transform continuous signals into discrete sequence predictions with associated quality scores. These quality scores encode the basecaller's confidence and are critical for accurate likelihood calculations in downstream haplotype classification.
+
+\begin{definition}[Quality Score Model]
+\label{def:quality-score-model}
+The relationship between quality scores and error probabilities follows the Phred scale, with per-position error probability and sequence-level likelihood defined as follows:
+\end{definition}
+
+\begin{eqbox}{Quality Score Model}
+\begin{equation}
+\Prob(\text{error at position } j | Q_j) = 10^{-Q_j/10}
+\label{eq:quality-score-error}
+\end{equation}
+\begin{equation}
+\Prob(\hat{s} = s | \mathbf{Q}) = \prod_{j=1}^{n} \left(1 - 10^{-Q_j/10}\right)^{\mathbb{I}\{\hat{s}_j = s_j\}} \cdot \left(\frac{10^{-Q_j/10}}{|\mathcal{A}| - 1}\right)^{\mathbb{I}\{\hat{s}_j \neq s_j\}}
+\label{eq:sequence-likelihood-quality}
+\end{equation}
+where $\hat{s}$ is the observed (basecalled) sequence, $s$ is the true sequence, $\mathbf{Q} = (Q_1, \ldots, Q_n)$ are quality scores, $\mathcal{A} = \{A, C, G, T\}$ is the nucleotide alphabet, and $\mathbb{I}\{\cdot\}$ is the indicator function.
+\end{eqbox}
+
+This model assumes independence of errors across positions and uniform distribution over incorrect bases conditional on error. While these assumptions are approximations, they provide tractable likelihood calculations. Quality score calibration (Chapter~\ref{chap:sma-seq}) validates these assumptions against empirical data.
+
+Modern basecallers employ deep neural networks trained on large corpora of signal-sequence pairs. For nanopore sequencing, models like Dorado and Guppy use bidirectional recurrent networks (LSTMs or GRUs) that integrate signal information from extended temporal contexts. For PacBio, the CCS (circular consensus sequencing) algorithm performs multiple passes over circular templates, aggregating evidence to produce high-accuracy consensus sequences.
+
+Quality score calibration varies across basecaller versions, training data distributions, and sequence contexts. Systematic biases can lead to overconfident or underconfident posterior probabilities. The SMA-seq framework (Chapter~\ref{chap:sma-seq}) provides methods for empirically measuring calibration and correcting miscalibration through confusion matrices.
+
+\section{Per-Read Empirical Accuracy via Edit Distance}
+
+Individual read accuracy provides a fundamental quality metric for sequencing data. We quantify accuracy through edit distance: the minimum number of single-base operations (insertions, deletions, substitutions) required to transform the observed read into the true sequence.
+
+\begin{definition}[Levenshtein Distance]
+\label{def:levenshtein-distance}
+The edit distance between sequences quantifies the minimum number of single-base operations required for transformation:
+\end{definition}
+
+\begin{eqbox}{Levenshtein Distance and Per-Read Accuracy}
+\begin{equation}
+d_{\text{edit}}(r,t) = \min\{\text{\# insertions, deletions, substitutions to transform } r \to t\}
+\label{eq:levenshtein-distance}
+\end{equation}
+\begin{equation}
+\text{Accuracy}(r,t) = 1 - \frac{d_{\text{edit}}(r,t)}{\max(|r|, |t|)}
+\label{eq:per-read-accuracy}
+\end{equation}
+where $r$ is the observed sequence, $t$ is the true sequence, and $|r|$, $|t|$ denote sequence lengths. This normalizes the edit distance by length, yielding accuracy values in $[0,1]$.
+\end{eqbox}
+
+\begin{example}[Edit Distance Calculation]
+\label{ex:edit-distance}
+Consider the alignment:
+\begin{verbatim}
+True:     ACGTACGT
+Observed: ACGTCCGT
+          ||||*|||
+\end{verbatim}
+This requires one substitution ($A \to C$ at position 5), so $d_{\text{edit}} = 1$. With length 8, accuracy = $1 - 1/8 = 0.875 = 87.5\%$.
+
+For an insertion error:
+\begin{verbatim}
+True:     ACGT--ACGT
+Observed: ACGTATACGT
+          ||||**||||
+\end{verbatim}
+One insertion ($AT$ inserted) yields $d_{\text{edit}} = 1$, with accuracy $= 1 - 1/10 = 90\%$ (normalized by observed length).
+\end{example}
+
+Edit distance provides a comprehensive error metric that treats all error types equivalently. However, different error modes (substitutions vs. indels) may have different downstream impacts. Homopolymer-associated indels, common in nanopore and Ion Torrent sequencing, require special consideration in model design.
+
+For haplotype classification, per-read accuracy informs confidence in individual observations. Reads with accuracy $< 80\%$ may be excluded from analysis (Chapter~\ref{chap:qc-gates}), as their error rates overwhelm true sequence signals. The relationship between read accuracy and classification performance is formalized in Chapter~\ref{chap:experimental-design}.
+
+\section{Introduction to Confusion Matrices}
+\label{sec:confusion-matrix}
+
+The quality score model (Definition~\ref{def:quality-score-model}) assumes simple error probabilities. Reality is more complex: sequencing technologies exhibit systematic error patterns depending on sequence context, base modifications, and run conditions. Confusion matrices provide an empirical framework for capturing these patterns.
+
+\begin{definition}[Sequence-to-Sequence Confusion Matrix]
+\label{def:confusion-matrix}
+The confusion matrix $\mathbf{C}$ captures technology-specific error patterns through empirical conditional probabilities:
+\end{definition}
+
+\begin{eqbox}{Confusion Matrix Definition}
+\begin{equation}
+C_{ij} = \Prob(\text{observe sequence } j \mid \text{true sequence } i)
+\label{eq:confusion-matrix}
+\end{equation}
+where rows index true sequences and columns index observed sequences. The matrix is row-stochastic: $\sum_{j} C_{ij} = 1$ for each true sequence $i$.
+\end{eqbox}
+
+\begin{important}[Confusion Matrix Index Convention]
+\textbf{Index convention used throughout this framework:}
+\begin{equation}
+C_{ij} = \text{count of true class } i \text{ predicted as class } j
+\end{equation}
+\begin{itemize}
+\item \textbf{Rows} index TRUE sequences (ground truth)
+\item \textbf{Columns} index PREDICTED sequences (basecaller output)
+\item Row sums: $N_i = \sum_j C_{ij}$ (total molecules of type $i$)
+\item True Positive Rate: $\mathrm{TPR}(i) = C_{ii}/N_i$
+\end{itemize}
+This convention is consistent across all chapters and appendices.
+\end{important}
+
+For single bases, $\mathbf{C}$ is a $4 \times 4$ matrix over $\mathcal{A} = \{A, C, G, T\}$. Diagonal elements $C_{ii}$ represent correct calls, while off-diagonals capture specific substitution patterns (e.g., $C_{AT}$ for calling T when A is true, found at row A, column T). 
+
+For k-mers, $\mathbf{C}$ expands to $(4^k) \times (4^k)$ dimensions, capturing context-dependent errors. For instance, homopolymer runs exhibit characteristic indel patterns that cannot be captured by single-base models. A $6$-mer confusion matrix contains $4^6 \times 4^6 \approx 16.8$ million parameters, requiring substantial data for reliable estimation.
+
+The SMA-seq methodology (Chapter~\ref{chap:sma-seq}) constructs confusion matrices empirically by sequencing physical standards with known sequences. By aligning observed reads to truth, we directly measure $C_{ij}$ frequencies. These empirical confusion matrices enable:
+
+\begin{enumerate}
+\item \textbf{Improved likelihoods}: Replacing quality score models with empirical error rates (Chapter~\ref{chap:posteriors})
+\item \textbf{Calibration assessment}: Comparing predicted vs. observed error rates (Chapter~\ref{chap:qc-gates})
+\item \textbf{Basecaller fine-tuning}: Providing labeled training data for model improvement (Chapter~\ref{chap:noisy-labels})
+\end{enumerate}
+
+\begin{remark}[Preview of SMA-seq Development]
+\label{rem:sma-seq-preview}
+While we introduce confusion matrices abstractly here, their practical construction requires careful attention to:
+\begin{itemize}
+\item \textbf{Standard purity} (Chapter~\ref{chap:purity}): Contamination in physical standards biases confusion matrix estimates
+\item \textbf{Alignment strategy}: Mapping reads to standards must handle high error rates
+\item \textbf{Statistical power}: Sample size requirements for reliable $C_{ij}$ estimation
+\item \textbf{Context modeling}: Trade-offs between k-mer size and data requirements
+\end{itemize}
+These practical considerations are developed systematically in Part~\ref{part:sma-seq}.
+\end{remark}
+
+\section{Integration with Haplotype Classification}
+
+The models developed in this chapter provide the foundation for Bayesian haplotype classification (Chapter~\ref{chap:posteriors}). The likelihood of observing read set $\mathbf{R}$ given haplotype $h_i$ integrates over the pipeline:
+
+\begin{equation}
+\Prob(\mathbf{R} | h_i) = \sum_{\mathbf{l} \in \mathcal{L}_i} \Prob(\mathbf{l} | h_i) \prod_{r \in \mathbf{R}} \Prob(r | \mathbf{l})
+\end{equation}
+
+The outer sum integrates over possible library molecule populations, weighted by $\Prob(\mathbf{l} | h_i)$ from the upstream pipeline stages (mutation, fragmentation, library preparation). The product accumulates evidence across reads, with each $\Prob(r | \mathbf{l})$ computed via the confusion matrix or quality score model.
+
+In practice, exact computation is intractable due to the exponential state space. Approximation strategies include:
+
+\begin{enumerate}
+\item \textbf{Workflow weights} (Chapter~\ref{chap:posteriors}): Collapsing upstream pipeline stages into a single empirical distribution over fragments
+\item \textbf{Independence assumptions}: Treating reads as conditionally independent given the haplotype
+\item \textbf{Monte Carlo integration}: Sampling library molecules from the prior distribution
+\end{enumerate}
+
+These approximations balance accuracy and computational efficiency, enabling practical implementation while maintaining probabilistic rigor.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Variable Summary and Reference}
+\label{sec:variable-summary-ch4}
+
+This section provides a comprehensive summary of all key variables used in this chapter, including physical descriptions, units, and methods of measurement or determination.
+
+\subsection{Variable Summary Table}
+
+\begin{vartable}
+\varrow{$h, h_i$}{Haplotype: specific phased DNA sequence from candidate set $\mathcal{H}$.}
+       {categorical sequence}
+       {Defined by reference database (PharmVar, structural variant catalog). Posterior $P(h_i \mid R)$ inferred from reads.}
+
+\varrow{$r, r_n$}{Basecalled read sequence with per-base quality scores.}
+       {bp (length), nucleotide string}
+       {Measured by sequencing platform and basecaller; output from signal processing.}
+
+\varrow{$\sigma, \boldsymbol{\sigma}$}{Continuous sequencing signal (current trace or fluorescence).}
+       {picoamperes (nanopore) or arbitrary units (PacBio)}
+       {Measured by sequencing hardware sensor during molecule transit.}
+
+\varrow{$C_{ij}$}{Confusion matrix entry: probability of observing sequence $j$ given true sequence $i$.}
+       {probability (0--1)}
+       {Measured empirically via SMA-seq by aligning reads from known standards.}
+
+\varrow{$Q, Q_j$}{Phred quality score at position $j$, encoding error probability.}
+       {Phred units (dimensionless log scale)}
+       {Computed by basecaller; $Q = -10\log_{10}(p_{\text{err}})$.}
+
+\varrow{$d_{\text{edit}}(r,t)$}{Levenshtein edit distance between observed read $r$ and true sequence $t$.}
+       {count of edits}
+       {Computed via dynamic programming alignment (Smith-Waterman, Needleman-Wunsch).}
+
+\varrow{$P(r \mid h)$}{Per-read likelihood: probability of observing read $r$ if true haplotype is $h$.}
+       {probability (0--1)}
+       {Computed from quality scores or confusion matrices; marginalizes over possible fragments.}
+
+\varrow{$P(r \mid \sigma)$}{Basecalling probability: likelihood of basecalled sequence $r$ given signal $\sigma$.}
+       {probability (0--1)}
+       {Implicitly computed by neural network basecaller; encoded in quality scores.}
+
+\varrow{$\mathcal{H}$}{Haplotype space: complete set of candidate haplotypes considered.}
+       {dimensionless set}
+       {Defined by assay design and variant database.}
+
+\varrow{$\mathbf{R}, R$}{Dataset of all reads: $R = \{r_1, \ldots, r_N\}$.}
+       {counted collection}
+       {All reads passing QC filters (length, quality, mapping).}
+\end{vartable}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Detailed Variable Reference Boxes}
+
+This subsection provides in-depth reference information for the most important variables in the classification pipeline, including physical descriptions, units, measurement methods, and concrete examples.
+
+\begin{varbox}{$h_i$}
+\textbf{Physical description.}
+A candidate haplotype: a specific fully phased DNA sequence from the haplotype space $\mathcal{H}$ that could be present in the sample. Represents one possible genomic configuration at the target locus.
+
+\textbf{Units.}
+Categorical; an indexed sequence over the alphabet $\{A, C, G, T\}$ plus potential structural variants.
+
+\textbf{Measurement / determination.}
+The sequence of $h_i$ is defined from external reference databases (e.g., PharmVar for pharmacogenes, structural variant catalogs for complex loci). The posterior probability $P(h_i \mid R)$ is inferred from sequencing data using the confusion matrix framework and Bayes' rule.
+
+\textbf{Example.}
+For CYP2D6 classification:
+\[
+h_1 = \text{CYP2D6*1 (wild-type)}, \quad
+h_2 = \text{CYP2D6*10 (c.100C>T)}, \quad
+h_3 = \text{CYP2D6*36+*10 (hybrid)}.
+\]
+After observing 500 reads, the posterior might yield $P(h_2 \mid R) = 0.95$, $P(h_1 \mid R) = 0.04$, indicating strong evidence for the *10 allele.
+\end{varbox}
+
+\begin{varbox}{$r_n$}
+\textbf{Physical description.}
+The $n$-th basecalled read: a nucleotide sequence with associated per-base quality scores produced by the sequencing platform and basecaller. Represents the final decoded output from the raw sequencing signal.
+
+\textbf{Units.}
+Length measured in base pairs (bp); sequence is a string over $\{A, C, G, T\}$; quality scores in Phred units.
+
+\textbf{Measurement / determination.}
+Reads are directly measured by the sequencing instrument (nanopore or PacBio) and decoded by the basecaller (Dorado, Guppy, or CCS). After quality control filtering (minimum length, mean quality, mapping quality), the remaining reads constitute the dataset $R$.
+
+\textbf{Example.}
+An Oxford Nanopore run targeting CYP2D6 might produce $N = 30,000$ reads. A single read $r_{42}$ could be a 7,300 bp sequence spanning the entire gene with mean quality score $Q_{\text{pred}} = 29.7$. Individual base quality scores range from $Q = 10$ (low confidence) to $Q = 40$ (high confidence).
+\end{varbox}
+
+\begin{varbox}{$\sigma$}
+\textbf{Physical description.}
+The continuous sequencing signal generated as a library molecule transits through the sensor. For nanopore sequencing, this is an electrical current trace in picoamperes; for PacBio, this is fluorescence intensity in multiple color channels.
+
+\textbf{Units.}
+Nanopore: picoamperes (pA), sampled at 4--5 kHz.
+PacBio: arbitrary fluorescence units, multiple channels.
+
+\textbf{Measurement / determination.}
+Measured directly by sequencing hardware sensors. The signal is preprocessed (normalization, drift correction) and segmented to identify base boundaries, then decoded by the basecaller to produce read $r$ with quality scores $Q$.
+
+\textbf{Example.}
+For a nanopore read, the signal might consist of 50,000 current measurements over 10 seconds of molecule transit. The basecaller segments this into $\sim 7,000$ base calls by identifying current level transitions corresponding to 5-mer or 6-mer k-mer states. Homopolymer runs exhibit characteristic plateaus in current that are challenging to decode accurately.
+\end{varbox}
+
+\begin{varbox}{$C_{ij}$}
+\textbf{Physical description.}
+An entry in the confusion matrix: the empirical probability of observing sequence $j$ (basecaller output) when the true sequence is $i$ (ground truth from standard).
+
+\textbf{Units.}
+Probability in $[0,1]$; the matrix $\mathbf{C}$ is row-stochastic with $\sum_j C_{ij} = 1$ for each true sequence $i$.
+
+\textbf{Measurement / determination.}
+Measured empirically via SMA-seq by sequencing physical standards with known sequences. Reads are aligned to the ground truth, and error frequencies are tabulated. For single bases, $\mathbf{C}$ is $4 \times 4$; for k-mers, it is $4^k \times 4^k$.
+
+\textbf{Example.}
+For a high-quality nanopore basecaller on a 6-mer standard set:
+\[
+C_{AA,AA} = 0.92, \quad C_{AA,AC} = 0.03, \quad C_{AA,AG} = 0.02, \quad C_{AA,AT} = 0.03.
+\]
+The diagonal entry $C_{AA,AA} = 0.92$ is the true positive rate for the AA sequence; off-diagonals capture specific substitution patterns. Homopolymer runs typically have lower TPR and higher indel rates.
+\end{varbox}
+
+\begin{varbox}{$Q_j$, $d_{\text{edit}}$}
+\textbf{Physical description.}
+$Q_j$: Phred quality score at position $j$, encoding the basecaller's predicted error probability at that base.
+$d_{\text{edit}}$: Levenshtein edit distance between observed read $r$ and true sequence $t$, counting minimum insertions, deletions, and substitutions required for transformation.
+
+\textbf{Units.}
+$Q_j$: Phred units (dimensionless logarithmic scale), related to error probability by $p_{\text{err}} = 10^{-Q/10}$.
+$d_{\text{edit}}$: dimensionless count of editing operations.
+
+\textbf{Measurement / determination.}
+$Q_j$ is computed by the basecaller based on signal quality and model confidence, reported in FASTQ format. $d_{\text{edit}}$ is computed via dynamic programming alignment algorithms (Smith-Waterman for local alignment, Needleman-Wunsch for global alignment) when ground truth is available.
+
+\textbf{Example.}
+For a read with mean quality $Q_{\text{mean}} = 30$:
+\[
+p_{\text{err}} = 10^{-30/10} = 10^{-3} = 0.001 \quad (0.1\% \text{ error rate}).
+\]
+If the read has length 5,000 bp and aligns to the truth with 25 mismatches, then:
+\[
+d_{\text{edit}} = 25, \quad \text{Accuracy} = 1 - \frac{25}{5000} = 0.995 \quad (99.5\%).
+\]
+The empirical quality is $Q_{\text{emp}} = -10\log_{10}(0.005) \approx 23$, indicating the basecaller overestimated quality.
+\end{varbox}
+
+\section{Chapter Summary}
+
+\begin{keytakeaways}
+This chapter established the mathematical framework for the complete single-molecule sequencing pipeline:
+
+\begin{itemize}
+\item \textbf{State Space Hierarchy} (Definition~\ref{def:state-space-hierarchy}): Formalized the transformation from haplotypes through genomic molecules, fragments, library molecules, signals, to observed reads—providing mathematical infrastructure for rigorous likelihood computation
+
+\item \textbf{Pipeline Factorization Theorem} (Theorem~\ref{thm:pipeline-factorization}): Decomposed the joint probability distribution into modular conditional distributions, enabling independent optimization of each stage (fragmentation, library prep, signal generation, basecalling)
+
+\item \textbf{Signal Generation Models} (Definition~\ref{def:signal-emission}): Described continuous signal generation from template sequences, establishing the physical basis for nanopore current traces and PacBio fluorescence pulses
+
+\item \textbf{Basecalling Framework} (Definition~\ref{def:quality-score-model}): Formalized the neural network decoding process that translates signals to sequences with associated quality scores
+
+\item \textbf{Edit Distance Metrics} (Definition~\ref{def:levenshtein-distance}): Quantified per-read accuracy through formal alignment distance, providing the foundation for accuracy measurements
+
+\item \textbf{Confusion Matrix Formalism} (Definition~\ref{def:confusion-matrix}): Introduced empirical error pattern capture, enabling practical likelihood calculations from observed basecaller performance
+\end{itemize}
+
+\textbf{Connections to subsequent chapters:}
+\begin{itemize}
+\item Chapter~\ref{chap:purity}: Purity constraints derived from pipeline error accumulation
+\item Chapter~\ref{chap:posteriors}: Bayesian inference using likelihood functions from confusion matrices
+\item Chapter~\ref{chap:experimental-design}: Coverage requirements and sample size calculations
+\item Part~\ref{part:sma-seq}: SMA-seq methodology for empirically measuring confusion matrices
+\end{itemize}
+
+\textbf{Mathematical reference:} For complete formal treatment of the pipeline factorization, state space constructions, and all proofs, see Appendix~\ref{app:mathematical-models}. For a quick reference of notation and symbols, see Appendix~\ref{app:notation}. For variable definitions and equation cross-references, see Appendices~\ref{app:variable-master} and \ref{app:equation-master}.
+\end{keytakeaways}
+
+
+

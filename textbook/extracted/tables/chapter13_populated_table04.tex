@@ -1,0 +1,17 @@
+\begin{table}[!htbp]
+\centering
+\caption{Basecaller Fine-Tuning QC Gates}
+\label{tab:basecaller-qc}
+\begin{tabular}{p{4cm}p{4cm}p{4.5cm}}
+\toprule
+\textbf{Metric} & \textbf{Threshold} & \textbf{Action if Failed} \\
+\midrule
+Test set accuracy & $\geq$ 95\% of pre-training & Re-optimize hyperparameters \\
+Validation-test gap & $< 0.05$ accuracy difference & Increase regularization \\
+Calibration error (ECE) & $< 0.05$ & Apply recalibration (Section~\ref{sec:quality-calibration}) \\
+Cross-platform accuracy & $\geq$ 95\% of source platform & Include target platform in training \\
+Temporal stability (6 mo) & No significant trend & Implement periodic monitoring \\
+Batch CV & $< 0.05$ & Investigate batch-specific factors \\
+\bottomrule
+\end{tabular}
+\end{table}

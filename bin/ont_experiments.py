@@ -62,6 +62,18 @@ try:
 except ImportError:
     HAS_GIT = False
 
+try:
+    import urllib.request
+    HAS_URLLIB = True
+except ImportError:
+    HAS_URLLIB = False
+
+try:
+    import jsonschema
+    HAS_JSONSCHEMA = True
+except ImportError:
+    HAS_JSONSCHEMA = False
+
 
 # =============================================================================
 # Configuration
@@ -71,29 +83,74 @@ REGISTRY_DIR = Path.home() / ".ont-registry"
 REGISTRY_FILE = REGISTRY_DIR / "experiments.yaml"
 REGISTRY_VERSION = "2.0"
 
+# GitHub sync configuration
+# NOTE: Disabled by default for private repository compatibility
+# Enable via ONT_GITHUB_SYNC=1 environment variable or config file
+GITHUB_REGISTRY_URL = "https://raw.githubusercontent.com/Single-Molecule-Sequencing/ont-ecosystem/main/registry/experiments.yaml"
+GITHUB_SYNC_ENABLED = False  # Disabled for private repo; enable with ONT_GITHUB_SYNC=1
+
 # Analysis skill configurations
+# Each skill maps to a bin script and defines how results are captured
 ANALYSIS_SKILLS = {
+    # Signal Stage (σ) - QC analysis of raw signals
     "end_reasons": {
         "script": "end_reason.py",
         "description": "Read end reason QC analysis",
-        "result_fields": ["total_reads", "quality_status", "signal_positive_pct", 
+        "result_fields": ["total_reads", "quality_status", "signal_positive_pct",
                          "unblock_mux_pct", "data_service_pct"],
-        "input_mode": "location",  # Pass experiment location as first arg
+        "input_mode": "location",
+        "pipeline_stage": "σ",
+        "skill_dir": "end-reason",
     },
+    "endreason_qc": {
+        "script": "ont_endreason_qc.py",
+        "description": "Enhanced end reason QC with KDE visualization",
+        "result_fields": ["total_reads", "quality_grade", "signal_positive_pct",
+                         "unblock_pct", "mean_sp_length", "mean_unblock_length"],
+        "input_mode": "location",
+        "pipeline_stage": "σ",
+        "skill_dir": "end-reason",
+    },
+    "monitoring": {
+        "script": "ont_monitor.py",
+        "description": "Run monitoring snapshot",
+        "result_fields": ["total_reads", "total_bases", "mean_qscore", "n50",
+                         "throughput_gbp_hr", "pore_activity_pct"],
+        "input_mode": "location",
+        "default_args": ["--snapshot"],
+        "pipeline_stage": "σ",
+        "skill_dir": "ont-monitor",
+    },
+
+    # Basecalling Stage (r)
     "basecalling": {
         "script": "dorado_basecall.py",
         "description": "Dorado basecalling",
         "result_fields": ["total_reads", "pass_reads", "mean_qscore", "median_qscore",
                          "bases_called", "n50", "model", "model_path", "model_tier",
                          "model_version", "chemistry", "batch_size"],
-        "input_mode": "location",  # Pass experiment location as first arg
-        "capture_model_path": True,  # Capture model path in event
+        "input_mode": "location",
+        "capture_model_path": True,
+        "pipeline_stage": "r",
+        "skill_dir": "dorado-bench-v2",
     },
     "alignment": {
-        "script": "minimap2",
-        "description": "Minimap2 alignment",
-        "result_fields": ["mapped_reads", "mapping_rate", "mean_coverage"],
-        "input_mode": "explicit",  # Requires explicit input/output args
+        "script": "ont_align.py",
+        "description": "Minimap2/Dorado alignment",
+        "result_fields": ["mapped_reads", "mapping_rate", "mean_coverage", "median_coverage"],
+        "input_mode": "explicit",
+        "default_args": ["align"],
+        "pipeline_stage": "r",
+        "skill_dir": "ont-align",
+    },
+    "align_qc": {
+        "script": "ont_align.py",
+        "description": "BAM QC analysis",
+        "result_fields": ["total_reads", "mapped_pct", "mean_mapq", "error_rate"],
+        "input_mode": "explicit",
+        "default_args": ["qc"],
+        "pipeline_stage": "r",
+        "skill_dir": "ont-align",
     },
 }
 
@@ -304,6 +361,163 @@ class Event:
         return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
 
 
+# =============================================================================
+# Domain Memory: Task Tracking (Anthropic Agent Memory Pattern)
+# =============================================================================
+
+@dataclass
+class Task:
+    """A trackable task in the experiment workflow (v2.0 with dependencies)"""
+    name: str                           # Task identifier (e.g., "end_reasons")
+    status: str                         # pending, in_progress, passing, failing, skipped, blocked
+    description: str                    # Human-readable description
+    created: str                        # ISO timestamp
+    updated: str                        # ISO timestamp
+    last_run: Optional[str] = None      # Last execution timestamp
+    last_event_id: Optional[str] = None # Reference to Event that updated this
+    error: Optional[str] = None         # Error message if failing
+    attempts: int = 0                   # Number of execution attempts
+    # v2.0 fields
+    pipeline_stage: Optional[str] = None  # SMS pipeline stage (h, g, u, d, l, σ, r, C, A)
+    skill: Optional[str] = None           # Associated ONT Ecosystem skill name
+    dependencies: Optional[List[str]] = None  # Task names that must complete first
+    priority: int = 3                     # Priority 1-5 (1=highest)
+
+    def to_dict(self) -> Dict:
+        d = {}
+        for k, v in asdict(self).items():
+            if v is not None:
+                d[k] = v
+        return d
+
+    @classmethod
+    def from_dict(cls, data: Dict) -> 'Task':
+        return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
+
+    def is_runnable(self, task_list: 'TaskList') -> bool:
+        """Check if this task can run (all dependencies satisfied)"""
+        if self.status in ('passing', 'skipped'):
+            return False  # Already done
+        if not self.dependencies:
+            return True  # No dependencies
+        for dep_name in self.dependencies:
+            dep_task = task_list.get_task(dep_name)
+            if not dep_task or dep_task.status not in ('passing', 'skipped'):
+                return False
+        return True
+
+    def is_blocked(self, task_list: 'TaskList') -> bool:
+        """Check if this task is blocked by failing dependencies"""
+        if not self.dependencies:
+            return False
+        for dep_name in self.dependencies:
+            dep_task = task_list.get_task(dep_name)
+            if dep_task and dep_task.status == 'failing':
+                return True
+        return False
+
+
+@dataclass
+class TaskList:
+    """Domain memory: task backlog for an experiment"""
+    experiment_id: str
+    version: str = "1.0"
+    created: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    tasks: List[Task] = field(default_factory=list)
+
+    def to_dict(self) -> Dict:
+        return {
+            'experiment_id': self.experiment_id,
+            'version': self.version,
+            'created': self.created,
+            'updated': self.updated,
+            'tasks': [t.to_dict() for t in self.tasks]
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict) -> 'TaskList':
+        tasks = [Task.from_dict(t) for t in data.get('tasks', [])]
+        return cls(
+            experiment_id=data['experiment_id'],
+            version=data.get('version', '1.0'),
+            created=data.get('created', ''),
+            updated=data.get('updated', ''),
+            tasks=tasks
+        )
+
+    def get_task(self, name: str) -> Optional[Task]:
+        """Get task by name"""
+        return next((t for t in self.tasks if t.name == name), None)
+
+    def update_task(self, name: str, status: str, error: Optional[str] = None):
+        """Update task status"""
+        task = self.get_task(name)
+        if task:
+            task.status = status
+            task.updated = datetime.now(timezone.utc).isoformat()
+            task.error = error
+            self.updated = task.updated
+
+    def get_runnable_tasks(self) -> List[Task]:
+        """Get tasks that are ready to run (dependencies satisfied)"""
+        return [t for t in self.tasks if t.is_runnable(self)]
+
+    def get_blocked_tasks(self) -> List[Task]:
+        """Get tasks blocked by failing dependencies"""
+        return [t for t in self.tasks if t.is_blocked(self)]
+
+    def get_next_task(self) -> Optional[Task]:
+        """Get the highest priority runnable task"""
+        runnable = self.get_runnable_tasks()
+        if not runnable:
+            return None
+        # Sort by priority (1 is highest), then by name
+        return sorted(runnable, key=lambda t: (t.priority, t.name))[0]
+
+    def validate_dependencies(self) -> List[str]:
+        """Check for invalid dependencies (missing tasks, cycles)"""
+        errors = []
+        task_names = {t.name for t in self.tasks}
+
+        # Check for missing dependencies
+        for task in self.tasks:
+            if task.dependencies:
+                for dep in task.dependencies:
+                    if dep not in task_names:
+                        errors.append(f"Task '{task.name}' depends on missing task '{dep}'")
+
+        # Check for cycles using DFS
+        def has_cycle(task_name: str, visited: set, rec_stack: set) -> bool:
+            visited.add(task_name)
+            rec_stack.add(task_name)
+            task = self.get_task(task_name)
+            if task and task.dependencies:
+                for dep in task.dependencies:
+                    if dep not in visited:
+                        if has_cycle(dep, visited, rec_stack):
+                            return True
+                    elif dep in rec_stack:
+                        return True
+            rec_stack.remove(task_name)
+            return False
+
+        visited = set()
+        for task in self.tasks:
+            if task.name not in visited:
+                if has_cycle(task.name, visited, set()):
+                    errors.append(f"Dependency cycle detected involving task '{task.name}'")
+
+        return errors
+
+    def get_progress_summary(self) -> Dict[str, int]:
+        """Get summary of task statuses"""
+        summary = defaultdict(int)
+        for task in self.tasks:
+            summary[task.status] += 1
+        return dict(summary)
+
+
 @dataclass
 class ExperimentMetadata:
     """Core metadata for a nanopore experiment"""
@@ -388,7 +602,20 @@ class ExperimentMetadata:
         return exp
 
 
-@dataclass  
+@dataclass
+class BootupContext:
+    """Grounded context for agent execution - the standardized bootup ritual result"""
+    experiment: ExperimentMetadata
+    tasks: TaskList
+    history: List[Event]
+    pending_tasks: List[Task]
+    failing_tasks: List[Task]
+    passing_tasks: List[Task]
+    last_run: Optional[Event]
+    recommendations: List[str]
+
+
+@dataclass
 class Registry:
     """Experiment registry with event sourcing"""
     version: str = REGISTRY_VERSION
@@ -464,31 +691,317 @@ class Registry:
 # Registry I/O
 # =============================================================================
 
-def load_registry() -> Registry:
-    """Load registry from file"""
-    if not REGISTRY_FILE.exists():
-        return Registry()
+def fetch_github_registry() -> Optional[Registry]:
+    """Fetch registry from GitHub (read-only fallback)"""
+    if not HAS_URLLIB or os.environ.get('ONT_NO_GITHUB_SYNC') == '1':
+        return None
     
-    with open(REGISTRY_FILE, 'r') as f:
-        if HAS_YAML:
-            data = yaml.safe_load(f) or {}
-        else:
-            data = json.load(f)
+    try:
+        req = urllib.request.Request(
+            GITHUB_REGISTRY_URL, 
+            headers={'User-Agent': 'ont-experiments/2.0'}
+        )
+        with urllib.request.urlopen(req, timeout=20) as response:
+            content = response.read().decode('utf-8')
+            if content.startswith('\ufeff'):
+                content = content[1:]  # Remove BOM
+            if HAS_YAML:
+                data = yaml.safe_load(content) or {}
+            else:
+                data = json.loads(content)
+            return Registry.from_dict(data)
+    except Exception as e:
+        # Silently fail - GitHub is a fallback
+        return None
+
+
+def load_registry(prefer_github: bool = False) -> Registry:
+    """Load registry from local file or GitHub fallback
     
-    return Registry.from_dict(data)
+    Args:
+        prefer_github: If True, fetch from GitHub first (useful for read-only operations)
+    
+    Priority:
+        1. Local registry file (if exists and not prefer_github)
+        2. GitHub registry (fallback for read-only access)
+        3. Empty registry
+    """
+    # Option to prefer GitHub (e.g., when running without HPC access)
+    if prefer_github and GITHUB_SYNC_ENABLED:
+        github_registry = fetch_github_registry()
+        if github_registry:
+            return github_registry
+    
+    # Try local file first
+    if REGISTRY_FILE.exists():
+        try:
+            with open(REGISTRY_FILE, 'r') as f:
+                if HAS_YAML:
+                    data = yaml.safe_load(f) or {}
+                else:
+                    data = json.load(f)
+            return Registry.from_dict(data)
+        except Exception:
+            pass  # Fall through to GitHub
+    
+    # Fall back to GitHub if local doesn't exist
+    if GITHUB_SYNC_ENABLED:
+        github_registry = fetch_github_registry()
+        if github_registry:
+            return github_registry
+    
+    return Registry()
 
 
 def save_registry(registry: Registry):
     """Save registry to file"""
     REGISTRY_DIR.mkdir(parents=True, exist_ok=True)
-    
+
     data = registry.to_dict()
-    
+
     with open(REGISTRY_FILE, 'w') as f:
         if HAS_YAML:
             yaml.dump(data, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
         else:
             json.dump(data, f, indent=2)
+
+
+# =============================================================================
+# Domain Memory: Task Persistence
+# =============================================================================
+
+EXPERIMENTS_DIR = REGISTRY_DIR / "experiments"
+
+
+def get_experiment_dir(experiment_id: str) -> Path:
+    """Get/create experiment-specific domain memory directory"""
+    exp_dir = EXPERIMENTS_DIR / experiment_id
+    exp_dir.mkdir(parents=True, exist_ok=True)
+    return exp_dir
+
+
+def load_tasks(experiment_id: str) -> Optional[TaskList]:
+    """Load task list from experiment directory"""
+    tasks_file = get_experiment_dir(experiment_id) / "tasks.yaml"
+    if not tasks_file.exists():
+        return None
+
+    try:
+        with open(tasks_file, 'r') as f:
+            if HAS_YAML:
+                data = yaml.safe_load(f) or {}
+            else:
+                data = json.load(f)
+        return TaskList.from_dict(data)
+    except Exception:
+        return None
+
+
+def save_tasks(task_list: TaskList):
+    """Save task list to experiment directory"""
+    task_list.updated = datetime.now(timezone.utc).isoformat()
+    tasks_file = get_experiment_dir(task_list.experiment_id) / "tasks.yaml"
+
+    data = task_list.to_dict()
+
+    with open(tasks_file, 'w') as f:
+        if HAS_YAML:
+            yaml.dump(data, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+        else:
+            json.dump(data, f, indent=2)
+
+
+def initialize_tasks(experiment: 'ExperimentMetadata') -> TaskList:
+    """Create initial task list with standard analysis tasks (v2.0 with dependencies)
+
+    Task dependency graph:
+        end_reasons (σ) ─┐
+                        ├─► basecalling (r) ─► alignment ─► haplotype_calling
+        signal_qc (σ) ──┘
+
+    Pipeline stages:
+        σ = Signal Stage (end_reasons, signal_qc)
+        r = Basecalling Stage (basecalling)
+        h = Haplotype Stage (haplotype_calling)
+    """
+    now = datetime.now(timezone.utc).isoformat()
+
+    tasks = [
+        # Signal Stage (σ) - No dependencies, can run in parallel
+        Task(
+            name="end_reasons",
+            status="pending",
+            description="Read end reason QC analysis",
+            created=now,
+            updated=now,
+            pipeline_stage="σ",
+            skill="end-reason",
+            dependencies=None,
+            priority=1
+        ),
+        Task(
+            name="signal_qc",
+            status="pending",
+            description="Signal quality metrics (pA levels, dwell times)",
+            created=now,
+            updated=now,
+            pipeline_stage="σ",
+            skill="ont-monitor",
+            dependencies=None,
+            priority=2
+        ),
+
+        # Basecalling Stage (r) - Depends on signal QC
+        Task(
+            name="basecalling",
+            status="pending",
+            description="Dorado basecalling with SUP model",
+            created=now,
+            updated=now,
+            pipeline_stage="r",
+            skill="dorado-bench-v2",
+            dependencies=["end_reasons"],
+            priority=2
+        ),
+
+        # Alignment - Depends on basecalling
+        Task(
+            name="alignment",
+            status="pending",
+            description="Reference genome alignment with minimap2",
+            created=now,
+            updated=now,
+            pipeline_stage="r",
+            skill="ont-align",
+            dependencies=["basecalling"],
+            priority=3
+        ),
+
+        # Haplotype calling (h) - Depends on alignment
+        Task(
+            name="haplotype_calling",
+            status="pending",
+            description="Haplotype classification and phasing",
+            created=now,
+            updated=now,
+            pipeline_stage="h",
+            skill=None,
+            dependencies=["alignment"],
+            priority=4
+        ),
+    ]
+
+    return TaskList(
+        experiment_id=experiment.id,
+        version="2.0",
+        created=now,
+        updated=now,
+        tasks=tasks
+    )
+
+
+# =============================================================================
+# Domain Memory: Progress Logging
+# =============================================================================
+
+def append_progress(experiment_id: str, entry: str, task_name: Optional[str] = None):
+    """Append entry to PROGRESS.md"""
+    progress_file = get_experiment_dir(experiment_id) / "PROGRESS.md"
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+    header = f"## {timestamp}"
+    if task_name:
+        header += f" - {task_name}"
+
+    with open(progress_file, 'a') as f:
+        f.write(f"\n{header}\n{entry}\n")
+
+
+def initialize_progress(experiment: 'ExperimentMetadata'):
+    """Create initial PROGRESS.md"""
+    progress_file = get_experiment_dir(experiment.id) / "PROGRESS.md"
+
+    content = f"""# Progress Log: {experiment.name}
+
+**Experiment ID:** {experiment.id}
+**Location:** {experiment.location}
+**Platform:** {experiment.platform or 'Unknown'}
+**Created:** {datetime.now().isoformat()}
+
+---
+
+## {datetime.now().strftime("%Y-%m-%d %H:%M")} - Initialized
+- Domain memory scaffolding created
+- Task backlog initialized with {len(ANALYSIS_SKILLS)} pending tasks
+- Ready for analysis
+
+"""
+    progress_file.write_text(content)
+
+
+# =============================================================================
+# Domain Memory: Bootup Ritual
+# =============================================================================
+
+def bootup_check(experiment_id: str) -> Optional[BootupContext]:
+    """
+    Standardized bootup ritual - READ STATE BEFORE ACTING
+
+    This implements Anthropic's agent memory pattern:
+    1. Load registry state
+    2. Load task state
+    3. Categorize tasks
+    4. Generate recommendations
+
+    Returns grounded context or None if experiment not found.
+    """
+    # 1. Load registry
+    registry = load_registry()
+    exp = registry.find(experiment_id)
+    if not exp:
+        return None
+
+    # 2. Load task state (initialize if needed)
+    tasks = load_tasks(experiment_id)
+    if not tasks:
+        tasks = initialize_tasks(exp)
+        save_tasks(tasks)
+        initialize_progress(exp)
+
+    # 3. Get history
+    history = exp.events
+
+    # 4. Categorize tasks
+    pending = [t for t in tasks.tasks if t.status == "pending"]
+    failing = [t for t in tasks.tasks if t.status == "failing"]
+    passing = [t for t in tasks.tasks if t.status == "passing"]
+
+    # 5. Get last run
+    last_run = None
+    for event in reversed(history):
+        if event.type == "analysis":
+            last_run = event
+            break
+
+    # 6. Generate recommendations
+    recommendations = []
+    if failing:
+        recommendations.append(f"Fix failing tasks first: {[t.name for t in failing]}")
+    elif pending:
+        recommendations.append(f"Next task: {pending[0].name}")
+    else:
+        recommendations.append("All tasks complete!")
+
+    return BootupContext(
+        experiment=exp,
+        tasks=tasks,
+        history=history,
+        pending_tasks=pending,
+        failing_tasks=failing,
+        passing_tasks=passing,
+        last_run=last_run,
+        recommendations=recommendations
+    )
 
 
 # =============================================================================
@@ -840,14 +1353,15 @@ def run_analysis(
     skill_config = ANALYSIS_SKILLS[analysis_type]
     script = skill_config['script']
     input_mode = skill_config.get('input_mode', 'location')
-    
+    default_args = skill_config.get('default_args', [])
+
     # Build command based on input mode
     if input_mode == 'location':
         # Pass experiment location as first argument
-        cmd = ['python3', script, experiment.location] + args
+        cmd = ['python3', script] + default_args + [experiment.location] + args
     else:
         # Explicit mode - args must include input/output
-        cmd = ['python3', script] + args
+        cmd = ['python3', script] + default_args + args
     
     command_str = ' '.join(cmd)
     
@@ -991,9 +1505,9 @@ def print_experiment_table(experiments: List[ExperimentMetadata]):
         print("  No experiments found.")
         return
     
-    # Header
+    # Header (use ASCII for Windows compatibility)
     print(f"\n  {'ID':<16} {'Name':<30} {'Status':<12} {'Format':<6} {'Size':<8} {'Events'}")
-    print(f"  {'─' * 16} {'─' * 30} {'─' * 12} {'─' * 6} {'─' * 8} {'─' * 6}")
+    print(f"  {'-' * 16} {'-' * 30} {'-' * 12} {'-' * 6} {'-' * 8} {'-' * 6}")
     
     for exp in experiments:
         name = exp.name[:28] + '..' if len(exp.name) > 30 else exp.name
@@ -1005,9 +1519,9 @@ def print_experiment_table(experiments: List[ExperimentMetadata]):
 
 def print_experiment_detail(exp: ExperimentMetadata):
     """Print detailed experiment info"""
-    print(f"\n  {'═' * 60}")
+    print(f"\n  {'=' * 60}")
     print(f"  Experiment: {exp.id}")
-    print(f"  {'═' * 60}")
+    print(f"  {'=' * 60}")
     
     print(f"\n  Name:       {exp.name}")
     print(f"  Location:   {exp.location}")
@@ -1018,7 +1532,7 @@ def print_experiment_detail(exp: ExperimentMetadata):
         print(f"  Tags:       {', '.join(exp.tags)}")
     
     print(f"\n  Platform")
-    print(f"  {'─' * 40}")
+    print(f"  {'-' * 40}")
     if exp.platform:
         print(f"  Device:     {exp.platform}")
     if exp.flowcell_type:
@@ -1029,7 +1543,7 @@ def print_experiment_detail(exp: ExperimentMetadata):
         print(f"  Chemistry:  {exp.chemistry}")
     
     print(f"\n  Data")
-    print(f"  {'─' * 40}")
+    print(f"  {'-' * 40}")
     print(f"  Format:     {exp.data_format or 'unknown'}")
     print(f"  Files:      {exp.file_count}")
     print(f"  Size:       {exp.total_size_gb:.2f} GB")
@@ -1040,7 +1554,7 @@ def print_experiment_detail(exp: ExperimentMetadata):
     
     if exp.events:
         print(f"\n  Recent Events ({len(exp.events)} total)")
-        print(f"  {'─' * 40}")
+        print(f"  {'-' * 40}")
         for i, event in enumerate(exp.events[-5:], start=max(1, len(exp.events)-4)):
             ts = event.timestamp[:19].replace('T', ' ')
             if event.type == 'analysis':
@@ -1052,7 +1566,7 @@ def print_experiment_detail(exp: ExperimentMetadata):
 def print_event_history(exp: ExperimentMetadata, verbose: bool = False):
     """Print full event history"""
     print(f"\n  Event History: {exp.id}")
-    print(f"  {'═' * 60}")
+    print(f"  {'=' * 60}")
     
     for i, event in enumerate(exp.events, 1):
         ts = event.timestamp[:19].replace('T', ' ')
@@ -1217,7 +1731,9 @@ def cmd_register(args):
 
 def cmd_list(args):
     """List experiments"""
-    registry = load_registry()
+    # Use GitHub if requested or local doesn't exist
+    prefer_github = getattr(args, 'github', False)
+    registry = load_registry(prefer_github=prefer_github)
     experiments = registry.experiments
     
     # Filter
@@ -1228,7 +1744,14 @@ def cmd_list(args):
     if args.source:
         experiments = [e for e in experiments if e.source == args.source]
     
-    print(f"\n  Registry: {REGISTRY_FILE}")
+    # Determine source indicator
+    if REGISTRY_FILE.exists() and not prefer_github:
+        source_msg = f"Local: {REGISTRY_FILE}"
+    else:
+        source_msg = f"GitHub: {GITHUB_REGISTRY_URL.split('/')[-2]}/registry"
+    
+    print(f"\n  Registry: {source_msg}")
+    print(f"  Updated: {registry.updated[:19] if registry.updated else 'unknown'}")
     print(f"  Total: {len(registry.experiments)} experiments")
     
     if args.status or args.tag or args.source:
@@ -1242,7 +1765,8 @@ def cmd_list(args):
 
 def cmd_info(args):
     """Show experiment details"""
-    registry = load_registry()
+    prefer_github = getattr(args, 'github', False)
+    registry = load_registry(prefer_github=prefer_github)
     
     exp = registry.find(args.experiment_id)
     if not exp:
@@ -1439,7 +1963,7 @@ def cmd_status(args):
 def cmd_public(args):
     """List public datasets"""
     print(f"\n  Public ONT Datasets")
-    print(f"  {'═' * 60}")
+    print(f"  {'=' * 60}")
     
     # Group by category
     categories = defaultdict(list)
@@ -1448,7 +1972,7 @@ def cmd_public(args):
     
     for category, datasets in sorted(categories.items()):
         print(f"\n  {category.replace('_', ' ').title()}")
-        print(f"  {'─' * 50}")
+        print(f"  {'-' * 50}")
         
         for dataset_id, info in datasets:
             featured = " ⭐" if info.get('featured') else ""
@@ -1542,7 +2066,7 @@ def cmd_fetch(args):
 def cmd_remove(args):
     """Remove from registry"""
     registry = load_registry()
-    
+
     if registry.remove(args.experiment_id):
         save_registry(registry)
         print(f"Removed: {args.experiment_id}")
@@ -1550,6 +2074,667 @@ def cmd_remove(args):
     else:
         print(f"Not found: {args.experiment_id}")
         return 1
+
+
+# =============================================================================
+# Domain Memory Commands
+# =============================================================================
+
+def cmd_tasks(args):
+    """View and manage experiment tasks (v2.0 with dependencies)"""
+    ctx = bootup_check(args.experiment_id)
+    if not ctx:
+        print(f"Error: Experiment not found: {args.experiment_id}")
+        return 1
+
+    verbose = getattr(args, 'verbose', False)
+
+    print(f"\nTasks for {ctx.experiment.name}")
+    print(f"Version: {ctx.tasks.version}")
+    print("=" * 60)
+
+    status_icons = {
+        "pending": "○",
+        "in_progress": "◐",
+        "passing": "✓",
+        "failing": "✗",
+        "skipped": "−",
+        "blocked": "⊘"
+    }
+
+    # Group tasks by pipeline stage
+    by_stage = defaultdict(list)
+    for task in ctx.tasks.tasks:
+        stage = task.pipeline_stage or "other"
+        by_stage[stage].append(task)
+
+    # Stage display order and labels
+    stage_labels = {
+        "σ": "Signal (σ)",
+        "r": "Basecalling (r)",
+        "h": "Haplotype (h)",
+        "other": "Other"
+    }
+
+    for stage in ["σ", "r", "h", "other"]:
+        if stage in by_stage:
+            print(f"\n{stage_labels.get(stage, stage)}:")
+            for task in by_stage[stage]:
+                icon = status_icons.get(task.status, "?")
+                priority_marker = f"[P{task.priority}]" if verbose else ""
+                runnable = "▶" if task.is_runnable(ctx.tasks) else " "
+                print(f"  {runnable}{icon} {task.name}: {task.status} {priority_marker}")
+
+                if task.description and verbose:
+                    print(f"       {task.description}")
+                if task.skill:
+                    print(f"       Skill: {task.skill}")
+                if task.dependencies:
+                    print(f"       Depends on: {', '.join(task.dependencies)}")
+                if task.error:
+                    print(f"       Error: {task.error}")
+                if task.last_run and verbose:
+                    print(f"       Last run: {task.last_run[:19]}")
+                if task.attempts > 0 and verbose:
+                    print(f"       Attempts: {task.attempts}")
+
+    # Summary
+    summary = ctx.tasks.get_progress_summary()
+    print("\n" + "=" * 60)
+    print("Summary:")
+    for status, count in sorted(summary.items()):
+        print(f"  {status_icons.get(status, '?')} {status}: {count}")
+
+    # Runnable tasks
+    runnable = ctx.tasks.get_runnable_tasks()
+    if runnable:
+        print(f"\nReady to run ({len(runnable)}):")
+        for task in sorted(runnable, key=lambda t: t.priority):
+            print(f"  ▶ {task.name}")
+
+    # Blocked tasks
+    blocked = ctx.tasks.get_blocked_tasks()
+    if blocked:
+        print(f"\nBlocked ({len(blocked)}):")
+        for task in blocked:
+            print(f"  ⊘ {task.name}")
+
+    # Recommendations
+    if ctx.recommendations:
+        print(f"\nRecommendation: {ctx.recommendations[0]}")
+
+    return 0
+
+
+def cmd_progress(args):
+    """View experiment progress log"""
+    progress_file = get_experiment_dir(args.experiment_id) / "PROGRESS.md"
+
+    if progress_file.exists():
+        print(progress_file.read_text())
+    else:
+        print(f"No progress log found for {args.experiment_id}")
+        print("Run 'ont_experiments.py init-tasks <exp_id>' to initialize domain memory.")
+
+    return 0
+
+
+def cmd_init_tasks(args):
+    """Initialize domain memory scaffolding for an experiment"""
+    registry = load_registry()
+    exp = registry.find(args.experiment_id)
+
+    if not exp:
+        print(f"Error: Experiment not found: {args.experiment_id}")
+        return 1
+
+    exp_dir = get_experiment_dir(exp.id)
+
+    # Check if already initialized
+    tasks_file = exp_dir / "tasks.yaml"
+    if tasks_file.exists() and not args.force:
+        print(f"Domain memory already initialized for {exp.id}")
+        print(f"  Tasks: {tasks_file}")
+        print("Use --force to reinitialize.")
+        return 0
+
+    # Create task list
+    tasks = initialize_tasks(exp)
+    save_tasks(tasks)
+
+    # Create progress log
+    initialize_progress(exp)
+
+    # Optionally create experiment CLAUDE.md
+    if args.claude_md:
+        claude_md_file = exp_dir / "CLAUDE.md"
+        claude_md_content = f"""# CLAUDE.md - {exp.name}
+
+This file provides context for AI agents working with this experiment.
+
+## Experiment Info
+- **ID:** {exp.id}
+- **Name:** {exp.name}
+- **Location:** {exp.location}
+- **Platform:** {exp.platform or 'Unknown'}
+- **Status:** {exp.status}
+
+## Task Workflow
+
+1. Run `ont_experiments.py tasks {exp.id}` to see current task status
+2. Run `ont_experiments.py next {exp.id}` to get the next recommended task
+3. Execute analyses via `ont_experiments.py run <task> {exp.id}`
+4. Check progress with `ont_experiments.py progress {exp.id}`
+
+## Notes
+
+Add experiment-specific notes here.
+"""
+        claude_md_file.write_text(claude_md_content)
+        print(f"  CLAUDE.md: {claude_md_file}")
+
+    print(f"Initialized domain memory for {exp.id}")
+    print(f"  Directory: {exp_dir}")
+    print(f"  Tasks: {tasks_file}")
+    print(f"  Progress: {exp_dir / 'PROGRESS.md'}")
+
+    return 0
+
+
+def cmd_next(args):
+    """Get next recommended task for an experiment (v2.0 with dependency awareness)"""
+    ctx = bootup_check(args.experiment_id)
+
+    if not ctx:
+        print(f"Error: Experiment not found: {args.experiment_id}")
+        return 1
+
+    # Use v2.0 dependency-aware task selection
+    next_task = ctx.tasks.get_next_task()
+    blocked_tasks = ctx.tasks.get_blocked_tasks()
+    summary = ctx.tasks.get_progress_summary()
+
+    if args.json:
+        # Machine-readable output for agents
+        output = {
+            "experiment_id": ctx.experiment.id,
+            "experiment_name": ctx.experiment.name,
+            "version": ctx.tasks.version,
+            "summary": summary,
+            "blocked_count": len(blocked_tasks),
+        }
+
+        if ctx.failing_tasks:
+            task = ctx.failing_tasks[0]
+            output["recommendation"] = "fix"
+            output["task"] = task.name
+            output["pipeline_stage"] = task.pipeline_stage
+            output["skill"] = task.skill
+            output["error"] = task.error
+            output["command"] = f"ont_experiments.py run {task.name} {ctx.experiment.id}"
+        elif next_task:
+            output["recommendation"] = "next"
+            output["task"] = next_task.name
+            output["pipeline_stage"] = next_task.pipeline_stage
+            output["skill"] = next_task.skill
+            output["priority"] = next_task.priority
+            output["dependencies"] = next_task.dependencies
+            output["command"] = f"ont_experiments.py run {next_task.name} {ctx.experiment.id}"
+        elif blocked_tasks:
+            output["recommendation"] = "blocked"
+            output["task"] = None
+            output["blocked_by"] = [t.name for t in blocked_tasks]
+            output["command"] = None
+        else:
+            output["recommendation"] = "done"
+            output["task"] = None
+            output["command"] = None
+
+        print(json.dumps(output, indent=2))
+    else:
+        # Human-readable output
+        if ctx.failing_tasks:
+            task = ctx.failing_tasks[0]
+            print(f"FIX: {task.name} (failing)")
+            if task.pipeline_stage:
+                print(f"Stage: {task.pipeline_stage}")
+            if task.skill:
+                print(f"Skill: {task.skill}")
+            if task.error:
+                print(f"Error: {task.error}")
+            print(f"Run: ont_experiments.py run {task.name} {ctx.experiment.id}")
+        elif next_task:
+            print(f"NEXT: {next_task.name} [P{next_task.priority}]")
+            print(f"Description: {next_task.description}")
+            if next_task.pipeline_stage:
+                print(f"Stage: {next_task.pipeline_stage}")
+            if next_task.skill:
+                print(f"Skill: {next_task.skill}")
+            if next_task.dependencies:
+                print(f"Dependencies: {', '.join(next_task.dependencies)} (satisfied)")
+            print(f"Run: ont_experiments.py run {next_task.name} {ctx.experiment.id}")
+        elif blocked_tasks:
+            print("BLOCKED: All pending tasks are blocked by failing dependencies")
+            for task in blocked_tasks[:3]:
+                print(f"  - {task.name} blocked by failing dependency")
+            print("\nFix failing tasks first.")
+        else:
+            print("DONE: All tasks complete!")
+            print(f"Summary: {summary}")
+
+    return 0
+
+
+# =============================================================================
+# Math Registry Commands
+# =============================================================================
+
+def get_registry_path() -> Path:
+    """Get path to the registry directory (relative to this script)"""
+    script_dir = Path(__file__).parent.parent
+    return script_dir / "registry"
+
+
+def load_math_registry() -> Dict:
+    """Load the math equations registry
+
+    Authoritative source: textbook/equations.yaml
+    """
+    # Primary location: textbook/equations.yaml (authoritative)
+    script_dir = Path(__file__).parent.parent
+    textbook_path = script_dir / "textbook" / "equations.yaml"
+
+    if textbook_path.exists() and HAS_YAML:
+        with open(textbook_path) as f:
+            return yaml.safe_load(f)
+
+    return {"equations": {}}
+
+
+def load_variables_registry() -> Dict:
+    """Load the variables registry
+
+    Authoritative source: textbook/variables.yaml
+    """
+    # Primary location: textbook/variables.yaml (authoritative)
+    script_dir = Path(__file__).parent.parent
+    textbook_path = script_dir / "textbook" / "variables.yaml"
+
+    if textbook_path.exists() and HAS_YAML:
+        with open(textbook_path) as f:
+            return yaml.safe_load(f)
+
+    return {"variables": {}}
+
+
+def load_pipeline_stages() -> Dict:
+    """Load the pipeline stages registry"""
+    registry_path = get_registry_path() / "pipeline"
+    filepath = registry_path / "stages.yaml"
+
+    if filepath.exists() and HAS_YAML:
+        with open(filepath) as f:
+            return yaml.safe_load(f)
+
+    return {"stages": []}
+
+
+# =============================================================================
+# Schema Validation
+# =============================================================================
+
+def load_schema(schema_name: str) -> Optional[Dict]:
+    """Load a JSON schema from the registry/schemas directory"""
+    schema_path = get_registry_path() / "schemas" / f"{schema_name}.json"
+    if schema_path.exists():
+        with open(schema_path) as f:
+            return json.load(f)
+    return None
+
+
+def validate_equation(equation: Dict, equation_id: str) -> List[str]:
+    """Validate a single equation against the schema"""
+    errors = []
+    schema = load_schema("equation")
+
+    if not schema:
+        return ["Schema not found: equation.json"]
+
+    if not HAS_JSONSCHEMA:
+        return ["jsonschema not installed"]
+
+    try:
+        jsonschema.validate(equation, schema)
+    except jsonschema.ValidationError as e:
+        errors.append(f"{equation_id}: {e.message}")
+
+    return errors
+
+
+def validate_pipeline_stage(stage: Dict, stage_id: str) -> List[str]:
+    """Validate a single pipeline stage against the schema"""
+    errors = []
+    schema = load_schema("pipeline_stage")
+
+    if not schema:
+        return ["Schema not found: pipeline_stage.json"]
+
+    if not HAS_JSONSCHEMA:
+        return ["jsonschema not installed"]
+
+    try:
+        jsonschema.validate(stage, schema)
+    except jsonschema.ValidationError as e:
+        errors.append(f"{stage_id}: {e.message}")
+
+    return errors
+
+
+def validate_task(task: Dict, task_name: str) -> List[str]:
+    """Validate a single task against the schema"""
+    errors = []
+    schema = load_schema("task")
+
+    if not schema:
+        return ["Schema not found: task.json"]
+
+    if not HAS_JSONSCHEMA:
+        return ["jsonschema not installed"]
+
+    try:
+        jsonschema.validate(task, schema)
+    except jsonschema.ValidationError as e:
+        errors.append(f"{task_name}: {e.message}")
+
+    return errors
+
+
+def validate_registry(target: str = "all") -> Dict[str, List[str]]:
+    """
+    Validate registry files against their schemas
+
+    Args:
+        target: What to validate - 'all', 'equations', 'stages', 'tasks', 'experiments'
+
+    Returns:
+        Dict mapping category to list of validation errors
+    """
+    results = {}
+
+    if target in ("all", "equations"):
+        results["equations"] = []
+        registry = load_math_registry()
+        equations = registry.get("equations", {})
+        for eq_id, eq in equations.items():
+            errors = validate_equation(eq, eq_id)
+            results["equations"].extend(errors)
+
+    if target in ("all", "stages"):
+        results["stages"] = []
+        data = load_pipeline_stages()
+        stages = data.get("stages", [])
+        for stage in stages:
+            stage_id = stage.get("id", "unknown")
+            errors = validate_pipeline_stage(stage, stage_id)
+            results["stages"].extend(errors)
+
+    if target in ("all", "experiments"):
+        results["experiments"] = []
+        # Validate experiments in user registry
+        registry = load_registry()
+        schema = load_schema("experiment")
+        if schema and HAS_JSONSCHEMA:
+            for exp in registry.experiments:
+                try:
+                    exp_dict = asdict(exp)
+                    jsonschema.validate(exp_dict, schema)
+                except jsonschema.ValidationError as e:
+                    results["experiments"].append(f"{exp.id}: {e.message}")
+
+    return results
+
+
+def cmd_validate(args):
+    """Validate registry files against JSON schemas"""
+    if not HAS_JSONSCHEMA:
+        print("Error: jsonschema required. Install with: pip install jsonschema")
+        return 1
+
+    if not HAS_YAML:
+        print("Error: PyYAML required. Install with: pip install pyyaml")
+        return 1
+
+    target = getattr(args, 'target', 'all')
+    verbose = getattr(args, 'verbose', False)
+
+    print(f"Validating registry: {target}")
+    print("=" * 50)
+
+    results = validate_registry(target)
+
+    total_errors = 0
+    for category, errors in results.items():
+        if errors:
+            print(f"\n{category}: {len(errors)} errors")
+            for error in errors:
+                print(f"  - {error}")
+            total_errors += len(errors)
+        else:
+            print(f"{category}: OK")
+
+    print("=" * 50)
+    if total_errors == 0:
+        print("All validations passed")
+        return 0
+    else:
+        print(f"Total errors: {total_errors}")
+        return 1
+
+
+def cmd_math(args):
+    """Query the math equations registry"""
+    if not HAS_YAML:
+        print("Error: PyYAML required for math registry. Install with: pip install pyyaml")
+        return 1
+
+    registry = load_math_registry()
+    equations = registry.get("equations", {})
+
+    if args.math_command == "list":
+        # List all equations
+        if not equations:
+            print("No equations in registry")
+            return 0
+
+        print(f"{'ID':<10} {'Title':<45} {'Chapter':<8} {'Type':<12}")
+        print("-" * 80)
+
+        for eq_id, eq in sorted(equations.items()):
+            title = eq.get("title", "")[:44]
+            chapter = eq.get("chapter", "")
+            eq_type = eq.get("type", "")
+            print(f"{eq_id:<10} {title:<45} {chapter:<8} {eq_type:<12}")
+
+        print(f"\nTotal: {len(equations)} equations")
+        return 0
+
+    elif args.math_command == "get":
+        eq_id = args.equation_id
+        if eq_id not in equations:
+            print(f"Error: Equation '{eq_id}' not found")
+            print(f"Available: {', '.join(sorted(equations.keys())[:10])}...")
+            return 1
+
+        eq = equations[eq_id]
+
+        if args.json:
+            print(json.dumps(eq, indent=2, default=str))
+        else:
+            print(f"Equation {eq_id}: {eq.get('title', 'Untitled')}")
+            print("=" * 60)
+            print(f"Chapter: {eq.get('chapter', 'N/A')}")
+            print(f"Type: {eq.get('type', 'N/A')}")
+            print(f"Category: {eq.get('category', 'N/A')}")
+            print(f"\nLaTeX: {eq.get('latex', 'N/A')}")
+            if eq.get('description'):
+                print(f"\nDescription:\n{eq.get('description')}")
+            if eq.get('variables'):
+                print(f"\nVariables: {', '.join(eq.get('variables', []))}")
+            if eq.get('related_equations'):
+                print(f"Related: {', '.join(eq.get('related_equations', []))}")
+
+        return 0
+
+    elif args.math_command == "latex":
+        eq_id = args.equation_id
+        if eq_id not in equations:
+            print(f"Error: Equation '{eq_id}' not found")
+            return 1
+
+        eq = equations[eq_id]
+        if args.full:
+            print(eq.get("latex_full", eq.get("latex", "")))
+        else:
+            print(eq.get("latex", ""))
+        return 0
+
+    elif args.math_command == "search":
+        query = args.query.lower()
+        matches = []
+
+        for eq_id, eq in equations.items():
+            searchable = f"{eq_id} {eq.get('title', '')} {eq.get('description', '')} {' '.join(eq.get('tags', []))}".lower()
+            if query in searchable:
+                matches.append((eq_id, eq))
+
+        if not matches:
+            print(f"No equations matching '{args.query}'")
+            return 0
+
+        print(f"Found {len(matches)} equations matching '{args.query}':")
+        print(f"{'ID':<10} {'Title':<50}")
+        print("-" * 65)
+        for eq_id, eq in matches[:20]:
+            print(f"{eq_id:<10} {eq.get('title', '')[:49]:<50}")
+
+        if len(matches) > 20:
+            print(f"... and {len(matches) - 20} more")
+
+        return 0
+
+    elif args.math_command == "variables":
+        var_registry = load_variables_registry()
+        variables = var_registry.get("variables", {})
+
+        if args.variable_id:
+            var_id = args.variable_id
+            if var_id not in variables:
+                print(f"Error: Variable '{var_id}' not found")
+                return 1
+
+            var = variables[var_id]
+            if args.json:
+                print(json.dumps(var, indent=2, default=str))
+            else:
+                print(f"Variable: {var.get('symbol_display', var_id)} ({var.get('name', 'Untitled')})")
+                print("=" * 60)
+                print(f"Symbol (LaTeX): {var.get('symbol', 'N/A')}")
+                print(f"Domain: {var.get('domain', 'N/A')}")
+                print(f"Units: {var.get('units', 'N/A')}")
+                print(f"Typical Range: {var.get('typical_range', 'N/A')}")
+                if var.get('description'):
+                    print(f"\nDescription:\n{var.get('description')}")
+        else:
+            # List all variables
+            print(f"{'Symbol':<12} {'Name':<30} {'Domain':<15}")
+            print("-" * 60)
+            for var_id, var in sorted(variables.items()):
+                symbol = var.get('symbol_display', var_id)[:11]
+                name = var.get('name', '')[:29]
+                domain = var.get('domain', '')[:14]
+                print(f"{symbol:<12} {name:<30} {domain:<15}")
+            print(f"\nTotal: {len(variables)} variables")
+
+        return 0
+
+    return 0
+
+
+def cmd_stages(args):
+    """List pipeline stages"""
+    if not HAS_YAML:
+        print("Error: PyYAML required. Install with: pip install pyyaml")
+        return 1
+
+    data = load_pipeline_stages()
+    stages = data.get("stages", [])
+
+    if not stages:
+        print("No pipeline stages found in registry")
+        return 1
+
+    if args.json:
+        print(json.dumps(stages, indent=2))
+        return 0
+
+    print("SMS Pipeline Stages")
+    print("=" * 80)
+    print(f"{'Symbol':<6} {'Name':<30} {'Probability Term':<20} {'Team':<15}")
+    print("-" * 80)
+
+    for stage in stages:
+        symbol = stage.get("symbol", "?")
+        name = stage.get("name", "")[:29]
+        prob = stage.get("probability_term", "")[:19]
+        team = stage.get("primary_team", "")[:14]
+        print(f"{symbol:<6} {name:<30} {prob:<20} {team:<15}")
+
+    print(f"\nTotal: {len(stages)} stages")
+    print("\nUse 'ont_experiments.py stage <symbol>' for details")
+    return 0
+
+
+def cmd_stage(args):
+    """Show details of a specific pipeline stage"""
+    if not HAS_YAML:
+        print("Error: PyYAML required. Install with: pip install pyyaml")
+        return 1
+
+    data = load_pipeline_stages()
+    stages = {s.get("stage_id") or s.get("symbol"): s for s in data.get("stages", [])}
+
+    stage_id = args.stage_id
+    if stage_id not in stages:
+        print(f"Error: Stage '{stage_id}' not found")
+        print(f"Available: {', '.join(sorted(stages.keys()))}")
+        return 1
+
+    stage = stages[stage_id]
+
+    if args.json:
+        print(json.dumps(stage, indent=2))
+        return 0
+
+    print(f"Stage {stage.get('symbol', stage_id)}: {stage.get('name', 'Untitled')}")
+    print("=" * 60)
+    print(f"Probability Term: {stage.get('probability_term', 'N/A')}")
+    print(f"Primary Team: {stage.get('primary_team', 'N/A')}")
+    print(f"Dependencies: {', '.join(stage.get('dependencies', [])) or 'None'}")
+
+    if stage.get('description'):
+        print(f"\nDescription:\n{stage.get('description')}")
+
+    if stage.get('outputs'):
+        print(f"\nOutputs:")
+        for output in stage.get('outputs', []):
+            print(f"  - {output}")
+
+    if stage.get('key_methods'):
+        print(f"\nKey Methods:")
+        for method in stage.get('key_methods', []):
+            print(f"  - {method}")
+
+    return 0
 
 
 # =============================================================================
@@ -1587,10 +2772,14 @@ def main():
     p_list.add_argument('--status', help='Filter by status')
     p_list.add_argument('--tag', help='Filter by tag')
     p_list.add_argument('--source', help='Filter by source')
+    p_list.add_argument('--github', '-g', action='store_true', 
+                        help='Fetch from GitHub instead of local registry')
     
     # info
     p_info = subparsers.add_parser('info', help='Show details')
     p_info.add_argument('experiment_id', help='Experiment ID')
+    p_info.add_argument('--github', '-g', action='store_true',
+                        help='Fetch from GitHub instead of local registry')
     p_info.add_argument('--json', action='store_true', help='Output JSON')
     
     # run
@@ -1640,7 +2829,80 @@ def main():
     # remove
     p_remove = subparsers.add_parser('remove', help='Remove from registry')
     p_remove.add_argument('experiment_id', help='Experiment ID')
-    
+
+    # ==========================================================================
+    # Domain Memory Commands
+    # ==========================================================================
+
+    # tasks - View task backlog (v2.0 with dependencies)
+    p_tasks = subparsers.add_parser('tasks', help='View experiment task backlog')
+    p_tasks.add_argument('experiment_id', help='Experiment ID')
+    p_tasks.add_argument('--verbose', '-v', action='store_true', help='Show detailed task info')
+
+    # progress - View progress log
+    p_progress = subparsers.add_parser('progress', help='View experiment progress log')
+    p_progress.add_argument('experiment_id', help='Experiment ID')
+
+    # init-tasks - Initialize domain memory
+    p_init_tasks = subparsers.add_parser('init-tasks', help='Initialize domain memory for experiment')
+    p_init_tasks.add_argument('experiment_id', help='Experiment ID')
+    p_init_tasks.add_argument('--force', '-f', action='store_true', help='Reinitialize if exists')
+    p_init_tasks.add_argument('--claude-md', action='store_true', help='Create experiment CLAUDE.md')
+
+    # next - Get next recommended task
+    p_next = subparsers.add_parser('next', help='Get next recommended task (agent-friendly)')
+    p_next.add_argument('experiment_id', help='Experiment ID')
+    p_next.add_argument('--json', action='store_true', help='Output JSON for machine parsing')
+
+    # ==========================================================================
+    # Math Registry Commands
+    # ==========================================================================
+
+    p_math = subparsers.add_parser('math', help='Query math equations registry')
+    math_sub = p_math.add_subparsers(dest='math_command', help='Math subcommands')
+
+    # math list
+    math_sub.add_parser('list', help='List all equations')
+
+    # math get
+    p_math_get = math_sub.add_parser('get', help='Get equation details')
+    p_math_get.add_argument('equation_id', help='Equation ID (e.g., 5.1, 6.6)')
+    p_math_get.add_argument('--json', action='store_true', help='Output JSON')
+
+    # math latex
+    p_math_latex = math_sub.add_parser('latex', help='Get equation LaTeX')
+    p_math_latex.add_argument('equation_id', help='Equation ID')
+    p_math_latex.add_argument('--full', action='store_true', help='Include full equation environment')
+
+    # math search
+    p_math_search = math_sub.add_parser('search', help='Search equations')
+    p_math_search.add_argument('query', help='Search query')
+
+    # math variables
+    p_math_vars = math_sub.add_parser('variables', help='List or get variable details')
+    p_math_vars.add_argument('variable_id', nargs='?', help='Variable ID (optional)')
+    p_math_vars.add_argument('--json', action='store_true', help='Output JSON')
+
+    # ==========================================================================
+    # Pipeline Stage Commands
+    # ==========================================================================
+
+    # stages - List all pipeline stages
+    p_stages = subparsers.add_parser('stages', help='List SMS pipeline stages')
+    p_stages.add_argument('--json', action='store_true', help='Output JSON')
+
+    # stage - Get stage details
+    p_stage = subparsers.add_parser('stage', help='Get pipeline stage details')
+    p_stage.add_argument('stage_id', help='Stage symbol (h, g, u, d, l, σ, r, C, A)')
+    p_stage.add_argument('--json', action='store_true', help='Output JSON')
+
+    # validate - Validate registry files against schemas
+    p_validate = subparsers.add_parser('validate', help='Validate registry against schemas')
+    p_validate.add_argument('target', nargs='?', default='all',
+                            choices=['all', 'equations', 'stages', 'experiments', 'tasks'],
+                            help='What to validate (default: all)')
+    p_validate.add_argument('--verbose', '-v', action='store_true', help='Verbose output')
+
     args = parser.parse_args()
     
     if not args.command:
@@ -1662,8 +2924,20 @@ def main():
         'public': cmd_public,
         'fetch': cmd_fetch,
         'remove': cmd_remove,
+        # Domain Memory commands
+        'tasks': cmd_tasks,
+        'progress': cmd_progress,
+        'init-tasks': cmd_init_tasks,
+        'next': cmd_next,
+        # Math Registry commands
+        'math': cmd_math,
+        # Pipeline Stage commands
+        'stages': cmd_stages,
+        'stage': cmd_stage,
+        # Validation commands
+        'validate': cmd_validate,
     }
-    
+
     return commands[args.command](args)
 
 

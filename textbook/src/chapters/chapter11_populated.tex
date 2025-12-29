@@ -1,0 +1,1513 @@
+% Chapter 11: SMA-seq Methodology
+% Migrated from v5 Chapter 4 (SEER Framework)
+% Part IV: SMA-seq and Model Improvement
+
+\chapter{SMA-seq: Sequencing and Measurement of Alleles}
+\label{chap:sma-seq}
+
+\begin{learningobjectives}
+By the end of this chapter, you will be able to:
+\begin{itemize}
+\item Explain the SMA-seq (Sequencing and Measurement of Alleles) methodology for empirical error measurement using known-truth standards
+\item Construct confusion matrices $\mathbf{C}$ from controlled experiments with plasmid standards
+\item Calculate Single Molecule Accuracy (SMA): $\text{SMA} = \Prob(\text{all bases correct})$ with Wilson score confidence intervals
+\item Assess quality score calibration by comparing predicted $Q_{\text{pred}}$ vs empirical $Q_{\text{emp}}$ error rates
+\item Quantify calibration gaps $\Delta Q = Q_{\text{emp}} - Q_{\text{pred}}$ and diagnose systematic overestimation/underestimation
+\item Apply SEER (Sequencing Empirical Error Rate) framework to measure per-base, per-read, and per-haplotype errors
+\item Execute complete SMA-seq experimental protocol: standard preparation, sequencing, alignment-free analysis
+\item Validate basecaller performance against clinical acceptance criteria (SMA $\geq$ 0.85 for deployment)
+\end{itemize}
+\end{learningobjectives}
+
+\section{Introduction to SMA-seq}
+
+The Sequencing and Measurement of Alleles (SMA-seq) methodology provides the empirical foundation for accurate haplotype classification in single-molecule sequencing. Unlike theoretical error models that rely on manufacturer specifications or asymptotic approximations, SMA-seq employs controlled experiments with known-truth reference standards to measure actual per-base, per-read, and per-haplotype error rates under realistic operational conditions.
+
+This empirical approach addresses a fundamental challenge in precision genomics: basecaller-reported quality scores often systematically overestimate or underestimate true base-call accuracy, leading to miscalibrated confidence intervals and suboptimal inference. By establishing ground truth through plasmid-based standards with known sequences, SMA-seq provides definitive measurements of empirical error rates that can be compared against predicted error probabilities.
+
+The methodology builds directly on the mathematical foundations established in Part II (Chapters \ref{chap:classification-model}--\ref{chap:experimental-design}), providing the critical link between theoretical models and empirical reality. The confusion matrices measured through SMA-seq experiments directly populate the likelihood functions used in Bayesian haplotype classification (Chapter \ref{chap:posteriors}), ensuring that classification confidence intervals accurately reflect true uncertainty.
+
+\section{The SEER Framework: Sequencing Empirical Error Rate}
+
+\subsection{Foundational Concepts}
+
+The SEER (Sequencing Empirical Error Rate) framework within SMA-seq rests on a simple but powerful principle: if we sequence molecules with perfectly known sequence composition, any discrepancies between observed reads and known truth directly quantify sequencing errors. This approach requires careful experimental design to ensure measured error rates accurately reflect operational conditions while eliminating confounding factors such as template errors, contamination, or artifact introduction during library preparation.
+
+\begin{remark}[Rigorous Mathematical Specification]
+\label{rem:seer-spec-reference}
+For complete mathematical definitions of SEER matrix, quality score metrics (predicted vs.\ empirical), single-molecule accuracy (SMA), end-reason gating, and implementation specifications with command scaffolding, see Appendix~\ref{app:software}, Section~\ref{sec:seer-sma-spec}. That section provides the formal mathematical framework and computational protocols for reproducible metric calculation.
+\end{remark}
+
+\begin{definition}[Reference Standard]
+A reference standard is a physical DNA molecule with:
+\begin{enumerate}
+\item Known sequence composition verified by orthogonal methods
+\item Measured purity $\pi \geq 0.95$ (see Chapter \ref{chap:purity})
+\item Sufficient quantity for replicate measurements
+\item Sequence complexity representative of target applications
+\end{enumerate}
+\end{definition}
+
+The choice of reference standards critically impacts the validity and generalizability of error measurements. Plasmid-based standards offer several advantages:
+\begin{itemize}
+\item Clonal amplification ensures sequence homogeneity
+\item Bacterial replication provides cost-effective production
+\item Sanger sequencing enables independent verification
+\item Modular design allows systematic variation of sequence features
+\end{itemize}
+
+\subsection{Purity Constraints and Ground Truth}
+
+As established in Chapter \ref{chap:purity}, the purity of reference standards imposes fundamental limits on achievable accuracy. The Purity Ceiling Theorem (Theorem 5.1) states that measured true positive rate (TPR) cannot exceed template purity:
+
+\begin{eqbox}{Purity ceiling on achievable TPR in SMA-seq}
+\begin{equation}
+\text{TPR}(s_i) \leq \pi_i
+\label{eq_11_1}
+\end{equation}
+\end{eqbox}
+
+This constraint has profound implications for SEER measurements. Violations of this inequality indicate:
+\begin{enumerate}
+\item Contamination of the reference standard
+\item Errors in the presumed reference sequence
+\item Systematic bias in the measurement process
+\end{enumerate}
+
+For bacterial replication-based standards, purity degradation follows:
+\begin{equation}
+\pi_{\text{upper}}(k, L, r) \approx (1 - r)^{kL}
+\label{eq_11_2}
+\end{equation}
+where $k$ represents replication cycles, $L$ denotes plasmid length in base pairs, and $r$ specifies per-base replication error rate.
+
+\subsection{The Empirical Core: SEER and SMA-seq}
+\label{sec:seer-empirical-core}
+
+The SEER (Sequencing Empirical Error Rate) framework operationalizes the abstract error model $\Prob(\hat{s}\mid s)$ introduced in Part II by sequencing physical reference standards with known sequence composition and high purity $\pi$. For each standard, SEER constructs an empirical confusion matrix $C$ whose entries $C_{ij}$ count observations of predicted sequence $s_j$ given true sequence $s_i$. This confusion matrix directly defines:
+\begin{itemize}
+\item The per-sequence true positive rate $\mathrm{TPR}_i = C_{ii}/N_i$
+\item The per-sequence misclassification probability $\varepsilon_i = 1-\mathrm{TPR}_i$
+\item The Single Molecule Accuracy of the standard, $\mathrm{SMA}(s_i)=\mathrm{TPR}_i$ (see Appendix~\ref{app:mathematical-models}, Definition~\ref{def:app-f-sma})
+\end{itemize}
+
+SMA-seq combines SEER with targeted experimental design to measure these quantities under realistic operating conditions---identical chemistries, basecalling models, and analysis pipelines to those used for unknown samples. As a result, the SMA-seq confusion matrices $C^{\text{platform}}$ and derived metrics $\mathrm{SMA}(s_i)$ serve as the ground truth for:
+
+\begin{enumerate}
+\item \textbf{Likelihood construction}: Replacing theoretical error rates in $\Prob(R\mid h)$ with empirical confusion-matrix entries (Chapters~\ref{chap:classification-model} and \ref{chap:posteriors})
+
+\item \textbf{Quality calibration}: Quantifying the degree of quality overstatement or understatement by comparing predicted Phred scores with observed error frequencies (Section~\ref{sec:quality-calibration} below)
+
+\item \textbf{Model benchmarking}: Evaluating the speed--accuracy trade-off between basecalling models (fast / hac / sup) using SEER metrics such as SMA, TPR, and quality overstatement fraction $d$
+\end{enumerate}
+
+This closes the loop between the abstract error model of Part II and the practical basecalling pipeline: the probabilistic term $\Prob(r\mid \sigma)$ in the Pipeline Factorization Theorem (Theorem~\ref{thm:pipeline-factorization}, Appendix~\ref{app:mathematical-models}) is no longer a black box but a \emph{measurable, tunable component} of the framework.
+
+\begin{eqbox}{Single Molecule Accuracy (SMA) definition}
+For a standard with true sequence $s_i$, the \textbf{Single Molecule Accuracy} is defined as
+\begin{equation}
+\mathrm{SMA}(s_i) := \mathrm{TPR}_i = \frac{C_{ii}}{N_i},
+\label{eq:sma-definition}
+\end{equation}
+where $C_{ii}$ is the count of reads correctly identified as $s_i$ and $N_i = \sum_{j} C_{ij}$ is the total number of molecules sequenced from standard $s_i$. At the assay level, SMA is averaged across all standards.
+\end{eqbox}
+
+\begin{remark}[Complete Mathematical Specification]
+See Appendix~\ref{app:mathematical-models}, Section~\ref{sec:app-f-sma-definition} for the complete mathematical specification of SMA.
+\end{remark}
+
+\subsection{The SMA-SEER Feedback Loop in Practice}
+\label{sec:sma-seer-loop-practice}
+
+The preceding sections define SMA-seq as a protocol for sequencing physical standards and SEER as a set of empirical error models derived from these standards. Together they form the operational core of the \textbf{SMA-SEER feedback loop}: a cycle that measures, models, improves, and revalidates the performance of the sequencing and basecalling stack.
+
+\begin{enumerate}
+\item \textbf{Measure: Ground-truth data from physical standards.}
+
+SMA-seq begins with the construction of plasmid standards representing specific haplotypes of interest (e.g., key \textit{CYP2D6} alleles). Design and cloning workflows (Chapter~\ref{chap:plasmid-standards}) ensure that each plasmid's intended insert sequence is known and verified by Sanger sequencing and orthogonal enzymological QC. The resulting standards are sequenced to high depth, generating sets of reads $R_{S_i}$ for each standard sequence $s_i$.
+
+\item \textbf{Model: Confusion matrices, per-base SEER matrices, and SMA.}
+
+Using the standards as ground truth, SEER constructs sequence-level confusion matrices $C$ and per-base SEER matrices $M$. For each standard $s_i$, the diagonal term $C_{ii}/N_i$ defines the Single Molecule Accuracy $\mathrm{SMA}(s_i)$ and the off-diagonal terms quantify specific misclassification pathways. At the per-base level, the SEER matrix $M$ separates substitution, insertion, and deletion rates. These matrices provide empirical estimates of the conditional distributions $\Prob(\hat{s}\mid s_i)$ and $\Prob(\hat{b}\mid b)$ that enter the likelihood functions in haplotype classification.
+
+\item \textbf{Audit: Quality score calibration and overstatement fraction.}
+
+For each read, SMA-seq compares predicted error probabilities derived from basecaller quality scores with empirical error rates obtained from alignment to the known standard. The difference between predicted and empirical qualities is summarized by metrics such as the calibration gap $\Delta Q$, the quality overstatement fraction $d$, and expected calibration error. These metrics expose systematic overconfidence or underconfidence in the basecaller and define acceptance thresholds for clinical use.
+
+\item \textbf{Improve: Basecaller optimization and error-model refinement.}
+
+When SEER reveals unacceptable miscalibration or elevated error rates, the framework prescribes two classes of interventions. First, non-parametric recalibration methods (e.g., isotonic regression) can be applied to adjust predicted error probabilities without changing the underlying neural network. Second, SMA-seq standards can be used as labelled data for basecaller retraining or fine-tuning (Chapter~\ref{chap:basecaller-tuning}), directly reducing the empirical error rates encoded in the confusion and SEER matrices. These interventions correspond mathematically to modifying $\Prob(r\mid\sigma)$ and its induced error models in Appendices~B and F.
+
+\item \textbf{Deploy and re-measure: Clinical samples and new cohorts.}
+
+Once a basecaller and error model pass SEER quality gates, they are used to analyze clinical and research samples. In downstream chapters, the same likelihood and posterior machinery is applied to patient data, including the \textit{CYP2D6} Tamoxifen cohort (Chapter~\ref{chap:singapore-cohort}). Performance on such cohorts, in turn, motivates the design of new standards and SMA-seq experiments (e.g., plasmids representing novel fusion alleles or rare haplotypes), thereby closing the loop.
+\end{enumerate}
+
+By making this cycle explicit, the SMA-SEER framework clarifies the relationship between laboratory experimentation, basecaller development, and clinical interpretation. Every improvement in SMA-seq design or SEER analysis can be translated---through the likelihoods defined in Chapter~\ref{chap:posteriors} and Appendices~\ref{app:core-equations}/\ref{app:mathematical-models}---into more accurate, better-calibrated diplotype posteriors for real patients.
+
+\section{Confusion Matrix Framework}
+
+\subsection{Experimental Design for Matrix Construction}
+
+A complete SMA-seq experiment requires sequencing multiple distinct reference standards under identical operational conditions. Let $\mathcal{E} = \{E_1, E_2, \ldots, E_u\}$ denote a set of sequencing experiments, where each experiment $E_i$ sequences a reference standard with known true sequence $s_i$. 
+
+For each experiment, we collect all base-called reads and group them by unique sequence identity, creating the set of observed sequences:
+\begin{equation}
+\mathcal{U}_E = \{u_1, u_2, \ldots, u_v\}
+\end{equation}
+where $v = |\mathcal{U}_E|$ represents the total number of distinct sequences observed across all experiments.
+
+\begin{figure}[!htbp]
+\centering
+% \includegraphics[width=0.9\textwidth]{SEER_pipeline25simple.svg}
+\fbox{\parbox{0.9\textwidth}{\centering [SEER Pipeline Diagram]\\ Shows flow from physical standards $\rightarrow$ sequencing $\rightarrow$ confusion matrix $\rightarrow$ empirical error rates}}
+\caption{The SEER/SMA-seq pipeline for empirical error measurement. Physical standards with known sequences undergo sequencing, producing reads that populate the confusion matrix. Empirical error rates derived from the matrix enable quality score calibration and inform Bayesian classification.}
+\label{fig:seer-pipeline}
+\end{figure}
+
+\subsection{Matrix Construction and Normalization}
+
+For each experiment $E_i$, we construct a count vector $\mathbf{c}_i = (c_{i1}, c_{i2}, \ldots, c_{iv})$ where element $c_{ij}$ specifies the number of reads from experiment $E_i$ that were basecalled as sequence $u_j$. This representation naturally extends to the confusion matrix:
+
+\begin{equation}
+\mathbf{M} = \begin{bmatrix}
+c_{11} & c_{12} & \cdots & c_{1v} \\
+c_{21} & c_{22} & \cdots & c_{2v} \\
+\vdots & \vdots & \ddots & \vdots \\
+c_{u1} & c_{u2} & \cdots & c_{uv}
+\end{bmatrix}
+\label{eq_11_5}
+\end{equation}
+
+where rows correspond to true sequences (experiments) and columns correspond to observed sequences. The normalized confusion matrix becomes:
+
+\begin{equation}
+C_{ij} = \frac{c_{ij}}{\sum_{k=1}^{v} c_{ik}}
+\end{equation}
+
+This normalization ensures that each row sums to unity, representing a probability distribution over observed sequences given a true template.
+
+\subsection{Classification Performance Metrics}
+
+From the confusion matrix, we derive multiple performance metrics that characterize different aspects of sequencing accuracy:
+
+\begin{definition}[True Positive Rate]
+The true positive rate for reference standard $s_i$ is:
+\begin{equation}
+\text{TPR}(s_i) = C_{ii} = \frac{c_{ii}}{\sum_{j=1}^{v} c_{ij}}
+\end{equation}
+\end{definition}
+
+This metric quantifies the fraction of reads from template sequence $s_i$ that are correctly identified by the basecaller. As per \CEref{15}, TPR must respect purity constraints.
+
+\begin{definition}[Empirical Error Rate]
+The empirical error rate for reference standard $s_i$ is:
+\begin{equation}
+\text{EER}(s_i) = 1 - \text{TPR}(s_i) = \sum_{j \neq i} C_{ij}
+\end{equation}
+\end{definition}
+
+The EER provides a direct measure of the total error rate, including substitutions, insertions, and deletions, without requiring explicit alignment or edit distance calculation.
+
+\section{Quality Score Calibration Assessment}
+
+\subsection{Predicted vs. Empirical Quality Comparison}
+
+Modern basecallers output quality scores that ostensibly predict error probabilities. For a read with average quality score $\bar{Q}$, the predicted error rate is:
+\begin{equation}
+p_{\text{pred}} = 10^{-\bar{Q}/10}
+\end{equation}
+
+The empirical quality score, computed from observed error rates, is:
+\begin{equation}
+Q_{\text{emp}} = -10 \log_{10}(\text{EER})
+\end{equation}
+
+Systematic discrepancies between predicted and empirical quality scores indicate miscalibration:
+\begin{equation}
+\Delta Q = Q_{\text{pred}} - Q_{\text{emp}}
+\end{equation}
+
+Positive values of $\Delta Q$ indicate quality score overestimation (overconfidence), while negative values indicate underestimation (excessive caution).
+
+\subsection{Quality Overestimation and Calibration Metrics}
+
+Following \CEref{14} and the calibration framework in Appendix~\ref{app:calibration-framework} (Definition~\ref{def:delta-q}), we quantify systematic quality score miscalibration using multiple complementary metrics.
+
+\begin{eqbox}{Quality overestimation fraction}
+\begin{equation}
+d = \frac{1}{|\mathcal{U}_E|} \sum_{u \in \mathcal{U}_E} \mathbb{I}[Q_{\text{pred}}(u) > Q_{\text{emp}}(u)] \times 100\%
+\label{eq_11_12}
+\end{equation}
+\end{eqbox}
+
+This metric represents the percentage of unique sequences for which the basecaller overestimates quality. Acceptance thresholds for clinical deployment are:
+
+\begin{itemize}
+\item $d \leq 30\%$: Acceptable calibration for clinical use
+\item $30\% < d \leq 50\%$: Warning zone requiring investigation
+\item $d > 50\%$: Unacceptable miscalibration requiring recalibration
+\end{itemize}
+
+\textbf{Limitation:} The fraction $d$ is binary and does not quantify the \emph{magnitude} of miscalibration. A sequence with $\Delta Q = +0.1$ dB contributes equally to $d$ as one with $\Delta Q = +10$ dB. Therefore, supplement $d$ with magnitude metrics:
+
+\begin{definition}[Mean Absolute Quality Deviation (MAQD\_Q)]
+\begin{equation}
+\text{MAQD}_Q = \frac{1}{|\mathcal{U}_E|} \sum_{u \in \mathcal{U}_E} |Q_{\text{pred}}(u) - Q_{\text{emp}}(u)|
+\end{equation}
+\end{definition}
+
+\textbf{Acceptance threshold:} $\text{MAQD}_Q < 2$ dB for clinical deployment.
+
+\begin{definition}[Root Mean Square Quality Error]
+\begin{equation}
+\text{RMSE}_Q = \sqrt{\frac{1}{|\mathcal{U}_E|} \sum_{u \in \mathcal{U}_E} (Q_{\text{pred}}(u) - Q_{\text{emp}}(u))^2}
+\end{equation}
+\end{definition}
+
+RMSE$_Q$ penalizes large deviations more heavily than MAD. Well-calibrated basecallers exhibit RMSE$_Q < 3$ dB.
+
+\subsection{QQ Plot Analysis}
+
+Quantile-quantile (QQ) plots provide visual assessment of calibration quality:
+
+\begin{enumerate}
+\item Sort observed sequences by predicted quality: $Q_{\text{pred}}^{(1)} \leq Q_{\text{pred}}^{(2)} \leq \cdots \leq Q_{\text{pred}}^{(v)}$
+\item Sort the same sequences by empirical quality: $Q_{\text{emp}}^{(1)} \leq Q_{\text{emp}}^{(2)} \leq \cdots \leq Q_{\text{emp}}^{(v)}$
+\item Plot $Q_{\text{pred}}^{(i)}$ vs. $Q_{\text{emp}}^{(i)}$ for $i = 1, \ldots, v$
+\item Perfect calibration yields points along the identity line $y = x$
+\end{enumerate}
+
+Systematic deviations from the identity line indicate specific calibration issues:
+\begin{itemize}
+\item Points above the line: Quality overestimation
+\item Points below the line: Quality underestimation
+\item Non-linear patterns: Context-dependent miscalibration
+\end{itemize}
+
+\subsection{Reliability Diagrams and Expected Calibration Error}
+
+While QQ plots assess rank-order correlation, \textbf{reliability diagrams} directly evaluate whether predicted error probabilities match empirical rates.
+
+\textbf{Construction procedure:}
+\begin{enumerate}
+\item Convert predicted quality scores to error probabilities: $\hat{p}_{\text{err},i} = 10^{-Q_{\text{pred},i}/10}$
+\item Partition reads into $M$ bins by predicted error probability (e.g., $M = 10$ bins)
+\item For bin $m$, compute:
+\begin{itemize}
+\item $\bar{p}_m$ = mean predicted error probability in bin $m$
+\item $\bar{y}_m$ = empirical error rate in bin $m$ (fraction of reads with errors)
+\item $n_m$ = number of reads in bin $m$
+\end{itemize}
+\item Plot $\bar{p}_m$ (x-axis) vs. $\bar{y}_m$ (y-axis) with point sizes proportional to $n_m$
+\item Add identity line $y = x$ (perfect calibration reference)
+\end{enumerate}
+
+\begin{eqbox}{Expected Calibration Error (ECE)}
+\begin{equation}
+\text{ECE} = \sum_{m=1}^{M} \frac{n_m}{N} \left| \bar{p}_m - \bar{y}_m \right|
+\label{eq:ece-sma}
+\end{equation}
+\end{eqbox}
+
+where $N = \sum_{m=1}^{M} n_m$ is the total number of reads, $M$ is the number of bins, $n_m$ is the number of reads in bin $m$, $\bar{p}_m$ is the mean predicted error probability in bin $m$, and $\bar{y}_m$ is the empirical error rate in bin $m$.
+
+ECE quantifies average deviation between predicted and empirical error rates, weighted by bin size. Well-calibrated basecallers exhibit ECE $< 0.02$ (2\% absolute error) when using a standard binning scheme (e.g., $M=10$ equal-width bins). Note that ECE values are sensitive to the number and boundaries of bins; the threshold may require adjustment for other binning choices.
+
+\begin{eqbox}{Brier score for calibration assessment}
+\begin{equation}
+\text{Brier} = \frac{1}{N} \sum_{i=1}^{N} (\hat{p}_{\text{err},i} - y_i)^2
+\label{eq:brier-sma}
+\end{equation}
+\end{eqbox}
+
+where $N$ is the total number of reads, $\hat{p}_{\text{err},i}$ is the predicted error probability for read $i$, and $y_i \in \{0, 1\}$ indicates whether read $i$ contains an error (1 = error, 0 = correct).
+
+\begin{remark}[Brier Score Convention]
+This definition uses the convention $y_i = 1$ for an error and $y_i = 0$ for a correct read, which is opposite to the typical convention in machine learning literature (where $1$ usually indicates a correct prediction or positive outcome). Please keep this in mind when interpreting the Brier score and related metrics.
+\end{remark}
+The Brier score is a proper scoring rule that rewards both calibration and sharpness (confident predictions). Lower Brier scores indicate better performance. For reference:
+\begin{itemize}
+\item Brier $< 0.05$: Excellent calibration and discrimination
+\item Brier $\in [0.05, 0.10]$: Acceptable for clinical use
+\item Brier $> 0.10$: Poor calibration requiring basecaller retraining
+\end{itemize}
+
+\textbf{Interpretation:} ECE isolates calibration (agreement between predicted and empirical rates), while Brier score combines calibration and resolution (also called sharpness: ability to distinguish error-prone from error-free reads). Both metrics should be reported for comprehensive assessment.
+
+For complete mathematical definitions and acceptance thresholds, see Appendix~\ref{app:appendixb}, Definition~\ref{def:calibration}.
+
+\subsection{Per-Base Calibration Implementation}
+
+While the preceding subsections focus on calibration at the read or sequence level, rigorous SMA-seq validation requires \textbf{per-base calibration assessment}. This finer granularity reveals position-dependent miscalibration patterns, k-mer context effects, and base-specific biases that aggregate metrics obscure.
+
+\subsubsection{Per-Base vs. Per-Read Calibration}
+
+Standard basecaller quality assessment operates at the read level: aggregate quality scores (e.g., mean Q per read) predict read-level error rates. However, haplotype classification depends on individual base calls at pharmacogenetically relevant positions. A read with mean $\bar{Q} = 25$ may contain individual bases with $Q_i \in [5, 40]$, each contributing differently to likelihood calculations (Chapter \ref{chap:posteriors}).
+
+Per-base calibration analyzes each base call independently:
+
+\begin{definition}[Per-Base Calibration Dataset]
+For aligned reads against a known reference (plasmid standards), construct a per-base dataset:
+\begin{equation}
+\mathcal{D}_{\text{base}} = \{(Q_i, e_i, \kappa_i, r_i) : i = 1, \ldots, N\}
+\end{equation}
+where:
+\begin{itemize}
+\item $Q_i$ = Phred quality score for base $i$
+\item $e_i \in \{0, 1\}$ = observed error indicator (0 = match reference, 1 = mismatch)
+\item $\kappa_i$ = k-mer context surrounding base $i$ (e.g., 5-mer)
+\item $r_i$ = end\_reason for the read containing base $i$
+\item $N$ = total bases across all reads
+\end{itemize}
+\end{definition}
+
+For a typical SMA-seq experiment with 50,000 reads of mean length 3,000~bp, $N \approx 150 \times 10^6$ bases, providing sufficient statistical power to detect subtle calibration errors.
+
+\subsubsection{Binning Strategy for Skewed Q Distributions}
+
+Basecaller Q scores exhibit heavy right-skew: most bases receive high confidence ($Q > 20$), with long tails toward low quality. Uniform binning (equal-width bins) results in sparse high-quality bins and overcrowded low-quality bins, degrading ECE precision.
+
+\textbf{Recommended approach:} Quantile-based binning (equal-frequency bins).
+
+\begin{equation}
+\text{Bin } b \text{ contains bases with } \hat{p}_{\text{err}} \in [q_{(b-1)/B}, q_{b/B}]
+\end{equation}
+where $q_\alpha$ denotes the $\alpha$-quantile of predicted error probabilities $\hat{p}_{\text{err},i} = 10^{-Q_i/10}$, and $B$ is the number of bins (typically $B \in [15, 30]$ for per-base analysis).
+
+This ensures each bin contains $\approx N/B$ bases, stabilizing variance estimates and improving ECE interpretability. Bins with $<100$ bases should be merged or excluded to prevent high-variance artifacts.
+
+\subsubsection{Stratification by End Reason}
+
+As established in Section~\ref{sec:end-reason-analysis}, read completeness critically impacts accuracy measurements. Incomplete reads (end\_reason $\neq$ signal\_positive) contribute truncated sequences with elevated error rates near termination points. Combining complete and incomplete reads in calibration analysis systematically biases ECE upward.
+
+\textbf{Required workflow:}
+\begin{enumerate}
+\item Partition $\mathcal{D}_{\text{base}}$ by end\_reason: $\mathcal{D}_{\text{SP}}$, $\mathcal{D}_{\text{UMC}}$, $\mathcal{D}_{\text{SN}}$, etc.
+\item Compute $\text{ECE}_{\text{SP}}$, $\text{ECE}_{\text{UMC}}$, $\text{ECE}_{\text{SN}}$ independently
+\item Use $\text{ECE}_{\text{SP}}$ as the primary calibration metric for clinical validation
+\item Report $\text{ECE}_{\text{UMC}}$ and $\text{ECE}_{\text{SN}}$ as secondary diagnostics (failure mode identification)
+\end{enumerate}
+
+\textbf{Typical observations:}
+\begin{itemize}
+\item $\text{ECE}_{\text{SP}} \approx 0.01$--0.03 for well-calibrated modern basecallers (Dorado v0.5+)
+\item $\text{ECE}_{\text{UMC}} \approx 0.05$--0.10 (higher due to motor stalling artifacts)
+\item $\text{ECE}_{\text{SN}} > 0.10$ (early failures with poor signal quality)
+\end{itemize}
+
+If $\text{ECE}_{\text{SP}} > 0.05$, recalibration is required (see isotonic regression, Section below).
+
+\subsubsection{Practical Implementation: Python Tooling}
+
+The SMS Framework provides reference implementations for per-base calibration analysis. These tools integrate with standard Nanopore file formats (POD5, BAM) and implement the mathematical framework described above.
+
+\textbf{Core module:} \texttt{FAT/scripts/basecaller\_calibration.py}
+
+Key functions:
+\begin{itemize}
+\item \texttt{phred\_to\_error\_prob(Q)}: Convert Phred Q to predicted error probability $\hat{p} = 10^{-Q/10}$
+\item \texttt{compute\_ece(p\_pred, y\_true, n\_bins, strategy)}: ECE with quantile or uniform binning
+\item \texttt{plot\_reliability\_diagram(bin\_stats, ...)}: Generate calibration visualization
+\item \texttt{stratify\_by\_end\_reason(df, ...)}: Compute ECE per end\_reason category
+\item \texttt{recalibrate\_isotonic(Q\_train, err\_train, Q\_test)}: Isotonic regression recalibration
+\end{itemize}
+
+\textbf{Example usage:}
+\begin{verbatim}
+import numpy as np
+import pandas as pd
+from FAT.scripts.basecaller_calibration import (
+    phred_to_error_prob, compute_ece, plot_reliability_diagram
+)
+
+# Load per-base data (from aligned BAM + POD5 metadata)
+df = pd.read_csv("per_base_data.csv")  # Columns: Q, err, end_reason
+
+# Filter to complete reads only
+df_complete = df[df['end_reason'] == 'signal_positive']
+
+# Convert Q to predicted error
+p_pred = phred_to_error_prob(df_complete['Q'].values)
+
+# Compute ECE with quantile binning
+ece, bin_stats = compute_ece(
+    p_pred,
+    df_complete['err'].values,
+    n_bins=20,
+    strategy='quantile'
+)
+
+print(f"ECE (signal_positive): {ece:.4f}")
+
+# Plot reliability diagram
+plot_reliability_diagram(bin_stats, ece=ece)
+\end{verbatim}
+
+For interactive analysis, see the Jupyter notebook tutorial: \texttt{FAT/tutorials/basecaller\_calibration\_tutorial.ipynb}. This notebook provides step-by-step examples with simulated data, end\_reason stratification, recalibration methods, and integration with SMA-seq plasmid standards.
+
+\subsubsection{Recalibration via Isotonic Regression}
+
+When ECE exceeds acceptance thresholds, systematic recalibration corrects basecaller overconfidence or underconfidence. Isotonic regression provides a non-parametric, monotonic mapping from predicted to calibrated error probabilities.
+
+\textbf{Method:}
+\begin{enumerate}
+\item Split SMA-seq plasmid data into training (70\%) and validation (30\%) sets
+\item Fit isotonic regression on training set: $\hat{p}_{\text{cal}} = f_{\text{iso}}(\hat{p}_{\text{pred}})$
+\item Apply to validation set and recompute $\text{ECE}_{\text{cal}}$
+\item If $\text{ECE}_{\text{cal}} < 0.02$, apply $f_{\text{iso}}$ to clinical samples
+\end{enumerate}
+
+The isotonic mapping $f_{\text{iso}}$ preserves rank order (monotonicity constraint) while adjusting magnitudes. Unlike Platt scaling (logistic regression), isotonic regression imposes no parametric form, adapting to arbitrary miscalibration patterns.
+
+\textbf{Expected improvement:} ECE reduction of 40--70\% is typical for moderately miscalibrated basecallers. For severe miscalibration ($\text{ECE} > 0.10$), consider basecaller retraining (Chapter~\ref{chap:basecaller-tuning}) rather than post-hoc recalibration.
+
+\textbf{Implementation:} See \texttt{recalibrate\_isotonic()} function in \texttt{basecaller\_calibration.py}.
+
+\section{Formal Per-Base Metrics and Single-Molecule Accuracy}
+\label{sec:formal-per-base-metrics}
+
+The preceding sections establish sequence-level and read-level metrics for SMA-seq validation. This section formalizes per-base metrics derived from pairwise alignment of reads to known reference standards, enabling fine-grained characterization of substitution, insertion, and deletion error patterns. These definitions provide rigorous mathematical foundations for the SMA-seq pipeline and ensure reproducibility across implementations.
+
+\subsection{Per-Base SEER Matrix with Indels}
+\label{subsec:seer-matrix-indels}
+
+The sequence-level confusion matrix (\S\ref{sec:confusion-matrix}) aggregates entire reads into distinct sequences. For per-base error characterization, we require alignment-level analysis that distinguishes substitutions, insertions, and deletions explicitly.
+
+\begin{definition}[Alignment Pair Notation]
+\label{def:alignment-pairs}
+Let $s_\star$ denote the reference standard sequence (known truth) and $r$ a basecalled read aligned to $s_\star$. The alignment yields a sequence of pairs:
+\begin{equation}
+(g_1, r_1), (g_2, r_2), \ldots, (g_m, r_m) \in (\Sigma \cup \{\varepsilon\}) \times (\Sigma \cup \{\varepsilon\})
+\end{equation}
+where $\Sigma = \{\text{A}, \text{C}, \text{G}, \text{T}\}$ is the DNA alphabet, $\varepsilon$ denotes a gap (indel), and $m$ is the alignment length. We prohibit double gaps: $(g_j, r_j) \neq (\varepsilon, \varepsilon)$ for all $j$.
+
+Each pair $(g_j, r_j)$ represents:
+\begin{itemize}
+\item \textbf{Match:} $g_j = r_j \in \Sigma$ (correct base call)
+\item \textbf{Substitution:} $g_j, r_j \in \Sigma$, $g_j \neq r_j$ (mismatch)
+\item \textbf{Deletion:} $g_j \in \Sigma$, $r_j = \varepsilon$ (reference base missing from read)
+\item \textbf{Insertion:} $g_j = \varepsilon$, $r_j \in \Sigma$ (extra base in read)
+\end{itemize}
+\end{definition}
+
+\begin{definition}[Per-Base SEER Matrix]
+\label{def:seer-matrix-indels}
+For a set of reads $R_{S+} = \{r : \text{end\_reason}(r) = \text{signal\_positive}\}$ aligned to standard $s_\star$, construct alignment pair counts:
+\begin{equation}
+C_{a,b} = \#\{j : (g_j, r_j) = (a, b)\} \quad \text{for } a, b \in \Sigma \cup \{\varepsilon\}, \; (a,b) \neq (\varepsilon, \varepsilon)
+\end{equation}
+\end{definition}
+
+\begin{eqbox}{SEER matrix normalization}
+The SEER matrix $\mathbf{M} \in \mathbb{R}^{5 \times 5}$ (4 bases + gap) is obtained via row normalization over truth states:
+\begin{equation}
+M_{a,b} = \frac{C_{a,b}}{\sum_{b' \in \Sigma \cup \{\varepsilon\}} C_{a,b'}} \quad \text{for } a \in \Sigma \cup \{\varepsilon\}
+\label{eq_11_21}
+\end{equation}
+where $\Sigma = \{A, C, G, T\}$ is the DNA alphabet and $\varepsilon$ denotes a gap (indel).
+\end{eqbox}
+
+\begin{remark}[SEER Matrix Interpretation]
+Each row of $\mathbf{M}$ sums to 1 and represents the conditional distribution of observed bases given a true base:
+\begin{itemize}
+\item \textbf{Substitution submatrix $\mathbf{S} \in \mathbb{R}^{4 \times 4}$:} Entries $M_{a,b}$ for $a, b \in \Sigma$ quantify base-to-base substitution rates. For example, $M_{\text{A},\text{G}}$ gives the rate at which true adenines are called as guanines.
+
+\item \textbf{Deletion rates:} The column $M_{a,\varepsilon}$ for $a \in \Sigma$ specifies the probability that base $a$ is deleted (not observed in the read).
+
+\item \textbf{Insertion rates:} The row $M_{\varepsilon,b}$ for $b \in \Sigma$ indicates the probability of spuriously inserting base $b$. Normalization for insertions requires care: insertions do not consume reference positions, so we normalize by total aligned length or report as insertions per kilobase.
+\end{itemize}
+\end{remark}
+
+\begin{definition}[Aggregate Indel Rates]
+From the SEER matrix, define overall insertion and deletion rates:
+\begin{equation}
+r_{\text{ins}} = \frac{\sum_{b \in \Sigma} C_{\varepsilon,b}}{\sum_{a \in \Sigma} \sum_{b \in \Sigma \cup \{\varepsilon\}} C_{a,b}}, \quad
+r_{\text{del}} = \frac{\sum_{a \in \Sigma} C_{a,\varepsilon}}{\sum_{a \in \Sigma} \sum_{b \in \Sigma \cup \{\varepsilon\}} C_{a,b}}
+\label{eq_11_22}
+\end{equation}
+These rates quantify the overall fraction of reference bases that are deleted ($r_{\text{del}}$), and the fraction of aligned positions (including insertions) that are insertions ($r_{\text{ins}}$). Note that $r_{\text{ins}}$ is normalized by total aligned positions, not reference bases.
+
+\textbf{Alternative normalization:} If desired, the insertion rate per reference base can be defined as
+\begin{equation}
+r_{\text{ins,ref}} = \frac{\sum_{b \in \Sigma} C_{\varepsilon,b}}{\sum_{a \in \Sigma} \sum_{b \in \Sigma \cup \{\varepsilon\}} C_{a,b} - \sum_{b \in \Sigma} C_{\varepsilon,b}}
+\end{equation}
+where the denominator excludes inserted positions, representing only reference-consuming positions.
+
+\textit{Note:} The choice of normalization should be made explicit when reporting insertion rates, as the denominator affects interpretation.
+\end{definition}
+
+\subsection{Per-Base Error Indicators and Empirical Quality}
+
+\begin{definition}[Per-Base Error Indicator]
+\label{def:per-base-error-indicator}
+For read $r$ with length $\ell = |r|$ aligned to reference $s_\star$, define the per-base error indicator:
+\begin{equation}
+Y_i = \begin{cases}
+1 & \text{if base } i \text{ in } r \text{ is a mismatch or involved in an indel} \\
+0 & \text{otherwise (match)}
+\end{cases}
+\label{eq_11_24}
+\end{equation}
+
+Specifically:
+\begin{itemize}
+\item $Y_i = 1$ if the alignment at position $i$ shows $(g_i, r_i)$ with $g_i \neq r_i$ (substitution)
+\item $Y_i = 1$ if position $i$ corresponds to a deletion ($r_i = \varepsilon$) or insertion ($g_i = \varepsilon$)
+\item $Y_i = 0$ if $(g_i, r_i) = (a, a)$ for some $a \in \Sigma$ (perfect match)
+\end{itemize}
+\end{definition}
+
+\begin{definition}[Empirical Per-Read Error Rate and Quality]
+The empirical per-read error rate is:
+\begin{equation}
+\hat{e}^{\text{emp}}(r) = \frac{1}{\ell} \sum_{i=1}^{\ell} Y_i
+\label{eq_11_25}
+\end{equation}
+
+The corresponding empirical quality score (in Phred scale) is:
+\begin{equation}
+Q_{\text{read}}^{\text{emp}}(r) = -10 \log_{10}\left( \hat{e}^{\text{emp}}(r) \right)
+\label{eq_11_26}
+\end{equation}
+\end{definition}
+
+Compare this to the predicted quality from basecaller Q scores:
+\begin{equation}
+\hat{p}_i = 10^{-Q_i/10}, \quad
+\hat{e}^{\text{pred}}(r) = \frac{1}{\ell} \sum_{i=1}^{\ell} \hat{p}_i, \quad
+Q_{\text{read}}^{\text{pred}}(r) = -10 \log_{10}\left( \hat{e}^{\text{pred}}(r) \right)
+\label{eq_11_27}
+\end{equation}
+
+The calibration gap $\Delta Q = Q_{\text{read}}^{\text{pred}} - Q_{\text{read}}^{\text{emp}}$ quantifies basecaller miscalibration (positive values indicate overconfidence).
+
+\subsection{Single-Molecule Accuracy: Formal Definitions}
+
+Single-molecule accuracy (SMA) is the central metric for SMA-seq validation. We define two complementary measures: exact-sequence accuracy (binary) and per-base accuracy (continuous).
+
+\begin{definition}[Exact-Sequence Single-Molecule Accuracy]
+\label{def:sma-exact}
+The exact-sequence SMA is the probability that a basecalled read perfectly matches the reference standard end-to-end:
+\begin{equation}
+\text{SMA}_{\text{exact}} = \Pr(\hat{s}(r) = s_\star \mid \text{end\_reason}(r) = \text{signal\_positive})
+\label{eq_11_28}
+\end{equation}
+\end{definition}
+
+\begin{eqbox}{SMA exact-match empirical estimator}
+The empirical estimator over dataset $R_{S+}$ is:
+\begin{equation}
+\widehat{\text{SMA}}_{\text{exact}} = \frac{1}{|R_{S+}|} \sum_{r \in R_{S+}} \mathbb{I}\{\hat{s}(r) = s_\star\}
+\label{eq_11_29}
+\end{equation}
+where $\mathbb{I}\{\cdot\}$ is the indicator function (1 if condition true, 0 otherwise), $R_{S+}$ is the set of reads with end\_reason = signal\_positive, and $s_\star$ is the known reference sequence.
+\end{eqbox}
+
+\begin{remark}[Confidence Interval for SMA$_{\text{exact}}$]
+Since $\widehat{\text{SMA}}_{\text{exact}}$ is a binomial proportion, use the Wilson score interval for $95\%$ confidence bounds:
+\begin{equation}
+\text{CI}_{95\%}(\text{SMA}_{\text{exact}}) = \frac{1}{1 + \frac{z^2}{n}} \left( \hat{p} + \frac{z^2}{2n} \pm z \sqrt{\frac{\hat{p}(1-\hat{p})}{n} + \frac{z^2}{4n^2}} \right)
+\label{eq_11_30}
+\end{equation}
+where $\hat{p} = \widehat{\text{SMA}}_{\text{exact}}$, $n = |R_{S+}|$, and $z = 1.96$ for $95\%$ confidence.
+\end{remark}
+
+\begin{eqbox}{Per-base Single-Molecule Accuracy}
+The per-base SMA is one minus the per-base error rate, aggregated over all complete reads:
+\begin{equation}
+\text{SMA}_{\text{base}} = 1 - \frac{\sum_{r \in R_{S+}} \sum_{i=1}^{\ell_r} Y_i}{\sum_{r \in R_{S+}} \ell_r}
+\label{eq_11_31}
+\end{equation}
+where $Y_i$ is the per-base error indicator (1 if error, 0 if match), $\ell_r$ is the length of read $r$, and $R_{S+}$ is the set of reads with end\_reason = signal\_positive.
+\end{eqbox}
+
+This metric quantifies the average per-base accuracy across all signal-positive reads. It decomposes into:
+\begin{equation}
+\text{SMA}_{\text{base}} = 1 - (r_{\text{mismatch}} + r_{\text{ins}} + r_{\text{del}})
+\label{eq_11_32}
+\end{equation}
+where $r_{\text{mismatch}}$, $r_{\text{ins}}$, and $r_{\text{del}}$ denote mismatch, insertion, and deletion rates, respectively.
+
+\textbf{Explicit definitions:}
+\begin{align*}
+r_{\text{mismatch}} &= \frac{\sum_{r \in R_{S+}} \sum_{i=1}^{\ell_r} \mathbb{I}\{\text{mismatch at } i\}}{\sum_{r \in R_{S+}} \ell_r} \\
+r_{\text{ins}}     &= \frac{\sum_{r \in R_{S+}} \sum_{i=1}^{\ell_r} \mathbb{I}\{\text{insertion at } i\}}{\sum_{r \in R_{S+}} \ell_r} \\
+r_{\text{del}}     &= \frac{\sum_{r \in R_{S+}} \sum_{i=1}^{\ell_r} \mathbb{I}\{\text{deletion at } i\}}{\sum_{r \in R_{S+}} \ell_r}
+\end{align*}
+Here, each rate is computed with respect to the total number of read bases, matching the denominator in Equation~\ref{eq_11_31}. This differs from the standard definitions in Equation~\ref{eq_11_22}, which use aligned reference positions as the denominator.
+\end{definition}
+
+\begin{definition}[Predicted Single-Molecule Accuracy]
+\label{def:sma-predicted}
+Using basecaller-predicted error probabilities $\hat{p}_i = 10^{-Q_i/10}$, define predicted per-base SMA:
+\begin{equation}
+\widehat{\text{SMA}}_{\text{base}}^{\text{pred}} = 1 - \frac{\sum_{r \in R_{S+}} \sum_{i=1}^{\ell_r} \hat{p}_i}{\sum_{r \in R_{S+}} \ell_r}
+\label{eq_11_33}
+\end{equation}
+
+The calibration gap for SMA is:
+\begin{equation}
+\Delta_{\text{SMA}} = \widehat{\text{SMA}}_{\text{base}}^{\text{pred}} - \text{SMA}_{\text{base}}
+\label{eq_11_34}
+\end{equation}
+
+A positive gap indicates basecaller overconfidence (predicted accuracy exceeds empirical).
+\end{definition}
+
+\subsection{Purity Bias and the SMA Ceiling}
+
+As established in Chapter~\ref{chap:purity}, library purity $\pi = \Pr(Z = s_\star)$ fundamentally limits measured accuracy. If a fraction $(1-\pi)$ of molecules in the library are not the intended standard $s_\star$, then observed exact-sequence accuracy is bounded:
+
+\begin{theorem}[Purity Bias in SMA Measurements]
+\label{thm:purity-bias-sma}
+For a library with purity $\pi$, the expected measured exact-sequence accuracy satisfies:
+\begin{equation}
+\mathbb{E}[\widehat{\text{SMA}}_{\text{exact}}] = \pi \cdot A + (1-\pi) \cdot B
+\label{eq_11_35}
+\end{equation}
+where:
+\begin{itemize}
+\item $A = \Pr(\hat{s} = s_\star \mid Z = s_\star)$ is the true sequencing accuracy on target molecules
+\item $B = \Pr(\hat{s} = s_\star \mid Z \neq s_\star)$ is the probability that a contaminant sequence is called as $s_\star$ (typically $B \approx 0$ for distinct contaminants)
+\end{itemize}
+\end{theorem}
+
+\begin{proof}
+By law of total expectation, partitioning on the true molecular identity $Z$:
+\begin{align}
+\mathbb{E}[\widehat{\text{SMA}}_{\text{exact}}] &= \mathbb{E}[\mathbb{I}\{\hat{s} = s_\star\}] \\
+&= \Pr(\hat{s} = s_\star) \\
+&= \Pr(\hat{s} = s_\star \mid Z = s_\star) \Pr(Z = s_\star) + \Pr(\hat{s} = s_\star \mid Z \neq s_\star) \Pr(Z \neq s_\star) \\
+&= \pi \cdot A + (1-\pi) \cdot B. \quad \qed
+\end{align}
+\end{proof}
+
+\begin{recommendation}[SMA Reporting with Purity]
+\label{rec:sma-purity-reporting}
+When reporting SMA metrics:
+\begin{enumerate}
+\item \textbf{Always report library purity $\pi$} alongside $\widehat{\text{SMA}}_{\text{exact}}$, measured via independent assay (e.g., Sanger sequencing of cloned inserts).
+\item \textbf{State the purity ceiling:} $\widehat{\text{SMA}}_{\text{exact}} \leq \pi$ for any well-designed experiment. Violations indicate errors in purity measurement or reference sequence.
+\item \textbf{Do not claim accuracy beyond purity:} If $\pi = 0.96$, sequencing accuracy $A$ cannot be conclusively demonstrated above $96\%$ without independent validation.
+\item \textbf{Separate purity from completeness:} Purity ($\pi$) and read completion rate (fraction with end\_reason = signal\_positive) are independent quality attributes. Report both.
+\end{enumerate}
+\end{recommendation}
+
+\subsection{Bootstrap Confidence Intervals for SEER and SMA}
+
+\begin{definition}[Nonparametric Bootstrap for SEER Matrix]
+To obtain confidence intervals for SEER matrix entries $M_{a,b}$:
+\begin{enumerate}
+\item Resample $R_{S+}$ with replacement to obtain bootstrap sample $R_{S+}^{(b)}$ of size $|R_{S+}|$, for $b = 1, \ldots, B$ (typically $B = 1000$).
+\item For each bootstrap sample, compute alignment pair counts $C_{a,b}^{(b)}$ and SEER matrix $\mathbf{M}^{(b)}$ via row normalization (Equation \ref{eq_11_21}).
+\item For each matrix entry, compute the $95\%$ CI as $[\text{percentile}_{2.5}(M_{a,b}^{(1)}, \ldots, M_{a,b}^{(B)}), \text{percentile}_{97.5}(M_{a,b}^{(1)}, \ldots, M_{a,b}^{(B)})]$.
+\end{enumerate}
+\end{definition}
+
+Similarly, bootstrap CIs for insertion/deletion rates $r_{\text{ins}}$ and $r_{\text{del}}$ (Equation \ref{eq_11_22}) and per-base SMA (Equation \ref{eq_11_31}) follow the same resampling procedure.
+
+\section{Context-Specific Error Patterns}
+
+\subsection{K-mer Error Profiling}
+
+Sequence context significantly influences error rates. For each k-mer $\kappa$ of length $k$ (typically $k \in \{3, 5, 7\}$):
+
+\begin{equation}
+\text{EER}(\kappa) = \frac{\text{errors in } \kappa}{\text{occurrences of } \kappa}
+\end{equation}
+
+This k-mer-specific error rate reveals problematic sequence contexts:
+\begin{itemize}
+\item Homopolymer runs: e.g., AAAAA often shows elevated error rates
+\item GC-rich regions: Secondary structure formation increases errors
+\item Specific motifs: Technology-dependent systematic biases
+\end{itemize}
+
+\subsection{Error Type Classification}
+
+Beyond aggregate error rates, SMA-seq enables classification of error types:
+
+\begin{definition}[Error Type Decomposition]
+\begin{align}
+\text{EER}_{\text{sub}}(s_i) &= \text{Substitution error rate} \\
+\text{EER}_{\text{ins}}(s_i) &= \text{Insertion error rate} \\
+\text{EER}_{\text{del}}(s_i) &= \text{Deletion error rate}
+\end{align}
+with $\text{EER}(s_i) = \text{EER}_{\text{sub}}(s_i) + \text{EER}_{\text{ins}}(s_i) + \text{EER}_{\text{del}}(s_i)$.
+\end{definition}
+
+This decomposition requires alignment of observed sequences to reference templates, typically using edit distance calculations as introduced in Chapter \ref{chap:classification-model}.
+
+\section{Integration with Haplotype Classification}
+
+\subsection{Likelihood Computation Using Confusion Matrices}
+
+The confusion matrix directly enables likelihood calculations for Bayesian classification. Given candidate haplotype $h$ with sequence $s_h$ and observed reads $\mathbf{r} = \{r_1, \ldots, r_n\}$:
+
+\begin{equation}
+P(\mathbf{r} | h) = \prod_{i=1}^{n} C_{r_i, s_h}
+\end{equation}
+
+where $C_{r_i, s_h}$ is the confusion matrix entry for observing read $r_i$ when the true sequence is $s_h$.
+
+When direct measurements are unavailable for specific sequences, interpolation strategies include:
+\begin{itemize}
+\item K-mer composition weighting
+\item Sequence similarity metrics
+\item Conservative bounds using worst-case error rates
+\end{itemize}
+
+\subsection{Confidence Interval Calibration}
+
+Properly calibrated quality scores ensure accurate posterior confidence intervals. The posterior probability from Chapter \ref{chap:posteriors}:
+
+\begin{equation}
+P(h_i | \mathbf{r}) = \frac{P(\mathbf{r} | h_i) P(h_i)}{\sum_{j=1}^{P} P(\mathbf{r} | h_j) P(h_j)}
+\end{equation}
+
+relies on accurate likelihood functions. Miscalibrated quality scores propagate through this calculation, producing overconfident or underconfident classifications.
+
+\section{Experimental Protocols and Best Practices}
+
+\subsection{Library Preparation Considerations}
+
+The library preparation protocol used for SMA-seq standards must match clinical sample protocols:
+
+\begin{enumerate}
+\item \textbf{Fragmentation method:} Mechanical shearing vs. enzymatic vs. transposase
+\item \textbf{Adapter sequences:} Identical adapters prevent bias introduction
+\item \textbf{Purification steps:} Matched cleanup procedures
+\item \textbf{Amplification:} PCR-free protocols when possible
+\end{enumerate}
+
+For Cas9-based enrichment (Chapter \ref{chap:basecaller-tuning}), standards undergo identical cutting and enrichment steps.
+
+\subsection{Sequencing Depth Requirements}
+
+Adequate sequencing depth ensures precise error rate estimation:
+
+\begin{itemize}
+\item \textbf{Aggregate error rates:} Minimum 10,000 reads per standard
+\item \textbf{K-mer profiling:} Minimum 100,000 reads per standard
+\item \textbf{Basecaller training:} Minimum 1,000,000 reads total
+\item \textbf{Technical replicates:} $n = 3$ for reproducibility assessment
+\end{itemize}
+
+Confidence interval width scales as $1/\sqrt{n}$ where $n$ denotes read count. For 95\% CI width $\pm 0.01$, approximately 10,000 reads are required.
+
+\subsection{Data Analysis Workflow}
+
+The complete SMA-seq analysis pipeline:
+
+\begin{enumerate}
+\item \textbf{Basecalling:} Apply target basecaller to raw signals
+\item \textbf{Read grouping:} Cluster by exact sequence identity
+\item \textbf{Matrix construction:} Populate confusion matrix counts
+\item \textbf{Normalization:} Convert counts to probabilities
+\item \textbf{Metric calculation:} Compute TPR, EER, quality metrics
+\item \textbf{Visualization:} Generate QQ plots, k-mer heatmaps
+\item \textbf{Quality gates:} Apply acceptance criteria
+\item \textbf{Documentation:} Standardized reporting
+\end{enumerate}
+
+Each step includes quality checkpoints from Chapter \ref{chap:qc-gates} to ensure data integrity.
+
+\section{Clinical Validation and Regulatory Compliance}
+
+\subsection{Analytical Validation Requirements}
+
+For clinical deployment, SMA-seq provides essential evidence supporting analytical validation:
+
+\begin{definition}[Analytical Performance Characteristics]
+\begin{itemize}
+\item \textbf{Accuracy:} TPR $\geq 0.95$ for major alleles
+\item \textbf{Precision:} CV $\leq 5\%$ across technical replicates
+\item \textbf{Sensitivity:} Detection limit for minor alleles
+\item \textbf{Specificity:} False positive rate $\leq 0.01$
+\item \textbf{Linearity:} Response across allele frequency range
+\end{itemize}
+\end{definition}
+
+These metrics align with FDA, CLIA, and CAP requirements for laboratory-developed tests.
+
+\subsection{Quality Control Integration}
+
+SMA-seq measurements establish run-specific quality gates:
+
+\begin{enumerate}
+\item \textbf{Positive control:} Known haplotype standard in each run
+\item \textbf{Negative control:} No-template control for contamination
+\item \textbf{Quality threshold:} $d \leq 30\%$ for quality overestimation
+\item \textbf{TPR threshold:} Observed TPR $\geq 0.9 \times$ expected TPR
+\end{enumerate}
+
+Runs failing these criteria require investigation before clinical reporting.
+
+\section{Advanced Topics and Extensions}
+
+\subsection{Basecaller Fine-Tuning}
+
+SMA-seq data enables supervised basecaller improvement:
+
+\begin{enumerate}
+\item Generate signal-sequence pairs from standards
+\item Identify systematic error patterns
+\item Retrain neural network models
+\item Validate improvement on held-out standards
+\end{enumerate}
+
+This iterative refinement process is detailed in Chapter \ref{chap:basecaller-tuning}.
+
+\subsection{Technology Comparison}
+
+Cross-platform SMA-seq experiments enable objective technology comparison:
+
+\begin{itemize}
+\item Nanopore vs. PacBio vs. Element Biosciences
+\item Different basecaller versions
+\item Alternative library preparation methods
+\end{itemize}
+
+Standardized metrics facilitate evidence-based platform selection.
+
+\subsection{Mixture Deconvolution}
+
+For samples containing multiple haplotypes at varying frequencies:
+
+\begin{equation}
+P(\mathbf{r}) = \sum_{i=1}^{K} \alpha_i P(\mathbf{r} | h_i)
+\end{equation}
+
+where $\alpha_i$ represents the frequency of haplotype $h_i$. SMA-seq measurements of $P(\mathbf{r} | h_i)$ enable accurate frequency estimation.
+
+\section{Read Completeness and End Reason Metadata}
+\label{sec:end-reason-analysis}
+
+Beyond basecalling quality scores, Oxford Nanopore Technologies (ONT) sequencing provides metadata indicating \emph{why} each read terminated. This \textbf{end reason} information is critical for SMA-seq applications because it distinguishes complete single-molecule reads from those truncated by technical interruptions. Ignoring end reason metadata can systematically bias accuracy measurements and lead to incorrect conclusions about sequencing performance.
+
+\subsection{End Reason Taxonomy and Definitions}
+
+ONT sequencing proceeds through a state machine with transitions between open-pore, strand-translocation, and blocked states. Each read termination event is classified into one of several mutually exclusive categories, stored in raw signal metadata (POD5/FAST5 files) but typically \emph{not} propagated to basecalled outputs (FASTQ/BAM).
+
+\begin{definition}[End Reason Categories]
+\label{def:end-reason}
+Let $\mathcal{E} = \{\text{signal\_positive}, \text{signal\_negative}, \text{mux\_change}, \text{unblock\_mux\_change}, \text{data\_service\_unblock\_mux\_change}, \text{active\_channel\_change}, \text{device\_detach}, \text{adapter\_partial\_insert}, \text{partial}, \text{unknown}\}$ denote the complete set of end reason codes per ONT Specification v1.1:
+
+\begin{itemize}
+\item \textbf{signal\_positive (SP):} Read terminated with return to open-pore baseline current. Indicates natural completion after full or near-full strand translocation through the nanopore. Expected pattern: current trace returns to $\sim$180--220~pA baseline. \textbf{Recommended for analysis.}
+
+\item \textbf{signal\_negative (SN):} Abnormal termination with large negative current excursion ($>$80~pA drop beyond typical fluctuations). Often indicates early strand failure, pore malfunction, or strand reversal. Corresponds to failed sequencing attempts.
+
+\item \textbf{mux\_change (MC):} Forced termination due to multiplexer channel re-scan. ONT flow cells periodically (every 1--4 hours) test alternate nanopore wells per channel. Reads actively sequencing during a MUX scan are abruptly ejected. Results in short, incomplete reads.
+
+\item \textbf{unblock\_mux\_change (UMC):} Termination triggered by automatic voltage reversal to eject a stalled strand. Indicates the pore detected a blockage (near-zero current for $>$several seconds) and forcibly removed the molecule. Produces incomplete reads, often mid-length.
+
+\item \textbf{data\_service\_unblock\_mux\_change (DSUMC):} Software-triggered unblock combined with mux change. Rare ($<0.5\%$ of reads).
+
+\item \textbf{analysis\_config\_change (ACC):} Read terminated due to analysis configuration update during run. Uncommon except during live configuration changes.
+
+\item \textbf{device\_data\_error (DDE):} Hardware or data acquisition error. Indicates instrument malfunction or communication failure.
+
+\item \textbf{api\_request (API):} Read terminated by explicit user/API command. Occurs during manual run intervention.
+
+\item \textbf{paused (P):} Read interrupted by run pause. Temporary suspension of sequencing.
+
+\item \textbf{unknown (UNK):} Reason not recorded or unrecognized value. Should be rare ($<0.1\%$) in properly functioning systems.
+\end{itemize}
+
+Each read $r_i$ has associated metadata: read ID, sequence length $\ell_i$, quality scores $\mathbf{Q}_i$, and end reason $E_i \in \mathcal{E}$.
+
+\textbf{Note:} For mathematical analysis, we group codes into \emph{complete} ($\{$SP$\}$) and \emph{incomplete} ($\{$SN, MC, UMC, DSUMC, ACC, DDE, API, P, UNK$\}$) categories.
+\end{definition}
+
+\textbf{Physical interpretation:} Signal\_positive events correspond to molecules that successfully translocated; all other categories represent incomplete observations. For SMA-seq validation with known standards, only SP reads guarantee observation of the full molecule.
+
+\subsection{Read Length Distributions Conditioned on End Reason}
+
+For SMA-seq experiments with clonal templates of known length $L_{\text{true}}$, the observed read length distribution $p(\ell | E)$ reveals systematic truncation patterns.
+
+\begin{theorem}[End Reason and Read Completeness]
+\label{thm:end-reason-completeness}
+For a homogeneous sample with true molecule length $L_{\text{true}}$, the read length distributions satisfy:
+\begin{equation}
+\mathbb{E}[\ell \mid E = \text{SP}] \approx L_{\text{true}}, \quad \mathbb{E}[\ell \mid E \in \{\text{UMC}, \text{SN}, \text{MC}\}] < L_{\text{true}}
+\end{equation}
+with strict inequality for incomplete-read categories. Moreover, the probability of observing full-length reads satisfies:
+\begin{equation}
+\Pr(\ell \geq L_{\text{true}} \mid E = \text{SP}) \gg \Pr(\ell \geq L_{\text{true}} \mid E \neq \text{SP})
+\end{equation}
+\end{theorem}
+
+\begin{proof}[Empirical validation]
+In controlled experiments with plasmid standards ($L_{\text{true}} = 3000$--5000~bp), we observe:
+\begin{itemize}
+\item \textbf{Signal\_positive:} Median read length $\tilde{\ell}_{\text{SP}} \approx 0.98 L_{\text{true}}$, with $>95\%$ of reads within $\pm 5\%$ of expected length.
+\item \textbf{Unblock\_mux\_change:} Median $\tilde{\ell}_{\text{UMC}} \approx 0.5 L_{\text{true}}$, reflecting truncation mid-molecule. Essentially zero reads reach $L_{\text{true}}$.
+\item \textbf{Signal\_negative:} Median $\tilde{\ell}_{\text{SN}} \approx 0.3 L_{\text{true}}$, heavily skewed toward early failures.
+\item \textbf{Mux\_change:} Median $\tilde{\ell}_{\text{MC}} \approx 0.1 L_{\text{true}}$, most reads $<1$~kb due to brief sequencing windows between MUX scans.
+\end{itemize}
+The non-overlapping distributions confirm that end reason is a strong predictor of read completeness (see Figure~\ref{fig:end-reason-lengths}, supplementary materials). \qed
+\end{proof}
+
+\subsection{Survival Analysis Framework for Read Truncation}
+
+We model read truncation as a right-censored observation problem. Let $L$ denote the true molecule length and $\ell$ the observed read length. For incomplete reads, $\ell < L$ represents a \emph{censored} observation—we know the molecule was at least length $\ell$ but not how much longer.
+
+\begin{definition}[Read Completion Hazard Function]
+\label{def:completion-hazard}
+Define the hazard function $h(x)$ as the instantaneous probability of read termination at position $x$ (measured in bases sequenced), conditional on survival to $x$:
+\begin{equation}
+h(x) = \lim_{\Delta x \to 0} \frac{\Pr(x \leq \ell < x + \Delta x \mid \ell \geq x)}{\Delta x}
+\end{equation}
+
+The survival function (probability of sequencing at least $x$ bases without forced termination) is:
+\begin{equation}
+S(x) = \exp\left( -\int_0^x h(t) \, dt \right)
+\end{equation}
+
+For constant hazard $h(x) = \lambda$, this reduces to exponential survival:
+\begin{equation}
+S(x) = e^{-\lambda x}, \quad \mathbb{E}[\ell \mid \text{terminated}] = \frac{1}{\lambda}
+\end{equation}
+\end{definition}
+
+\textbf{Empirical hazard estimation:} From end\_reason = UMC read lengths in a dataset with $N_{\text{UMC}}$ truncated reads, estimate $\lambda$ via maximum likelihood:
+\begin{equation}
+\hat{\lambda} = \frac{1}{\bar{\ell}_{\text{UMC}}}
+\end{equation}
+where $\bar{\ell}_{\text{UMC}}$ is the mean UMC read length.
+
+\textbf{Example:} For $\bar{\ell}_{\text{UMC}} = 2500$~bp:
+\begin{equation}
+\hat{\lambda} = \frac{1}{2500} = 4.00 \times 10^{-4} \text{ per base}
+\end{equation}
+This implies an expected survival length of $1/\lambda = 2500$~bp. For molecules $<5$~kb, the completion probability is $S(5000) = e^{-5000 \times \hat{\lambda}} \approx e^{-2} \approx 13.5\%$, consistent with observations.
+
+\subsection{Statistical Tests for Read Completion Rates}
+
+\begin{definition}[Read Completion Proportion Test]
+\label{def:completion-test}
+For a dataset with known true molecule length $L$ and $N$ total reads, let $k$ be the number of reads with end\_reason = SP. Test whether the observed completion rate matches expectation based on sequence length and platform specifications.
+
+\textbf{Null hypothesis:} $H_0: p_{\text{complete}} = p_0$ (expected completion rate)
+
+\textbf{Test statistic:} $k \sim \text{Binomial}(N, p_0)$
+
+\textbf{Exact p-value} (lower tail):
+\begin{equation}
+p_{\text{value}} = \sum_{j=0}^{k} \binom{N}{j} p_0^j (1-p_0)^{N-j}
+\end{equation}
+
+\textbf{Confidence interval:} Use Wilson score or Clopper--Pearson (Appendix~\ref{app:appendixb}, Definition~\ref{def:binomial-ci}).
+
+\textbf{Acceptance criterion:} Observed $\hat{p} = k/N$ falls within 95\% CI of $p_0$. Significant deviations indicate library preparation issues, excessive pore blockages, or suboptimal run conditions requiring investigation.
+\end{definition}
+
+\textbf{Practical application:} For a 3~kb plasmid standard with expected $p_0 = 0.96$ (based on historical data), observing $k = 9{,}120$ complete reads out of $N = 10{,}000$ total gives $\hat{p} = 0.912$. Wilson 95\% CI: [0.905, 0.919]. Since $p_0 = 0.96$ falls outside this interval, reject $H_0$ and investigate potential causes (motor enzyme degradation, buffer pH, elevated temperature).
+
+\subsection{Impact on Accuracy Metrics and Filtering Strategies}
+
+\textbf{Problem:} Standard accuracy analyses aggregate all reads, which systematically underestimates performance on complete molecules. Incomplete reads:
+\begin{itemize}
+\item Contribute missing sequence (appear as deletions or lower coverage)
+\item Often have elevated error rates near truncation points (motor stalling introduces signal artifacts)
+\item Skew read-length N50 statistics downward
+\item Inflate empirical error rates if denominator includes incomplete reads
+\end{itemize}
+
+\begin{recommendation}[End Reason Filtering for SMA-seq]
+\label{rec:end-reason-filter}
+For SMA-seq accuracy validation:
+\begin{enumerate}
+\item \textbf{Primary dataset:} Use only reads with end\_reason = signal\_positive. These represent true single-molecule observations of complete templates.
+
+\item \textbf{Quality gate:} Require $\geq 90\%$ of reads in SP category. Lower completion rates indicate systematic problems (library quality, pore chemistry, run conditions).
+
+\item \textbf{Secondary analysis (optional):} Separately analyze incomplete-read categories to identify failure modes:
+\begin{itemize}
+\item High UMC rate at specific sequence positions → difficult-to-sequence motifs (secondary structure, homopolymers)
+\item High SN rate overall → poor library prep or degraded pores
+\item High MC rate → excessively frequent MUX scans (adjust MinKNOW configuration)
+\end{itemize}
+
+\item \textbf{Reporting:} Always report end\_reason distribution alongside accuracy metrics. Example:
+\begin{verbatim}
+Total reads: 45,231
+  - signal_positive: 42,869 (94.8%)
+  - unblock_mux_change: 2,139 (4.7%)
+  - signal_negative: 216 (0.5%)
+  - mux_change: 7 (<0.1%)
+
+Accuracy on SP reads: 99.82% identity (Q28.4)
+Accuracy on all reads: 98.91% (Q20.6)
+\end{verbatim}
+This transparently shows that incomplete reads degrade apparent accuracy by $\sim$8~dB Q.
+\end{enumerate}
+\end{recommendation}
+
+\subsection{Data Integration Pipeline}
+
+\textbf{Challenge:} ONT basecallers (Dorado, Guppy) output FASTQ/BAM files \emph{without} end\_reason metadata. The \texttt{sequencing\_summary.txt} file or raw POD5 files contain end\_reason for each read ID.
+
+\textbf{Solution:} Join basecalled data with metadata by read ID using official ONT file formats:
+
+\begin{enumerate}
+\item Extract read ID $\to$ end\_reason mapping from POD5 files using the official POD5 Python API (\texttt{pod5-file-format}):
+\begin{verbatim}
+import pod5
+metadata = {}
+with pod5.Reader("reads.pod5") as reader:
+    for read in reader.reads():
+        # read.read_id is a UUID object; str(read.read_id) produces the canonical UUID string with hyphens (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx),
+        # which matches the format used in ONT BAM query_name. No further conversion is needed for matching.
+        read_id_str = str(read.read_id)
+        # end_reason stored in read.end_reason enumeration
+        metadata[read_id_str] = read.end_reason.name
+\end{verbatim}
+
+\textbf{Note:} POD5 \texttt{read.end\_reason} is an enumeration with values: \texttt{signal\_positive}, \texttt{signal\_negative}, \texttt{mux\_change}, \texttt{unblock\_mux\_change}, and others. Access via \texttt{.name} attribute.
+
+\item Annotate BAM with custom tag (using \texttt{ER:Z} for end\_reason, following SAM optional field specification):
+\begin{verbatim}
+import pysam
+bam_in = pysam.AlignmentFile("basecalls.bam", "rb")
+bam_out = pysam.AlignmentFile("annotated.bam", "wb", template=bam_in)
+
+for aln in bam_in:
+    # Match BAM query_name to POD5 read_id
+    er = metadata.get(aln.query_name, "unknown")
+    aln.set_tag("ER", er, value_type='Z')  # String tag
+    bam_out.write(aln)
+\end{verbatim}
+
+\textbf{Alternative:} Extract from \texttt{sequencing\_summary.txt} if POD5 files unavailable:
+\begin{verbatim}
+import pandas as pd
+summary = pd.read_csv("sequencing_summary.txt", sep="\t")
+metadata = dict(zip(summary['read_id'], summary['end_reason']))
+\end{verbatim}
+
+\item Filter reads by end\_reason using SAM tag filtering:
+\begin{verbatim}
+# For samtools >= 1.13:
+samtools view -e '[ER]=="signal_positive"' annotated.bam > complete_reads.bam
+
+# For samtools < 1.13 (no -e support):
+samtools view annotated.bam | awk '$0 ~ /\tER:Z:signal_positive/' | samtools view -bS - > complete_reads.bam
+\end{verbatim}
+\end{enumerate}
+
+\textbf{Standard ONT BAM Tags:} Dorado basecaller includes several standard SAM optional tags (see SAM specification):
+\begin{itemize}
+\item \texttt{BC:Z}: Barcode sequence (e.g., \texttt{barcode01}, \texttt{unclassified})
+\item \texttt{TS:A}: Strand orientation (\texttt{+} for 5'$\to$3', \texttt{-} for 3'$\to$5')
+\item \texttt{MM:Z} and \texttt{ML:B}: Modified base calls (SAM v1.7 specification)
+\item \texttt{pi:Z}: Parent read ID for split reads (duplex/adapter-split reads)
+\item \texttt{pt:i}: Estimated poly(A/T) tail length (cDNA/dRNA)
+\item \texttt{RX:Z}: UMI sequence (if detected)
+\end{itemize}
+
+This workflow enables end\_reason-aware analysis in downstream tools (alignment, variant calling, assembly) without modifying those tools.
+
+\subsection{Integration with Existing Quality Framework}
+
+End\_reason filtering complements but does not replace other quality gates:
+
+\begin{itemize}
+\item \textbf{Q-score filtering} (Chapter~\ref{chap:qc-gates}): Removes low-confidence basecalls. End\_reason filtering removes \emph{incomplete} reads regardless of quality. Use both: first filter by end\_reason (completeness), then by Q-score (confidence).
+
+\item \textbf{Purity constraints} (Chapter~\ref{chap:purity}): True positive rate still bounded by template purity: $\text{TPR} \leq \pi$ (CE.15). End\_reason filtering ensures TPR is measured on complete reads, avoiding the confound where incomplete reads appear as "errors."
+
+\item \textbf{Calibration metrics} (this chapter, Section~\ref{sec:end-reason-analysis}): Expected Calibration Error (ECE), Brier score, and reliability diagrams should be computed on SP-filtered datasets to reflect true basecaller performance on complete molecules.
+\end{itemize}
+
+By combining end\_reason filtering with existing quality gates, SMA-seq achieves rigorous, unbiased accuracy assessment suitable for clinical validation and regulatory submission.
+
+\section{Software Implementation}
+
+\subsection{Core Functions}
+
+Essential SMA-seq analysis functions:
+
+\begin{verbatim}
+def construct_confusion_matrix(experiments):
+    """
+    Build confusion matrix from SEER experiments.
+    
+    Args:
+        experiments: List of (true_seq, observed_reads)
+    
+    Returns:
+        matrix: Normalized confusion matrix
+        metrics: Dict of performance metrics
+    """
+    # Implementation details in supplementary code
+    
+def calculate_quality_overestimation(matrix, qualities):
+    """
+    Compute quality overestimation fraction.
+    
+    Args:
+        matrix: Confusion matrix
+        qualities: Predicted quality scores
+    
+    Returns:
+        d: Overestimation percentage
+        qq_data: Data for QQ plot
+    """
+    # Implementation details in supplementary code
+\end{verbatim}
+
+\subsection{Integration with Classification Pipeline}
+
+The confusion matrix integrates seamlessly with Bayesian classification:
+
+\begin{verbatim}
+def compute_likelihood(reads, haplotype, confusion_matrix):
+    """
+    Calculate likelihood using empirical confusion matrix.
+    
+    Args:
+        reads: Observed read sequences
+        haplotype: Candidate haplotype sequence
+        confusion_matrix: SMA-seq derived matrix
+    
+    Returns:
+        likelihood: P(reads | haplotype)
+    """
+    likelihood = 1.0
+    for read in reads:
+        likelihood *= confusion_matrix[read, haplotype]
+    return likelihood
+\end{verbatim}
+
+\section{Variable Summary and Reference}
+\label{sec:sma-variable-summary}
+
+This section provides a comprehensive summary of all variables used in this chapter, including physical descriptions, units, and methods of measurement or determination. These variables form the core notation for SMA-seq empirical error measurement and quality calibration throughout the framework.
+
+\subsection{Variable Summary Table}
+
+\begin{vartable}
+\varrow{$\pi, \pi_i$}{Molecular purity of a reference standard: fraction of molecules with correct sequence.}
+       {fraction (0--1)}
+       {Measured via clone-level Sanger sequencing, restriction digest, or deep NGS of plasmid.}
+
+\varrow{$\text{TPR}(s_i)$}{True positive rate for standard $s_i$: fraction of reads correctly identified.}
+       {fraction (0--1)}
+       {Computed from confusion matrix diagonal: TPR$(s_i) = C_{ii}/N_i$.}
+
+\varrow{$\mathbf{C}$}{Confusion matrix: counts $C_{ij}$ of reads from standard $i$ called as sequence $j$.}
+       {integer count matrix}
+       {Constructed by grouping basecalled reads by sequence identity and true standard.}
+
+\varrow{$\mathbf{M}$}{SEER matrix: normalized per-base error rates including substitutions and indels.}
+       {probability matrix (0--1)}
+       {Row-normalized from alignment pair counts: $M_{a,b} = C_{a,b}/\sum_{b'} C_{a,b'}$.}
+
+\varrow{$\text{SMA}$}{Single Molecule Accuracy: probability of exact sequence match.}
+       {fraction (0--1)}
+       {Measured empirically: SMA$_{\text{exact}} = $ (perfect matches) / (total reads).}
+
+\varrow{$Q_{\text{pred}}$}{Predicted quality score from basecaller (mean per-read Phred quality).}
+       {Phred units (dimensionless)}
+       {Average of per-base quality scores output by basecaller; $p_{\text{err}} = 10^{-Q/10}$.}
+
+\varrow{$Q_{\text{emp}}$}{Empirical quality score computed from observed error rate.}
+       {Phred units (dimensionless)}
+       {Derived from alignment to known standard: $Q_{\text{emp}} = -10\log_{10}(\text{EER})$.}
+
+\varrow{$d$}{Quality overestimation fraction: percentage of reads with $Q_{\text{pred}} > Q_{\text{emp}}$.}
+       {percentage (0--100\%)}
+       {Computed from SMA-seq standards; acceptance threshold $d \leq 30\%$ for clinical use.}
+
+\varrow{$\text{ECE}$}{Expected Calibration Error: average absolute deviation between predicted and empirical error rates.}
+       {fraction (0--1)}
+       {Weighted average across bins: ECE $= \sum_m (n_m/N)|\bar{p}_m - \bar{y}_m|$.}
+
+\varrow{$R_{S+}$}{Set of reads with end\_reason = signal\_positive (complete reads).}
+       {read set}
+       {Filtered from total reads by end\_reason metadata from POD5 files.}
+
+\varrow{$s_\star$}{Known reference standard sequence (ground truth).}
+       {DNA sequence string}
+       {Verified by Sanger sequencing and restriction digest; defines expected read sequence.}
+
+\varrow{$\mathcal{U}_E$}{Set of unique observed sequences across all SMA-seq experiments.}
+       {sequence set}
+       {Distinct basecalled sequences grouped by exact string match.}
+\end{vartable}
+
+\subsection{Detailed Variable Reference Boxes}
+
+This section provides in-depth reference information for each variable, including physical descriptions, units, measurement methods, and concrete examples.
+
+\begin{varbox}{$\pi$}
+\textbf{Physical description.}
+Molecular purity of a reference standard: the fraction of molecules in the library that have the exact intended sequence $s_\star$. Impurity $(1-\pi)$ arises from replication errors during plasmid amplification, contamination, or synthesis errors.
+
+\textbf{Units.}
+Fraction in $[0,1]$; often expressed as percentage.
+
+\textbf{Measurement / determination.}
+Measured independently of sequencing via:
+\begin{itemize}
+\item Clone-level Sanger sequencing of 20-50 individual colonies
+\item Restriction digest fingerprinting
+\item Deep Illumina sequencing of plasmid prep
+\end{itemize}
+Purity imposes fundamental ceiling on achievable TPR: TPR$(s_i) \leq \pi_i$ (Equation~\ref{eq:purity-ceiling-sma}).
+
+\textbf{Example.}
+For a CYP2D6*10 plasmid standard with $L=5000$ bp, after $k=20$ bacterial replication cycles with error rate $r=10^{-6}$ per base per cycle:
+\[
+\pi_{\max} \approx (1-r)^{kL} = (1-10^{-6})^{100000} \approx 0.905.
+\]
+If empirical purity measurement gives $\pi=0.96$, this violates the theoretical bound and indicates either measurement error or incorrect replication model parameters.
+\end{varbox}
+
+\begin{varbox}{$\text{TPR}$}
+\textbf{Physical description.}
+True Positive Rate for standard $s_i$: the fraction of sequencing reads from template $s_i$ that are correctly identified as $s_i$ by the basecaller. This is the diagonal element of the normalized confusion matrix.
+
+\textbf{Units.}
+Fraction in $[0,1]$.
+
+\textbf{Measurement / determination.}
+Computed from confusion matrix counts (Equation~\ref{eq:sma-definition}):
+\[
+\text{TPR}(s_i) = \frac{C_{ii}}{N_i} = \frac{\text{reads correctly called as } s_i}{\text{total reads from } s_i}.
+\]
+For SMA-seq, only reads with end\_reason = signal\_positive should be included.
+
+\textbf{Example.}
+For a plasmid standard sequenced to 10,000 complete reads (end\_reason = SP), if 9,850 reads are exact matches to the reference sequence:
+\[
+\text{TPR} = 9850/10000 = 0.985 = 98.5\%.
+\]
+This corresponds to $\text{SMA}_{\text{exact}} = 0.985$ for this standard.
+\end{varbox}
+
+\begin{varbox}{$\text{SMA}$}
+\textbf{Physical description.}
+Single Molecule Accuracy: the probability that a single sequencing read is an exact match to the true template sequence, with no errors anywhere in the read. This is the central performance metric for SMA-seq validation.
+
+\textbf{Units.}
+Probability (fraction in $[0,1]$); often expressed as percentage or converted to Phred quality.
+
+\textbf{Measurement / determination.}
+Two complementary measures (Equations~\ref{eq:sma-exact-estimator} and \ref{eq:sma-base}):
+\begin{itemize}
+\item \textbf{Exact-match SMA:} Fraction of reads with zero errors
+\item \textbf{Per-base SMA:} One minus the per-base error rate
+\end{itemize}
+Both require filtering to end\_reason = signal\_positive reads. Confidence intervals via Wilson score method.
+
+\textbf{Example.}
+For a 3 kb plasmid standard:
+\begin{itemize}
+\item 9,500 of 10,000 reads are exact matches $\Rightarrow$ SMA$_{\text{exact}} = 0.95$
+\item Per-base error rate of 0.2\% $\Rightarrow$ SMA$_{\text{base}} = 0.998 = 99.8\%$
+\end{itemize}
+The difference reflects that most reads with errors have only 1-2 errors, not many errors.
+\end{varbox}
+
+\begin{varbox}{$\mathbf{M}$ (SEER matrix)}
+\textbf{Physical description.}
+The SEER (Sequencing Empirical Error Rate) matrix is a $5 \times 5$ normalized confusion matrix encoding per-base error rates including all substitutions (A$\leftrightarrow$C, A$\leftrightarrow$G, etc.) plus insertions and deletions.
+
+\textbf{Units.}
+Probability matrix; each row sums to 1.
+
+\textbf{Measurement / determination.}
+Constructed from aligned reads to known standards (Equation~\ref{eq:seer-matrix-normalization}):
+\begin{enumerate}
+\item Align reads to reference standard $s_\star$
+\item Count alignment pairs $(g_j, r_j)$ where $g_j$ is true base, $r_j$ is called base
+\item Normalize rows: $M_{a,b} = C_{a,b}/\sum_{b'} C_{a,b'}$
+\end{enumerate}
+
+\textbf{Example.}
+For a well-calibrated Nanopore basecaller on 3 kb standards:
+\begin{itemize}
+\item Diagonal entries (matches): $M_{A,A} \approx 0.998$, $M_{C,C} \approx 0.997$, etc.
+\item Substitution rates: $M_{A,G} \approx 0.0008$ (A$\to$G transversion)
+\item Deletion rate: $M_{A,\varepsilon} \approx 0.0007$
+\item Insertion rate: $M_{\varepsilon,A} \approx 0.0005$
+\end{itemize}
+\end{varbox}
+
+\begin{varbox}{$Q_{\text{pred}}$, $Q_{\text{emp}}$}
+\textbf{Physical description.}
+$Q_{\text{pred}}$: Predicted per-read quality score from basecaller (average of per-base Phred Q).
+$Q_{\text{emp}}$: Empirical per-read quality score computed from actual error rate when aligned to known reference.
+
+\textbf{Units.}
+Both in Phred units: $Q = -10\log_{10}(p_{\text{err}})$.
+
+\textbf{Measurement / determination.}
+\begin{itemize}
+\item $Q_{\text{pred}}$: Average per-base quality scores from basecaller output (FASTQ/BAM)
+\item $Q_{\text{emp}}$: Convert observed error rate to Phred scale after alignment to standard
+\end{itemize}
+Well-calibrated basecallers have $Q_{\text{pred}} \approx Q_{\text{emp}}$ on average.
+
+\textbf{Example.}
+For a read with mean predicted quality $\bar{Q}_{\text{pred}} = 30$ (predicted error rate 0.1\%):
+\begin{itemize}
+\item If empirical error rate is 0.2\% $\Rightarrow Q_{\text{emp}} = 27$ $\Rightarrow$ quality overestimation of 3 dB
+\item If empirical error rate is 0.05\% $\Rightarrow Q_{\text{emp}} = 33$ $\Rightarrow$ quality underestimation of 3 dB
+\end{itemize}
+Calibration gap $\Delta Q = Q_{\text{pred}} - Q_{\text{emp}}$ quantifies miscalibration.
+\end{varbox}
+
+\begin{varbox}{$d$ (quality overestimation fraction)}
+\textbf{Physical description.}
+The fraction (percentage) of unique sequences in SMA-seq experiments for which the basecaller's predicted quality score exceeds the empirically measured quality score. Systematic overestimation ($d > 0.5$) indicates basecaller overconfidence.
+
+\textbf{Units.}
+Percentage (0--100\%).
+
+\textbf{Measurement / determination.}
+Computed from SMA-seq standards using Equation~\ref{eq:overestimation-sma}:
+\[
+d = \frac{1}{|\mathcal{U}_E|} \sum_{u \in \mathcal{U}_E} \mathbb{I}[Q_{\text{pred}}(u) > Q_{\text{emp}}(u)] \times 100\%.
+\]
+Each unique observed sequence $u$ contributes 0 or 1 to the sum.
+
+\textbf{Example.}
+For an SMA-seq experiment with 10,000 unique sequences:
+\begin{itemize}
+\item If 2,400 have $Q_{\text{pred}} > Q_{\text{emp}}$ $\Rightarrow d = 24\%$ (acceptable, $d \leq 30\%$)
+\item If 6,500 have $Q_{\text{pred}} > Q_{\text{emp}}$ $\Rightarrow d = 65\%$ (unacceptable, requires recalibration)
+\end{itemize}
+Clinical acceptance threshold: $d \leq 30\%$.
+\end{varbox}
+
+\begin{varbox}{$\text{ECE}$ (Expected Calibration Error)}
+\textbf{Physical description.}
+Expected Calibration Error quantifies the average absolute difference between predicted error probabilities (from basecaller quality scores) and empirically observed error rates, weighted by the number of reads in each bin.
+
+\textbf{Units.}
+Fraction in $[0,1]$; often reported as percentage.
+
+\textbf{Measurement / determination.}
+Computed using reliability diagram methodology (Equation~\ref{eq:ece-sma}):
+\begin{enumerate}
+\item Bin reads by predicted error probability (typically $M=10$ or $M=20$ bins)
+\item For each bin $m$: compute mean predicted $\bar{p}_m$ and empirical rate $\bar{y}_m$
+\item Weighted average: ECE $= \sum_{m=1}^M (n_m/N)|\bar{p}_m - \bar{y}_m|$
+\end{enumerate}
+
+\textbf{Example.}
+For a basecaller evaluated on 50,000 reads from standards:
+\begin{itemize}
+\item ECE = 0.015 (1.5\%) $\Rightarrow$ well-calibrated (threshold: ECE $< 0.02$)
+\item ECE = 0.08 (8\%) $\Rightarrow$ poor calibration, requires isotonic regression recalibration
+\end{itemize}
+ECE should be computed separately for each end\_reason category; use ECE$_{SP}$ (signal\_positive) as primary metric.
+\end{varbox}
+
+\begin{varbox}{$R_{S+}$}
+\textbf{Physical description.}
+The set of reads with end\_reason = signal\_positive, indicating natural completion of strand translocation through the nanopore. These are the only reads that represent complete observations of full-length molecules and should be used for SMA-seq accuracy measurements.
+
+\textbf{Units.}
+Set of reads; $|R_{S+}|$ is the count.
+
+\textbf{Measurement / determination.}
+Filtered from total reads using end\_reason metadata from POD5 files or sequencing summary:
+\begin{enumerate}
+\item Extract read\_id $\to$ end\_reason mapping from POD5
+\item Filter basecalled reads to retain only those with end\_reason = signal\_positive
+\item Exclude incomplete reads (unblock\_mux\_change, signal\_negative, mux\_change, etc.)
+\end{enumerate}
+
+\textbf{Example.}
+For a sequencing run with 45,000 total reads:
+\begin{itemize}
+\item 42,500 reads with end\_reason = signal\_positive (94.4\%) $\Rightarrow$ acceptable completion rate
+\item 2,100 reads with end\_reason = unblock\_mux\_change (4.7\%)
+\item 400 reads with other end\_reasons (0.9\%)
+\end{itemize}
+Only the 42,500 SP reads should be used for SMA calculation. If completion rate $< 90\%$, investigate library quality or run conditions.
+\end{varbox}
+
+\section{Chapter Summary}
+
+\begin{keytakeaways}
+The SMA-seq methodology provides the empirical foundation for accurate single-molecule haplotype classification:
+
+\textbf{Core Methodology:}
+\begin{itemize}
+\item \textbf{Ground Truth Principle:} Sequence molecules with known sequence composition (plasmid standards from Chapter~\ref{chap:plasmid-standards}); discrepancies between observed reads and known truth directly quantify basecaller errors
+
+\item \textbf{SEER Framework:} Sequencing Empirical Error Rate measurements provide per-base, per-read, and per-haplotype error characterization under realistic operational conditions
+
+\item \textbf{Confusion Matrix Construction:} Systematic $4 \times 4$ matrix $\mathbf{C}$ where $C_{ij} = \Prob(\text{call } j | \text{true } i)$ captures substitution patterns plus indel rates $\rho_{\text{ins}}, \rho_{\text{del}}$ (Equations~\ref{eq_11_5}, \ref{eq_11_22})
+\end{itemize}
+
+\textbf{Single Molecule Accuracy (SMA):}
+\begin{itemize}
+\item \textbf{Definition} (Equation~\ref{eq_11_28}): $\text{SMA} = \Prob(\text{all } L \text{ bases correct})$ quantifies read-level accuracy
+
+\item \textbf{Empirical Estimator} (Equation~\ref{eq_11_29}): $\widehat{\text{SMA}} = \frac{1}{N} \sum_{n=1}^{N} \mathbbm{1}\{\text{read } n \text{ perfect}\}$
+
+\item \textbf{Wilson Score CI} (Equation~\ref{eq_11_30}): Exact binomial confidence intervals avoid asymptotic approximations
+
+\item \textbf{Per-Base Factorization} (Equation~\ref{eq_11_31}): $\text{SMA}_{\text{base}} = \prod_{j=1}^{L} (1 - \epsilon_j)$ enables position-specific analysis
+
+\item \textbf{Predicted SMA} (Equation~\ref{eq_11_33}): $\text{SMA}_{\text{pred}} = \prod_{j=1}^{L} (1 - 10^{-Q_j/10})$ from quality scores
+
+\item \textbf{Calibration Gap} (Equation~\ref{eq_11_34}): $\Delta_{\text{SMA}} = \text{SMA}_{\text{pred}} - \text{SMA}_{\text{emp}}$ diagnoses miscalibration
+\end{itemize}
+
+\textbf{Quality Score Calibration:}
+\begin{itemize}
+\item \textbf{Predicted Quality} (Equation~\ref{eq_11_27}): $Q_{\text{pred}}(r) = -10 \log_{10} \left(1 - \prod_{j=1}^{L} (1 - 10^{-Q_j/10})\right)$ from basecaller
+
+\item \textbf{Empirical Quality} (Equation~\ref{eq_11_26}): $Q_{\text{emp}}(r) = -10 \log_{10} \left(\frac{\sum_{j=1}^{L} E_j}{L}\right)$ from alignments to standards
+
+\item \textbf{Calibration Assessment:} Compare $Q_{\text{pred}}$ vs $Q_{\text{emp}}$ distributions; systematic gaps indicate overestimation (common) or underestimation
+
+\item \textbf{Overestimation Pattern} (Equation~\ref{eq_11_12}): $\text{SMA}_{\text{predicted}} > \text{SMA}_{\text{empirical}}$ signals inflated confidence—requires recalibration or downweighting
+\end{itemize}
+
+\textbf{Experimental Protocol:}
+\begin{itemize}
+\item \textbf{Standards Preparation:} Sequence 10-20 plasmid standards (Chapter~\ref{chap:plasmid-standards}) representing target haplotypes, achieve $\pi \geq 0.995$ purity
+
+\item \textbf{Sequencing Execution:} Apply identical protocols (library prep, enrichment, sequencing) to standards and clinical samples for matched error profiles
+
+\item \textbf{Alignment-Free Analysis:} Compute confusion matrices without requiring genome alignment (enables novel variant detection)
+
+\item \textbf{Matrix Validation:} Row-normalization (Equation~\ref{eq_11_21}): $\widetilde{C}_{ij} = C_{ij}/\sum_k C_{ik}$ ensures probability constraints
+\end{itemize}
+
+\textbf{Clinical Acceptance Criteria:}
+\begin{itemize}
+\item \textbf{SMA Threshold} (Equation~\ref{eq_13_11}): $\text{SMA}_{\text{sequencing}} \geq 0.85$ for clinical deployment
+
+\item \textbf{Calibration Requirement:} $|\Delta Q| < 2$ (quality gap within 2 Phred units across Q20-Q40 range)
+
+\item \textbf{Coverage Validation:} Minimum $N \geq 1000$ reads per standard for robust matrix estimation
+
+\item \textbf{Replication Consistency:} Technical replicates show $<$ 5\% relative difference in SMA estimates
+\end{itemize}
+
+\textbf{Framework Integration:}
+\begin{itemize}
+\item \textbf{Likelihood Functions:} Confusion matrices populate $\Prob(r|h)$ in Bayesian classification (Chapter~\ref{chap:posteriors})
+
+\item \textbf{Continuous Improvement:} SMA-seq data enables basecaller fine-tuning (Chapter~\ref{chap:basecaller-tuning}) and noisy label correction (Chapter~\ref{chap:noisy-labels})
+
+\item \textbf{QC Gates:} SMA thresholds enforce quality standards throughout production pipeline (Chapter~\ref{chap:qc-gates})
+
+\item \textbf{Validation Evidence:} Empirical error measurements support analytical performance claims for regulatory submissions
+\end{itemize}
+
+\textbf{Key Distinction:} SMA-seq provides \textbf{empirical} rather than theoretical error characterization, ensuring reported confidence intervals accurately reflect true uncertainty. This empirical grounding is essential for clinical decision-making where overconfident miscalibration can lead to patient harm.
+
+\textbf{Mathematical reference:} For complete SMA formulas, confusion matrix constructions, and quality calibration equations, see Appendices~\ref{app:core-equations} (Sections~\ref{sec:sma}--\ref{sec:quality-calibration}), \ref{app:variable-master}, and \ref{app:equation-master}.
+\end{keytakeaways}

@@ -1,0 +1,23 @@
+\begin{table}[!htbp]
+\centering
+\caption{Troubleshooting Cas9 Enrichment Issues}
+\label{tab:cas9-troubleshooting}
+\small
+\begin{tabular}{p{3.5cm}p{4.5cm}p{5.5cm}}
+\toprule
+\textbf{Problem} & \textbf{Likely Cause} & \textbf{Solution} \\
+\midrule
+Low on-target fraction ($<$30\%) & Poor guide RNA cutting efficiency; Incorrect fragment size distribution & Validate gRNAs with T7E1 assay; Optimize fragmentation to match $L_g$; Consider redesigning gRNAs \\
+\midrule
+High off-target fraction ($>$30\%) & Guide RNA off-target activity; DNA contamination & Check off-target predictions (use CRISPOR); Increase gRNA specificity; Validate DNA purity \\
+\midrule
+High nonspecific fraction ($>$20\%) & Library preparation failure; Adapter ligation issues & Check adapter concentrations; Increase ligation time/temp; Use fresh reagents \\
+\midrule
+Bimodal fragment distribution & Incomplete Cas9 cutting; Mixed populations & Increase Cas9 concentration; Extend incubation time; Validate gRNA activity \\
+\midrule
+No enrichment observed & Cas9 inactive; Wrong target coordinates; gRNA degradation & Use fresh Cas9 protein; Verify target coordinates; Synthesize new gRNAs; Check reaction conditions \\
+\midrule
+Variable enrichment across replicates & Pipetting errors; DNA quality variation; Cas9 batch effects & Use calibrated pipettes; Standardize DNA QC; Include positive controls \\
+\bottomrule
+\end{tabular}
+\end{table}

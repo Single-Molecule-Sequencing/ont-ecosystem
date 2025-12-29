@@ -1,0 +1,26 @@
+\begin{table}[!htbp]
+\centering
+\caption{Operational modules signaled by \texttt{sequencing\_summary.tsv}}
+\label{tab:ont-module-capabilities}
+\begin{tabular}{p{0.25\textwidth}p{0.65\textwidth}}
+\toprule
+\textbf{Module cue} & \textbf{Operational action} \\
+\midrule
+\texttt{alignment\_*} columns present & Generate quick-on-target dashboards and
+verify that reference genomes/targets match project manifests before launching
+full alignments. \\
+\texttt{barcode\_*} columns present & Enforce demultiplexing QC gates: confirm all
+expected barcodes appear, and alert when \texttt{barcode\_type} marks a control
+sample as a test subject. \\
+\texttt{poly\_tail\_*} columns present & For RNA programs, summarize tail lengths by
+library to confirm enzymatic steps behaved as expected and adjust trimming
+parameters for downstream aligners. \\
+\texttt{adaptive\_sampling\_*} columns present & Cross-check target/untarget bed
+files and log enrichment factors; missing columns imply the run defaulted to
+standard sequencing even if adaptive sampling was requested. \\
+\texttt{duplex\_parent\_*} columns present & Enable duplex yield reporting and
+ensure downstream classifiers handle duplex consensus reads separately from
+single-strand template/complement reads. \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -1,0 +1,235 @@
+%% sms.sty
+%% SMS Lab Manuscript Style Package
+%%
+%% Provides custom macros for figures, tables, and math notation
+%% consistent with the SMS Core Math Registry.
+%%
+%% Author: Gregory A. Farnum (gregfar@umich.edu)
+%% Date: 2025-11-20
+%% Version: 1.0
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{sms}[2025/11/20 v1.0 SMS Lab Manuscript Style]
+
+% Required packages
+\RequirePackage{graphicx}
+\RequirePackage{xcolor}
+\RequirePackage{ifthen}
+\RequirePackage{xstring}
+\RequirePackage{hyperref}
+
+%% ============================================================================
+%% VERSION MANAGEMENT
+%% ============================================================================
+
+% Set manuscript version (should be set in main document)
+\providecommand{\manuscriptversion}{v1.0.0}
+
+% Command to set version
+\newcommand{\setmanuscriptversion}[1]{%
+  \renewcommand{\manuscriptversion}{#1}%
+}
+
+%% ============================================================================
+%% FIGURE MANAGEMENT
+%% ============================================================================
+
+% SMS Figure macro
+% Usage: \smsfigure{figure_id}{width=0.8\textwidth, caption={...}, label={...}}
+\newcommand{\smsfigure}[2]{%
+  \begin{figure}[htbp]
+    \centering
+    \includegraphics[#2]{manuscript_figures/\manuscriptversion/#1_\manuscriptversion.pdf}%
+    \ifthenelse{\equal{#2}{}}{}{%
+      % Caption will be set by user in #2
+    }%
+  \end{figure}%
+}
+
+% SMS Figure with explicit parameters (alternative interface)
+\newcommand{\smsfigureex}[4]{%
+  % #1 = figure_id
+  % #2 = width (e.g., 0.8\textwidth)
+  % #3 = caption
+  % #4 = label
+  \begin{figure}[htbp]
+    \centering
+    \includegraphics[width=#2]{manuscript_figures/\manuscriptversion/#1_\manuscriptversion.pdf}%
+    \caption{#3}%
+    \label{#4}%
+  \end{figure}%
+}
+
+% SMS Figure placeholder (when figure not yet generated)
+\newcommand{\smsfigureplaceholder}[4]{%
+  % #1 = figure_id
+  % #2 = width
+  % #3 = height
+  % #4 = caption
+  \begin{figure}[htbp]
+    \centering
+    \fbox{\parbox{#2}{%
+      \centering
+      \vspace{#3}%
+      \textbf{[Figure: #1]}\\[0.5em]
+      \textit{Placeholder - not yet generated}\\[0.3em]
+      {\small See: \texttt{figures\_source/#1/}}%
+      \vspace{#3}%
+    }}%
+    \caption{#4}%
+    \label{fig:#1}%
+  \end{figure}%
+}
+
+%% ============================================================================
+%% TABLE MANAGEMENT
+%% ============================================================================
+
+% SMS Table macro
+\newcommand{\smstable}[3]{%
+  % #1 = table_id
+  % #2 = caption
+  % #3 = label
+  \begin{table}[htbp]
+    \centering
+    \caption{#2}%
+    \label{#3}%
+    \input{manuscript_tables/\manuscriptversion/#1_\manuscriptversion.tex}%
+  \end{table}%
+}
+
+% SMS Table placeholder
+\newcommand{\smstableplaceholder}[3]{%
+  % #1 = table_id
+  % #2 = caption
+  % #3 = expected rows/cols description
+  \begin{table}[htbp]
+    \centering
+    \caption{#2}%
+    \label{tab:#1}%
+    \fbox{\parbox{0.8\textwidth}{%
+      \centering
+      \vspace{1em}%
+      \textbf{[Table: #1]}\\[0.5em]
+      \textit{Placeholder - not yet generated}\\[0.3em]
+      {\small Expected format: #3}\\[0.3em]
+      {\small See: \texttt{tables\_source/#1/}}%
+      \vspace{1em}%
+    }}%
+  \end{table}%
+}
+
+%% ============================================================================
+%% MATH REGISTRY INTEGRATION
+%% ============================================================================
+
+% Reference to math registry module
+\newcommand{\mathregref}[1]{%
+  \texttt{#1} (SMS Core Math Registry)%
+}
+
+% Inline reference to registry with hyperlink
+\newcommand{\registryref}[1]{%
+  \href{https://github.com/gregfar/SMS_textbook/tree/main/sms-core-math/modules/#1.yaml}{\texttt{#1}}%
+}
+
+%% ============================================================================
+%% SMS-SPECIFIC NOTATION (from Math Registry)
+%% ============================================================================
+
+% Pipeline variables (from core_pipeline module)
+\providecommand{\varH}{h}  % Haplotype
+\providecommand{\varG}{g}  % Genomic molecules
+\providecommand{\varU}{u}  % Post-mutation sequences
+\providecommand{\varD}{d}  % DNA fragments
+\providecommand{\varL}{\ell}  % Library molecules
+\providecommand{\varSigma}{\sigma}  % Signal (use providecommand to avoid conflict with amsmath)
+\providecommand{\varR}{r}  % Reads
+\providecommand{\varC}{C}  % Calls/Classifications
+\providecommand{\varA}{A}  % Analysis/Action
+
+% Confusion matrix notation
+\providecommand{\confmatrix}{\mathbf{C}}  % Confusion matrix
+\providecommand{\confentry}[2]{C_{#1#2}}  % C_ij entry
+\providecommand{\confnorm}[2]{\tilde{C}_{#1#2}}  % Normalized C_ij
+
+% Quality scores (from qscore module)
+\providecommand{\qscore}{Q}  % Phred quality score
+\providecommand{\qscorePred}{Q_{\text{pred}}}  % Predicted Q
+\providecommand{\qscoreEmp}{Q_{\text{emp}}}  % Empirical Q
+
+% Purity notation (from purity module)
+\providecommand{\purity}{\pi}  % Sample purity
+\providecommand{\purityUpper}{\pi_{\text{upper}}}  % Upper bound
+\providecommand{\purityLower}{\pi_{\text{lower}}}  % Lower bound
+
+% Standard probability notation
+\providecommand{\Prob}{\mathbb{P}}  % Probability (use providecommand to avoid conflicts)
+\providecommand{\Expect}{\mathbb{E}}  % Expectation
+\providecommand{\given}{\,|\,}  % Conditional probability divider
+
+%% ============================================================================
+%% FORMATTING HELPERS
+%% ============================================================================
+
+% Highlight TODO items
+\newcommand{\TODO}[1]{%
+  \textcolor{red}{\textbf{[TODO: #1]}}%
+}
+
+% Note for reviewers
+\newcommand{\reviewnote}[1]{%
+  \textcolor{blue}{\textit{[Note: #1]}}%
+}
+
+% Equation reference with name
+\newcommand{\eqnref}[2]{%
+  Equation~\ref{#1} (#2)%
+}
+
+% Figure reference with name
+\newcommand{\figrefnamed}[2]{%
+  Figure~\ref{#1} (#2)%
+}
+
+% Table reference with name
+\newcommand{\tabrefnamed}[2]{%
+  Table~\ref{#1} (#2)%
+}
+
+%% ============================================================================
+%% COLORS (SMS Lab branding - optional)
+%% ============================================================================
+
+\definecolor{smsblue}{RGB}{0, 82, 204}  % Primary blue
+\definecolor{smsgreen}{RGB}{14, 138, 22}  % Success green
+\definecolor{smsorange}{RGB}{217, 63, 11}  % Warning orange
+\definecolor{smsred}{RGB}{215, 58, 74}  % Error red
+
+%% ============================================================================
+%% VERSION AND BUILD INFO
+%% ============================================================================
+
+% Display version info (for title page or footer)
+\newcommand{\smsversion}{%
+  {\small Version: \manuscriptversion}%
+}
+
+% Full build info
+\newcommand{\smsbuildinfo}[2]{%
+  % #1 = git commit
+  % #2 = build date
+  {\footnotesize%
+    \begin{tabular}{ll}
+      Version: & \manuscriptversion \\
+      Git Commit: & \texttt{#1} \\
+      Build Date: & #2 \\
+    \end{tabular}%
+  }%
+}
+
+%% ============================================================================
+%% END OF PACKAGE
+%% ============================================================================
+
+\endinput

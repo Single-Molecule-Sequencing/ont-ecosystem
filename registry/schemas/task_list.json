@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://ont-ecosystem.sms-lab.org/schemas/task_list.json",
+  "title": "Task List (Domain Memory)",
+  "description": "Schema for experiment task backlog in the domain memory system",
+  "type": "object",
+  "properties": {
+    "experiment_id": {
+      "type": "string",
+      "description": "Parent experiment ID",
+      "pattern": "^exp-[a-zA-Z0-9]{4,12}$"
+    },
+    "version": {
+      "type": "string",
+      "description": "Schema version",
+      "pattern": "^[0-9]+\\.[0-9]+$"
+    },
+    "created": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Task list creation timestamp"
+    },
+    "updated": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last update timestamp"
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "$ref": "task.json"
+      },
+      "description": "List of tasks"
+    }
+  },
+  "required": ["experiment_id", "tasks"],
+  "additionalProperties": true
+}

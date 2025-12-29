@@ -1,0 +1,98 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://ont-ecosystem.sms-lab.org/schemas/pipeline_stage.json",
+  "title": "Pipeline Stage Definition",
+  "description": "Schema for ONT pipeline stages from Pipeline Factorization Theorem",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stage identifier (alternative to stage_id)",
+      "enum": ["h", "g", "u", "d", "l", "ℓ", "sigma", "σ", "r", "C", "A"]
+    },
+    "stage_id": {
+      "type": "string",
+      "description": "Stage identifier",
+      "enum": ["h", "g", "u", "d", "l", "ℓ", "sigma", "σ", "r", "C", "A"]
+    },
+    "name": {
+      "type": "string",
+      "description": "Full stage name",
+      "minLength": 3
+    },
+    "symbol": {
+      "type": "string",
+      "description": "Mathematical symbol for the stage"
+    },
+    "probability_term": {
+      "type": "string",
+      "description": "Conditional probability term (e.g., 'P(g|h)')"
+    },
+    "description": {
+      "type": "string",
+      "description": "Stage description"
+    },
+    "team": {
+      "type": "string",
+      "description": "Responsible team or process"
+    },
+    "primary_team": {
+      "type": "string",
+      "description": "Primary responsible team"
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Stage dependencies"
+    },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Input data types or dependencies"
+    },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Output data types"
+    },
+    "key_equations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "References to key equations for this stage"
+    },
+    "key_methods": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Key methods for this stage"
+    },
+    "example_references": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Example references for this stage"
+    },
+    "skills": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "ONT Ecosystem skills associated with this stage"
+    }
+  },
+  "oneOf": [
+    {"required": ["id", "name"]},
+    {"required": ["stage_id", "name"]}
+  ],
+  "additionalProperties": true
+}

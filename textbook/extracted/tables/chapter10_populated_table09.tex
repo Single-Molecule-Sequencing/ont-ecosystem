@@ -1,0 +1,23 @@
+\begin{table}[!htbp]
+\centering
+\caption{Workflow Troubleshooting Guide}
+\label{tab:workflow-troubleshooting}
+\small
+\begin{tabular}{p{3.5cm}p{4cm}p{6cm}}
+\toprule
+\textbf{Problem} & \textbf{Likely Cause} & \textbf{Solution} \\
+\midrule
+Basecaller fails to start & GPU driver mismatch; insufficient VRAM & Update GPU drivers; reduce batch size; use CPU basecalling \\
+\midrule
+Low mapping rate ($<$70\%) & Wrong reference; contamination; adapter sequences & Verify reference matches sample; check for contamination; trim adapters \\
+\midrule
+Uneven coverage & PCR bias; GC bias; secondary structure & Use PCR-free library prep; adjust fragmentation; check target sequence \\
+\midrule
+Confusion matrix singular & Too few standards; identical haplotypes & Sequence more standards; verify haplotypes are distinguishable \\
+\midrule
+All posteriors $\sim$uniform & Insufficient coverage; poor quality & Increase sequencing depth; check quality scores; verify confusion matrix \\
+\midrule
+Classification inconsistent across replicates & Low coverage; border-line posterior & Increase coverage; report uncertainty; use mixture models \\
+\bottomrule
+\end{tabular}
+\end{table}

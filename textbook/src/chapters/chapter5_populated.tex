@@ -1,0 +1,579 @@
+\chapter{Purity and Ground Truth Constraints}
+\label{chap:purity}
+
+Physical standards form the foundation of empirical error measurement in single-molecule sequencing. However, no physical standard achieves perfect purity—even carefully constructed standards contain some fraction of molecules deviating from the intended reference sequence. This chapter formalizes purity constraints and their profound implications for classification accuracy, error measurement, and ground truth interpretation.
+
+\begin{learningobjectives}
+By the end of this chapter, you will be able to:
+\begin{itemize}
+\item Define purity as the fraction of molecules conforming to the intended reference sequence
+\item Prove and apply the Purity Ceiling Theorem: TPR $\leq \pi$ for any classification method
+\item Estimate purity bounds using capillary electrophoresis (lower bound) and replication models (upper bound)
+\item Quantify purity degradation during bacterial amplification using $\pi_{\text{upper}}(k,L,r) = (1-r)^{kL}$
+\item Distinguish between Platonic, consensus, and molecular definitions of ground truth
+\item Critically evaluate "ground truth" claims in genomic accuracy assessments
+\end{itemize}
+\end{learningobjectives}
+
+\section{Defining Purity for Physical Standards}
+
+\begin{definition}[Purity]
+\label{def:purity}
+The purity $\pi$ of a physical standard is the fraction of molecules conforming to the intended reference sequence:
+\begin{equation}
+\pi = \frac{\text{Number of correct molecules}}{\text{Total number of molecules}}
+\label{eq:purity-def}
+\end{equation}
+\end{definition}
+
+Purity quantifies template homogeneity and establishes an absolute ceiling on measurable classification performance. Even with perfect sequencing technology—zero basecalling errors, infinite coverage, ideal fragmentation—no classifier can achieve higher true positive rate than the underlying template purity. This fundamental constraint derives from physics, not statistics.
+
+\textbf{Sources of impurity} include biological replication errors (mutations accumulated during bacterial amplification), PCR errors introduced during library preparation, synthesis errors in synthetic templates, contamination from off-target sequences, and degradation or rearrangement during storage. Each source contributes independently to the total impurity $1 - \pi$.
+
+\textbf{Measurement challenges} arise because purity cannot be measured directly through sequencing alone—sequencing reports the convolution of template purity with sequencing errors. Orthogonal methods such as Sanger sequencing of clonal isolates, capillary electrophoresis size analysis, mass spectrometry, or restriction digest patterns provide independent purity estimates that serve as external validation for sequencing-based measurements.
+
+\begin{remark}[Notation: Empirical Purity $\pi$ vs. Theoretical Purity Function $\pi_{\text{upper}}(k,L,r)$]
+\label{rem:purity-notation}
+We distinguish between two related but distinct purity concepts:
+\begin{itemize}
+\item \textbf{$\pi$ (empirical purity):} Measured or assumed purity of a specific physical standard (constant, determined experimentally). This is the quantity in Definition~\ref{def:purity} and Theorem~\ref{thm:purity-ceiling}.
+\item \textbf{$\pi_{\text{upper}}(k,L,r)$ (theoretical purity function):} Upper bound on achievable purity as a function of replication cycles $k$, sequence length $L$, and per-base error rate $r$. Defined in Section~\ref{sec:replication-purity} as $(1-r)^{kL}$.
+\item \textbf{Relationship:} For a standard with $k$ replication cycles, empirical purity satisfies $\pi \leq \pi_{\text{upper}}(k,L,r)$, with equality only if all impurity arises from replication errors (no synthesis, contamination, or storage degradation).
+\end{itemize}
+Appendix~\ref{app:core-equations} uses the notation $P_{\text{pure}}(k) \equiv \pi_{\text{upper}}(k,L,r)$ for the same concept. See also Appendix~\ref{app:notation} for comprehensive notation guide.
+\end{remark}
+
+\section{Purity as Upper Bound on True Positive Rate}
+
+The most important theoretical result about purity establishes that it fundamentally limits classification accuracy regardless of algorithmic sophistication or data quantity.
+
+\begin{theorem}[Purity Ceiling]
+\label{thm:purity-ceiling}
+For any classification method applied to a standard with purity $\pi$, the maximum achievable true positive rate satisfies:
+\begin{eqbox}{Purity ceiling on true positive rate}
+\begin{equation}
+\text{TPR} \leq \pi
+\label{eq:tpr-ceiling}
+\end{equation}
+\end{eqbox}
+Equality holds only for a perfect classifier applied to a perfect standard.
+\end{theorem}
+
+\begin{proof}
+Consider a standard with intended sequence $s$ and purity $\pi$. The population contains $N\pi$ molecules with correct sequence $s$ and $N(1-\pi)$ molecules with variant sequences $s' \neq s$. Define TPR as the fraction of $s$ molecules correctly classified as $s$.
+
+Let $C_s$ denote the event that a molecule with true sequence $s$ is classified as $s$. In a perfect measurement where sequencing introduces no errors, only the template sequence determines classification. Therefore:
+\begin{equation}
+\text{TPR} = P(\text{classify as } s \mid \text{true sequence } s)
+\end{equation}
+
+The number of correct $s$ classifications cannot exceed the number of true $s$ molecules:
+\begin{equation}
+\text{Correct classifications} \leq N\pi
+\end{equation}
+
+Therefore:
+\begin{equation}
+\text{TPR} = \frac{\text{Correct classifications}}{N\pi} \leq \frac{N\pi}{N\pi} = 1 \cdot \pi = \pi
+\end{equation}
+
+Actually achieving TPR $= \pi$ requires perfect classification (zero errors) applied to the $N\pi$ correct molecules. Any classification errors reduce TPR below $\pi$. \qed
+\end{proof}
+
+\smsfigureex{purity_tpr_ceiling}{0.85\textwidth}{%
+  Visualization of the Purity Ceiling Theorem (Theorem~\ref{thm:purity-ceiling}). The green region shows achievable combinations where TPR $\leq \pi$, representing all physically realizable classification outcomes. The red region (TPR $> \pi$) is impossible under any circumstances—observations in this region indicate systematic experimental errors requiring immediate investigation. The black diagonal line represents the theoretical ceiling TPR $= \pi$, achievable only with perfect classification. Blue points illustrate realistic classifier performance, consistently below the purity ceiling. Any empirical measurement exceeding this boundary suggests either underestimated purity, erroneous reference sequences, or systematic contamination.
+}{fig:purity-tpr-ceiling}
+
+Figure~\ref{fig:purity-tpr-ceiling} illustrates the fundamental constraint established by Theorem~\ref{thm:purity-ceiling}. The achievable region (green) encompasses all valid TPR-purity combinations, strictly bounded by the line TPR $= \pi$. This boundary is not a statistical approximation but a physical reality: true positive rate cannot exceed the fraction of molecules that are actually correct. Any measurement falling in the impossible region (red) represents a violation of this constraint and demands immediate diagnostic investigation.
+
+\begin{warningbox}[Critical Implication: TPR Cannot Exceed Purity]
+The Purity Ceiling Theorem (Theorem~\ref{thm:purity-ceiling}) has profound practical consequences that are frequently overlooked:
+
+\textbf{If you observe TPR $>$ measured purity ($\pi$), something is fundamentally wrong:}
+\begin{itemize}
+\item Your purity estimate is too conservative (standard is actually purer)
+\item Your "reference sequence" contains errors (what you think is the truth isn't)
+\item Your classification method is overfitting to artifacts
+\item Systematic contamination is present
+\end{itemize}
+
+\textbf{This is not a statistical fluctuation—it violates physical reality.} Investigating TPR $>$ $\pi$ discrepancies often reveals critical experimental flaws that, if unaddressed, compromise all downstream inferences. Never dismiss this as "good performance"—it indicates broken assumptions.
+\end{warningbox}
+
+\textbf{Implications for empirical validation:} When measuring classification accuracy on physical standards, observed TPR values exceeding measured purity indicate systematic errors in either:
+\begin{enumerate}
+\item \textbf{Purity estimation:} The standard is actually purer than estimated
+\item \textbf{Reference sequence:} The "reference" contains errors, misaligning true/measured identities
+\item \textbf{Contamination:} Reads from off-target sources artificially inflate correct classifications
+\item \textbf{Model misspecification:} The classification model makes incorrect assumptions
+\end{enumerate}
+
+The purity ceiling (Equation \ref{eq:tpr-ceiling}) should be enforced as a hard quality control gate in all validation pipelines (see Chapter \ref{chap:qc-gates}). As illustrated in the red region of Figure~\ref{fig:purity-tpr-ceiling}, violations of this constraint require investigation and resolution before results can be trusted for clinical or research applications. The visual boundary serves as a diagnostic tool: plotting observed TPR against measured purity immediately reveals whether assumptions hold or require revision.
+
+\section{Estimating Purity: Lower and Upper Bounds}
+
+Since sequencing cannot measure purity independently from sequencing errors, we require orthogonal methods that probe template composition through different physical principles. Two complementary approaches provide lower and upper bounds on true purity.
+
+\subsection{Capillary Electrophoresis-Based Lower Bound}
+
+Capillary electrophoresis (CE) separates DNA molecules by size with single-nucleotide resolution for fragments up to several hundred base pairs. For plasmid standards, CE provides a purity lower bound by detecting length variants that indicate insertion, deletion, or rearrangement events.
+
+\textbf{Measurement procedure:}
+\begin{enumerate}
+\item Extract plasmid DNA from bacterial culture
+\item Linearize plasmids by restriction digest at a defined site
+\item Separate fragments by capillary electrophoresis
+\item Quantify the fraction of molecules at the expected size
+\end{enumerate}
+
+Let $f_{\text{expected}}$ denote the fraction of molecules appearing at the correct size in the CE electropherogram. This provides a \emph{lower bound} on purity:
+\begin{eqbox}{Capillary electrophoresis purity lower bound}
+\begin{equation}
+\pi_{\text{lower}} = f_{\text{expected}}
+\label{eq:purity-ce-lower}
+\end{equation}
+\end{eqbox}
+
+The bound is conservative because CE cannot detect point mutations or substitutions that preserve length. A plasmid with multiple SNPs relative to the reference would appear at the correct size in CE but contribute to impurity in sequencing analysis. Thus $\pi_{\text{true}} \geq \pi_{\text{lower}}$, with equality only when all variants are indels detectable by size.
+
+\textbf{Practical considerations:} CE resolution degrades for longer fragments (>1000 bp), limiting applicability to short amplicons or specific restriction digest patterns. For whole-plasmid analysis, use restriction digests that generate fragments in the optimal CE range (200-800 bp). Report electropherograms with clear identification of major and minor peaks, quantifying peak areas to estimate $f_{\text{expected}}$.
+
+\subsection{Replication-Based Upper Bound}
+\label{sec:replication-purity}
+
+DNA replication introduces errors at a predictable per-base rate, establishing an upper bound on achievable purity for amplified samples based on replication physics.
+
+\textbf{Model assumptions:}
+\begin{enumerate}
+\item \textbf{Independence:} Errors at different base positions are independent
+\item \textbf{Independence across cycles:} Each replication cycle introduces errors independently
+\item \textbf{Constant error rate:} Per-base error rate $r$ is constant across positions and cycles
+\item \textbf{No repair/selection:} DNA repair mechanisms and selection against mutants are negligible
+\item \textbf{All mutations occur in the final generation:} Early-occurring errors are neglected; the model treats each base-replication event as an independent opportunity for a new error.
+\end{enumerate}
+
+% Note: This model neglects clonal expansion of early errors and treats all $kL$ base-replication events as independent. This independence assumption is only a good approximation when $rkL \ll 1$ (i.e., errors are rare), but early errors that clonally expand are not explicitly tracked in this model.
+Under these assumptions, for bacterial amplification after $k$ cell doublings across a genomic region of length $L$ (in base pairs) with per-base replication error rate $r$, the maximum purity satisfies:
+\begin{eqbox}{Purity upper bound from replication model}
+\begin{equation}
+\pi_{\text{upper}}(k, L, r) = (1 - r)^{kL}
+\label{eq:purity-upper}
+\end{equation}
+\end{eqbox}
+
+\textbf{Poisson approximation for small $r$:} When $r \ll 1$ (typically $r \sim 10^{-9}$ for \emph{E. coli}), the exponential approximation provides intuitive interpretation:
+\begin{eqbox}{Poisson approximation for purity bound}
+\begin{equation}
+\pi_{\text{upper}}(k, L, r) = (1-r)^{kL} \approx e^{-rkL}
+\label{eq:purity-upper-poisson}
+\end{equation}
+\end{eqbox}
+
+The relative error of this approximation is less than 1\% when $rkL < 0.01$. The exponent $rkL$ represents the expected number of mutations across all base-replication events, and the formula gives the probability of observing zero mutations (Poisson with rate $\lambda = rkL$).
+
+\begin{example}[Bacterial Culture Purity Bound]
+\label{ex:replication-bound}
+Consider a 3 kb plasmid standard propagated in \emph{E. coli} for 20 cell doublings (typical overnight culture from single colony). Using $r = 10^{-9}$ per base per replication (standard \emph{E. coli} replication fidelity with proofreading):
+\begin{align}
+k &= 20 \text{ doublings} \\
+L &= 3000 \text{ bp} \\
+r &= 10^{-9} \text{ per base per replication} \\
+\pi_{\text{upper}} &\approx (1 - 10^{-9})^{20 \cdot 3000} \\
+&= (1 - 10^{-9})^{60000} \\
+&\approx e^{-60000 \cdot 10^{-9}} \\
+&= e^{-0.00006} \\
+&\approx 0.99994
+\end{align}
+
+Converting to quality score scale:
+\begin{equation}
+Q_{\text{purity}} = -10 \log_{10}(1 - \pi_{\text{upper}}) = -10 \log_{10}(0.00006) \approx 42.2
+\end{equation}
+
+This Q42 ceiling means that even with perfect sequencing, we cannot be more confident than Q42 in our classifications when using this standard.
+\end{example}
+
+\textbf{Practical application:} For standards intended to support high-confidence classification (Q $>$ 40), minimize culture duration and start from freshly plated single colonies. Document cell doubling history ($k$ value) for every standard batch and compute $\pi_{\text{upper}}$ as an explicit quality control metric. Standards failing to meet target $\pi_{\text{upper}}$ thresholds should be rejected or used only for lower-confidence applications.
+
+\subsection{Combined Purity Estimation Strategy}
+
+In practice, use both methods to bracket true purity:
+\begin{equation}
+\pi_{\text{lower}} \leq \pi_{\text{true}} \leq \pi_{\text{upper}}
+\label{eq:purity-bracket}
+\end{equation}
+
+The lower bound from CE detects large structural variants, while the upper bound from replication theory accounts for point mutations invisible to CE. If the bounds diverge substantially ($\pi_{\text{upper}} - \pi_{\text{lower}} > 0.01$), investigate:
+\begin{itemize}
+\item CE may have missed length variants (check resolution, fragment size)
+\item Replication error rate $r$ may be underestimated (verify strain, culture conditions)
+\item Contamination or degradation during storage may have occurred
+\end{itemize}
+
+For critical applications requiring high-confidence purity estimates, perform Sanger sequencing of multiple individual clones from the bacterial culture. Sequence diversity across clones directly measures purity without the indirection of CE or replication models.
+
+\textbf{Statistical methodology for clone-based purity:} Sequence $b$ independent clones and count $a$ matching the intended reference sequence. The purity estimate is:
+\begin{equation}
+\hat{\pi}_{\text{clones}} = \frac{a}{b}
+\end{equation}
+
+\textbf{Confidence intervals:} Report a binomial proportion confidence interval. Recommended approaches:
+
+\begin{itemize}
+\item \textbf{Wilson score interval (recommended):} For 95\% CI with $z = 1.96$:
+Lower and upper bounds:
+\begin{equation}
+\frac{\hat{\pi} + \frac{z^2}{2b} \pm z\sqrt{\frac{\hat{\pi}(1-\hat{\pi})}{b} + \frac{z^2}{4b^2}}}{1 + \frac{z^2}{b}}
+\end{equation}
+
+\item \textbf{Clopper--Pearson (exact):} Based on Beta quantiles, guaranteed coverage
+\begin{equation}
+\left[ \text{Beta}_{0.025}(a, b-a+1),\; \text{Beta}_{0.975}(a+1, b-a) \right]
+\end{equation}
+
+\item \textbf{Jeffreys Bayesian posterior:} With non-informative prior, posterior is Beta$(a+\frac{1}{2}, b-a+\frac{1}{2})$. Report median and 95\% credible interval.
+\end{itemize}
+
+\textbf{Laplace's rule of succession:} The estimator $(a+1)/(b+2)$ is sometimes used. This is a \textbf{Bayesian shrinkage estimator} (posterior mean with uniform prior), \textbf{not} an upper bound on purity. It pulls extreme estimates ($0/b$ or $b/b$) toward $0.5$, providing conservative point estimates but not confidence bounds. If reporting Laplace's value, always accompany it with a proper confidence interval from one of the methods above.
+
+\textbf{Sample size guidance:} To detect impurities at level $\delta$ with confidence $1-\alpha$:
+\textit{Derived from the probability of observing zero impure clones: $(1-\delta)^b \leq \alpha$.}
+\begin{equation}
+b \geq \frac{\log \alpha}{\log(1-\delta)}
+\end{equation}
+Examples: For $\delta = 0.05$ (5\% impurity), $\alpha = 0.05$ (95\% confidence): $b \geq 59$ clones. For $\delta = 0.01$ (1\% impurity): $b \geq 299$ clones.
+
+\section{Purity-Equivalent Quality Scores}
+
+To facilitate comparison with sequencing quality metrics, express purity on the Phred quality scale:
+\begin{eqbox}{Purity quality score}
+\begin{equation}
+Q_{\text{purity}} = -10 \log_{10}(1 - \pi)
+\label{eq:qpurity}
+\end{equation}
+\end{eqbox}
+
+\begin{center}
+\fbox{\parbox{0.95\textwidth}{%
+\textbf{IMPORTANT DISTINCTION:} $Q_{\text{purity}}$ uses the Phred scale for convenience but represents \textbf{template/molecular impurity}, not basecalling error. Traditional Phred scores ($Q_{\text{base}}$, $Q_{\text{read}}$) quantify computational errors in signal-to-sequence conversion. $Q_{\text{purity}}$ quantifies physical deviation of molecules from intended sequence due to replication errors, synthesis errors, or contamination.
+
+When comparing $Q_{\text{purity}}$ to sequencing quality, explicitly state that they measure different error sources:
+\begin{itemize}
+\item $Q_{\text{base}}$, $Q_{\text{read}}$: Basecalling/sequencing errors (computational/measurement)
+\item $Q_{\text{purity}}$: Template errors (physical/biological)
+\end{itemize}
+
+Both constrain classification accuracy, but through different mechanisms. See Appendix~\ref{app:purity-equations}, Equation~\ref{eq:qpurity} for complete discussion.
+}}
+\end{center}
+
+\bigskip
+
+This transformation reveals whether sequencing quality or template purity represents the limiting factor for classification accuracy. When $Q_{\text{sequencing}} > Q_{\text{purity}}$, further improvements in basecalling accuracy cannot improve classification performance—template purity dominates error budget. Conversely, when $Q_{\text{purity}} > Q_{\text{sequencing}}$, investing in better basecalling or deeper coverage yields proportional improvements in classification confidence.
+
+\begin{table}[!htbp]
+\centering
+\caption{Purity values and equivalent quality scores}
+\label{tab:purity-qvalues}
+\begin{tabular}{ccc}
+\toprule
+Purity $\pi$ & Impurity $1-\pi$ & $Q_{\text{purity}}$ \\
+\midrule
+0.99999 & $10^{-5}$ & 50 \\
+0.9999  & $10^{-4}$ & 40 \\
+0.999   & $10^{-3}$ & 30 \\
+0.99    & $10^{-2}$ & 20 \\
+0.9     & $10^{-1}$ & 10 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Practical implications:} ONT and PacBio HiFi sequencing now achieve modal quality scores Q30-Q40. For standards to fully validate these high-accuracy regimes, template purity must exceed 99.99\% (Q40). This requirement motivates:
+\begin{enumerate}
+\item Minimizing bacterial culture duration (reduce $k$ in Equation \ref{eq:purity-upper})
+\item Using high-fidelity replication strains (reduce $r$)
+\item Employing synthetic standards with controlled synthesis (eliminate replication errors)
+\item Validating purity through orthogonal methods (CE, Sanger, replication history)
+\end{enumerate}
+
+\section{Ground Truth Definition and Its Consequences}
+
+The term "ground truth" appears ubiquitously in genomics literature, often without acknowledging the philosophical and practical complexities it conceals. Purity constraints force us to confront a fundamental question: \emph{What does "truth" mean when physical DNA molecules deviate from their intended reference sequence?}
+
+\subsection{Three Conceptions of Ground Truth}
+
+\paragraph{Platonic Truth:} The intended reference sequence—the design specification, not the physical reality. This abstraction serves as the target for classification but may not correspond to any actual molecule in the sample. Example: the reference CYP2D6*1 sequence defines the haplotype, even though every physical implementation contains some replication errors.
+
+\paragraph{Consensus Truth:} The sequence shared by the majority (or plurality) of molecules in the standard. For a 99.5\% pure standard, the consensus represents the 99.5\% majority allele. This operational definition enables empirical measurement but conflates biological reality with statistical convention.
+
+\paragraph{Molecular Truth:} The actual sequence of each individual molecule. This represents physical reality but lacks a single well-defined value—every molecule has its own truth. Classifications must then specify: "Which molecule's truth are we evaluating against?"
+
+\subsection{Implications for Method Validation}
+
+The choice of ground truth definition profoundly impacts how we interpret validation metrics:
+
+\textbf{For TPR/TNR measurement:} If using Platonic truth (reference sequence), TPR $\leq \pi$ holds strictly. If using consensus truth (majority allele), we measure agreement with the majority, not absolute correctness. Both are valid but answer different questions.
+
+\textbf{For confusion matrix construction (Chapter \ref{chap:sma-seq}):} Off-diagonal elements $C_{ij}$ ($i \neq j$) combine true sequencing errors with template impurity. We cannot decompose these contributions without independent purity measurement. This fundamental ambiguity propagates through all downstream inference.
+
+\textbf{For clinical reporting:} Laboratories must document which ground truth definition they employ:
+\begin{itemize}
+\item "Classification accuracy relative to reference sequence" (Platonic)
+\item "Classification accuracy relative to majority consensus in standards" (Consensus)
+\item "Concordance with orthogonal sequencing methods" (Operational)
+\end{itemize}
+
+Each formulation conveys different information and carries different confidence levels. Regulatory frameworks should require explicit ground truth definitions in validation documentation.
+
+\subsection{Purity as Epistemic Constraint}
+
+Beyond its role as a statistical bound, purity represents an \emph{epistemic constraint}—a fundamental limit on knowability rather than just measurability. With impure standards, we cannot definitively distinguish sequencing errors from template variants without additional information. This irreducible uncertainty propagates through the entire pipeline:
+
+\begin{align}
+\text{Observed mismatch} &= \text{Sequencing error} \cup \text{Template variant} \label{eq:mismatch-ambiguity}
+\end{align}
+
+No amount of data or algorithmic sophistication can fully resolve this ambiguity. We can only bound the contribution of each source through:
+\begin{enumerate}
+\item Independent purity measurement (CE, Sanger, replication model)
+\item Technical replicates (inconsistent errors suggest sequencing; consistent suggests template)
+\item Multiple standards (patterns across standards isolate sequencing effects)
+\end{enumerate}
+
+This irreducible uncertainty should inform how we communicate confidence in clinical genomics. Claims of "perfect accuracy" or "zero false positives" may be mathematically correct relative to \emph{measured} ground truth but epistemically unjustified when ground truth itself remains uncertain at the 0.01-1\% level.
+
+\subsection{Best Practices for Ground Truth Management}
+
+Based on these considerations, we recommend:
+
+\paragraph{Documentation:} Explicitly state which ground truth definition (Platonic, consensus, molecular) applies to each reported metric. Document purity estimates with confidence intervals.
+
+\paragraph{Transparency:} Report both "accuracy relative to reference" and "measured purity of reference." The gap between these values quantifies epistemic uncertainty.
+
+\paragraph{Conservative reporting:} When purity $< 0.999$ (Q30), acknowledge that ground truth uncertainty contributes to classification uncertainty. Avoid overconfident claims that ignore this fundamental limitation.
+
+\paragraph{Validation design:} Use multiple standards with different purity levels to characterize how performance degrades with decreasing purity. This reveals whether the method approaches theoretical limits (TPR $\to \pi$) or suffers additional losses.
+
+\section{Variable Summary and Reference}
+\label{sec:purity-variable-summary}
+
+This section provides a comprehensive summary of all variables used in this chapter, including physical descriptions, units, and methods of measurement or determination. These variables form the core notation for purity theory and ground truth constraints throughout the framework.
+
+\subsection{Variable Summary Table}
+
+\begin{vartable}
+\varrow{$\pi$}{Purity: fraction of molecules in a standard conforming to the intended reference sequence.}
+       {fraction (0--1)}
+       {Measured via clone-level Sanger sequencing, capillary electrophoresis, or estimated from replication model.}
+
+\varrow{$\pi_{\text{upper}}$}{Purity upper bound from replication model: maximum achievable purity given replication parameters.}
+       {fraction (0--1)}
+       {Computed as $(1-r)^{kL}$ from per-base error rate $r$, replication cycles $k$, and molecule length $L$.}
+
+\varrow{$\pi_{\text{lower}}$}{Purity lower bound from capillary electrophoresis: fraction of molecules at expected size.}
+       {fraction (0--1)}
+       {Measured via CE size analysis; detects length variants but not point mutations.}
+
+\varrow{$k$}{Number of bacterial replication cycles (cell doublings).}
+       {cycle count}
+       {Experimental design parameter; determined by culture duration and growth conditions.}
+
+\varrow{$L$}{Molecule length of the standard or target region.}
+       {base pairs (bp)}
+       {Known from construct design or reference genome coordinates.}
+
+\varrow{$r$}{Per-base replication error rate.}
+       {probability per base per cycle}
+       {Determined by polymerase fidelity specifications; typically $10^{-6}$ to $10^{-9}$ for bacterial replication.}
+
+\varrow{$Q_{\text{purity}}$}{Purity quality score: Phred-scale representation of template impurity.}
+       {Phred units (dimensionless log-scale)}
+       {Computed as $-10 \log_{10}(1-\pi)$ to enable comparison with sequencing quality scores.}
+
+\varrow{$\text{TPR}$}{True positive rate: fraction of correct molecules correctly classified.}
+       {fraction (0--1)}
+       {Measured empirically from confusion matrix diagonal; constrained by $\text{TPR} \leq \pi$.}
+
+\varrow{$f_{\text{expected}}$}{Fraction of molecules at expected size in capillary electrophoresis.}
+       {fraction (0--1)}
+       {Measured by quantifying peak areas in CE electropherogram.}
+\end{vartable}
+
+\subsection{Detailed Variable Reference Boxes}
+
+This section provides in-depth reference information for each key variable, including physical descriptions, units, measurement methods, and concrete examples.
+
+\begin{varbox}{$\pi$}
+\textbf{Physical description.}
+Purity is the fraction of molecules in a physical standard that conform to the intended reference sequence. It quantifies template homogeneity and establishes the fundamental ceiling on classification accuracy.
+
+\textbf{Units.}
+Dimensionless fraction in $[0,1]$, where $\pi = 1$ represents perfect purity and $\pi < 1$ indicates the presence of variant molecules.
+
+\textbf{Measurement / determination.}
+Purity can be measured through multiple orthogonal approaches:
+\begin{itemize}
+\item \textbf{Clone-level Sanger sequencing:} Sequence $b$ independent bacterial clones and count $a$ matching the reference; $\hat{\pi} = a/b$ with binomial confidence intervals.
+\item \textbf{Capillary electrophoresis:} Provides lower bound $\pi_{\text{lower}}$ by detecting length variants.
+\item \textbf{Replication model:} Provides upper bound $\pi_{\text{upper}}$ based on theoretical error accumulation.
+\end{itemize}
+
+\textbf{Example.}
+For a plasmid standard propagated for 20 bacterial doublings ($k=20$) with length 3 kb ($L=3000$) and replication error rate $r=10^{-9}$:
+\[
+\pi_{\text{upper}} = (1-10^{-9})^{20 \cdot 3000} \approx 0.99994.
+\]
+If CE analysis shows 99.95\% of molecules at the expected size, then $\pi_{\text{lower}} = 0.9995$. The true purity is bracketed: $0.9995 \leq \pi \leq 0.99994$.
+\end{varbox}
+
+\begin{varbox}{$\pi_{\text{upper}}$}
+\textbf{Physical description.}
+The purity upper bound from the replication model represents the maximum achievable purity for an amplified standard, accounting for unavoidable errors accumulated during bacterial replication. It assumes all impurity arises from replication errors (no synthesis defects, contamination, or degradation).
+
+\textbf{Units.}
+Dimensionless fraction in $[0,1]$.
+
+\textbf{Measurement / determination.}
+Computed from the replication model (Equation~\ref{eq:purity-upper}) as:
+\[
+\pi_{\text{upper}}(k, L, r) = (1 - r)^{kL},
+\]
+where $k$ is the number of replication cycles, $L$ is the molecule length in base pairs, and $r$ is the per-base error rate. For small $r$, the Poisson approximation $\pi_{\text{upper}} \approx e^{-rkL}$ provides intuitive interpretation (Equation~\ref{eq:purity-upper-poisson}).
+
+\textbf{Example.}
+For a 5 kb plasmid ($L=5000$) with high-fidelity replication ($r=10^{-9}$) after 15 doublings ($k=15$):
+\[
+\pi_{\text{upper}} = (1-10^{-9})^{15 \cdot 5000} = (1-10^{-9})^{75000} \approx e^{-0.000075} \approx 0.999925.
+\]
+This Q41 ceiling ($Q_{\text{purity}} = -10\log_{10}(0.000075) \approx 41.2$) means even with perfect sequencing, classifications cannot exceed Q41 confidence.
+\end{varbox}
+
+\begin{varbox}{$\pi_{\text{lower}}$}
+\textbf{Physical description.}
+The purity lower bound from capillary electrophoresis represents the minimum purity of a standard based on size analysis. It detects large structural variants (insertions, deletions, rearrangements) but cannot detect point mutations that preserve length.
+
+\textbf{Units.}
+Dimensionless fraction in $[0,1]$.
+
+\textbf{Measurement / determination.}
+Measured via capillary electrophoresis (Equation~\ref{eq:purity-ce-lower}):
+\[
+\pi_{\text{lower}} = f_{\text{expected}},
+\]
+where $f_{\text{expected}}$ is the fraction of molecules appearing at the expected size in the CE electropherogram. Quantified by integrating peak areas and computing the ratio of the target peak to total signal.
+
+\textbf{Example.}
+A plasmid standard is linearized by restriction digest and analyzed by CE. The electropherogram shows a major peak at 4,237 bp (expected size) with integrated area 9,850, and two minor peaks at 4,195 bp (area 120) and 4,280 bp (area 30). Total area is 10,000.
+\[
+\pi_{\text{lower}} = f_{\text{expected}} = \frac{9850}{10000} = 0.985.
+\]
+This Q18 lower bound indicates at least 1.5\% impurity from length variants. Point mutations would contribute additional impurity not detected by this method.
+\end{varbox}
+
+\begin{varbox}{$\text{TPR}$}
+\textbf{Physical description.}
+True positive rate is the fraction of molecules with the correct sequence that are correctly classified by the method. It represents the diagonal element of the confusion matrix for a given haplotype and serves as the primary metric for classification accuracy.
+
+\textbf{Units.}
+Dimensionless fraction in $[0,1]$.
+
+\textbf{Measurement / determination.}
+Measured empirically from classification results on standards with known reference sequences. For a standard with $N\pi$ correct molecules, if $M$ are correctly classified, then:
+\[
+\text{TPR} = \frac{M}{N\pi}.
+\]
+The Purity Ceiling Theorem (Theorem~\ref{thm:purity-ceiling}, Equation~\ref{eq:tpr-ceiling}) establishes the fundamental constraint $\text{TPR} \leq \pi$.
+
+\textbf{Example.}
+A standard with measured purity $\pi = 0.998$ (Q27) is sequenced with 10,000 reads. The classifier correctly identifies 9,950 reads as matching the reference.
+\[
+\text{TPR} = \frac{9950}{10000 \cdot 0.998} = \frac{9950}{9980} \approx 0.997.
+\]
+This Q25 performance approaches but does not exceed the Q27 purity ceiling. If TPR had exceeded 0.998, it would violate the purity constraint and indicate systematic errors in either purity measurement or ground truth definition.
+\end{varbox}
+
+\begin{varbox}{$Q_{\text{purity}}$}
+\textbf{Physical description.}
+The purity quality score expresses template impurity on the Phred quality scale, enabling direct comparison with sequencing quality metrics. Unlike sequencing quality scores that measure basecalling errors, $Q_{\text{purity}}$ quantifies physical deviations of template molecules from the intended sequence.
+
+\textbf{Units.}
+Phred units (dimensionless logarithmic scale).
+
+\textbf{Measurement / determination.}
+Computed from purity via Equation~\ref{eq:qpurity}:
+\[
+Q_{\text{purity}} = -10 \log_{10}(1 - \pi).
+\]
+Equivalently, given impurity $\epsilon = 1 - \pi$, we have $Q_{\text{purity}} = -10 \log_{10}(\epsilon)$.
+
+\textbf{Example.}
+Consider three standards with different purities:
+\begin{itemize}
+\item $\pi = 0.9999$ (impurity $10^{-4}$): $Q_{\text{purity}} = -10\log_{10}(10^{-4}) = 40$.
+\item $\pi = 0.999$ (impurity $10^{-3}$): $Q_{\text{purity}} = -10\log_{10}(10^{-3}) = 30$.
+\item $\pi = 0.99$ (impurity $10^{-2}$): $Q_{\text{purity}} = -10\log_{10}(10^{-2}) = 20$.
+\end{itemize}
+When sequencing quality ($Q_{\text{seq}} = 35$) exceeds purity quality ($Q_{\text{purity}} = 30$), template impurity dominates the error budget and becomes the limiting factor for classification confidence.
+\end{varbox}
+
+\begin{varbox}{$k$}
+\textbf{Physical description.}
+Number of bacterial replication cycles (cell doublings) during plasmid amplification. Each doubling introduces opportunities for replication errors, causing purity to degrade exponentially with $k$ according to the replication model.
+
+\textbf{Units.}
+Dimensionless cycle count.
+
+\textbf{Measurement / determination.}
+Determined by culture duration and bacterial growth conditions. For \emph{E. coli} with doubling time $\tau \approx 20$ minutes under optimal conditions, a culture grown for time $t$ undergoes approximately:
+\[
+k \approx \frac{t}{\tau} = \frac{t}{20 \text{ min}}.
+\]
+Experimentally, track culture from single colony to harvest, documenting exact growth time and optical density measurements to estimate generation count.
+
+\textbf{Example.}
+A plasmid standard is prepared by:
+\begin{enumerate}
+\item Plating transformed cells to obtain single colonies (overnight, $\sim$16 hr).
+\item Picking a single colony into 5 mL starter culture (6 hr growth, $k_1 \approx 18$).
+\item Diluting 1:1000 into 500 mL culture (8 hr growth, $k_2 \approx 24$).
+\item Harvesting at saturation.
+\end{enumerate}
+Total replication cycles: $k = k_1 + k_2 = 18 + 24 = 42$.
+For $L = 5000$ bp and $r = 10^{-9}$:
+\[
+\pi_{\text{upper}} = (1-10^{-9})^{42 \cdot 5000} = (1-10^{-9})^{210000} \approx e^{-0.00021} \approx 0.99979,
+\]
+establishing a Q37 purity ceiling. Minimizing $k$ by using shorter culture times directly improves purity bounds.
+\end{varbox}
+
+\section{Chapter Summary}
+
+\begin{keytakeaways}
+This chapter established purity as a fundamental physical constraint on classification accuracy:
+
+\textbf{Core Results:}
+\begin{itemize}
+\item \textbf{Purity Definition} (Definition~\ref{def:purity}): $\pi = \text{(correct molecules)}/\text{(total molecules)}$ quantifies template homogeneity
+
+\item \textbf{Purity Ceiling Theorem} (Theorem~\ref{thm:purity-ceiling}): $\text{TPR} \leq \pi$ establishes an absolute upper bound on classification accuracy independent of algorithmic sophistication—no classifier can overcome impure templates
+
+\item \textbf{Lower Bound via Capillary Electrophoresis}: Size-based separation provides purity floor by detecting length variants (insertions, deletions, rearrangements)
+
+\item \textbf{Upper Bound via Replication Model}: $\pi_{\text{upper}}(k,L,r) = (1-r)^{kL}$ quantifies unavoidable purity degradation during bacterial amplification over $k$ replication cycles
+
+\item \textbf{Ground Truth Taxonomy}: Distinguished Platonic (idealized sequence), consensus (agreement among methods), and molecular (physical template) definitions—highlighting epistemic limitations
+\end{itemize}
+
+\textbf{Practical Implications:}
+\begin{itemize}
+\item \textbf{Validation design:} Measured TPR $> \pi$ indicates systematic errors requiring investigation
+\item \textbf{Quality control:} Purity ceiling serves as validation checkpoint (Chapter~\ref{chap:qc-gates})
+\item \textbf{Posterior calibration:} Cannot support $P(h|\text{data}) > \pi$ without external information (Chapter~\ref{chap:posteriors})
+\item \textbf{Confusion matrices:} Purity constrains diagonal elements $C_{ii} \leq \pi_i$ (Chapter~\ref{chap:sma-seq})
+\item \textbf{Reporting standards:} Acknowledge ground truth uncertainty; avoid overconfident claims when $\pi < 0.999$
+\end{itemize}
+
+\textbf{Key Insight:} Purity represents a \textbf{physical} constraint, not a statistical one. Perfect algorithms applied to impure standards cannot achieve perfect accuracy. This fundamental limitation ensures reported classification performance respects physical reality rather than mathematical idealization.
+
+\textbf{Mathematical reference:} For complete formal treatment of plasmid replication models, purity bounds, and proofs, see Appendix~\ref{app:mathematical-models}, Section~7. For purity equations and quick reference, see Appendices~\ref{app:core-equations} (Section~\ref{sec:purity}), \ref{app:variable-master}, and \ref{app:equation-master}.
+\end{keytakeaways}

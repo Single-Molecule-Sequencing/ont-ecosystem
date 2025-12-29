@@ -1,0 +1,186 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Appendix C: Laboratory Protocols and Quality Control Procedures
+%% Version 6.0 - Complete Migration from v5.tex (lines 2165-2252)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{Laboratory Protocols and Quality Control Procedures}
+\label{app:protocols}
+\label{app:qc}
+
+This comprehensive quality control checklist ensures rigorous validation at every stage of the haplotype classification pipeline, from pre-sequencing library preparation through final result interpretation. Each checkpoint references relevant core equations and specifies quantitative criteria for pass/fail decisions. Systematic application of these quality gates prevents propagation of errors, identifies systematic biases, and ensures confidence in final classifications.
+
+\textbf{Quality Philosophy:} The framework implements defense-in-depth quality control, with independent validation at multiple stages. Early-stage failures (pre-sequencing, sequencing run) indicate technical problems requiring experimental intervention, while late-stage failures (analysis, result) may indicate model misspecification or sample quality issues. All quality metrics should be documented in standardized QC reports for auditing and method validation.
+
+\textbf{Checkpoint Organization:} The checklist is organized chronologically through the experimental workflow: (1) Pre-Sequencing QC validates library quality before costly sequencing, (2) Sequencing Run QC monitors instrument performance in real-time, (3) Analysis QC assesses data quality and coverage adequacy, and (4) Result QC validates final classifications against purity and quality constraints. Each checkpoint includes specific metrics, threshold criteria, and recommended corrective actions for failures.
+
+\section{Core Quality Control Gates and Thresholds}
+
+\begin{table}[H]
+\centering
+\caption{Core Quality Control Gates and Thresholds}
+\label{tab:qc-gates-summary}
+\begin{tabular}{p{3.5cm}p{4cm}p{2.5cm}p{5cm}}
+\toprule
+\textbf{QC Gate} & \textbf{Metric} & \textbf{Threshold} & \textbf{Action / Notes} \\
+\midrule
+Fragment model validation & $D_{\mathrm{KL}}(f_{\mathrm{emp}} \| f_{\mathrm{frag}})$ & $<\mathbf{0.05}$ bits & Prefer empirical $f_{\mathrm{emp}}$; if using analytic model, flag result; see \CEref{9}. \\
+\midrule
+Read-length sanity check & $D_{\mathrm{KL}}(f_{\mathrm{emp}} \| f_{\mathrm{read}})$ & Warn: 0.10--0.20 bits; Fail: $>0.30$ bits & Investigate truncation, filters, size selection, or ligation bias; see \CEref{10}. \\
+\midrule
+Quality overstatement detection & $d = \frac{1}{N}\sum \mathbb{I}\{Q_{\mathrm{pred}} > Q_{\mathrm{emp}}\}$ & $d \leq 0.30$ & Report with 95\% CI; high $d$ triggers calibration review; see \CEref{14}. \\
+\midrule
+Purity ceiling enforcement & TPR vs. purity & \textbf{Hard gate:} TPR $\leq$ purity ($\pi$ or $\pi_{\max}$) & Do not report TPR exceeding measured or estimated purity ceiling; violations indicate contamination, reference errors, or model failure; see \CEref{15}. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Detailed QC Workflow:} The following sections provide comprehensive guidance for each quality control checkpoint, including measurement protocols, interpretation guidelines, and corrective actions.
+
+\section{Pre-Sequencing Quality Control (Library Validation)}
+    
+These measurements validate library quality before sequencing, enabling early detection of preparation issues that would compromise downstream analysis. Failed libraries should be reprepared rather than sequenced.
+    
+\begin{itemize}
+\item \textbf{Fragment Size Distribution:} Measure via Tapestation or BioAnalyzer, normalize using CE.7. Verify distribution shape matches expected profile for fragmentation method. Document mean, median, and mode fragment lengths.
+
+\item \textbf{Fragment Model Validation:} Compute $D_{\mathrm{KL}}(f_{\mathrm{emp}} \| f_{\mathrm{frag}}) < 0.05$ bits using CE.9. High divergence indicates complex distributions requiring empirical measurements throughout.
+
+\item \textbf{Library Concentration:} Measure using fluorometric quantification (Qubit). Verify concentration meets sequencing platform requirements.
+
+\item \textbf{Library Quality:} Assess adapter dimer content (<5\% of total library), confirm absence of degradation peaks.
+
+\item \textbf{Spike-In Control Preparation:} Add known-sequence controls at 1-5\% molar ratio. Verify control concentration and purity before mixing.
+\end{itemize}
+
+\section{Sequencing Run Quality Control (Real-Time Monitoring)}
+
+These metrics enable real-time assessment of sequencing quality during the run. Severe failures may warrant terminating the run early to conserve reagents.
+
+\begin{itemize}
+\item \textbf{Real-Time Quality Score Distribution:} Monitor mean Q-score evolution over time. Expected values: ONT Q10-Q18, PacBio HiFi Q20-Q30, Illumina Q30-Q35. Declining quality may indicate flow cell exhaustion or reagent issues.
+
+\item \textbf{Read Yield Tracking:} Compare actual read count to expected based on loading concentration. Low yield (<50\% expected) indicates loading, pore occupancy, or flow cell issues.
+
+\item \textbf{Read Length Distribution:} For long-read platforms, verify mean read length matches library preparation target. Systematic shortening indicates shearing during handling or pore blockage.
+
+\item \textbf{Pore Availability (ONT-specific):} Monitor active pore count. Rapid pore loss indicates sample quality issues (contaminants, high salt) or temperature control problems.
+
+\item \textbf{Error Mode Detection:} Analyze error patterns for systematic artifacts. Homopolymer errors (ONT) or cycles with quality drops (Illumina) indicate platform-specific issues.
+\end{itemize}
+
+\section{Post-Sequencing Analysis Quality Control}
+
+These post-sequencing metrics validate data quality and assess whether coverage is adequate for confident classification. Failed analyses may require resequencing.
+
+\begin{itemize}
+\item \textbf{Alignment Rate Statistics:} Verify >90\% of reads align to reference haplotypes. Low alignment rates indicate contamination, reference errors, or sequencing failures.
+
+\item \textbf{Coverage Uniformity:} Assess coverage distribution across genomic region. Extreme non-uniformity (>10-fold variation) suggests capture bias or PCR artifacts.
+
+\item \textbf{Perfect-Read Fraction Validation:} Compare observed perfect-read fraction to predictions from CE.2-CE.3. Verify agreement within 95\% confidence intervals. Large discrepancies indicate quality score miscalibration.
+
+\item \textbf{Coverage Adequacy:} Verify $\Pr(X \geq k) > 0.95$ using CE.5 where $k$ is target perfect-read coverage. Insufficient coverage requires deeper sequencing.
+
+\item \textbf{Posterior Entropy:} Compute $H = -\sum_i P(h_i|R)\log P(h_i|R)$. Low entropy (<0.5 bits) indicates clear classification, high entropy (>2 bits) indicates ambiguous data.
+
+\item \textbf{Control Sample Concordance:} Verify spike-in controls classify to expected haplotypes with >99\% posterior probability. Control failures indicate systematic model errors.
+\end{itemize}
+
+\section{Result Quality Control (Classification Validation)}
+
+These final checks validate classification results against fundamental physical constraints and quality thresholds. Failed results should be flagged as "insufficient evidence" rather than reported with confidence.
+
+\begin{itemize}
+\item \textbf{Posterior Probability Thresholds:} Verify $\max_i P(h_i|R) > \tau$ where $\tau$ is assay-specific threshold (typically 0.90-0.95 for clinical applications). Sub-threshold posteriors indicate ambiguous data requiring deeper sequencing or repeat analysis.
+
+\item \textbf{Bayes Factor Validation:} Confirm $\log_{10}\mathrm{BF} > 2$ for top hypothesis versus alternatives using CE.13. Weak Bayes factors (<2) indicate insufficient evidence for confident classification.
+
+\item \textbf{Quality Overstatement Assessment:} Verify overstatement fraction $d \leq 0.30$ using CE.14. High overstatement indicates basecaller miscalibration requiring quality score transformation. Report with 95\% confidence intervals.
+
+\item \textbf{Purity Constraint Validation:} Enforce TPR $\leq \pi_{\max}$ using CE.15. Violations indicate contamination, reference errors, or model failure. This is a hard constraint - violations mandate investigation before reporting results.
+
+\item \textbf{Technical Replicate Concordance:} For critical samples, verify replicate classifications agree with >95\% posterior on same haplotype. Discordant replicates indicate reproducibility issues or sample heterogeneity.
+
+\item \textbf{Negative Control Validation:} Process negative controls through entire pipeline. Verify they fail to classify (uniform posterior) or classify to expected negative haplotype with high confidence.
+\end{itemize}
+
+\section{Quality Control Workflow Integration}
+
+These checkpoints should be implemented as automated gates in analysis pipelines with clear pass/fail criteria. Failed checkpoints should trigger alerts with specific diagnostic recommendations. All QC metrics should be included in standardized reports, enabling systematic review and continuous method improvement. For clinical applications, implement additional regulatory-compliant documentation of all QC results.
+
+\subsection{Corrective Actions by QC Failure Type}
+
+\begin{table}[H]
+\centering
+\caption{Recommended Corrective Actions for QC Failures}
+\label{tab:corrective-actions}
+\begin{tabular}{p{4cm}p{4cm}p{6cm}}
+\toprule
+\textbf{Failure Type} & \textbf{Stage} & \textbf{Corrective Action} \\
+\midrule
+Low library quality & Pre-sequencing & Re-extract DNA or re-prepare library with fresh reagents \\
+Poor fragment distribution & Pre-sequencing & Adjust fragmentation protocol; optimize size selection \\
+Low read yield & Sequencing & Check loading concentration; verify instrument calibration \\
+Declining quality & Sequencing & Monitor pore/cluster health; consider terminating run early \\
+Low alignment rate & Analysis & Check reference sequences; screen for contamination \\
+Poor coverage uniformity & Analysis & Investigate capture bias; check PCR conditions \\
+Failed controls & Analysis & Re-run with fresh standards; check confusion matrix \\
+Sub-threshold posterior & Result & Increase sequencing depth; verify sample quality \\
+Purity constraint violation & Result & Investigate contamination; verify reference accuracy \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Standard Operating Procedure (SOP) Template}
+
+For regulatory compliance and method validation, all QC procedures should be documented in Standard Operating Procedures. Below is a template structure:
+
+\subsection{SOP Template Structure}
+
+\begin{enumerate}
+\item \textbf{Purpose:} Clear statement of QC objective
+\item \textbf{Scope:} Which samples, assays, or protocols this QC applies to
+\item \textbf{Definitions:} Key terms and abbreviations
+\item \textbf{Equipment and Materials:} Required instruments and reagents
+\item \textbf{Procedure:} Step-by-step instructions with decision points
+\item \textbf{Acceptance Criteria:} Quantitative pass/fail thresholds
+\item \textbf{Documentation:} Required records and data storage
+\item \textbf{Corrective Actions:} Response to failures
+\item \textbf{References:} Citations to equations, protocols, literature
+\item \textbf{Revision History:} Changes to SOP over time
+\end{enumerate}
+
+\subsection{Example SOP: Quality Score Calibration Check}
+
+\textbf{Purpose:} Validate basecaller quality score calibration using plasmid standards before clinical sample analysis.
+
+\textbf{Scope:} All Oxford Nanopore sequencing runs for haplotype classification.
+
+\textbf{Procedure:}
+\begin{enumerate}
+\item Sequence plasmid standard with known sequence
+\item Align reads to reference using minimap2
+\item Extract quality scores and compute empirical error rates
+\item Stratify by quality score bin (Q10-Q15, Q15-Q20, etc.)
+\item Compute overstatement fraction $d$ using CE.14
+\item Compare to threshold: $d \leq 0.30$ (pass), $d > 0.30$ (fail)
+\end{enumerate}
+
+\textbf{Acceptance Criteria:} $d \leq 0.30$ with 95\% confidence interval not exceeding 0.35.
+
+\textbf{Corrective Action:} If failed, apply quality score recalibration or retrain basecaller on plasmid standards before proceeding with clinical samples.
+
+\section{Audit Trail and Documentation}
+
+For clinical and regulated applications, maintain complete records of all QC checks:
+
+\begin{itemize}
+\item \textbf{Raw QC Data:} Store all measurements, not just pass/fail decisions
+\item \textbf{Timestamps:} Record date and time of each QC checkpoint
+\item \textbf{Operator Information:} Document who performed each procedure
+\item \textbf{Instrument IDs:} Track which instruments were used
+\item \textbf{Failure Reports:} Detailed documentation of failures and corrective actions
+\item \textbf{Sign-offs:} Required approvals before releasing results
+\end{itemize}
+
+\clearpage

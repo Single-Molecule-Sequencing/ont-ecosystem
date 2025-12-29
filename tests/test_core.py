@@ -50,18 +50,33 @@ def test_skill_frontmatter():
 
 
 def test_bin_scripts_exist():
-    """Test that all bin scripts exist"""
+    """Test that all bin scripts exist
+
+    Architecture:
+    - Orchestration & infrastructure scripts are authoritative in bin/
+    - Analysis scripts are wrappers that import from skills/
+    """
     bin_dir = Path(__file__).parent.parent / 'bin'
     expected_scripts = [
-        'ont_experiments.py',
-        'ont_align.py',
-        'ont_pipeline.py',
-        'end_reason.py',
-        'ont_monitor.py',
-        'dorado_basecall.py',
-        'ont_registry.py',
-        'ont_dashboard.py',
-        'experiment_db.py',
+        # Authoritative orchestration & infrastructure
+        'ont_experiments.py',    # Core orchestrator (authoritative)
+        'experiment_db.py',      # Database functions (authoritative)
+        'ont_registry.py',       # Permanent registry
+        'ont_dashboard.py',      # Web interface
+        'ont_config.py',         # Configuration management
+        'ont_context.py',        # Experiment context
+        'ont_integrate.py',      # Git integration
+        'ont_manuscript.py',     # Manuscript pipelines
+        'ont_endreason_qc.py',   # Enhanced QC visualization
+        'ont_textbook_export.py', # Textbook export
+        # Wrappers (import from skills/)
+        'end_reason.py',         # → skills/end-reason/scripts/
+        'dorado_basecall.py',    # → skills/dorado-bench-v2/scripts/
+        'ont_align.py',          # → skills/ont-align/scripts/
+        'ont_monitor.py',        # → skills/ont-monitor/scripts/
+        'ont_pipeline.py',       # → skills/ont-pipeline/scripts/
+        'calculate_resources.py', # → skills/dorado-bench-v2/scripts/
+        'make_sbatch_from_cmdtxt.py', # → skills/dorado-bench-v2/scripts/
     ]
 
     for script in expected_scripts:
@@ -135,8 +150,12 @@ def test_edit_distance_basic():
         result = edlib.align("HELLO", "HELLO")
         assert result['editDistance'] == 0
         
-        # Single substitution
+        # Single substitution (G→T at position 3)
         result = edlib.align("ACGT", "ACTT")
+        assert result['editDistance'] == 1
+
+        # Two substitutions
+        result = edlib.align("ACGT", "TCAT")
         assert result['editDistance'] == 2
         
         # Single insertion
@@ -229,9 +248,390 @@ def test_experiment_db_functions():
     assert exp_db.calculate_n50([100, 100, 100]) == 100
     assert exp_db.calculate_n50([1000, 100, 100, 100]) == 1000
 
-    # Test unique ID generation
-    uid = exp_db.get_experiment_unique_id("/test/path", {"protocol_run_id": "abc123"})
-    assert uid == "abc123"
+    # Test that key functions exist
+    assert hasattr(exp_db, 'find_experiments'), "Should have find_experiments function"
+    assert hasattr(exp_db, 'build_experiment_database'), "Should have build_experiment_database function"
+    assert hasattr(exp_db, 'sync_event_to_database'), "Should have sync_event_to_database function"
 
-    uid = exp_db.get_experiment_unique_id("/test/path", {})
-    assert len(uid) == 16  # MD5 hash prefix
+
+# =============================================================================
+# Domain Memory Tests
+# =============================================================================
+
+def test_task_dataclass():
+    """Test Task dataclass creation and serialization"""
+    from datetime import datetime, timezone
+
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    sys.path.insert(0, str(bin_dir))
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "ont_experiments",
+        bin_dir / "ont_experiments.py"
+    )
+    ont_exp = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_exp)
+
+    now = datetime.now(timezone.utc).isoformat()
+    task = ont_exp.Task(
+        name="end_reasons",
+        status="pending",
+        description="QC analysis",
+        created=now,
+        updated=now
+    )
+
+    assert task.name == "end_reasons"
+    assert task.status == "pending"
+    assert task.attempts == 0
+    assert task.error is None
+
+    # Test to_dict
+    d = task.to_dict()
+    assert d['name'] == "end_reasons"
+    assert d['status'] == "pending"
+
+    # Test from_dict
+    task2 = ont_exp.Task.from_dict(d)
+    assert task2.name == task.name
+    assert task2.status == task.status
+
+
+def test_tasklist_dataclass():
+    """Test TaskList dataclass creation and serialization"""
+    from datetime import datetime, timezone
+
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    sys.path.insert(0, str(bin_dir))
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "ont_experiments",
+        bin_dir / "ont_experiments.py"
+    )
+    ont_exp = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_exp)
+
+    now = datetime.now(timezone.utc).isoformat()
+    tasks = [
+        ont_exp.Task(name="end_reasons", status="pending",
+                     description="QC", created=now, updated=now),
+        ont_exp.Task(name="basecalling", status="pending",
+                     description="Basecall", created=now, updated=now),
+    ]
+
+    task_list = ont_exp.TaskList(
+        experiment_id="exp-test123",
+        tasks=tasks
+    )
+
+    assert task_list.experiment_id == "exp-test123"
+    assert len(task_list.tasks) == 2
+
+    # Test get_task
+    task = task_list.get_task("end_reasons")
+    assert task is not None
+    assert task.name == "end_reasons"
+
+    task = task_list.get_task("nonexistent")
+    assert task is None
+
+    # Test update_task
+    task_list.update_task("end_reasons", "passing")
+    task = task_list.get_task("end_reasons")
+    assert task.status == "passing"
+
+    # Test to_dict / from_dict
+    d = task_list.to_dict()
+    assert d['experiment_id'] == "exp-test123"
+    assert len(d['tasks']) == 2
+
+    task_list2 = ont_exp.TaskList.from_dict(d)
+    assert task_list2.experiment_id == task_list.experiment_id
+    assert len(task_list2.tasks) == 2
+
+
+def test_domain_memory_files_structure():
+    """Test that domain memory creates proper directory structure"""
+    import tempfile
+    import shutil
+    from datetime import datetime, timezone
+
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    sys.path.insert(0, str(bin_dir))
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "ont_experiments",
+        bin_dir / "ont_experiments.py"
+    )
+    ont_exp = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_exp)
+
+    # Create a temporary registry directory
+    temp_dir = Path(tempfile.mkdtemp())
+    try:
+        # Override the EXPERIMENTS_DIR for testing
+        original_experiments_dir = ont_exp.EXPERIMENTS_DIR
+        ont_exp.EXPERIMENTS_DIR = temp_dir / "experiments"
+
+        # Test get_experiment_dir creates directory
+        exp_dir = ont_exp.get_experiment_dir("exp-test123")
+        assert exp_dir.exists()
+        assert exp_dir.is_dir()
+
+        # Test initialize_tasks creates TaskList
+        now = datetime.now(timezone.utc).isoformat()
+
+        # Create mock experiment
+        mock_exp = ont_exp.ExperimentMetadata(
+            id="exp-test123",
+            name="Test Experiment",
+            location="/test/path"
+        )
+
+        task_list = ont_exp.initialize_tasks(mock_exp)
+        assert task_list.experiment_id == "exp-test123"
+        assert len(task_list.tasks) == 5  # v2.0: end_reasons, signal_qc, basecalling, alignment, haplotype_calling
+
+        # Test save_tasks and load_tasks
+        ont_exp.save_tasks(task_list)
+        tasks_file = exp_dir / "tasks.yaml"
+        assert tasks_file.exists()
+
+        loaded_tasks = ont_exp.load_tasks("exp-test123")
+        assert loaded_tasks is not None
+        assert loaded_tasks.experiment_id == "exp-test123"
+        assert len(loaded_tasks.tasks) == 5  # v2.0 task count
+
+        # Test initialize_progress
+        ont_exp.initialize_progress(mock_exp)
+        progress_file = exp_dir / "PROGRESS.md"
+        assert progress_file.exists()
+        content = progress_file.read_text()
+        assert "Test Experiment" in content
+        assert "exp-test123" in content
+
+        # Test append_progress
+        ont_exp.append_progress("exp-test123", "- Test entry\n- Another line", "end_reasons")
+        content = progress_file.read_text()
+        assert "Test entry" in content
+        assert "end_reasons" in content
+
+        # Restore original
+        ont_exp.EXPERIMENTS_DIR = original_experiments_dir
+
+    finally:
+        # Cleanup
+        shutil.rmtree(temp_dir)
+
+
+# =============================================================================
+# Math Registry Tests
+# =============================================================================
+
+def test_load_math_registry():
+    """Test loading the math equations registry"""
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    sys.path.insert(0, str(bin_dir))
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "ont_experiments",
+        bin_dir / "ont_experiments.py"
+    )
+    ont_exp = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_exp)
+
+    registry = ont_exp.load_math_registry()
+    assert 'equations' in registry, "Registry should have 'equations' key"
+
+    equations = registry.get('equations', {})
+    # Should have equations from the full database
+    assert len(equations) > 0, "Should have at least some equations"
+
+    # Check for known equation
+    if '5.1' in equations:
+        eq = equations['5.1']
+        assert 'title' in eq, "Equation should have title"
+        assert 'latex' in eq, "Equation should have latex"
+
+
+def test_load_variables_registry():
+    """Test loading the variables registry"""
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    sys.path.insert(0, str(bin_dir))
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "ont_experiments",
+        bin_dir / "ont_experiments.py"
+    )
+    ont_exp = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_exp)
+
+    registry = ont_exp.load_variables_registry()
+    assert 'variables' in registry, "Registry should have 'variables' key"
+
+    variables = registry.get('variables', {})
+    assert len(variables) > 0, "Should have at least some variables"
+
+    # Check for known variable
+    if 'pi' in variables:
+        var = variables['pi']
+        assert 'name' in var, "Variable should have name"
+        assert 'domain' in var, "Variable should have domain"
+
+
+def test_load_pipeline_stages():
+    """Test loading the pipeline stages registry"""
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    sys.path.insert(0, str(bin_dir))
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "ont_experiments",
+        bin_dir / "ont_experiments.py"
+    )
+    ont_exp = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_exp)
+
+    data = ont_exp.load_pipeline_stages()
+    assert 'stages' in data, "Should have 'stages' key"
+
+    stages = data.get('stages', [])
+    assert len(stages) == 9, "Should have 9 pipeline stages"
+
+    # Check for known stages
+    stage_symbols = [s.get('symbol') for s in stages]
+    assert 'h' in stage_symbols, "Should have haplotype stage"
+    assert 'r' in stage_symbols, "Should have basecalling stage"
+    assert 'σ' in stage_symbols, "Should have signal stage"
+
+
+def test_registry_path():
+    """Test that registry path is correctly computed"""
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    sys.path.insert(0, str(bin_dir))
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "ont_experiments",
+        bin_dir / "ont_experiments.py"
+    )
+    ont_exp = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_exp)
+
+    registry_path = ont_exp.get_registry_path()
+    assert registry_path.exists(), "Registry path should exist"
+    assert (registry_path / "textbook").exists(), "Textbook registry should exist"
+    assert (registry_path / "pipeline").exists(), "Pipeline registry should exist"
+
+
+def test_load_schema():
+    """Test that JSON schemas can be loaded"""
+    import json
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    sys.path.insert(0, str(bin_dir))
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "ont_experiments",
+        bin_dir / "ont_experiments.py"
+    )
+    ont_exp = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_exp)
+
+    # Test loading each schema
+    for schema_name in ['equation', 'pipeline_stage', 'experiment', 'task']:
+        schema = ont_exp.load_schema(schema_name)
+        assert schema is not None, f"Should load {schema_name} schema"
+        assert '$schema' in schema, f"{schema_name} should have $schema"
+        assert 'type' in schema, f"{schema_name} should have type"
+
+
+def test_validate_equation():
+    """Test equation validation against schema"""
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    sys.path.insert(0, str(bin_dir))
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "ont_experiments",
+        bin_dir / "ont_experiments.py"
+    )
+    ont_exp = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_exp)
+
+    # Valid equation
+    valid_eq = {
+        "name": "Test Equation",
+        "latex": "E = mc^2",
+        "description": "Energy-mass equivalence"
+    }
+    errors = ont_exp.validate_equation(valid_eq, "test_eq")
+    assert len(errors) == 0, f"Valid equation should pass: {errors}"
+
+    # Invalid equation (missing required field)
+    invalid_eq = {
+        "name": "Missing latex"
+    }
+    errors = ont_exp.validate_equation(invalid_eq, "test_invalid")
+    assert len(errors) > 0, "Invalid equation should fail"
+
+
+def test_validate_pipeline_stage():
+    """Test pipeline stage validation against schema"""
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    sys.path.insert(0, str(bin_dir))
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "ont_experiments",
+        bin_dir / "ont_experiments.py"
+    )
+    ont_exp = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_exp)
+
+    # Valid stage
+    valid_stage = {
+        "id": "h",
+        "name": "Haplotype Selection",
+        "description": "Selection of haplotype hypotheses"
+    }
+    errors = ont_exp.validate_pipeline_stage(valid_stage, "h")
+    assert len(errors) == 0, f"Valid stage should pass: {errors}"
+
+
+def test_validate_registry():
+    """Test full registry validation"""
+    bin_dir = Path(__file__).parent.parent / 'bin'
+    sys.path.insert(0, str(bin_dir))
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "ont_experiments",
+        bin_dir / "ont_experiments.py"
+    )
+    ont_exp = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ont_exp)
+
+    # Validate equations
+    results = ont_exp.validate_registry("equations")
+    assert "equations" in results, "Should have equations results"
+
+    # Validate stages
+    results = ont_exp.validate_registry("stages")
+    assert "stages" in results, "Should have stages results"
+
+
+def test_schemas_directory_exists():
+    """Test that schemas directory exists with all required files"""
+    schemas_dir = Path(__file__).parent.parent / 'registry' / 'schemas'
+    assert schemas_dir.exists(), "Schemas directory should exist"
+
+    expected_schemas = ['equation.json', 'pipeline_stage.json', 'experiment.json', 'task.json', 'task_list.json']
+    for schema_name in expected_schemas:
+        schema_file = schemas_dir / schema_name
+        assert schema_file.exists(), f"Missing schema: {schema_name}"

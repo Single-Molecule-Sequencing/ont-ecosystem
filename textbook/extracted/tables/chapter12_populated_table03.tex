@@ -1,0 +1,16 @@
+\begin{table}[!htbp]
+\centering
+\caption{Noisy Label Learning QC Gates}
+\label{tab:noisy-label-qc}
+\begin{tabular}{p{4cm}p{4cm}p{4cm}}
+\toprule
+\textbf{Metric} & \textbf{Threshold} & \textbf{Action if Failed} \\
+\midrule
+Validation set accuracy & $> 0.95$ & Increase regularization, expand validation set \\
+Label transition matrix diagonal & $T_{ii} > 0.85$ for all $i$ & Improve label quality before training \\
+Training-validation gap & $< 0.10$ accuracy difference & Increase dropout, reduce model capacity \\
+SMA-seq TPR on standards & $> 0.90$ for all standards & Identify and fix systematic errors \\
+Quality overestimation $d$ & $< 0.30$ & Recalibrate quality scores (Chapter~\ref{chap:basecaller}) \\
+\bottomrule
+\end{tabular}
+\end{table}

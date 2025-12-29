@@ -1,0 +1,271 @@
+# ONT Ecosystem Registry Index
+# Version: 2.0.0 - Consolidated Monorepo
+# Last Updated: 2025-12-28
+#
+# This file indexes all registry components and their relationships.
+# All content is now consolidated in this single repository.
+
+version: "2.0.0"
+last_updated: "2025-12-28"
+architecture: "monorepo"
+
+# =============================================================================
+# Repository Structure
+# =============================================================================
+#
+# ont-ecosystem/                    # Single consolidated repository
+# ├── bin/                          # Analysis scripts (16 Python scripts)
+# ├── skills/                       # Skill packages (8 skills)
+# ├── textbook/                     # SMS Haplotype Framework Textbook (AUTHORITATIVE)
+# │   ├── equations.yaml            # 4087 lines - master equation database
+# │   ├── variables.yaml            # 3532 lines - master variable database
+# │   ├── CLAUDE.md                 # Textbook AI guidance
+# │   └── src/chapters/             # LaTeX source
+# ├── registry/                     # Runtime registry and schemas
+# ├── data/math/                    # Reference PDFs
+# │   └── All_Math.pdf              # Authoritative math reference
+# └── manuscripts/                  # Manuscript templates and outputs
+#     └── templates/                # Scaffolding templates
+
+# =============================================================================
+# Core Components
+# =============================================================================
+
+components:
+  # ---------------------------------------------------------------------------
+  # Textbook (AUTHORITATIVE SOURCE - now internal)
+  # ---------------------------------------------------------------------------
+  textbook:
+    path: "../textbook/"
+    description: "SMS Haplotype Framework Textbook v6.0 - AUTHORITATIVE"
+    status: "consolidated"
+    files:
+      equations:
+        path: "equations.yaml"
+        lines: 4087
+        description: "Master equation database"
+        status: "authoritative"
+
+      variables:
+        path: "variables.yaml"
+        lines: 3532
+        description: "Master variable database"
+        status: "authoritative"
+
+      database_schema:
+        path: "database_schema.yaml"
+        description: "Schema for textbook database"
+
+      claude_guidance:
+        path: "CLAUDE.md"
+        description: "AI guidance for textbook content"
+
+      latex_style:
+        path: "sms.sty"
+        description: "LaTeX style package"
+
+      references:
+        path: "references.bib"
+        description: "BibTeX references"
+
+    source_files:
+      chapters: "src/chapters/"
+      appendices: "src/appendices/"
+      figures: "figures/"
+      tables: "tables/"
+
+  # ---------------------------------------------------------------------------
+  # Reference Data
+  # ---------------------------------------------------------------------------
+  reference_data:
+    path: "../data/math/"
+    description: "Reference PDFs and authoritative documents"
+    files:
+      all_math:
+        path: "All_Math.pdf"
+        description: "Authoritative math definitions (19 pages)"
+        status: "authoritative"
+        note: "Takes precedence when conflicts exist with equations.yaml"
+
+  # ---------------------------------------------------------------------------
+  # Pipeline Registry
+  # ---------------------------------------------------------------------------
+  pipeline:
+    path: "pipeline/"
+    description: "Pipeline Factorization Theorem stages"
+    files:
+      stages:
+        path: "stages.yaml"
+        description: "9 pipeline stages with skill mappings"
+        core_equation: "P(h,g,u,d,ℓ,σ,r) = P(h)·P(g|h)·P(u|g)·P(d|u,C)·P(ℓ|d,C)·P(σ|ℓ,A)·P(r|σ,A)"
+
+  # ---------------------------------------------------------------------------
+  # Schema Registry
+  # ---------------------------------------------------------------------------
+  schemas:
+    path: "schemas/"
+    description: "JSON Schema definitions for validation"
+    files:
+      experiment: { path: "experiment.json", description: "Experiment metadata" }
+      equation: { path: "equation.json", description: "Math equation schema" }
+      pipeline_stage: { path: "pipeline_stage.json", description: "Pipeline stage schema" }
+      task: { path: "task.json", description: "Domain memory task schema" }
+      task_list: { path: "task_list.json", description: "Task list schema" }
+      manuscript: { path: "manuscript.json", description: "Manuscript metadata schema" }
+
+  # ---------------------------------------------------------------------------
+  # Experiments Registry
+  # ---------------------------------------------------------------------------
+  experiments:
+    path: "experiments.yaml"
+    description: "145 registered experiments"
+    runtime_location: "~/.ont-registry/experiments.yaml"
+
+  # ---------------------------------------------------------------------------
+  # Manuscripts
+  # ---------------------------------------------------------------------------
+  manuscripts:
+    path: "../manuscripts/"
+    description: "Manuscript templates and outputs"
+    templates:
+      chapter: "templates/chapter/"
+      paper: "templates/paper/"
+      supplement: "templates/supplement/"
+
+# =============================================================================
+# Skill-to-Stage Mappings
+# =============================================================================
+
+skill_stage_map:
+  # Signal Acquisition Stage (σ)
+  end-reason:
+    stage: "σ"
+    analysis_types: ["end_reasons", "endreason_qc"]
+    purpose: "Read end reason QC analysis"
+    key_metrics: [signal_positive_pct, unblock_mux_pct, quality_grade]
+
+  ont-monitor:
+    stage: "σ"
+    analysis_types: ["monitoring"]
+    purpose: "Real-time and retrospective run monitoring"
+    key_metrics: [total_reads, throughput_gbp_hr, pore_activity_pct]
+
+  # Basecalling Stage (r)
+  dorado-bench-v2:
+    stage: "r"
+    analysis_types: ["basecalling"]
+    purpose: "GPU basecalling with model management"
+    key_metrics: [mean_qscore, n50, pass_reads]
+
+  ont-align:
+    stage: "r"
+    analysis_types: ["alignment", "align_qc"]
+    purpose: "Reference alignment and edit distance"
+    key_metrics: [mapping_rate, mean_coverage, error_rate]
+    key_equations: [levenshtein_distance, sequence_identity]
+
+  # Multi-Stage
+  ont-pipeline:
+    stages: ["r", "A"]
+    purpose: "Multi-step workflow orchestration"
+
+  ont-experiments-v2:
+    stages: ["*"]
+    purpose: "Core orchestration and registry management"
+
+  manuscript:
+    stage: "A"
+    purpose: "Figure/table generation for manuscripts"
+    key_outputs: [figures, tables, exports]
+
+# =============================================================================
+# Key Equations Quick Reference
+# =============================================================================
+
+key_equations:
+  phred_to_error:
+    id: "1.1.1"
+    latex: "p_{r,ℓ} = 10^{-Q_{r,ℓ}/10}"
+    description: "Per-base error probability from Phred score"
+    source: "textbook/equations.yaml"
+
+  levenshtein_distance:
+    id: "1.1.2"
+    latex: "d(s,r) ∈ ℕ₀"
+    description: "Minimum edit operations to transform s into r"
+    source: "textbook/equations.yaml"
+
+  pipeline_factorization:
+    id: "CE.1"
+    latex: "P(h,g,u,d,ℓ,σ,r) = P(h)·P(g|h)·P(u|g)·P(d|u,C)·P(ℓ|d,C)·P(σ|ℓ,A)·P(r|σ,A)"
+    description: "Joint probability factorization for SMS pipeline"
+    source: "textbook/equations.yaml"
+
+  purity_ceiling:
+    id: "5.2"
+    latex: "TPR ≤ π"
+    description: "True positive rate cannot exceed molecular purity"
+    source: "textbook/equations.yaml"
+
+  bayesian_posterior:
+    id: "6.6"
+    latex: "P(h|r) = P(r|h)P(h) / ΣP(r|h')P(h')"
+    description: "Posterior probability of haplotype given reads"
+    source: "textbook/equations.yaml"
+
+# =============================================================================
+# Integration Points
+# =============================================================================
+
+integration:
+  # How components connect
+  data_flow:
+    - source: "experiments"
+      via: "ont_experiments.py"
+      to: ["end-reason", "dorado-bench-v2", "ont-align"]
+
+    - source: "analysis_results"
+      via: "ont_context.py"
+      to: ["ont_manuscript.py"]
+
+    - source: "figures_tables"
+      via: "ont_manuscript.py"
+      to: ["manuscripts/", "textbook/figures/"]
+
+  # Automated sync
+  auto_sync:
+    enabled: true
+    triggers:
+      - on_analysis_complete: "sync results to database"
+      - on_figure_generate: "save to artifacts with versioning"
+      - on_manuscript_export: "copy to target manuscript repo"
+
+# =============================================================================
+# Manuscript Connection System
+# =============================================================================
+
+manuscript_system:
+  description: "Create and connect independent manuscript repositories"
+
+  create_command: "ont_manuscript.py create-manuscript <name> [--template paper|chapter]"
+
+  connection_method: "git-submodule"
+
+  auto_features:
+    - "Inherit equations.yaml via submodule"
+    - "Auto-sync figures from ont-ecosystem"
+    - "Shared LaTeX style (sms.sty)"
+    - "Connected CI/CD pipelines"
+
+  templates:
+    paper:
+      description: "Standard research paper"
+      includes: [abstract, methods, results, figures, tables, references]
+
+    chapter:
+      description: "Textbook chapter"
+      includes: [equations, proofs, worked_examples, exercises]
+
+    supplement:
+      description: "Supplementary materials"
+      includes: [extended_methods, additional_figures, data_tables]

@@ -1,0 +1,60 @@
+\begin{table}[H]
+\centering
+\small
+\caption{Navigation guide to key concepts and their locations}
+\label{tab:navigation-guide}
+\begin{tabular}{lp{3.5cm}p{5.5cm}}
+\toprule
+\textbf{Concept} & \textbf{Primary Definition} & \textbf{Key Sections / Applications} \\
+\midrule
+\multicolumn{3}{l}{\textit{\textbf{Core Mathematical Framework}}} \\
+Pipeline Factorization & Ch.~4, Def.~4.1 & App.~F §\ref{sec:app-f-pipeline-factorization}, Exec. Overview \\
+Posterior Computation & Ch.~6, Eq.~(6.1--6.3) & App.~B §\ref{sec:haplotype-classification}, Ch.~14--15 \\
+Confusion Matrix & Ch.~4, Def.~4.3 & Ch.~11, App.~F §\ref{sec:app-f-confusion}, App.~B \\
+Purity Theory & Ch.~5, Def.~5.1--5.3 & Ch.~8 (plasmids), Ch.~11 (SMA ceiling), App.~F §7 \\
+\midrule
+\multicolumn{3}{l}{\textit{\textbf{Quality Score Framework}}} \\
+Phred Quality & Ch.~4, Def.~4.2 & Ch.~11 (calibration), App.~F §\ref{sec:app-f-quality-scores} \\
+Phred Averaging Ineq. & Ch.~11, Thm.~11.2 & App.~B §\ref{sec:quality-score-theory}, App.~C (QC gates) \\
+Quality Overstatement & Ch.~11, Def.~11.5 & App.~C (QC Gate 8), Ch.~12--13 (calibration) \\
+ECE (Calibration Error) & Ch.~11, Def.~11.6 & Ch.~13 (fine-tuning), App.~C \\
+\midrule
+\multicolumn{3}{l}{\textit{\textbf{SMA-seq and SEER Framework}}} \\
+SMA (Single Mol. Acc.) & App.~F, Def.~2 & Ch.~11 §\ref{sec:sma-definitions}, Ch.~14--15 \\
+SMA-seq Protocol & Ch.~11 §11.1--11.3 & App.~D (computational), Ch.~8 (standards) \\
+SEER Framework & Ch.~11 §11.4--11.6 & Ch.~12--13 (model improvement) \\
+Purity Ceiling & Ch.~5, Thm.~5.2 & Ch.~11 §11.7 (SMA bias), Ch.~8 (design) \\
+\midrule
+\multicolumn{3}{l}{\textit{\textbf{Experimental Design}}} \\
+Coverage Calculation & Ch.~7, Eq.~(7.2--7.4) & App.~F §\ref{sec:app-f-coverage}, Ch.~9--10 \\
+Plasmid Replication & Ch.~5, Eq.~(5.5--5.8) & Ch.~8 §8.2, App.~F §7 (purity models) \\
+Dual Cas9 Cutting & Ch.~9, Def.~9.1 & Ch.~7 (design), App.~D (protocols) \\
+Mixture Design & Ch.~10 & Ch.~14 (validation mixtures) \\
+\midrule
+\multicolumn{3}{l}{\textit{\textbf{Model Improvement}}} \\
+Noisy Label Learning & Ch.~12 & Ch.~13 (fine-tuning), App.~F §10 \\
+Basecaller Fine-Tuning & Ch.~13 & Ch.~11 (SMA feedback), Ch.~15 (validation) \\
+Loss Functions & Ch.~13, Eq.~(13.2--13.5) & App.~F §10, Ch.~12 (robust training) \\
+\midrule
+\multicolumn{3}{l}{\textit{\textbf{Validation and QC}}} \\
+QC Gates (15 gates) & App.~C & Ch.~11 (empirical), Ch.~14--15 (validation) \\
+Ground Truth & Ch.~5 §5.4 & Ch.~14 (mixtures), Ch.~11 (SMA-seq) \\
+Wilson Confidence Int. & Ch.~11, Eq.~(11.8) & Ch.~14 (SMA CI), App.~C (binomial metrics) \\
+Accuracy Propagation & Ch.~14 & Ch.~15 (end-to-end), Ch.~6 (theory) \\
+\midrule
+\multicolumn{3}{l}{\textit{\textbf{Clinical Applications}}} \\
+CYP2D6 Classification & Ch.~18 & Ch.~1 (motivation), Ch.~15 (workflow) \\
+Tamoxifen Case Study & Ch.~18 §18.2--18.4 & Ch.~1 (Clinical Box 1.1) \\
+Endoxifen Prediction & Ch.~18, Eq.~(18.1) & Ch.~18 §18.4 \\
+Two Failures Framework & Ch.~18 §18.1 & Ch.~1 (clinical context) \\
+\midrule
+\multicolumn{3}{l}{\textit{\textbf{Core Equations (CE\#1--15)}}} \\
+CE.1: Posterior Basic & Ch.~4, App.~B §1 & Ch.~6 (applications), Ch.~14--15 \\
+CE.2: Bayes Theorem & App.~B §1 & Throughout (Bayesian inference) \\
+CE.4--5: Likelihood & Ch.~4, App.~B §2 & Ch.~6 (classification), Ch.~11 (empirical) \\
+CE.8--10: Quality Theory & App.~B §3 & Ch.~11 (calibration), Ch.~13 (fine-tuning) \\
+CE.11--12: Purity Bounds & Ch.~5, App.~B §4 & Ch.~8 (plasmids), Ch.~11 (SMA ceiling) \\
+CE.13--15: Coverage & Ch.~7, App.~B §5 & Ch.~9 (enrichment), Ch.~10 (mixtures) \\
+\bottomrule
+\end{tabular}
+\end{table}

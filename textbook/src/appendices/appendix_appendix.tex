@@ -1,0 +1,235 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Appendix A: Notation and Symbol Reference
+%% Version 6.0 - Complete Migration from v5.tex (lines 1889-2113)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{Notation and Symbol Reference}
+\label{app:notation}
+
+This comprehensive notation reference provides detailed descriptions of all mathematical symbols used throughout the framework, organized by functional category for easy reference. The notation system follows standard conventions in probability theory and statistical inference: uppercase letters denote random variables, bold fonts indicate vectors and matrices, and blackboard bold represents probability measures. This appendix serves as a complete reference for interpreting any equation in the main document.
+
+\textbf{Organization:} The notation is organized into eight functional categories that mirror the framework's computational pipeline: (1) Primary Spaces and Sets define the fundamental objects, (2) Fragment Length Variables handle size-dependent calculations, (3) Probability Distributions describe fragment and read characteristics, (4) Quality Score Parameters quantify sequencing accuracy, (5) Model Parameters specify the statistical framework, (6) Sequencing Metrics track experimental quantities, (7) Statistical Measures evaluate model performance, and (8) Cas9 Capture Parameters support targeted sequencing applications.
+
+\textbf{Usage Convention:} When referencing equations, always consult this appendix to verify symbol definitions. Pay particular attention to distinguishing $L$ (fixed length) from $\ell$ (variable length), and $f_{\mathrm{emp}}$ (empirical measurements) from $f_{\mathrm{frag}}$ (theoretical models). Consistent notation across the document ensures unambiguous interpretation of all mathematical expressions.
+
+\section{Primary Spaces and Sets}
+
+These fundamental mathematical objects define the complete sequencing pipeline from genomic sequences through physical processing to observed data. Each space represents a distinct stage in the data generation process, with probability distributions governing transitions between spaces.
+
+\begin{longtable}{p{2.5cm}p{9cm}}
+\caption{Spaces and Set Notation} \\
+\toprule
+\textbf{Symbol} & \textbf{Description} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{c}{\textit{Continued from previous page}} \\
+\toprule
+\textbf{Symbol} & \textbf{Description} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\bottomrule
+\endlastfoot
+$\mathcal{H}$ & Haplotype space: The complete set of candidate genomic sequences under consideration. In diploid organisms, typically $|\mathcal{H}| = 2$, though analysis may include additional variants. Used throughout all equations as the fundamental hypothesis space for Bayesian classification. \textit{See CE.11-CE.13 for usage in likelihood and posterior calculations.} \\
+$h_i$ & Individual haplotype: A specific genomic sequence variant, indexed by $i \in \{1, ..., P\}$. Each haplotype represents a distinct DNA sequence that could be the source of observed reads. In practice, haplotypes differ by SNPs, indels, or structural variants. \textit{Referenced in all likelihood calculations (CE.11, CE.12)} \\
+$P$ & Total number of distinct haplotypes in the candidate set. Typical values: $P=2$ for diploid single-locus analysis, $P=4$ for diploid two-locus analysis. Larger values increase computational cost linearly in likelihood calculations. \textit{Used in posterior normalization (CE.13)} \\
+$\Omega$ & Sample space: Set of all possible DNA molecules in the biological sample. For whole genome sequencing, $|\Omega| \approx 10^6$-$10^9$ molecules per nanogram of DNA. For targeted sequencing, $|\Omega|$ is effectively infinite before enrichment. \textit{Foundation for sampling model in fragmentation step} \\
+$\mathcal{S}$ & Signal space: Raw instrument measurements before basecalling. For ONT: electrical current time series sampled at 4 kHz. For PacBio: inter-pulse duration (IPD) measurements. For Illumina: fluorescence intensity per cycle. Dimensionality: $\mathcal{S} \subseteq \mathbb{R}^T$ where $T$ is measurement count. \textit{Input to basecalling model (CE.1, CE.2)} \\
+$\mathcal{R}$ & Read space: Basecalled nucleotide sequences after primary analysis. Elements are strings over alphabet $\{A, C, G, T\}$ with associated quality scores. Typical size: $|\mathcal{R}| = N = 100$-$10^5$ reads per sample. \textit{Observed data for likelihood calculation (CE.11)} \\
+$\mathcal{A}$ & Alignment space: Possible mappings of reads to reference genome. Each element specifies genomic coordinates, CIGAR string, mapping quality. Used only for quality assessment, NOT classification. \textit{See Chapter 10: alignments are for QC only} \\
+\end{longtable}
+
+\section{Fragment Length Variables}
+
+Fragment length distributions critically determine coverage and perfect-read probabilities. Different experimental protocols produce different distributions, requiring empirical measurement for accurate predictions.
+
+\begin{longtable}{p{2.5cm}p{9cm}}
+\caption{Fragment Length Notation} \\
+\toprule
+\textbf{Symbol} & \textbf{Description} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{c}{\textit{Continued from previous page}} \\
+\toprule
+\textbf{Symbol} & \textbf{Description} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\bottomrule
+\endlastfoot
+$L$ & Read length: Fixed length in bases for protocols with uniform read length. For ONT/PacBio long reads, this is target length post-size selection (e.g., $L = 10$ kb). For Illumina, this is read length setting (e.g., $L = 150$ bp). Used in simplified perfect-read calculations (CE.2). \\
+$\ell$ & Variable fragment length: Random variable representing actual length of individual DNA fragments in library. Distribution $f_{\mathrm{emp}}(\ell)$ must be measured empirically from experiment. Typical range: 200-600 bp (Illumina), 5-50 kb (ONT), 10-30 kb (PacBio HiFi). \textit{Central parameter in CE.3, CE.7, CE.16} \\
+$f_{\mathrm{emp}}(\ell)$ & Empirical fragment length distribution: Probability density function measured from actual sequencing data via read length histogram or Bioanalyzer/TapeStation. Use this in all production calculations rather than theoretical models. \textbf{Measurement:} Sequence standards or pilot samples, bin read lengths, fit kernel density estimate. \textit{Required input for CE.3, CE.7} \\
+$f_{\mathrm{frag}}(\ell)$ & Theoretical fragment distribution: Idealized model (e.g., Gamma, exponential) for design calculations when empirical data unavailable. \textbf{Common choices:} Gamma$(\alpha, \beta)$ with $\alpha=2$-4 for mechanical shearing, Exponential$(\lambda)$ for DNase fragmentation. Always validate against $f_{\mathrm{emp}}$ when data available. \textit{Used in CE.7 theoretical development} \\
+$\ell_{\min}, \ell_{\max}$ & Size selection boundaries: Minimum and maximum fragment lengths retained by purification (e.g., SPRI beads, Blue Pippin). Defines support of $f_{\mathrm{emp}}$: $f_{\mathrm{emp}}(\ell) = 0$ for $\ell < \ell_{\min}$ or $\ell > \ell_{\max}$. \\
+$L_g$ & Target gene length (bp): Length of genomic region for targeted capture applications. For Cas9 dual-cut capture (CE.16), this is the distance between the two guide RNA cut sites. \textbf{Design consideration:} Shorter targets ($L_g < 500$ bp) have higher dual-cut probability but may suffer from capture bias. Longer targets ($L_g > 5000$ bp) provide more sequence context but lower enrichment efficiency. \textbf{Typical range:} 500-5000 bp for optimal balance. \\
+\end{longtable}
+
+\clearpage
+
+\section{Probability Distributions}
+
+These distributions govern the hierarchical generative model from genomic DNA through sequencing to observed reads.
+
+\begin{longtable}{p{2.5cm}p{9cm}}
+\caption{Probability Distribution Notation} \\
+\toprule
+\textbf{Symbol} & \textbf{Description} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{c}{\textit{Continued from previous page}} \\
+\toprule
+\textbf{Symbol} & \textbf{Description} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\bottomrule
+\endlastfoot
+$\Prob(h_i)$ & Prior probability over haplotypes: Probability of haplotype $h_i$ before observing sequencing data. Can be informed by population genetics (allele frequencies) or set to uniform $\Prob(h_i) = 1/P$ for unbiased analysis. \textbf{Typical sources:} gnomAD, 1000 Genomes, PharmGKB for pharmacogenes. \textit{Input to Bayes' rule (CE.12, CE.13)} \\
+$\Prob(r_n | h_i)$ & Per-read likelihood: Probability of observing read $r_n$ given true haplotype $h_i$. Computed via confusion matrix (CE.10) or perfect-read model (CE.2, CE.3). This is the core of classification - accurate likelihood requires valid confusion matrix from SEER standards. \textit{See CE.10, CE.11} \\
+$\Prob(\mathbf{r} | h_i)$ & Dataset likelihood: Joint probability of all $N$ reads given haplotype $h_i$, assuming conditional independence: $\Prob(\mathbf{r} | h_i) = \prod_{n=1}^{N} \Prob(r_n | h_i)$. Computed in log-space to prevent underflow (CE.11). \textit{Central calculation in CE.11} \\
+$\Prob(h_i | \mathbf{r})$ & Posterior probability: Probability of haplotype $h_i$ after observing all reads $\mathbf{r}$. Computed via Bayes' rule (CE.13). Used for classification decision: assign sample to haplotype with maximum posterior (MAP rule). \textbf{Interpretation:} $\Prob(h_i | \mathbf{r}) > 0.99$ indicates high confidence assignment. $\Prob(h_i | \mathbf{r}) \approx 0.5$ for all $i$ indicates ambiguous classification requiring more data. \textit{Computed via CE.13} \\
+$\pi_i$ & Haplotype mixture fraction: Proportion of reads originating from haplotype $h_i$ in diploid or mixture samples. For pure diploid: $\pi_1 = \pi_2 = 0.5$. For contamination: $\pi_{\text{contaminant}}$ quantifies contamination level. \textbf{Estimation:} Maximum likelihood or expectation-maximization from read assignments. \textit{See Chapter 14 for mixture analysis} \\
+$\lambda$ & Sequencing depth parameter: Expected number of reads covering each base position, measured in $\times$ (fold). Typical values: $\lambda = 30\times$ (standard WGS), $\lambda = 100\times$ (clinical diagnostic), $\lambda = 1000\times$ (rare variant detection). Higher depth increases classification confidence but costs scale linearly. \textit{Design parameter in CE.5 coverage calculations} \\
+\end{longtable}
+
+\section{Quality Score Parameters}
+
+Quality scores provide per-base confidence estimates that directly affect perfect-read probabilities and downstream classification.
+
+\begin{longtable}{p{2.5cm}p{9cm}}
+\caption{Quality Score Notation} \\
+\toprule
+\textbf{Symbol} & \textbf{Description} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{c}{\textit{Continued from previous page}} \\
+\toprule
+\textbf{Symbol} & \textbf{Description} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\bottomrule
+\endlastfoot
+$Q$ & Phred quality score: Logarithmic encoding of error probability in decibels, computed as $Q = -10 \log_{10}(p_{\mathrm{err}})$. Scale: Q10 = 90\% accuracy, Q20 = 99\%, Q30 = 99.9\%, Q40 = 99.99\%. Most platforms report Q7-Q40 for ONT, Q20-Q50+ for PacBio HiFi, Q30-Q40 for Illumina. \textit{Fundamental transformation in CE.1} \\
+$p_{\mathrm{err}}(Q)$ & Error probability from quality score: Probability of incorrect base call, computed as $p_{\mathrm{err}}(Q) = 10^{-Q/10}$ (CE.1). This transformation assumes quality scores are well-calibrated (see CE.14 validation). \textbf{Critical:} Basecaller calibration errors propagate directly into this probability, affecting all downstream inference. \textit{Core of CE.1, input to CE.2, CE.3} \\
+$\theta$ & Per-base accuracy: Probability of correct basecall, related to error probability by $\theta = 1 - p_{\mathrm{err}}$. For Q30 base: $\theta = 0.999$. For Q40 base: $\theta = 0.9999$. Used in simplified perfect-read calculation: $P_{\mathrm{perf}} = \theta^L$ (CE.2). \\
+$\bar{Q}$ & Mean quality score: Average quality across all bases in a read or dataset, computed as $\bar{Q} = \frac{1}{N_{\text{bases}}}\sum_{i=1}^{N_{\text{bases}}} Q_i$. \textbf{Typical values:} ONT: Q10-Q18, PacBio HiFi: Q20-Q30, Illumina: Q30-Q35. Lower than expected $\bar{Q}$ indicates sequencing or library prep problems. \textit{QC metric, see Gate 2} \\
+$Q_{\mathrm{pred}}$ & Predicted quality score: Quality reported by basecaller for each base. Should reflect true error rate if basecaller is well-calibrated. Validation compares $Q_{\mathrm{pred}}$ vs $Q_{\mathrm{emp}}$ (CE.14). \\
+$Q_{\mathrm{emp}}$ & Empirical quality score: Measured error rate from standards, converted to Phred scale. Compute from alignment to known reference: $Q_{\mathrm{emp}} = -10 \log_{10}(\text{error rate})$. Agreement with $Q_{\mathrm{pred}}$ indicates good calibration. \textit{Validation metric, CE.14} \\
+\end{longtable}
+
+\clearpage
+
+\section{Model Parameters}
+
+These parameters define the statistical model and control inference behavior.
+
+\begin{longtable}{p{2.5cm}p{9cm}}
+\caption{Statistical Model Parameters} \\
+\toprule
+\textbf{Symbol} & \textbf{Description} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{c}{\textit{Continued from previous page}} \\
+\toprule
+\textbf{Symbol} & \textbf{Description} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\bottomrule
+\endlastfoot
+$\mathbf{C}$ & Confusion matrix: $P \times P$ matrix where element $C_{ij} = \Prob(\text{observe class } j | \text{true class } i)$ quantifies systematic sequencing errors. Rows sum to 1. Diagonal dominance ($C_{ii} > C_{ij}$ for $i \neq j$) indicates good discrimination. \textbf{Estimation:} SEER framework (Chapter 11) using plasmid standards. \textit{Core of CE.9, CE.10} \\
+$C_{ij}$ & Confusion matrix element: Probability that true haplotype $h_i$ produces a read classified as coming from haplotype $h_j$. Diagonal elements ($i=j$): true positive rate (TPR). Off-diagonal ($i \neq j$): misclassification rate. \textbf{Quality criteria:} TPR $\geq 0.95$ (good), TPR $\geq 0.99$ (excellent), TPR $\geq 0.999$ (clinical grade). \textit{Computed empirically via CE.9} \\
+$\boldsymbol{\theta}$ & Model parameter vector: Complete set of model parameters including confusion matrix, prior probabilities, fragment distribution. Estimated from standards (SEER) or set based on experimental design. \\
+$N$ & Total number of reads: Sample size for classification. Larger $N$ increases posterior confidence but has diminishing returns beyond coverage threshold. \textbf{Design guidance:} Use CE.5 to compute required $N$ for target confidence level. \textit{Used in CE.5, CE.11, CE.15} \\
+$\alpha, \beta$ & Fragment distribution shape parameters: For Gamma distribution $f(\ell) \propto \ell^{\alpha-1} e^{-\ell/\beta}$. Typical mechanical shearing: $\alpha = 2$-4, $\beta = 100$-300 bp. Enzymatic fragmentation: $\alpha = 3$-5, $\beta = 80$-200 bp. \textit{Used in theoretical models, CE.7} \\
+$\mu$ & Mutation rate: Per-base per-generation spontaneous mutation rate. Human germline: $\mu \approx 10^{-8}$. Bacterial: $\mu \approx 10^{-10}$ to $10^{-9}$. Used to compute purity upper bound from replication fidelity (CE.15). \\
+$d$ & Number of cell divisions: Generations since clonal origin. Affects purity through accumulated replication errors: $\pi_{\max} = (1 - \mu L)^d$ (CE.15). \textbf{Typical values:} Freshly isolated cells: $d \approx 1$-5. Cultured cell lines: $d = 20$-40. Affects achievable purity. \textit{Input to CE.15} \\
+\end{longtable}
+
+\section{Sequencing Metrics}
+
+Operational quantities measured during sequencing that inform quality control and downstream analysis.
+
+\begin{longtable}{p{2.5cm}p{9cm}}
+\caption{Experimental Measurements} \\
+\toprule
+\textbf{Symbol} & \textbf{Description} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{c}{\textit{Continued from previous page}} \\
+\toprule
+\textbf{Symbol} & \textbf{Description} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\bottomrule
+\endlastfoot
+$N_{\text{total}}$ & Total sequenced reads: Count of all reads passing basecaller filters (typically Q7 threshold). Used to compute on-target fraction and coverage. \\
+$N_{\text{on-target}}$ & On-target reads: Reads mapping to intended genomic region (for targeted sequencing). Defines enrichment success. \textbf{Quality criteria:} $N_{\text{on-target}}/N_{\text{total}} \geq 0.5$ (acceptable), $\geq 0.7$ (good), $\geq 0.9$ (excellent). \textit{See Chapter 9 for enrichment metrics} \\
+$\lambda_{\text{obs}}$ & Observed coverage: Measured sequencing depth at genomic position, computed as number of reads overlapping position divided by read length. Compare to $\lambda$ (expected coverage) to assess uniformity. \\
+$CV_{\text{cov}}$ & Coverage coefficient of variation: Standard deviation of coverage divided by mean, quantifies uniformity. $CV < 0.5$ indicates good uniformity. $CV > 1.0$ suggests amplification bias or capture artifacts requiring investigation. \textit{QC metric, Gate 3} \\
+$e_{\text{enr}}$ & Enrichment efficiency: Capture or PCR amplification success rate. For targeted sequencing, represents fraction of target molecules successfully captured and amplified. \textbf{Typical values:} Hybrid capture: 40-70\% on-target rate. Cas9 capture: 60-90\% on-target (when successful). PCR enrichment: 80-95\%. \textbf{Measurement:} Compare on-target read fraction to expected based on genome size. \textit{Essential for Cas9 capture design (CE.16)} \\
+$\text{MAPQ}$ & Mapping quality: Phred-scaled probability that alignment is incorrect, $\text{MAPQ} = -10\log_{10}(P(\text{wrong alignment}))$. MAPQ $\geq 20$ (99\% correct) typically required for analysis. \textbf{Note:} Used only for QC, NOT for classification. \textit{See Chapter 10: secondary analysis} \\
+\end{longtable}
+
+\section{Statistical Measures}
+
+Performance metrics quantifying classification accuracy and model quality.
+
+\begin{longtable}{p{2.5cm}p{9cm}}
+\caption{Performance Metrics} \\
+\toprule
+\textbf{Symbol} & \textbf{Description} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{c}{\textit{Continued from previous page}} \\
+\toprule
+\textbf{Symbol} & \textbf{Description} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\bottomrule
+\endlastfoot
+$\text{TPR}_i$ & True positive rate for haplotype $i$: Fraction of true $h_i$ reads correctly classified. Estimated from confusion matrix diagonal: $\text{TPR}_i = C_{ii}$. \textbf{Clinical requirement:} TPR $\geq 0.99$ for common alleles, TPR $\geq 0.95$ for rare alleles. \textit{Key metric from CE.9} \\
+$\text{FPR}_{ij}$ & False positive rate: Fraction of true $h_i$ reads misclassified as $h_j$. Off-diagonal confusion matrix element: $\text{FPR}_{ij} = C_{ij}$ for $i \neq j$. Should be minimized for robust classification. \\
+$D_{\text{KL}}(P \| Q)$ & Kullback-Leibler divergence: Measures difference between empirical distribution $P$ and model prediction $Q$, computed as $D_{\text{KL}}(P \| Q) = \sum_x P(x) \log_2(P(x)/Q(x))$ in bits. Used to validate quality score calibration (CE.14). \textbf{Interpretation:} $D_{\text{KL}} < 0.1$ bits = excellent agreement, 0.1-0.5 bits = acceptable, $> 0.5$ bits = recalibration needed. \textit{Computed in CE.14} \\
+$\text{BF}_{ij}$ & Bayes factor: Ratio of posterior odds to prior odds for hypotheses $i$ vs $j$: $\text{BF}_{ij} = \frac{\Prob(h_i|\mathbf{r})/\Prob(h_j|\mathbf{r})}{\Prob(h_i)/\Prob(h_j)}$. Quantifies strength of evidence from data. \textbf{Interpretation (Kass-Raftery scale):} BF $< 3$ = weak, 3-20 = positive, 20-150 = strong, $>150$ = very strong evidence. \textit{See CE.16 for formula} \\
+$\pi$ & Purity: Fraction of molecules in sample matching intended sequence. Fundamental accuracy ceiling (Theorem 5.1): observed TPR cannot exceed $\pi$. \textbf{Measurement:} Technical replication (lower bound) or clonal sequencing (upper bound). \textit{Critical parameter, CE.15, Chapter 5} \\
+$\pi_{\max}$ & Purity upper bound: Maximum achievable true positive rate, fundamentally limited by DNA replication physics. Computed from mutation rate $\mu$, cell divisions $d$, and genomic span $L$ via CE.15. \textbf{Physical interpretation:} Even perfect sequencing (infinite coverage, zero errors) cannot exceed this accuracy due to accumulated replication errors. \textbf{Hard QC constraint:} Any measured TPR $> \pi_{\max}$ indicates contamination, reference errors, or model failure and mandates investigation. \textbf{Typical values:} Well-controlled samples with $d=10$ divisions, $L=1000$ bp, $\mu=10^{-9}$: $\pi_{\max} \approx 0.99999$ (Q50). Extensively passaged cells with $d=30$: $\pi_{\max} \approx 0.99997$ (Q46). \textit{Computed and enforced via CE.15} \\
+$d$ & Overstatement fraction: Proportion of reads where predicted quality ($Q_{\mathrm{pred}}$) exceeds empirical quality ($Q_{\mathrm{emp}}$), indicating basecaller overconfidence. \textbf{Computation:} $d = \frac{1}{N}\sum_{n=1}^{N}\mathbb{I}\{Q_{\mathrm{pred},n}>Q_{\mathrm{emp},n}\}$ from CE.14. \textbf{Quality criteria:} $d \leq 0.20$ = excellent calibration (proceed with confidence), 0.20-0.30 = acceptable (proceed with caution), $d > 0.30$ = failed calibration (do not proceed, recalibrate basecaller). \textbf{Clinical importance:} Quality score overstatement propagates into likelihood calculations (CE.11), causing overconfidence in classifications. Even 2-3 dB systematic overstatement can produce 20-50\% errors in perfect-read estimates. \textbf{Report with confidence intervals:} Use Wilson score method for binomial proportion CIs. \textit{Validation metric computed via CE.14} \\
+\end{longtable}
+
+\section{Cas9 Capture Parameters}
+
+These parameters are specific to targeted sequencing applications using CRISPR-Cas9 technology for genomic enrichment. The dual-guide capture strategy requires precise coordination of two cutting events, with success depending on both cutting efficiencies ($e_1, e_2$) and fragment length distribution. These parameters enable rigorous design of targeted sequencing experiments, optimization of guide RNA selection, and prediction of enrichment performance before costly sequencing runs. Accurate measurement of cutting efficiencies through validation experiments is essential for reliable predictions.
+
+\begin{longtable}{p{2.5cm}p{9cm}}
+\caption{Targeted Sequencing Variables} \\
+\toprule
+\textbf{Symbol} & \textbf{Description} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{c}{\textit{Continued from previous page}} \\
+\toprule
+\textbf{Symbol} & \textbf{Description} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\bottomrule
+\endlastfoot
+$P_{\text{dual-cut}}$ & Cas9 dual-cut probability: Chance of successful dual-guide capture, computed as $P_{\mathrm{dual-cut}} = e_1 \times e_2 \times P(L_{\mathrm{frag}} < L_g)$ from CE.16. Requires both guide RNAs to cut successfully AND resulting fragment to be smaller than target region. \textbf{Typical values:} With good guides ($e_1, e_2 \approx 0.8$-0.9) and appropriate fragmentation ($P(L_{\mathrm{frag}} < L_g) \approx 0.6$-0.8 for $L_g = 2$-4 kb), expect $P_{\mathrm{dual-cut}} \approx 0.4$-0.6. \textbf{Design optimization:} Shorter target regions increase $P(L_{\mathrm{frag}} < L_g)$ but may reduce sequence context. Longer regions provide more information but lower capture efficiency. \textbf{Optimal range:} $L_g = 500$-5000 bp balances these trade-offs for most applications. \textit{Computed via CE.16 for targeted capture design} \\
+$e_1, e_2$ & Cas9 cutting efficiencies: Individual guide RNA cutting success rates at their respective genomic sites. Each represents probability that Cas9 successfully introduces a double-strand break at the target location. \textbf{Typical values:} High-quality guides: $e = 0.75$-0.95. Average guides: $e = 0.50$-0.75. Poor guides: $e < 0.50$ (should be redesigned). \textbf{Measurement protocol:} T7 endonuclease I assay, next-generation sequencing of edited loci, or ddPCR quantification of cut versus uncut alleles. \textbf{Design factors:} On-target score (predict via CRISPOR, Benchling, or similar tools), GC content (optimal 40-60\%), secondary structure, chromatin accessibility at target site. \textbf{Critical:} Both $e_1$ and $e_2$ must be high (>0.7) for efficient dual-capture; one poor guide drastically reduces $P_{\mathrm{dual-cut}}$ due to multiplicative effect. \textbf{Validation required:} Always validate cutting efficiency before large-scale experiments. \textit{Core inputs to CE.16 for capture efficiency prediction} \\
+$L_g$ & Target gene length: Size of genomic region between Cas9 cut sites, in base pairs. This is the distance from the first guide's cut site to the second guide's cut site. \textbf{Design consideration:} Must balance multiple factors: (1) Sequence content - longer regions provide more variants for discrimination, (2) Capture efficiency - shorter regions have higher probability of complete capture, (3) Fragment distribution - must match library fragmentation profile. \textbf{Optimal design:} Choose $L_g$ such that $P(L_{\mathrm{frag}} < L_g) \approx 0.6$-0.8 based on empirical fragmentation distribution $f_{\mathrm{emp}}$. For typical fragmentation (mean 400-600 bp), this suggests $L_g = 1$-3 kb. \textbf{Measurement:} Direct distance measurement from genomic coordinates of guide cut sites. \textbf{Pitfall:} Very long targets ($L_g > 10$ kb) may require unfragmented DNA (circulomics, intact genomic DNA preps) to achieve reasonable $P_{\mathrm{dual-cut}}$. \textit{Critical parameter in CE.16, must be coordinated with fragment distribution} \\
+\end{longtable}
+
+\clearpage

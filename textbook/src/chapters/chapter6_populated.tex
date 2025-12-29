@@ -1,0 +1,602 @@
+\chapter{Haplotype Posteriors from Sequence Evidence}
+\label{chap:posteriors}
+\label{chap:haplotype-posteriors}
+\label{chap:diplotypes}
+\label{chap:population-priors}
+
+\begin{learningobjectives}
+By the end of this chapter, you will be able to:
+\begin{itemize}
+\item Apply Bayes' theorem to combine prior knowledge with sequencing evidence for haplotype classification
+\item Select appropriate prior distributions (population-based, uniform, sparsity-inducing) based on application context
+\item Compute posterior probabilities $\Prob(h_i|\mathbf{r})$ using likelihood factorization and confusion matrices
+\item Implement numerically stable posterior computation using log-space arithmetic
+\item Apply MAP (maximum a posteriori) classification for point estimates
+\item Calculate Bayes factors for hypothesis comparison and evidence quantification
+\item Extend the framework to diplotype inference and mixture deconvolution
+\end{itemize}
+\end{learningobjectives}
+
+This chapter presents the Bayesian framework for combining likelihood functions with prior information to produce posterior probability distributions over candidate haplotypes. We develop both point estimation procedures for identifying the most likely haplotype and full posterior inference for quantifying classification uncertainty. The methods support both simple diploid scenarios and complex mixture models relevant to clinical applications.
+
+\section{Bayesian Framework for Haplotype Classification}
+
+The Bayesian approach to haplotype classification treats the true haplotype as an unknown quantity with associated uncertainty. By combining prior knowledge about haplotype frequencies or structures with observed sequencing data through Bayes' theorem, we obtain a complete probabilistic description of this uncertainty.
+
+\subsection{Prior Distribution over Haplotypes}
+
+The prior distribution encodes our knowledge about haplotype probabilities before observing sequencing data. The choice of prior can substantially impact classification, particularly when read coverage is limited or error rates are high.
+
+\begin{definition}[Prior Categories]
+\label{def:prior-categories}
+We consider three main categories of priors for haplotype classification:
+
+\textbf{Population Prior:} Based on empirical haplotype frequencies
+\begin{equation}
+\Prob(h_i) = \pi_i \propto f_{\text{pop}}(h_i)
+\end{equation}
+where $f_{\text{pop}}(h_i)$ is the population frequency of haplotype $h_i$ and normalization ensures $\sum_{i=1}^{P} \pi_i = 1$.
+
+\textbf{Dirichlet Prior:} For modeling uncertainty in haplotype frequencies
+\begin{equation}
+\boldsymbol{\pi} \sim \text{Dir}(\boldsymbol{\alpha})
+\end{equation}
+where $\boldsymbol{\alpha} = (\alpha_1, \ldots, \alpha_P)$ are concentration parameters that control the expected frequencies and their variance.
+
+\textbf{Sparsity-Inducing Prior:} To favor simpler or more common haplotypes
+\begin{equation}
+\Prob(h_i) \propto \exp(-\lambda \cdot \text{complexity}(h_i))
+\end{equation}
+where complexity can be measured by edit distance from reference, number of variants, or other domain-specific metrics.
+\end{definition}
+
+\begin{remark}[Prior Selection Guidelines]
+\label{rem:prior-selection}
+The choice of prior should reflect the application context:
+\begin{itemize}
+\item \textbf{Clinical diagnostics:} Use population-based priors from relevant ethnic groups
+\item \textbf{Discovery applications:} Use uniform or weakly informative priors
+\item \textbf{Targeted panels:} Use sparsity-inducing priors when expecting known haplotypes
+\item \textbf{Contamination settings:} Use mixture priors as described in Section \ref{sec:mixture-models}
+\end{itemize}
+\end{remark}
+
+\subsection{Likelihood from Fragmentation and Sequencing}
+
+The likelihood function $\Prob(\mathbf{r}|h)$ quantifies the probability of observing a set of reads $\mathbf{r} = \{r_1, \ldots, r_N\}$ given that the true haplotype is $h$. This likelihood incorporates both the sequencing error model and the fragmentation process.
+
+For independent reads, the likelihood factorizes as:
+\begin{eqbox}{Likelihood Factorization}
+\begin{equation}
+\label{eq_6_4}
+\Prob(\mathbf{r}|h) = \prod_{n=1}^{N} \Prob(r_n|h)
+\label{eq:likelihood-factorization}
+\end{equation}
+\end{eqbox}
+
+The per-read likelihood $\Prob(r_n|h)$ is computed using the confusion matrix framework developed in Chapter \ref{chap:classification}:
+\begin{equation}
+\label{eq_6_5}
+\Prob(r_n|h) = C_{r_n,s_h}
+\end{equation}
+where $C_{r_n,s_h}$ is the confusion matrix entry representing the probability of observing read $r_n$ when the true sequence is the haplotype sequence $s_h$.
+
+\begin{proposition}[Likelihood Computation Complexity]
+\label{prop:likelihood-complexity}
+For $N$ reads and $P$ candidate haplotypes, computing all likelihoods requires $O(NP)$ confusion matrix lookups when using pre-computed matrices from the SMA-seq framework (Chapter \ref{chap:sma-seq}).
+\end{proposition}
+
+\textbf{Proof:} Each of the $N$ reads must be evaluated against each of the $P$ haplotypes, requiring one confusion matrix lookup per pair. $\square$
+
+\subsection{Posterior Computation}
+
+The posterior distribution combines the prior and likelihood through Bayes' theorem, providing our updated belief about haplotype identity after observing the sequencing data.
+
+\begin{theorem}[Bayes' Rule for Haplotype Classification]
+\label{thm:bayes-rule}
+Given observed reads $\mathbf{r} = \{r_1, \ldots, r_N\}$ and candidate haplotypes $\mathcal{H} = \{h_1, \ldots, h_P\}$, the posterior probability of haplotype $h_i$ is:
+\begin{eqbox}{Bayes' Rule for Haplotype Classification}
+\begin{equation}
+\label{eq_6_6}
+\Prob(h_i|\mathbf{r}) = \frac{\Prob(h_i) \cdot \Prob(\mathbf{r}|h_i)}{\sum_{j=1}^{P} \Prob(h_j) \cdot \Prob(\mathbf{r}|h_j)}
+\label{eq:posterior-bayes}
+\end{equation}
+\end{eqbox}
+where the denominator ensures proper normalization.
+\end{theorem}
+
+\textbf{Proof:} By Bayes' theorem:
+\begin{align}
+\Prob(h_i|\mathbf{r}) &= \frac{\Prob(\mathbf{r}|h_i) \cdot \Prob(h_i)}{\Prob(\mathbf{r})} \\
+&= \frac{\Prob(\mathbf{r}|h_i) \cdot \Prob(h_i)}{\sum_{j=1}^{P} \Prob(\mathbf{r}|h_j) \cdot \Prob(h_j)}
+\end{align}
+where the second equality follows from the law of total probability over the complete set of candidate haplotypes. $\square$
+
+\begin{conceptbox}{The Power of Bayesian Inference for Haplotype Classification}
+Equation~\ref{eq_6_6} embodies a fundamental insight: \textbf{classification accuracy improves systematically as evidence accumulates}. This has profound practical implications:
+
+\textbf{Prior Knowledge Integration:}
+\begin{itemize}
+\item Population frequencies $\Prob(h_i)$ encode decades of genetic epidemiology
+\item Rare haplotypes require stronger evidence (more reads, higher quality) for confident classification
+\item Common haplotypes are correctly identified even with modest coverage
+\end{itemize}
+
+\textbf{Evidence Accumulation:}
+\begin{itemize}
+\item Each read provides multiplicative evidence via $\Prob(\mathbf{r}|h_i) = \prod_{n=1}^{N} \Prob(r_n|h_i)$
+\item Poor-quality reads contribute little (near-uniform likelihoods across haplotypes)
+\item High-quality reads at variant positions provide decisive discrimination
+\end{itemize}
+
+\textbf{Uncertainty Quantification:}
+\begin{itemize}
+\item Posterior $\Prob(h_i|\mathbf{r})$ directly quantifies confidence—no ad-hoc thresholds
+\item When evidence is weak, posterior remains diffuse (high entropy)
+\item Strong evidence concentrates probability mass on correct haplotype
+\end{itemize}
+
+\textbf{Clinical Translation:} For pharmacogenetic applications, this framework enables \textbf{actionable classification thresholds}: report diplotype only when $\max_i \Prob(h_i|\mathbf{r}) > 0.99$, otherwise flag for additional sequencing. Unlike frequentist p-values, these posteriors directly answer "How confident should I be in this classification?"
+\end{conceptbox}
+
+For numerical stability, computation should be performed in log space:
+
+\begin{algorithm}[H]
+\caption{Numerically Stable Posterior Computation}
+\label{alg:posterior-computation}
+\begin{algorithmic}[1]
+\REQUIRE Reads $\mathbf{r} = \{r_1, \ldots, r_N\}$, Haplotypes $\mathcal{H} = \{h_1, \ldots, h_P\}$, Priors $\{\Prob(h_i)\}_{i=1}^P$
+\ENSURE Posterior probabilities $\{\Prob(h_i|\mathbf{r})\}_{i=1}^P$
+\STATE Initialize log-likelihoods $\mathbf{L} \leftarrow \mathbf{0}_{P \times 1}$
+\FOR{each read $r_n \in \mathbf{r}$}
+    \FOR{each haplotype $h_i \in \mathcal{H}$}
+        \STATE $\ell_{n,i} \leftarrow \log C_{r_n,s_{h_i}}$ \COMMENT{Log confusion matrix lookup}
+        \STATE $L_i \leftarrow L_i + \ell_{n,i}$
+    \ENDFOR
+\ENDFOR
+\FOR{each haplotype $h_i \in \mathcal{H}$}
+    \STATE $\log P_i \leftarrow \log \Prob(h_i) + L_i$ \COMMENT{Log posterior (unnormalized)}
+\ENDFOR
+\STATE $\log P_{\max} \leftarrow \max_i \log P_i$ \COMMENT{For numerical stability}
+\STATE $Z \leftarrow \sum_{i=1}^{P} \exp(\log P_i - \log P_{\max})$ \COMMENT{Stable normalization}
+\FOR{each haplotype $h_i \in \mathcal{H}$}
+    \STATE $\Prob(h_i|\mathbf{r}) \leftarrow \exp(\log P_i - \log P_{\max} - \log Z)$
+\ENDFOR
+\RETURN $\{\Prob(h_i|\mathbf{r})\}_{i=1}^P$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{remark}[Computational Efficiency]
+\label{rem:computational-efficiency}
+Algorithm \ref{alg:posterior-computation} avoids numerical underflow by:
+\begin{enumerate}
+\item Working in log space for likelihood accumulation
+\item Subtracting the maximum log-posterior before exponentiation
+\item Computing the normalization constant using shifted values
+\end{enumerate}
+This ensures numerical stability even with thousands of reads and highly unlikely haplotypes.
+\end{remark}
+
+\section{Decision Rules and Classification Thresholds}
+
+While the posterior distribution provides complete information about uncertainty, clinical applications often require discrete decisions. We present several decision rules, each appropriate for different operational contexts.
+
+\subsection{Maximum A Posteriori (MAP) Classification}
+
+The MAP rule selects the haplotype with highest posterior probability:
+
+\begin{eqbox}{Maximum A Posteriori (MAP) Classification}
+\begin{equation}
+\label{eq_6_7}
+\hat{h}_{\text{MAP}} = \argmax_{h \in \mathcal{H}} \Prob(h|\mathbf{r})
+\label{eq:map-classification}
+\end{equation}
+\end{eqbox}
+
+This rule minimizes the expected number of misclassifications when all errors have equal cost. However, it may produce confident classifications even when the posterior is relatively flat across multiple haplotypes.
+
+\subsection{Posterior Probability Threshold}
+
+To avoid false positive classifications in clinical settings, we can require that the posterior probability exceed a threshold:
+
+\begin{definition}[Threshold-Based Decision Rule]
+\label{def:threshold-decision}
+Given threshold $\tau \in (0,1)$:
+\begin{equation}
+\text{Decision} = \begin{cases}
+\hat{h}_{\text{MAP}} & \text{if } \max_i \Prob(h_i|\mathbf{r}) > \tau \\
+\text{No call} & \text{otherwise}
+\end{cases}
+\end{equation}
+\end{definition}
+
+\begin{example}[Clinical Threshold Selection]
+\label{ex:clinical-threshold}
+For pharmacogenomic applications where incorrect haplotype calls could lead to adverse drug reactions:
+\begin{itemize}
+\item Standard testing: $\tau = 0.95$ (95\% confidence required)
+\item High-risk medications: $\tau = 0.99$ (99\% confidence required)
+\item Research applications: $\tau = 0.80$ (80\% confidence acceptable)
+\end{itemize}
+
+With $\tau = 0.95$, if the MAP haplotype has posterior probability 0.92, the system returns "No call" rather than risking a potentially incorrect classification.
+\end{example}
+
+\begin{proposition}[Coverage Requirements for Threshold-Based Classification]
+\label{prop:coverage-threshold}
+To achieve posterior probability $> \tau$ for the true haplotype with confusion matrix accuracy $p$ and uniform prior over $P$ haplotypes, the minimum number of concordant reads required is approximately:
+\begin{equation}
+N_{\min} \approx \frac{\log(\tau(P-1)/(1-\tau))}{\log(p/(1-p))}
+\end{equation}
+\end{proposition}
+
+This relationship highlights the trade-off between coverage depth, classification confidence, and the number of candidate haplotypes.
+
+\section{Bayes Factors for Hypothesis Comparison}
+
+Bayes factors provide a natural framework for comparing the evidence supporting different haplotypes without requiring threshold selection.
+
+\begin{definition}[Bayes Factor]
+\label{def:bayes-factor}
+The Bayes factor comparing haplotypes $h_i$ and $h_j$ given observed reads $\mathbf{r}$ is:
+\begin{eqbox}{Bayes Factor for Hypothesis Comparison}
+\begin{equation}
+\label{eq_6_10}
+\text{BF}_{ij} = \frac{\Prob(\mathbf{r}|h_i)}{\Prob(\mathbf{r}|h_j)} = \frac{\Prob(h_i|\mathbf{r})/\Prob(h_i)}{\Prob(h_j|\mathbf{r})/\Prob(h_j)}
+\label{eq:bayes-factor}
+\end{equation}
+\end{eqbox}
+\end{definition}
+
+The Bayes factor quantifies how much more likely the data are under $h_i$ compared to $h_j$, independent of prior probabilities. This makes it particularly useful for:
+\begin{itemize}
+\item Comparing specific hypotheses (e.g., wild-type vs. specific variant)
+\item Quantifying evidence strength in validation studies
+\item Combining evidence across multiple experiments
+\end{itemize}
+
+\begin{table}[!htbp]
+\centering
+\caption{Bayes Factor Interpretation Scale}
+\label{tab:bayes-factor-scale}
+\begin{tabular}{ll}
+\toprule
+$\log_{10}(\text{BF})$ & Evidence Strength \\
+\midrule
+$> 2.0$ & Decisive evidence for $h_i$ \\
+$1.5 - 2.0$ & Very strong evidence for $h_i$ \\
+$1.0 - 1.5$ & Strong evidence for $h_i$ \\
+$0.5 - 1.0$ & Substantial evidence for $h_i$ \\
+$0.0 - 0.5$ & Weak evidence for $h_i$ \\
+$-0.5 - 0.0$ & Weak evidence for $h_j$ \\
+$< -0.5$ & Substantial or stronger evidence for $h_j$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{remark}[Bayes Factor Properties]
+\label{rem:bayes-factor-properties}
+Key properties of Bayes factors:
+\begin{enumerate}
+\item \textbf{Symmetry:} $\text{BF}_{ij} = 1/\text{BF}_{ji}$
+\item \textbf{Transitivity:} $\text{BF}_{ik} = \text{BF}_{ij} \cdot \text{BF}_{jk}$
+\item \textbf{Sequential updating:} $\text{BF}_{ij}(\mathbf{r}_1, \mathbf{r}_2) = \text{BF}_{ij}(\mathbf{r}_1) \cdot \text{BF}_{ij}(\mathbf{r}_2)$ for independent data
+\item \textbf{Prior independence:} BF is unchanged by uniform scaling of priors
+\end{enumerate}
+\end{remark}
+
+\section{Mixture Models and Complex Scenarios}
+\label{sec:mixture-models}
+
+Real-world samples often contain mixtures of DNA from multiple sources. This occurs naturally in diploid organisms and pathologically in contamination or tumor heterogeneity.
+
+\begin{definition}[Diploid Mixture Model]
+\label{def:diploid-mixture}
+For a diploid sample with haplotypes $h_i$ and $h_j$ in proportion $\lambda$:
+\begin{eqbox}{Diploid Mixture Likelihood}
+\begin{equation}
+\Prob(r_n|h_i, h_j; \lambda) = \lambda \cdot \Prob(r_n|h_i) + (1-\lambda) \cdot \Prob(r_n|h_j)
+\label{eq:diploid-mixture}
+\end{equation}
+\end{eqbox}
+where $\lambda \in [0.3, 0.7]$ typically for balanced diploid samples.
+\end{definition}
+
+The posterior for diploid genotypes becomes:
+\begin{equation}
+\Prob(g_{ij}|\mathbf{r}) = \frac{\Prob(g_{ij}) \prod_{n=1}^{N} \Prob(r_n|h_i, h_j; \lambda_{ij})}{\sum_{g \in \mathcal{G}} \Prob(g) \prod_{n=1}^{N} \Prob(r_n|g)}
+\end{equation}
+where $\mathcal{G}$ is the set of possible diploid genotypes.
+
+\begin{proposition}[Identifiability in Mixture Models]
+\label{prop:mixture-identifiability}
+For distinguishing diploid genotype $g_{ij} = \{h_i, h_j\}$ from $g_{kl} = \{h_k, h_l\}$ with confidence $\tau$, the required number of reads scales as:
+\begin{equation}
+N \propto \frac{\log(1/\epsilon)}{D^2(g_{ij} || g_{kl})}
+\end{equation}
+where $D(g_{ij} || g_{kl})$ is the Kullback-Leibler divergence between the mixture distributions and $\epsilon = 1 - \tau$ is the error tolerance.
+\end{proposition}
+
+\section{Quality Control and Posterior Calibration}
+
+The reliability of posterior probabilities depends critically on the accuracy of the confusion matrix and prior specification. Quality control procedures ensure that reported confidence levels match empirical accuracy.
+
+\subsection{Posterior Calibration Verification}
+
+Well-calibrated posteriors satisfy:
+\begin{equation}
+\Prob(\text{correct classification} | \Prob(h|\mathbf{r}) = p) = p
+\end{equation}
+
+This can be verified empirically using validation datasets with known ground truth. Systematic deviations indicate:
+\begin{itemize}
+\item \textbf{Overconfidence:} Empirical accuracy $< p$ suggests confusion matrix underestimates errors
+\item \textbf{Underconfidence:} Empirical accuracy $> p$ suggests overly conservative error model
+\end{itemize}
+
+\subsection{Prior Sensitivity Analysis}
+
+The impact of prior choice should be assessed through:
+\begin{equation}
+\Delta_{\text{posterior}} = \max_{h_i} |\Prob(h_i|\mathbf{r}; \text{prior}_1) - \Prob(h_i|\mathbf{r}; \text{prior}_2)|
+\end{equation}
+
+Large values of $\Delta_{\text{posterior}}$ indicate that conclusions are sensitive to prior specification and additional data may be needed. See Chapter \ref{chap:qc-gates} for comprehensive quality control procedures.
+
+\section{Variable Summary and Reference}
+\label{sec:variable-summary-ch6}
+
+This section provides a comprehensive summary of the key variables used in this chapter for Bayesian haplotype classification. These variables form the core notation for posterior computation and decision-making throughout the framework.
+
+\subsection{Variable Summary Table}
+
+\begin{vartable}
+\varrow{$h_i$}{Candidate haplotype $i$ from the haplotype space $\mathcal{H}$.}
+       {dimensionless categorical}
+       {Defined by reference database (e.g., PharmVar) and assay design.}
+
+\varrow{$\Prob(h_i)$}{Prior probability of haplotype $h_i$ before observing data.}
+       {probability (0--1)}
+       {Set from population frequencies (gnomAD, 1000 Genomes) or uniform/sparsity-inducing priors.}
+
+\varrow{$r_n$}{Single sequencing read $n$ with basecalled sequence and quality scores.}
+       {bp (length), sequence string}
+       {Measured by sequencing platform and basecaller; extracted from raw signal.}
+
+\varrow{$\mathbf{r}$}{Complete dataset of reads $\mathbf{r} = \{r_1, \ldots, r_N\}$.}
+       {counted collection}
+       {All reads passing QC filters for the sample.}
+
+\varrow{$N$}{Total number of reads in the dataset.}
+       {dimensionless count}
+       {Measured from sequencing run after QC filtering.}
+
+\varrow{$\Prob(r_n|h_i)$}{Per-read likelihood: probability of observing read $r_n$ given haplotype $h_i$.}
+       {probability (0--1)}
+       {Computed via confusion matrix $C_{r_n,s_{h_i}}$ from SMA-seq calibration.}
+
+\varrow{$\Prob(\mathbf{r}|h_i)$}{Dataset likelihood: probability of observing all reads given haplotype $h_i$.}
+       {probability (0--1)}
+       {Product of per-read likelihoods: $\prod_{n=1}^{N} \Prob(r_n|h_i)$ (Equation~\ref{eq:likelihood-factorization}).}
+
+\varrow{$\Prob(h_i|\mathbf{r})$}{Posterior probability of haplotype $h_i$ given observed reads.}
+       {probability (0--1)}
+       {Computed via Bayes' rule (Equation~\ref{eq:posterior-bayes}); final classification metric.}
+
+\varrow{$C_{r_n,s_h}$}{Confusion matrix entry: probability of observing read $r_n$ from true sequence $s_h$.}
+       {probability (0--1)}
+       {Empirically measured from SMA-seq standards (Chapter~\ref{chap:classification}).}
+
+\varrow{$\text{BF}_{ij}$}{Bayes factor comparing evidence for haplotype $h_i$ versus $h_j$.}
+       {dimensionless ratio}
+       {Computed as likelihood ratio $\Prob(\mathbf{r}|h_i)/\Prob(\mathbf{r}|h_j)$ (Equation~\ref{eq:bayes-factor}).}
+
+\varrow{$\tau$}{Posterior probability threshold for classification decisions.}
+       {probability (0--1)}
+       {Set based on clinical risk tolerance (typically 0.95--0.99 for pharmacogenomics).}
+
+\varrow{$\lambda$}{Mixture fraction in diploid samples: proportion of reads from haplotype $h_i$.}
+       {fraction (0--1)}
+       {Estimated via EM algorithm or set to 0.5 for balanced diploid (Equation~\ref{eq:diploid-mixture}).}
+
+\varrow{$P$}{Number of candidate haplotypes in space $\mathcal{H}$.}
+       {dimensionless count}
+       {Determined by assay design and haplotype database size.}
+\end{vartable}
+
+\subsection{Detailed Variable Reference Boxes}
+
+This section provides in-depth reference information for the most critical variables in Bayesian haplotype classification.
+
+\begin{varbox}{$h_i$}
+\textbf{Physical description.}
+A candidate haplotype representing one specific phased DNA sequence that could be present in the sample. Each haplotype $h_i$ is an element of the haplotype space $\mathcal{H} = \{h_1, \ldots, h_P\}$ defined by the assay design.
+
+\textbf{Units.}
+Categorical variable (dimensionless); each index $i$ corresponds to a specific DNA sequence.
+
+\textbf{Measurement / determination.}
+Haplotype sequences are defined by external reference databases (e.g., PharmVar for pharmacogenes, gnomAD for population variants). The posterior probability $\Prob(h_i|\mathbf{r})$ is inferred from sequencing data.
+
+\textbf{Example.}
+For CYP2D6 analysis, the haplotype space might include:
+\[
+h_1 = \text{CYP2D6*1},\quad h_2 = \text{CYP2D6*2},\quad h_3 = \text{CYP2D6*4},\quad h_4 = \text{CYP2D6*10}
+\]
+If posterior probabilities are $\Prob(h_1|\mathbf{r}) = 0.02$, $\Prob(h_2|\mathbf{r}) = 0.97$, $\Prob(h_3|\mathbf{r}) = 0.01$, $\Prob(h_4|\mathbf{r}) < 0.01$, then $h_2$ (*2 allele) is the most likely haplotype.
+\end{varbox}
+
+\begin{varbox}{$\Prob(h_i|\mathbf{r})$}
+\textbf{Physical description.}
+Posterior probability that haplotype $h_i$ is the true haplotype given all observed sequencing reads $\mathbf{r}$. This represents our final belief about haplotype identity after combining prior knowledge with empirical evidence.
+
+\textbf{Units.}
+Probability in $[0,1]$; satisfies $\sum_{i=1}^{P} \Prob(h_i|\mathbf{r}) = 1$.
+
+\textbf{Measurement / determination.}
+Computed via Bayes' rule (Equation~\ref{eq:posterior-bayes}):
+\[
+\Prob(h_i|\mathbf{r}) = \frac{\Prob(h_i) \cdot \Prob(\mathbf{r}|h_i)}{\sum_{j=1}^{P} \Prob(h_j) \cdot \Prob(\mathbf{r}|h_j)}
+\]
+using prior probabilities $\Prob(h_i)$ and likelihoods $\Prob(\mathbf{r}|h_i)$ from confusion matrices.
+
+\textbf{Example.}
+With $N = 500$ high-quality reads strongly supporting haplotype *10, the posterior might be $\Prob(h=\text{*10}|\mathbf{r}) = 0.998$, indicating 99.8\% confidence. This exceeds typical clinical thresholds ($\tau = 0.95$), enabling confident classification.
+\end{varbox}
+
+\begin{varbox}{$\Prob(\mathbf{r}|h_i)$}
+\textbf{Physical description.}
+Dataset likelihood: the probability of observing the complete set of reads $\mathbf{r} = \{r_1, \ldots, r_N\}$ if the true haplotype is $h_i$. This quantifies how well the data support haplotype $h_i$.
+
+\textbf{Units.}
+Probability in $[0,1]$ (often extremely small for large $N$; computed in log space).
+
+\textbf{Measurement / determination.}
+Computed as the product of per-read likelihoods (Equation~\ref{eq:likelihood-factorization}):
+\[
+\Prob(\mathbf{r}|h_i) = \prod_{n=1}^{N} \Prob(r_n|h_i)
+\]
+where each $\Prob(r_n|h_i) = C_{r_n,s_{h_i}}$ comes from the confusion matrix.
+
+\textbf{Example.}
+For a perfect standard with 1000 reads all matching haplotype $h_1$, if each read has $\Prob(r_n|h_1) \approx 0.999$, then:
+\[
+\log \Prob(\mathbf{r}|h_1) \approx 1000 \times \log(0.999) \approx -1.0
+\]
+For a mismatched haplotype $h_2$ with $\Prob(r_n|h_2) \approx 10^{-4}$:
+\[
+\log \Prob(\mathbf{r}|h_2) \approx 1000 \times \log(10^{-4}) = -4000
+\]
+The enormous difference in log-likelihoods provides decisive evidence for $h_1$.
+\end{varbox}
+
+\begin{varbox}{$\text{BF}_{ij}$}
+\textbf{Physical description.}
+Bayes factor comparing the evidence for haplotype $h_i$ versus haplotype $h_j$. Unlike posterior probabilities, Bayes factors are independent of prior probabilities and quantify the strength of evidence from the data alone.
+
+\textbf{Units.}
+Dimensionless ratio; values range from 0 to $\infty$.
+
+\textbf{Measurement / determination.}
+Computed as the likelihood ratio (Equation~\ref{eq:bayes-factor}):
+\[
+\text{BF}_{ij} = \frac{\Prob(\mathbf{r}|h_i)}{\Prob(\mathbf{r}|h_j)} = \frac{\Prob(h_i|\mathbf{r})/\Prob(h_i)}{\Prob(h_j|\mathbf{r})/\Prob(h_j)}
+\]
+
+\textbf{Example.}
+Comparing *1 and *4 alleles with 200 reads:
+\begin{itemize}
+\item If $\log \Prob(\mathbf{r}|h_1) = -150$ and $\log \Prob(\mathbf{r}|h_4) = -180$
+\item Then $\log_{10} \text{BF}_{1,4} = (-150 + 180)/\ln(10) \approx 13$
+\item This corresponds to $\text{BF}_{1,4} \approx 10^{13}$, providing overwhelming evidence for *1 over *4
+\end{itemize}
+Standard interpretation: $\text{BF} > 100$ is decisive, $10 < \text{BF} < 100$ is strong, $3 < \text{BF} < 10$ is moderate evidence.
+\end{varbox}
+
+\begin{varbox}{$\lambda$}
+\textbf{Physical description.}
+Mixture fraction representing the proportion of reads originating from haplotype $h_i$ in a diploid or contaminated sample. The complementary fraction $1-\lambda$ corresponds to haplotype $h_j$.
+
+\textbf{Units.}
+Fraction in $[0,1]$; typically $\lambda \approx 0.5$ for balanced diploid samples.
+
+\textbf{Measurement / determination.}
+Estimated by fitting the mixture model (Equation~\ref{eq:diploid-mixture}) to observed read likelihoods:
+\[
+\Prob(r_n|h_i, h_j; \lambda) = \lambda \cdot \Prob(r_n|h_i) + (1-\lambda) \cdot \Prob(r_n|h_j)
+\]
+Typically estimated via maximum likelihood or EM algorithm.
+
+\textbf{Example.}
+For a heterozygous sample with *1/*10:
+\begin{itemize}
+\item Balanced diploid: $\lambda \approx 0.5$ (equal coverage from both alleles)
+\item Copy number variation: $\lambda = 0.67$ might indicate 2 copies of *1, 1 copy of *10
+\item Contamination: $\lambda = 0.98$ indicates 98\% patient DNA (*1), 2\% contaminant (*10)
+\end{itemize}
+\end{varbox}
+
+\begin{varbox}{$\tau$}
+\textbf{Physical description.}
+Posterior probability threshold used for clinical decision-making. Classifications are only reported when $\max_i \Prob(h_i|\mathbf{r}) > \tau$; otherwise, the system returns "No call" to avoid false positives.
+
+\textbf{Units.}
+Probability in $(0,1)$; typically set between 0.80 and 0.99 depending on application.
+
+\textbf{Measurement / determination.}
+Threshold $\tau$ is not measured but selected based on clinical risk tolerance and validation studies balancing sensitivity versus specificity.
+
+\textbf{Example.}
+Threshold selection by application:
+\begin{itemize}
+\item \textbf{High-risk medications (warfarin, clopidogrel):} $\tau = 0.99$ (99\% confidence required)
+\item \textbf{Standard pharmacogenomic testing:} $\tau = 0.95$ (95\% confidence)
+\item \textbf{Research applications:} $\tau = 0.80$ (80\% confidence acceptable)
+\end{itemize}
+If the MAP estimate has $\Prob(h_{\text{MAP}}|\mathbf{r}) = 0.93$ and $\tau = 0.95$, the system returns "No call" rather than risking an incorrect classification. The sample may be resequenced or flagged for orthogonal validation.
+\end{varbox}
+
+\section{Computational Considerations}
+
+\subsection{Haplotype Space Reduction}
+
+When the number of candidate haplotypes $P$ is large (e.g., $> 1000$), exact posterior computation becomes prohibitive. Strategies for reduction include:
+
+\begin{enumerate}
+\item \textbf{Likelihood-based filtering:} Retain only haplotypes with likelihood above threshold
+\item \textbf{Prior-based selection:} Focus on haplotypes with non-negligible prior probability
+\item \textbf{Adaptive refinement:} Start with common haplotypes, expand if no strong posterior peak
+\item \textbf{Local search:} Explore haplotype space near high-likelihood candidates
+\end{enumerate}
+
+\subsection{Parallel Implementation}
+
+The likelihood computation in Algorithm \ref{alg:posterior-computation} is embarrassingly parallel:
+\begin{itemize}
+\item Distribute reads across processors for likelihood calculation
+\item Parallelize over haplotypes for prior-weighted posterior computation
+\item Use GPU acceleration for confusion matrix lookups
+\end{itemize}
+
+Modern implementations achieve near-linear speedup with up to 64 cores for typical problem sizes ($N \sim 10^4$ reads, $P \sim 10^2$ haplotypes).
+
+\section{Chapter Summary}
+
+\begin{keytakeaways}
+This chapter established the Bayesian framework for haplotype classification from single-molecule sequencing data:
+
+\textbf{Core Framework:}
+\begin{itemize}
+\item \textbf{Prior Distributions} (Definition~\ref{def:prior-categories}): Population-based, uniform, or sparsity-inducing priors encode domain knowledge before observing data
+
+\item \textbf{Likelihood Computation} (Equations~\ref{eq_6_4}, \ref{eq_6_5}): Factorizes as $\Prob(\mathbf{r}|h) = \prod_{n=1}^{N} \Prob(r_n|h)$ using confusion matrices from Chapter~\ref{chap:classification}
+
+\item \textbf{Bayes' Theorem} (Theorem~\ref{thm:bayes-rule}, Equation~\ref{eq_6_6}): Combines prior and likelihood to yield posterior $\Prob(h_i|\mathbf{r}) = \frac{\Prob(h_i) \cdot \Prob(\mathbf{r}|h_i)}{\sum_j \Prob(h_j) \cdot \Prob(\mathbf{r}|h_j)}$
+
+\item \textbf{MAP Classification} (Equation~\ref{eq_6_7}): Point estimate $\widehat{h}_{\text{MAP}} = \arg\max_h \Prob(h|\mathbf{r})$ for clinical decision-making
+
+\item \textbf{Bayes Factors} (Equation~\ref{eq_6_10}): $\text{BF}_{12} = \Prob(\mathbf{r}|h_1)/\Prob(\mathbf{r}|h_2)$ quantifies relative evidence without threshold selection
+
+\item \textbf{Numerical Stability}: Log-space computation prevents underflow in posterior calculations over large read sets
+\end{itemize}
+
+\textbf{Critical Dependencies:}
+\begin{itemize}
+\item \textbf{Confusion matrix accuracy} (Chapter~\ref{chap:classification}): Determines likelihood reliability and posterior calibration
+\item \textbf{Purity constraints} (Chapter~\ref{chap:purity}): Bound achievable posterior confidence via $P(h|\mathbf{r}) \leq \pi$
+\item \textbf{Quality control} (Chapter~\ref{chap:qc-gates}): Ensures operational reliability in production pipelines
+\end{itemize}
+
+\textbf{Practitioner Guidelines:}
+\begin{enumerate}
+\item \textbf{Full posteriors over point estimates:} Posterior probabilities quantify uncertainty; MAP alone discards valuable information
+\item \textbf{Clinical threshold selection:} Balance sensitivity/specificity based on consequences of false positives vs. false negatives
+\item \textbf{Bayes factors for evidence combination:} Multiply BFs across independent experiments without ad-hoc thresholds
+\item \textbf{Prior sensitivity analysis:} Validate robustness by varying priors; high sensitivity indicates weak evidence
+\item \textbf{Computational optimization:} Use log-space arithmetic, parallel computing (Algorithm~\ref{alg:posterior-computation})
+\end{enumerate}
+
+\textbf{Extensions:} Diplotype inference combines haplotype posteriors. Mixture deconvolution extends to contamination scenarios. Haplotagging links reads to parental haplotypes.
+
+\textbf{Mathematical reference:} For complete formal Bayesian derivations, haplotype and diplotype classification proofs, and haplotagging models, see Appendix~\ref{app:mathematical-models}, Sections~5--6. For quick reference of posterior formulas, see Appendices~\ref{app:core-equations}, \ref{app:variable-master}, and \ref{app:equation-master}.
+\end{keytakeaways}

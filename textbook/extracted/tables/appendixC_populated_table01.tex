@@ -1,0 +1,18 @@
+\begin{table}[H]
+\centering
+\caption{Core Quality Control Gates and Thresholds}
+\label{tab:qc-gates-summary}
+\begin{tabular}{p{3.5cm}p{4cm}p{2.5cm}p{5cm}}
+\toprule
+\textbf{QC Gate} & \textbf{Metric} & \textbf{Threshold} & \textbf{Action / Notes} \\
+\midrule
+Fragment model validation & $D_{\mathrm{KL}}(f_{\mathrm{emp}} \| f_{\mathrm{frag}})$ & $<\mathbf{0.05}$ bits & Prefer empirical $f_{\mathrm{emp}}$; if using analytic model, flag result; see \CEref{9}. \\
+\midrule
+Read-length sanity check & $D_{\mathrm{KL}}(f_{\mathrm{emp}} \| f_{\mathrm{read}})$ & Warn: 0.10--0.20 bits; Fail: $>0.30$ bits & Investigate truncation, filters, size selection, or ligation bias; see \CEref{10}. \\
+\midrule
+Quality overstatement detection & $d = \frac{1}{N}\sum \mathbb{I}\{Q_{\mathrm{pred}} > Q_{\mathrm{emp}}\}$ & $d \leq 0.30$ & Report with 95\% CI; high $d$ triggers calibration review; see \CEref{14}. \\
+\midrule
+Purity ceiling enforcement & TPR vs. purity & \textbf{Hard gate:} TPR $\leq$ purity ($\pi$ or $\pi_{\max}$) & Do not report TPR exceeding measured or estimated purity ceiling; violations indicate contamination, reference errors, or model failure; see \CEref{15}. \\
+\bottomrule
+\end{tabular}
+\end{table}

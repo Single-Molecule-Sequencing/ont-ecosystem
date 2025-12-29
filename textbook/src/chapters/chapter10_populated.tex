@@ -1,0 +1,1081 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Chapter 10: From Sample to Analyzed Data (Complete Workflow)
+%% Part III: Physical Standards, Library Preparation, and Workflows
+%% Version 6.0 - Migrated from v5 Ch8 + expansions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{From Sample to Analyzed Data: The Complete Workflow}
+\label{chap:workflow}
+\label{chap:signal-to-sequence}
+\label{chap:data-pipeline}
+
+The haplotype classification framework developed in Parts II-III requires integration of multiple experimental and computational components: physical standards construction (Chapter~\ref{chap:plasmid-standards}), optional targeted enrichment (Chapter~\ref{chap:targeted-enrichment}), single-molecule sequencing, empirical error characterization (Chapter~\ref{chap:sma-seq}), and Bayesian inference (Chapter~\ref{chap:posteriors}). This chapter presents the complete operational workflow, from sample collection through clinical report generation, emphasizing practical implementation details and quality checkpoints.
+
+The workflow architecture mirrors standard genomics pipelines but incorporates framework-specific requirements: (1) \textbf{Primary analysis} converts raw signals to base calls with quality scores, (2) \textbf{Secondary analysis} performs exploratory mapping for quality assessment (not classification), and (3) \textbf{Tertiary analysis} executes haplotype classification using the alignment-free framework. Clear separation of these stages enables modular implementation and systematic troubleshooting.
+
+\begin{learningobjectives}
+By the end of this chapter, you will be able to:
+\begin{itemize}
+\item Distinguish primary (basecalling), secondary (QC mapping), and tertiary (classification) analysis stages
+\item Execute complete workflow from biological sample to clinical report
+\item Install and configure software dependencies (Guppy/Dorado, minimap2, samtools, custom Python scripts)
+\item Implement all five QC gates at appropriate workflow checkpoints
+\item Optimize computational performance: parallel processing, GPU acceleration, caching strategies
+\item Troubleshoot common workflow failures: basecalling errors, alignment issues, posterior computation problems
+\item Estimate computational requirements: <1 hour per sample on modern workstation
+\item Archive essential data while managing storage constraints (70-90\% compression for FASTQ)
+\end{itemize}
+\end{learningobjectives}
+
+\section{Workflow Overview}
+
+\begin{figure}[!htbp]
+\centering
+\fbox{\begin{minipage}{0.9\textwidth}
+\centering
+\textbf{Complete Haplotype Classification Pipeline} \\
+\vspace{0.5cm}
+\begin{tabular}{c}
+\textbf{Sample Preparation} \\
+$\downarrow$ \\
+DNA extraction \& QC \\
+$\downarrow$ \\
+Fragmentation (optional) \\
+$\downarrow$ \\
+Cas9 enrichment (optional) \\
+$\downarrow$ \\
+Library preparation \\
+$\downarrow$ \\
+\hline
+\textbf{Sequencing} \\
+$\downarrow$ \\
+Single-molecule sequencing \\
+$\downarrow$ \\
+Raw signal acquisition \\
+$\downarrow$ \\
+\hline
+\textbf{Primary Analysis} \\
+$\downarrow$ \\
+Basecalling \\
+$\downarrow$ \\
+Quality score assignment \\
+$\downarrow$ \\
+FASTQ generation \\
+$\downarrow$ \\
+\hline
+\textbf{Secondary Analysis (QC only)} \\
+$\downarrow$ \\
+Reference alignment \\
+$\downarrow$ \\
+Coverage assessment \\
+$\downarrow$ \\
+Quality metrics \\
+$\downarrow$ \\
+\hline
+\textbf{Tertiary Analysis (Classification)} \\
+$\downarrow$ \\
+Confusion matrix estimation (if standards) \\
+$\downarrow$ \\
+Per-read likelihood computation \\
+$\downarrow$ \\
+Posterior probability calculation \\
+$\downarrow$ \\
+Haplotype assignment \\
+$\downarrow$ \\
+Quality control gates \\
+$\downarrow$ \\
+Clinical report
+\end{tabular}
+\end{minipage}}
+\caption{End-to-end workflow from biological sample to clinical classification result. Dashed boxes indicate optional steps depending on application.}
+\label{fig:complete-workflow}
+\end{figure}
+
+\section{Primary Analysis: From Signals to Sequences}
+
+Primary analysis converts platform-specific raw signals (electrical current changes for ONT, photon pulses for PacBio/Illumina) into nucleotide sequences with associated quality scores.
+
+\subsection{Signal Acquisition}
+
+\textbf{Oxford Nanopore Technology (ONT):}
+\begin{itemize}
+\item Raw signals: FAST5 or POD5 format containing ionic current measurements
+\item Sampling rate: 4-5 kHz (4000-5000 measurements per second)
+\item Signal characteristics: Current level shifts as different k-mers pass through pore
+\item File size: 1-10 MB per read depending on length and sampling rate
+\end{itemize}
+
+\subsection{ONT Run Metadata: \texttt{sequencing\_summary.tsv}}
+
+MinKNOW and Dorado emit a \texttt{sequencing\_summary.tsv} manifest whose
+columnar schema is versioned (current release~1.1) by Oxford Nanopore
+Technologies.\footnote{Official specification:
+\url{https://github.com/nanoporetech/ont-output-specifications/blob/main/sequencing_summary/spec.yaml}}
+Each release is referenced in the header preamble, enabling automated schema
+negotiation when multiple software versions coexist. Lightweight validators
+can parse the YAML definition and confirm column presence, types, and allowed
+values prior to ingestion. Every row represents a single basecalled read with
+pointers back to the raw signal, per-pore acquisition context, and downstream
+analysis results. Using the schema as intended is essential for reproducible
+traceability, diagnosing run-level anomalies, and reconciling telemetry across
+software upgrades. When importing manifests into workflow managers or LIMS,
+persist the \texttt{schema\_version} alongside a manifest checksum to preserve
+audit trails.
+
+\begin{table}[!htbp]
+\centering
+\caption{Selected fields in the ONT \texttt{sequencing\_summary} specification}
+\label{tab:ont-sequencing-summary}
+\begin{tabular}{p{0.28\textwidth}p{0.62\textwidth}}
+\toprule
+\textbf{Field(s)} & \textbf{Description and workflow use} \\
+\midrule
+\texttt{filename\_fastq}/\texttt{filename\_fast5}/\texttt{filename\_pod5}/\texttt{filename\_bam}/\texttt{input\_filename} &
+Online basecalling populates per-read pointers to FASTQ, FAST5/POD5, and BAM
+artifacts, while offline re-basecalling records the originating POD5/FAST5 in
+\texttt{input\_filename}. Keeping these paths in laboratory notebooks enables
+auditable linkage between archived signal, emitted basecalls, and tertiary
+analysis inputs. \\
+\texttt{batch\_id}, \texttt{parent\_read\_id}, \texttt{read\_id}, \texttt{run\_id} & A
+numeric \texttt{batch\_id} differentiates processing batches in offline
+workflows. UUIDs identify the sequencing run, the parent raw signal chunk, and
+any child reads produced by splitting or duplex polishing, supporting
+deduplication and duplex traceability. \\
+\texttt{channel}, \texttt{mux}, \texttt{minknow\_events}, \texttt{start\_time}, \texttt{duration}, \texttt{template\_start}, \texttt{template\_duration}, \texttt{num\_events\_template} &
+Per-pore acquisition metadata reveals pore loading, mux cycling, and
+electrical stability. Tracking event counts and dwell times across these
+columns helps flag failing pores and validates hardware interventions noted in
+run logs. \\
+\texttt{passes\_filtering}, \texttt{sequence\_length\_template}, \texttt{mean\_qscore\_template} &
+Instrument filters and basecaller-reported length/Q-score statistics provide a
+lightweight proxy for Gate~4 calibration checks and dataset-wide length
+distribution monitoring without reparsing FASTQ files. \\
+\texttt{end\_reason} & Categorical reason for read termination. Reported values
+include \texttt{signal\_positive}, \texttt{signal\_negative}, \texttt{mux\_change},
+\texttt{unblock\_mux\_change}, \texttt{data\_service\_unblock\_mux\_change},
+\texttt{analysis\_config\_change}, \texttt{device\_data\_error}, \texttt{api\_request},
+\texttt{paused}, and \texttt{unknown}. Yield stratified by termination mode
+distinguishes natural completion from active unblocks or hardware faults. \\
+\texttt{pore\_type}, \texttt{experiment\_id}, \texttt{sample\_id} & User-supplied run
+metadata should reconcile with laboratory information systems. Automated
+validations prevent sample swaps, enforce chemistry-specific model selection,
+and ensure the correct pore type was used during downstream analysis. \\
+\texttt{poly\_tail\_*} (RNA only) & Poly-A tail length and positional estimates
+are emitted when the poly-A estimation module runs. They support RNA-specific
+QC such as verifying tail trimming parameters or detecting incomplete cDNA
+synthesis. \\
+\texttt{barcode\_*} (when barcoding) & Barcode kit, arrangement, alias, and front
+/ rear confidence scores drive demultiplexing QC. Monitoring barcode scores and
+\texttt{type} (test sample vs controls) guards against barcode hopping and
+incorrect control labelling. \\
+\texttt{alignment\_*} (when aligning) & Optional alignment genome, orientation,
+accuracy, and BED hit metrics summarise exploratory mapping performed within
+MinKNOW/Dorado, enabling rapid on-target assessment without rebuilding reports.
+\\
+\texttt{duplex\_parent\_template}/\texttt{duplex\_parent\_complement} (duplex) & When
+duplex polishing succeeds these UUIDs link the fused read back to its template
+and complement parents, preserving provenance for re-analysis or auditing. \\
+\texttt{instrument\_type}, \texttt{instrument\_serial\_number}, \texttt{asic\_id}, \texttt{asic\_temp}, \texttt{asic\_version} &
+Hardware identifiers and temperature telemetry capture real-time instrument
+state. Tracking \texttt{asic\_temp} alongside throughput highlights thermal
+drift, while \texttt{instrument\_serial\_number} links deviations to specific
+devices for service reports. \\
+\texttt{flow\_cell\_id}, \texttt{flow\_cell\_product\_code}, \texttt{pore\_version}, \texttt{sequencing\_kit}, \texttt{flow\_cell\_position} &
+Consumable metadata documents chemistry lots and loading positions. Pairing
+these fields with inventory databases accelerates root-cause analysis of pore
+failure and enforces compatibility checks during automated run provisioning. \\
+\texttt{protocol\_group\_id}, \texttt{protocol\_run\_id}, \texttt{protocol}, \texttt{protocol\_version}, \texttt{protocol\_start}, \texttt{protocol\_duration} &
+Protocol identifiers mirror MinKNOW scheduling metadata. They support
+comparisons between protocol variants (for example, adaptive sampling vs.
+standard sequencing) and reconstruct pauses or restarts observed in the run
+log. \\
+\texttt{tracking\_id.*} & Nested tracking-card entries---covering operator,
+laboratory, and sample alias fields---provide the linkage required for
+regulatory record keeping. Populate them consistently to enable cross-run
+analytics on operator effects or training interventions. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Schema negotiation and ingestion pipelines.} The YAML specification
+defines enumerations, numeric bounds, and dependencies between optional module
+columns. Automated import pipelines should validate incoming manifests against
+these constraints before loading them into production data stores, rejecting or
+quarantining rows that fail schema checks. Because optional features (for
+example, duplex polishing or on-instrument alignment) append columns, parsing
+code should rely on column names rather than positional indices and persist the
+header metadata (including the schema URL) to make reprocessing under future
+schema revisions reproducible.
+
+\paragraph{Column categories and data types.} The specification annotates each
+column with a primitive type and (when applicable) a units comment or a
+regular-expression constraint. Mapping these declarations into your ingestion
+layer prevents subtle coercion errors:
+\begin{itemize}
+  \item \textbf{Identifiers and paths} (for example, filenames, UUIDs, kit
+  codes) are strings constrained by regular expressions; treat them as
+  case-sensitive text to preserve leading zeros and hexadecimal casing.
+  \item \textbf{Counts and durations} (such as \texttt{num\_events\_*},
+  \texttt{duration}, \texttt{template\_duration}) are integers representing raw
+  event counts or milliseconds; convert to floating-point seconds only when
+  required for analytics and persist the original integer for audit parity.
+  \item \textbf{Continuous telemetry} (for example, \texttt{mean\_qscore\_*},
+  \texttt{asic\_temp}, \texttt{calibration\_strain\_rate}) are floats; enforce
+  the schema-provided numeric bounds to catch corrupted rows or locale-induced
+  decimal separator issues.
+  \item \textbf{Enumerations} (such as \texttt{end\_reason},
+  \texttt{experiment\_type}, \texttt{barcode\_type}) should be loaded into
+  categorical columns so that dashboards can surface unexpected values as
+  validation failures rather than silently plotting them.
+\end{itemize}
+
+\begin{table}[!htbp]
+\centering
+\caption{Examples of schema-constrained ONT sequencing summary fields}
+\label{tab:ont-sequencing-summary-types}
+\begin{tabular}{p{0.23\textwidth}p{0.18\textwidth}p{0.49\textwidth}}
+\toprule
+\textbf{Field} & \textbf{Type / units} & \textbf{Constraint or ingestion note} \\
+\midrule
+\texttt{start\_time} & Integer (ms) & Must be $\geq 0$; combine with
+\texttt{duration} to reconstruct wall-clock timestamps. \\
+\texttt{calibration\_strain\_rate} & Float & Limited to 0--500; clamp
+out-of-range values and alert instrumentation team. \\
+\texttt{experiment\_type} & Enum & Allowed values listed in specification;
+use to drive protocol-specific QC. \\
+\texttt{tracking\_id.user\_specified\_run\_id} & Regex string & Accepts
+alphanumeric, dash, and underscore; block whitespace during validation. \\
+\texttt{passes\_filtering} & Boolean & Represented as 0/1; convert to logical
+type in downstream warehouses. \\
+\texttt{run\_id} & UUID (string) & Validate length (36 including hyphens) and
+hyphen positions to detect truncated identifiers. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Interpreting module groups.} Columns are organized into logical
+modules (core, basecalling, barcoding, alignment, duplex, adaptive sampling)
+within the specification. Downstream analytics can use these groupings to drive
+feature availability---for instance, enabling duplex QC plots only when both
+\texttt{duplex\_parent\_template} and \texttt{duplex\_parent\_complement} are present. A
+simple approach is to build module capability maps keyed by the schema version
+so that dashboards and reports degrade gracefully when a module is absent.
+
+\paragraph{Linking to signal archives.} Although POD5 supersedes FAST5 for new
+deployments, many laboratories operate mixed archives. The manifest captures
+the exact filenames and checksums for raw signal and derived FASTQ/BAM outputs,
+allowing archival systems to snapshot the manifest alongside each object store
+prefix, tape cartridge, or external drive. Restoration workflows can then
+confirm bit-level integrity before re-basecalling and avoid orphaned signal
+containers.
+
+\paragraph{Worked example: schema-aware ingestion.} A robust production import
+routine can be implemented with commodity tooling:
+\begin{enumerate}
+  \item Fetch the published YAML schema (pinned by \texttt{schema\_version}) and
+  compile it into a validator object.
+  \item Load the TSV into a typed dataframe using column name lookups, not
+  ordinal positions, and set strict converters for UUID, integer, float, and
+  categorical columns.
+  \item Apply the validator row-wise, routing failures to a quarantine table
+  with human-readable error messages.
+  \item Materialize success rows into the warehouse together with the manifest
+  checksum, source URI, and ingestion timestamp.
+  \item Emit a reconciliation report summarizing record counts, module
+  availability (for example, number of rows containing \texttt{barcode\_*}), and
+  notable enumerations to support QC sign-off.
+\end{enumerate}
+
+\paragraph{Operational considerations for online vs. offline runs.} The
+\texttt{only\_when} attribute in the specification differentiates between
+columns populated during live (MinKNOW-hosted) sequencing and those emitted when
+basecalling is run offline. Build conditional ingestion logic that honours
+these flags, so that missing columns do not trigger false-positive alerts when a
+module is legitimately absent. Conversely, require offline manifests to include
+\texttt{input\_filename} and \texttt{batch\_id}, ensuring re-basecalling jobs can
+be traced back to their signal sources.
+
+\textbf{Recommended QC checks:}
+\begin{itemize}
+\item \textbf{Traceability:} Reconcile \texttt{filename\_*}, \texttt{input\_filename},
+and UUID columns before archiving or deleting POD5/FAST5 containers. Offline
+re-basecalling should produce consistent \texttt{batch\_id} groupings.
+\item \textbf{Channel health:} Plot \texttt{duration}, \texttt{minknow\_events}, and
+\texttt{template\_duration} by \texttt{channel}/\texttt{mux} to confirm even pore
+utilization and detect fouled channels.
+\item \textbf{Termination modes:} Track \texttt{end\_reason} distributions---including
+the \texttt{unknown} class---to spot excessive unblocks, pausing, or device
+errors prior to tertiary analysis.
+\item \textbf{Sample bookkeeping:} Cross-check \texttt{experiment\_id},
+\texttt{sample\_id}, and \texttt{alias}/\texttt{type} assignments against the laboratory
+information system during Gate~1 intake verification.
+\item \textbf{Barcode/duplex performance:} Monitor \texttt{barcode\_*} scores for weak or
+negative-control assignments and verify duplex parent IDs are populated when
+duplex calling is enabled.
+\item \textbf{Instrumentation drift:} Trend \texttt{asic\_temp}, \texttt{asic\_version}, and
+\texttt{instrument\_serial\_number} across runs to spot devices requiring
+maintenance or recalibration.
+\item \textbf{Consumable accountability:} Audit \texttt{flow\_cell\_id}, \texttt{sequencing\_kit},
+and \texttt{pore\_version} against procurement records to surface out-of-spec
+chemistry batches quickly.
+\item \textbf{Protocol compliance:} Plot \texttt{protocol\_start}, \texttt{protocol\_duration},
+and \texttt{end\_reason} to document pauses, restarts, or shortened runs that
+could bias downstream coverage or introduce selection artefacts.
+\end{itemize}
+
+\paragraph{Schema surveillance and compatibility testing.} Treat the public
+YAML schema as a dependency: mirror the file in version control, write unit
+tests that diff the mirrored copy against the upstream release, and gate
+pipeline deployments on an explicit review when new columns, enumerations, or
+numeric bounds appear. The specification includes a per-column
+\texttt{required} flag plus \texttt{only\_when} contexts, enabling regression
+tests that assert, for example, that online manifests never drop
+\texttt{filename\_fastq} while offline manifests always include
+\texttt{input\_filename}. CI systems can fetch candidate manifests, validate
+them against the pinned schema, and fail fast if Dorado or MinKNOW updates add
+fields that ingestion code has not yet whitelisted.
+
+\paragraph{Metadata normalization for downstream joins.} Several columns share
+semantic domains with laboratory tracking systems (for example,
+\texttt{tracking\_id.sample\_barcode} vs. LIS sample identifiers). Normalize the
+case, padding, and delimiter rules during ingestion so that referential
+integrity checks can be enforced automatically. A minimal strategy is to build
+lookup tables keyed by \texttt{run\_id} and \texttt{tracking\_id.user\_specified\_run\_id}
+so that clinical reports can reference either identifier without ambiguity.
+When exporting data to tertiary analysis environments, provide the normalized
+identifiers plus the raw manifest values to preserve provenance and allow
+ad-hoc debugging of mismatched records.
+
+\paragraph{Bridging reads, raw signal, and event-level archives.} Beyond the
+per-file pointers, the manifest exposes event counts
+(\texttt{minknow\_events}, \texttt{num\_events\_*}) and timestamps
+(\texttt{start\_time}, \texttt{duration}) that can reconstitute the time window
+occupied on each pore. Archival services can use these data to chunk POD5 or
+FAST5 collections by run and time, enabling partial restores when only a
+problematic interval requires re-analysis. Pairing read-level metadata with the
+\texttt{tracking\_id.device\_id} and \texttt{tracking\_id.flow\_cell\_id} subfields further
+supports investigations into flow cell swaps or handling errors.
+
+\begin{table}[!htbp]
+\centering
+\caption{Operational modules signaled by \texttt{sequencing\_summary.tsv}}
+\label{tab:ont-module-capabilities}
+\begin{tabular}{p{0.25\textwidth}p{0.65\textwidth}}
+\toprule
+\textbf{Module cue} & \textbf{Operational action} \\
+\midrule
+\texttt{alignment\_*} columns present & Generate quick-on-target dashboards and
+verify that reference genomes/targets match project manifests before launching
+full alignments. \\
+\texttt{barcode\_*} columns present & Enforce demultiplexing QC gates: confirm all
+expected barcodes appear, and alert when \texttt{barcode\_type} marks a control
+sample as a test subject. \\
+\texttt{poly\_tail\_*} columns present & For RNA programs, summarize tail lengths by
+library to confirm enzymatic steps behaved as expected and adjust trimming
+parameters for downstream aligners. \\
+\texttt{adaptive\_sampling\_*} columns present & Cross-check target/untarget bed
+files and log enrichment factors; missing columns imply the run defaulted to
+standard sequencing even if adaptive sampling was requested. \\
+\texttt{duplex\_parent\_*} columns present & Enable duplex yield reporting and
+ensure downstream classifiers handle duplex consensus reads separately from
+single-strand template/complement reads. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Reconciliation against FASTQ/BAM inventories.} Because large runs may
+split outputs across dozens of compressed files, it is easy for archive
+operations to lose track of which manifest rows map to which FASTQ archive. Use
+the \texttt{filename\_*} columns, together with manifest record counts, to build
+per-file digests (for example, `sha256sum output.fastq.gz > fastq.sha256`).
+Warehouse loaders can then join the manifest to the checksum table, detect
+partially transferred files immediately, and prevent stale FASTQ bundles from
+entering tertiary analysis.
+
+\paragraph{Example validator implementation.} The following pseudocode outlines
+how to wrap the YAML definition in a lightweight Python validation layer:
+\begin{verbatim}
+schema = load_schema("spec.yaml")
+df = pandas.read_csv("sequencing_summary.tsv", sep="\t",
+                     dtype=schema.pandas_dtypes())
+errors = []
+for column in schema.columns:
+    if column.only_when == "online" and offline_mode:
+        continue
+    if column.required and column.name not in df:
+        errors.append(f"Missing {column.name}")
+    errors.extend(column.validate(df[column.name]))
+if errors:
+    raise ValueError("Manifest validation failed", errors)
+\end{verbatim}
+This pattern mirrors the structure of the published specification---including
+per-column regex checks and enumerations---and produces actionable error
+messages for operators.
+
+\paragraph{Regression tests for manifest ingestion.} Treat manifest parsing as
+production code worthy of automated testing. Minimal coverage should include:
+\begin{itemize}
+  \item \textbf{Schema drift alarms:} Unit tests that deserialize the pinned
+  YAML into a fixture and fail when upstream adds or removes columns. Keeping a
+  frozen copy of the specification in version control allows `pytest` (or an
+  equivalent framework) to alert operators immediately after MinKNOW/Dorado
+  upgrades.
+  \item \textbf{Round-trip fidelity:} Property tests that write a synthetic
+  \texttt{sequencing\_summary.tsv} containing edge-case values (maximum duration,
+  rare \texttt{end\_reason}, mixed optional modules) and confirm the ingestion
+  layer preserves types, enumerations, and null semantics when re-exported.
+  \item \textbf{Constraint enforcement:} Negative tests that intentionally break
+  regex rules (for example, malformed UUIDs) or omit required columns to verify
+  the validator raises descriptive exceptions instead of silently coercing
+  values.
+  \item \textbf{Online/offline toggles:} Tests that simulate both execution
+  contexts so that \texttt{only\_when} logic is exercised before a real offline
+  re-basecalling job runs.
+\end{itemize}
+The resulting test suite is lightweight yet powerful enough to block CI merges
+when ingestion changes would otherwise corrupt provenance.
+
+\textbf{PacBio HiFi:}
+\begin{itemize}
+\item Raw signals: Fluorescence pulse recordings (proprietary format)
+\item Sampling: Polymerase kinetics during nucleotide incorporation
+\item Signal characteristics: Inter-pulse duration (IPD) varies by base and modifications
+\item Processing: Circular consensus sequencing (CCS) generates HiFi reads from multiple passes
+\end{itemize}
+
+\textbf{Illumina (if applicable):}
+\begin{itemize}
+\item Raw signals: BCL (base call) files from image analysis
+\item Sampling: Fluorescence intensity per cycle per cluster
+\item Processing: Real-time base calling during sequencing (RTA software)
+\item Output: FASTQ files directly from instrument
+\end{itemize}
+
+\subsection{Basecalling}
+
+\textbf{For Oxford Nanopore:}
+
+\begin{protocol}[ONT Basecalling Protocol]
+\textbf{Software options:}
+\begin{itemize}
+\item \textbf{Guppy (deprecated):} CPU and GPU versions; standard for older data
+\item \textbf{Dorado:} Current ONT basecaller; GPU-accelerated; improved accuracy
+\item \textbf{Bonito:} Research basecaller; customizable models
+\end{itemize}
+
+\textbf{Recommended command (Dorado):}
+\begin{verbatim}
+dorado basecaller \
+  --model dna_r10.4.1_e8.2_400bps_hac@v4.2.0 \
+  --emit-fastq \
+  --verbose \
+  pod5_files/ > output.fastq
+\end{verbatim}
+
+\textbf{Model selection:}
+\begin{itemize}
+\item \texttt{fast}: Lower accuracy (~95\%), faster processing
+\item \texttt{hac} (high-accuracy): Standard choice (~98-99\%)
+\item \texttt{sup} (super-accuracy): Highest accuracy (~99+\%), slower
+\end{itemize}
+
+\begin{remark}[SEER Benchmarking of Basecalling Models]
+The choice between Dorado basecalling models (fast, hac, sup) represents a classical speed--accuracy trade-off. Benchmarking runs on the same SMA-seq standards with each model produce three confusion matrices $C_{\text{fast}}$, $C_{\text{hac}}$, $C_{\text{sup}}$ and corresponding metrics: SMA, TPR, and quality overstatement fraction $d$ (Chapter~\ref{chap:sma-seq}). These SEER-derived metrics enable quantitative comparison: for example, a $3\times$ increase in runtime from hac to sup may yield only a 0.2\% absolute increase in TPR but a 5\% reduction in miscalibrated quality, which may or may not justify the cost depending on the clinical setting. Integrating these empirical metrics into workflow decisions ensures that basecaller selection is driven by data rather than informal impressions of ``accuracy''.
+\end{remark}
+
+\textbf{Key parameters:}
+\begin{itemize}
+\item \texttt{--min-qscore}: Filter reads below quality threshold (e.g., Q10)
+\item \texttt{--device}: Specify GPU (cuda:0) or CPU
+\item \texttt{--batch-size}: Optimize for available GPU memory
+\end{itemize}
+\end{protocol}
+
+\textbf{For PacBio HiFi:}
+
+HiFi reads are typically pre-processed by instrument software (SMRT Link):
+\begin{itemize}
+\item CCS generates consensus from multiple passes of circular template
+\item Quality scores reflect agreement across passes
+\item Typical Q20+ accuracy (~99\%) after CCS
+\item Output: BAM files with HiFi reads
+\end{itemize}
+
+\textbf{Post-processing (if needed):}
+\begin{verbatim}
+# Convert BAM to FASTQ if needed
+samtools fastq input.bam > output.fastq
+
+# Filter by quality
+seqtk seq -Q 20 input.fastq > filtered.fastq
+\end{verbatim}
+
+\subsection{Quality Score Calibration}
+
+As developed in Chapter~\ref{chap:classification-model}, quality scores should reflect true error probabilities via \CEref{1}:
+\begin{equation}
+p_{\text{err}}(Q) = 10^{-Q/10}
+\end{equation}
+
+\textbf{Calibration check (from standards):}
+\begin{enumerate}
+\item Sequence plasmid standards with known sequence
+\item Compute empirical error rate stratified by reported Q-score
+\item Compare empirical error rate to $p_{\text{err}}(Q)$ formula
+\item If systematic deviation observed, apply correction or re-train basecaller
+\end{enumerate}
+
+This calibration validation is formalized as Quality Control Gate 4 in Chapter~\ref{chap:qc-gates}.
+
+\section{Secondary Analysis: Exploratory Mapping and QC}
+
+\textbf{Critical distinction:} Secondary analysis in this framework serves \textit{quality assessment only}. Haplotype classification does NOT use alignments; it operates directly on unaligned reads via the confusion matrix methodology (Chapters~\ref{chap:classification-model} and \ref{chap:posteriors}).
+
+\subsection{Reference Alignment}
+
+\textbf{Purpose of alignment:}
+\begin{itemize}
+\item Assess on-target rate for enriched sequencing
+\item Visualize coverage distribution
+\item Identify low-quality regions requiring investigation
+\item Validate that reads map to expected genomic location
+\end{itemize}
+
+\textbf{Alignment tools:}
+
+\begin{table}[!htbp]
+\centering
+\caption{Alignment Software for Quality Control}
+\label{tab:alignment-tools}
+\begin{tabular}{llll}
+\toprule
+\textbf{Tool} & \textbf{Platform} & \textbf{Speed} & \textbf{Use Case} \\
+\midrule
+minimap2 & ONT, PacBio & Fast & Long reads, exploratory mapping \\
+BWA-MEM & Illumina & Medium & Short reads, standard pipeline \\
+NGMLR & ONT, PacBio & Slow & Structural variant detection \\
+Winnowmap & ONT, PacBio & Fast & Repetitive regions \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Recommended command (minimap2):}
+\begin{verbatim}
+minimap2 -ax map-ont \
+  reference.fasta \
+  reads.fastq | \
+  samtools sort -o aligned.bam -
+  
+samtools index aligned.bam
+\end{verbatim}
+
+\subsection{Coverage Assessment}
+
+\textbf{Key metrics:}
+\begin{itemize}
+\item \textbf{Mean coverage:} Average read depth across target region
+\item \textbf{Coverage uniformity:} Coefficient of variation of coverage
+\item \textbf{Fraction at threshold:} Percentage of bases with $\geq N$× coverage
+\end{itemize}
+
+\textbf{Computation:}
+\begin{verbatim}
+# Compute per-base coverage
+samtools depth -a aligned.bam > coverage.txt
+
+# Summarize statistics
+awk '{sum+=$3; count++} END {print "Mean:", sum/count}' coverage.txt
+\end{verbatim}
+
+\textbf{Quality criteria (from Chapter~\ref{chap:design}):}
+\begin{itemize}
+\item For binary classification: Mean coverage $\geq$ 100× (haploid), $\geq$ 200× (diploid)
+\item For mixture detection: Adjust based on power analysis (\CEref{7})
+\item Uniformity: CV $<$ 0.5 indicates acceptable coverage distribution
+\end{itemize}
+
+\subsection{Read Quality Metrics}
+
+\begin{protocol}[Quality Metrics Extraction]
+\textbf{Per-read metrics:}
+\begin{itemize}
+\item Read length distribution (check against expected fragment distribution)
+\item Mean quality score per read
+\item Mapping quality (MAPQ) distribution
+\item Alignment identity/accuracy
+\item End reason metadata (for ONT data; see Chapter~\ref{chap:sma-seq} Section on Read Completeness)
+\end{itemize}
+
+\textbf{Tools:}
+\begin{verbatim}
+# Summary statistics
+samtools flagstat aligned.bam
+
+# Read length distribution
+samtools view aligned.bam | \
+  awk '{print length($10)}' | \
+  sort -n | uniq -c > read_lengths.txt
+  
+# Quality score distribution
+seqkit stats -a reads.fastq
+\end{verbatim}
+
+\textbf{Interpretation:}
+\begin{itemize}
+\item Mapping rate $>$ 90\%: Good quality
+\item Mapping rate 70-90\%: Acceptable; investigate unmapped reads
+\item Mapping rate $<$ 70\%: Poor quality; check for contamination or wrong reference
+\item For ONT data: Consider filtering reads by end reason (retain signal\_positive, exclude unblock\_mux\_change and signal\_negative for high-confidence analysis). See Chapter~\ref{chap:sma-seq} for read completeness analysis and filtering recommendations.
+\end{itemize}
+\end{protocol}
+
+\section{Tertiary Analysis: Haplotype Classification}
+
+This stage implements the core mathematical framework: confusion matrix estimation from standards, likelihood computation for clinical samples, and posterior probability calculation.
+
+\subsection{Confusion Matrix Estimation (Standards)}
+
+If running standards to build or validate confusion matrix:
+
+\begin{algorithm}[H]
+\caption{SEER Confusion Matrix Estimation}
+\label{alg:confusion-matrix}
+\textbf{Input:} FASTQ files from plasmid standards $h_1, h_2, \ldots, h_K$ \\
+\textbf{Output:} Confusion matrix $\mathbf{C}$ with elements $C_{ij}$
+
+\begin{algorithmic}[1]
+\STATE Initialize count matrix $\mathbf{N}$ with zeros ($K \times K$)
+\FOR{each standard $i = 1$ to $K$}
+    \STATE Load reads $\{r_n\}$ from standard $h_i$
+    \FOR{each read $r_n$}
+        \STATE Compute edit distance to all haplotypes: $d(r_n, h_j)$ for $j = 1, \ldots, K$
+        \STATE Classify to nearest haplotype: $j^* = \arg\min_j d(r_n, h_j)$
+        \STATE Increment count: $N_{ij^*} \leftarrow N_{ij^*} + 1$
+    \ENDFOR
+\ENDFOR
+\STATE Normalize rows to obtain probabilities:
+\STATE $\qquad C_{ij} = N_{ij} / \sum_{k=1}^{K} N_{ik}$
+\RETURN Confusion matrix $\mathbf{C}$
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Implementation notes:}
+\begin{itemize}
+\item Edit distance computation: Use dynamic programming (Needleman-Wunsch) or heuristic alignment
+\item Parallelization: Process reads independently across multiple cores
+\item Memory management: Stream reads from FASTQ to avoid loading entire file
+\item Quality filtering: Optionally filter reads with mean Q-score $<$ threshold before classification
+\end{itemize}
+
+\subsection{Clinical Sample Likelihood Computation}
+
+For clinical samples, compute likelihoods using the confusion matrix:
+
+\begin{algorithm}[H]
+\caption{Per-Read Likelihood via Confusion Matrix}
+\label{alg:read-likelihood}
+\textbf{Input:} Read $r_n$, confusion matrix $\mathbf{C}$, haplotypes $\{h_j\}$ \\
+\textbf{Output:} Likelihood vector $[\Prob(r_n|h_1), \ldots, \Prob(r_n|h_K)]$
+
+\begin{algorithmic}[1]
+\STATE Compute edit distance to all haplotypes: $d_j = d(r_n, h_j)$ for $j = 1, \ldots, K$
+\STATE Find nearest haplotype: $j^* = \arg\min_j d_j$
+\STATE Read $r_n$ is classified as coming from ``class'' $j^*$
+\FOR{each haplotype $h_i$}
+    \STATE Likelihood is probability that true sequence $h_i$ produces observation $j^*$:
+    \STATE $\qquad \Prob(r_n | h_i) = C_{i,j^*}$
+\ENDFOR
+\RETURN Likelihood vector
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Numerical stability:} Perform computations in log-space to avoid underflow:
+\begin{equation}
+\log \Prob(r_n | h_i) = \log C_{i,j^*}
+\end{equation}
+
+\subsection{Dataset Log-Likelihood and Posterior}
+
+Aggregate over all $N$ reads:
+
+\begin{align}
+\log \Prob(\mathbf{r} | h_i) &= \sum_{n=1}^{N} \log \Prob(r_n | h_i) \label{eq_10_5} \\
+&= \sum_{n=1}^{N} \log C_{i, j^*_n}
+\end{align}
+
+where $j^*_n$ is the classified category for read $r_n$.
+
+\textbf{Posterior probability} via Bayes' rule (Chapter~\ref{chap:posteriors}):
+\begin{equation}
+\Prob(h_i | \mathbf{r}) = \frac{\Prob(h_i) \cdot \Prob(\mathbf{r} | h_i)}{\sum_{k=1}^{K} \Prob(h_k) \cdot \Prob(\mathbf{r} | h_k)}
+\label{eq_10_3}
+\end{equation}
+
+In log-space using log-sum-exp trick:
+\begin{align}
+\log \Prob(h_i | \mathbf{r}) &= \log \Prob(h_i) + \log \Prob(\mathbf{r} | h_i) - \log Z \\
+\text{where} \quad \log Z &= \text{LogSumExp}_k \left[ \log \Prob(h_k) + \log \Prob(\mathbf{r} | h_k) \right]
+\end{align}
+
+\textbf{Log-sum-exp trick:}
+\begin{equation}
+\log \sum_{k} \exp(x_k) = x_{\max} + \log \sum_{k} \exp(x_k - x_{\max})
+\end{equation}
+where $x_{\max} = \max_k x_k$ prevents overflow/underflow.
+
+\subsection{Diplotype Inference for Clinical Samples}
+
+For diploid samples, consider all possible diplotype configurations:
+
+\begin{algorithm}[H]
+\caption{Diplotype Posterior Computation}
+\label{alg:diplotype-posterior}
+\textbf{Input:} Reads $\mathbf{r}$, confusion matrix $\mathbf{C}$, haplotypes $\{h_j\}$, prior $\Prob(h_i, h_j)$ \\
+\textbf{Output:} Diplotype posterior $\Prob(h_i, h_j | \mathbf{r})$
+
+\begin{algorithmic}[1]
+\FOR{each diplotype $(h_i, h_j)$ where $i \leq j$}
+    \STATE Compute expected confusion matrix for 50:50 mixture:
+    \STATE $\qquad C^{\text{mix}}_{i,j,k} = 0.5 \cdot C_{ik} + 0.5 \cdot C_{jk}$
+    \STATE Compute log-likelihood:
+    \STATE $\qquad \log \Prob(\mathbf{r} | h_i, h_j) = \sum_{n=1}^{N} \log C^{\text{mix}}_{i,j,k^*_n}$
+    \STATE \qquad where $k^*_n$ is classified category for read $r_n$
+\ENDFOR
+\STATE Compute posterior via Bayes' rule:
+\STATE $\qquad \Prob(h_i, h_j | \mathbf{r}) \propto \Prob(h_i, h_j) \cdot \Prob(\mathbf{r} | h_i, h_j)$
+\STATE Normalize: $\sum_{i \leq j} \Prob(h_i, h_j | \mathbf{r}) = 1$
+\RETURN Diplotype posterior probabilities
+\end{algorithmic}
+\end{algorithm}
+
+\section{Software Implementation}
+
+\subsection{Computational Requirements}
+
+\begin{table}[!htbp]
+\centering
+\caption{Computational Resource Requirements}
+\label{tab:compute-requirements}
+\begin{tabular}{llll}
+\toprule
+\textbf{Analysis Stage} & \textbf{CPU} & \textbf{RAM} & \textbf{Storage} \\
+\midrule
+Basecalling (ONT, GPU) & 8+ cores & 16-32 GB & 10× raw data \\
+Basecalling (ONT, CPU) & 32+ cores & 64 GB & 10× raw data \\
+Alignment (minimap2) & 8-16 cores & 8-16 GB & 2× FASTQ size \\
+Tertiary analysis & 4-8 cores & 8 GB & 1 GB/million reads \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Typical runtime (10× coverage, 5 kb target):}
+\begin{itemize}
+\item Basecalling: 5-30 minutes (GPU) or 2-8 hours (CPU)
+\item Alignment: 5-10 minutes
+\item Confusion matrix estimation: 1-5 minutes
+\item Likelihood computation: 1-2 minutes
+\item Total: $<$ 1 hour with GPU basecalling
+\end{itemize}
+
+\begin{practicalnote}[Workflow Optimization and Storage Management]
+Practical deployment requires balancing computational speed, storage costs, and data retention policies:
+
+\textbf{Performance Optimization:}
+\begin{itemize}
+\item \textbf{GPU Acceleration:} NVIDIA GPUs (RTX 3090, A100) provide 10-20× speedup for basecalling; investment (\$1500-\$10000) pays off when processing >100 samples/month
+
+\item \textbf{Parallel Processing:} Use GNU Parallel or Snakemake to process multiple samples simultaneously; 96-sample plate completes in same time as single sample with sufficient cores
+
+\item \textbf{Incremental Updates:} Re-use confusion matrices from standards across multiple clinical runs; re-estimate only when basecaller version changes or SMA-seq validation fails (Chapter~\ref{chap:sma-seq})
+\end{itemize}
+
+\textbf{Storage Optimization:}
+\begin{itemize}
+\item \textbf{Raw Signal Files:} POD5/FAST5 are 10-50 GB per run; compress with \texttt{pod5 compress} (30\% reduction) or delete after FASTQ generation if storage-limited
+
+\item \textbf{FASTQ Compression:} Use \texttt{gzip -9} for 70-90\% size reduction; \texttt{FASTQ.gz} files are directly usable by most tools without decompression
+
+\item \textbf{Retention Policy:} Keep raw signals for 90 days (re-basecalling if needed), FASTQ forever (enables reanalysis), final reports forever (regulatory requirement), intermediate files (BAM, logs) for 30 days
+\end{itemize}
+
+\textbf{Cost Breakdown (96-sample clinical run):}
+\begin{itemize}
+\item Compute (AWS c6i.8xlarge, 8 hours): \$60
+\item Storage (1 TB, 1 year S3): \$25/year
+\item GPU (on-premise amortization): \$15/run
+\item \textbf{Total per sample:} \$1 compute + \$0.25 storage = \$1.25
+\end{itemize}
+
+\textbf{Scalability:} Single workstation (32 cores, 64 GB RAM, RTX 3090) handles 10-50 samples/day; larger operations (>500 samples/month) benefit from HPC cluster or cloud-based workflow (AWS Batch, Nextflow Tower).
+\end{practicalnote}
+
+\subsection{Software Dependencies}
+
+\begin{table}[!htbp]
+\centering
+\caption{Required Software Tools}
+\label{tab:software-dependencies}
+\begin{tabular}{lll}
+\toprule
+\textbf{Tool} & \textbf{Purpose} & \textbf{Version} \\
+\midrule
+Dorado & ONT basecalling & $\geq$ 0.3.0 \\
+minimap2 & Read alignment & $\geq$ 2.24 \\
+samtools & BAM manipulation & $\geq$ 1.15 \\
+Python & Scripting & $\geq$ 3.8 \\
+NumPy & Numerical computation & $\geq$ 1.20 \\
+SciPy & Statistical functions & $\geq$ 1.7 \\
+Pandas & Data manipulation & $\geq$ 1.3 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Installation via conda:}
+\begin{verbatim}
+conda create -n haplotype python=3.10
+conda activate haplotype
+conda install -c bioconda minimap2 samtools
+pip install numpy scipy pandas
+\end{verbatim}
+
+\subsection{Example Pipeline Script}
+
+\begin{verbatim}
+#!/bin/bash
+# complete_pipeline.sh - End-to-end haplotype classification
+
+# Configuration
+FAST5_DIR="raw_data/"
+OUTPUT_DIR="analysis/"
+REFERENCE="reference.fasta"
+STANDARDS_DIR="standards/"
+
+# Step 1: Basecalling
+dorado basecaller \
+  --model dna_r10.4.1_e8.2_400bps_hac@v4.2.0 \
+  --emit-fastq \
+  $FAST5_DIR > $OUTPUT_DIR/reads.fastq
+
+# Step 2: Secondary analysis (QC only)
+minimap2 -ax map-ont $REFERENCE $OUTPUT_DIR/reads.fastq | \
+  samtools sort -o $OUTPUT_DIR/aligned.bam -
+samtools index $OUTPUT_DIR/aligned.bam
+samtools depth -a $OUTPUT_DIR/aligned.bam > $OUTPUT_DIR/coverage.txt
+
+# Step 3: Build confusion matrix from standards
+python build_confusion_matrix.py \
+  --standards $STANDARDS_DIR \
+  --output $OUTPUT_DIR/confusion_matrix.npy
+
+# Step 4: Classify clinical sample
+python classify_haplotypes.py \
+  --reads $OUTPUT_DIR/reads.fastq \
+  --confusion-matrix $OUTPUT_DIR/confusion_matrix.npy \
+  --prior uniform \
+  --output $OUTPUT_DIR/results.json
+
+# Step 5: Generate report
+python generate_report.py \
+  --results $OUTPUT_DIR/results.json \
+  --output $OUTPUT_DIR/clinical_report.pdf
+\end{verbatim}
+
+\section{Quality Control Integration}
+
+The workflow incorporates multiple quality checkpoints corresponding to gates defined in Chapter~\ref{chap:qc-gates}:
+
+\begin{table}[!htbp]
+\centering
+\caption{QC Gates in Workflow}
+\label{tab:qc-workflow-integration}
+\begin{tabular}{lll}
+\toprule
+\textbf{QC Gate} & \textbf{Workflow Stage} & \textbf{Action if Failed} \\
+\midrule
+Gate 1: Input Quality & Sample preparation & Repeat DNA extraction \\
+Gate 2: Library Quality & Post-sequencing & Re-prepare library \\
+Gate 3: Coverage & Secondary analysis & Sequence additional runs \\
+Gate 4: Calibration & Tertiary analysis & Re-train basecaller \\
+Gate 5: Classification & Tertiary analysis & Report inconclusive \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Each gate has specific pass/fail criteria and decision trees detailed in Chapter~\ref{chap:qc-gates}.
+
+\section{Data Flow and File Management}
+
+\subsection{Directory Structure}
+
+\begin{verbatim}
+project/
+|-- raw_data/           # FAST5/POD5 files from sequencer
+|-- fastq/              # Basecalled reads
+|-- aligned/            # BAM files (QC only)
+|-- standards/          # Standard plasmid FASTQs
+|-- confusion_matrices/ # Estimated confusion matrices
+|-- results/            # Classification outputs
+`-- reports/            # Clinical reports
+\end{verbatim}
+
+\subsection{File Formats and Sizes}
+
+\begin{table}[!htbp]
+\centering
+\caption{Data File Sizes (10× coverage, 5 kb target)}
+\label{tab:file-sizes}
+\begin{tabular}{llr}
+\toprule
+\textbf{File Type} & \textbf{Description} & \textbf{Typical Size} \\
+\midrule
+FAST5/POD5 & Raw signals (ONT) & 5-50 GB \\
+FASTQ & Basecalled reads & 500 MB - 2 GB \\
+BAM & Aligned reads & 200 MB - 1 GB \\
+Confusion matrix & NumPy array & $<$ 1 MB \\
+Results JSON & Classification output & $<$ 1 MB \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Troubleshooting Common Issues}
+
+\begin{table}[!htbp]
+\centering
+\caption{Workflow Troubleshooting Guide}
+\label{tab:workflow-troubleshooting}
+\small
+\begin{tabular}{p{3.5cm}p{4cm}p{6cm}}
+\toprule
+\textbf{Problem} & \textbf{Likely Cause} & \textbf{Solution} \\
+\midrule
+Basecaller fails to start & GPU driver mismatch; insufficient VRAM & Update GPU drivers; reduce batch size; use CPU basecalling \\
+\midrule
+Low mapping rate ($<$70\%) & Wrong reference; contamination; adapter sequences & Verify reference matches sample; check for contamination; trim adapters \\
+\midrule
+Uneven coverage & PCR bias; GC bias; secondary structure & Use PCR-free library prep; adjust fragmentation; check target sequence \\
+\midrule
+Confusion matrix singular & Too few standards; identical haplotypes & Sequence more standards; verify haplotypes are distinguishable \\
+\midrule
+All posteriors $\sim$uniform & Insufficient coverage; poor quality & Increase sequencing depth; check quality scores; verify confusion matrix \\
+\midrule
+Classification inconsistent across replicates & Low coverage; border-line posterior & Increase coverage; report uncertainty; use mixture models \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Performance Optimization}
+
+\subsection{Computational Optimizations}
+
+\begin{enumerate}
+\item \textbf{Parallelization:} Process reads independently across CPU cores
+\begin{verbatim}
+# Python multiprocessing
+from multiprocessing import Pool
+with Pool(processes=8) as pool:
+    results = pool.map(classify_read, reads)
+\end{verbatim}
+
+\item \textbf{Vectorization:} Use NumPy for batch operations
+\begin{verbatim}
+# Vectorized log-likelihood computation
+log_likelihoods = np.log(confusion_matrix[true_indices, observed_indices])
+dataset_loglik = np.sum(log_likelihoods, axis=0)
+\end{verbatim}
+
+\item \textbf{Caching:} Store edit distances to avoid recomputation
+\begin{verbatim}
+from functools import lru_cache
+
+@lru_cache(maxsize=10000)
+def cached_edit_distance(read, haplotype):
+    return edit_distance(read, haplotype)
+\end{verbatim}
+
+\item \textbf{GPU acceleration:} Offload likelihood calculations to GPU
+\begin{itemize}
+\item Use CuPy for GPU-accelerated NumPy operations
+\item Speedup: 10-50× for large datasets
+\end{itemize}
+\end{enumerate}
+
+\subsection{Storage Optimizations}
+
+\begin{itemize}
+\item Compress FASTQ files: \texttt{gzip} or \texttt{bzip2} reduces size 70-90\%
+\item Delete raw FAST5/POD5 after basecalling (if disk space limited)
+\item Store only summary statistics from BAM files (not full alignments)
+\item Archive standards and confusion matrices for reproducibility
+\end{itemize}
+
+\section{Chapter Summary}
+
+\begin{keytakeaways}
+This chapter integrated all components of Parts II-III into an operational end-to-end workflow:
+
+\textbf{Three-Stage Analysis Pipeline:}
+\begin{itemize}
+\item \textbf{Primary Analysis:} Platform-specific basecalling converts raw signals (FAST5/POD5) to sequences with quality scores (FASTQ)
+  \begin{itemize}
+  \item ONT: Guppy (GPU, fast/hac/sup modes) or Dorado (newest basecaller)
+  \item PacBio: CCS (circular consensus sequencing) for HiFi reads
+  \item Output: FASTQ files with Phred quality scores
+  \end{itemize}
+
+\item \textbf{Secondary Analysis:} Alignment-based QC metrics assess data quality without using alignment for classification
+  \begin{itemize}
+  \item minimap2: Fast alignment to reference genome (QC only, not used in inference)
+  \item samtools: Extract coverage, mapping quality, on-target fraction metrics
+  \item Purpose: Validate library quality, detect systematic failures
+  \item Key distinction: Alignment informs QC but NOT haplotype classification
+  \end{itemize}
+
+\item \textbf{Tertiary Analysis:} Confusion matrix-based Bayesian inference produces diplotype calls
+  \begin{itemize}
+  \item Load confusion matrices from SMA-seq calibration (Chapter~\ref{chap:sma-seq})
+  \item Compute per-read likelihoods $\Prob(r|h)$ for each candidate haplotype
+  \item Calculate posteriors $\Prob(h|\mathbf{r})$ using Bayes' theorem (Equation~\ref{eq_6_6})
+  \item Generate clinical report with diplotype calls and confidence scores
+  \end{itemize}
+\end{itemize}
+
+\textbf{Software Infrastructure:}
+\begin{itemize}
+\item \textbf{Core Dependencies:} Python 3.8+, NumPy, SciPy, Biopython, pysam
+\item \textbf{Basecallers:} Guppy (ONT), Dorado (ONT), CCS (PacBio)
+\item \textbf{Alignment Tools:} minimap2 (mapping), samtools (BAM processing)
+\item \textbf{Custom Scripts:} Confusion matrix loader, likelihood calculator, posterior inference
+\item \textbf{Computational Requirements:} 8-16 GB RAM, GPU recommended for basecalling, <1 hour per sample
+\end{itemize}
+
+\textbf{Quality Control Integration (5 Gates):}
+\begin{itemize}
+\item \textbf{Gate 1 (DNA Quality):} A260/A280 ratio, concentration, fragment size distribution
+\item \textbf{Gate 2 (Library Quality):} Adapter ligation efficiency, on-target fraction, insert size
+\item \textbf{Gate 3 (Sequencing Quality):} Read length distribution, quality score distribution, yield
+\item \textbf{Gate 4 (Coverage):} Minimum informative reads per variant position
+\item \textbf{Gate 5 (Classification Confidence):} Posterior probability thresholds for clinical reporting
+\end{itemize}
+
+\textbf{Performance Optimization:}
+\begin{itemize}
+\item \textbf{Parallel Processing:} Multiprocessing module for read-level parallelization (near-linear speedup)
+\item \textbf{GPU Acceleration:} CuPy for confusion matrix operations (10-50× speedup for large datasets)
+\item \textbf{Caching:} Precompute and cache confusion matrices, avoid redundant likelihood calculations
+\item \textbf{Storage:} gzip compression reduces FASTQ size 70-90\%, delete raw signal files if space-limited
+\end{itemize}
+
+\textbf{Troubleshooting Common Issues:}
+\begin{itemize}
+\item \textbf{Low basecalling quality:} Check flowcell age, sequencing chemistry compatibility, basecaller model version
+\item \textbf{Poor alignment rates:} Verify reference genome version, check for sample contamination
+\item \textbf{Insufficient coverage:} Increase sequencing depth, optimize enrichment efficiency
+\item \textbf{Posterior computation failures:} Validate confusion matrix format, check for numerical underflow (use log-space)
+\end{itemize}
+
+\textbf{Framework Integration:} This workflow completes Part III by connecting laboratory protocols (Chapters~\ref{chap:plasmid-standards}, \ref{chap:targeted-enrichment}) with computational inference (Chapter~\ref{chap:posteriors}). Part IV extends these methods to basecaller improvement through SMA-seq (Chapter~\ref{chap:sma-seq}), enabling continuous accuracy enhancement. Part V formalizes validation protocols for clinical deployment (Chapters~\ref{chap:mixtures}, \ref{chap:qc-gates}).
+
+\textbf{Practical Deployment:} The complete workflow has been validated on cohorts ranging from 10 to 250 patients, processing <1 hour per sample on modern workstations with GPU acceleration. Automated scripts handle batch processing, QC reporting, and clinical interpretation.
+
+\textbf{Mathematical reference:} For likelihood computation algorithms and posterior inference pseudocode, see Appendices~\ref{app:computational-protocols} and \ref{app:equation-master}.
+\end{keytakeaways}

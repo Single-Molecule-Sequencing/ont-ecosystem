@@ -1,0 +1,20 @@
+\begin{table}[!htbp]
+\centering
+\caption{Manifest-derived release evidence}
+\label{tab:release-manifest}
+\begin{tabular}{p{0.3\textwidth}p{0.55\textwidth}}
+\toprule
+\textbf{Check} & \textbf{Purpose} \\
+\midrule
+Schema diff report & Documents that no unexpected columns appeared between
+validation and production runs. \\
+Read/alias reconciliation & Ensures \texttt{sample\_id}, barcode aliases, and
+tracking-card entries match laboratory notebooks to prevent sample swaps. \\
+Termination summary & Aggregates \texttt{end\_reason} counts for QA review,
+closing the loop with Chapter~\ref{chap:qc-gates} pore-health metrics. \\
+Optional module inventory & Records whether alignment, barcoding, duplex, or
+adaptive-sampling modules were engaged so downstream automation can branch
+correctly. \\
+\bottomrule
+\end{tabular}
+\end{table}

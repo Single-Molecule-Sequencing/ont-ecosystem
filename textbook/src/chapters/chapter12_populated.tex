@@ -1,0 +1,708 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Chapter 12: Training with Noisy Labels
+%% Part IV: SMA-seq and Model Improvement
+%% Version 6.0 - NEW Content
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{Training with Noisy Labels}
+\label{chap:noisy_labels}
+\label{chap:noisy-labels}
+
+\begin{learningobjectives}
+By the end of this chapter, you will be able to:
+\begin{itemize}
+\item Understand why ground truth labels in genomic sequencing are inherently imperfect
+\item Recognize sources and impacts of label noise on model training
+\item Learn strategies for constructing high-quality signal databases from physical standards
+\item Apply robust training methods that account for label uncertainty
+\item Integrate noisy label learning with the SMA-seq framework (Chapter~\ref{chap:sma-seq})
+\end{itemize}
+\end{learningobjectives}
+
+The accuracy of machine learning models fundamentally depends on the quality of their training data. In genomic sequencing applications, this presents a profound challenge: the ``ground truth'' labels used to train basecallers and variant callers are themselves derived from imperfect measurements. This chapter addresses the noisy labels problem—the reality that training data contains systematic and random errors that, if ignored, propagate through the learning process and compromise model performance. We develop mathematical frameworks for quantifying label noise, establish protocols for constructing high-quality signal databases from physical standards, and present training strategies that achieve robust performance despite inevitable label uncertainty.
+
+\section{The Noisy Labels Problem in Sequencing}
+\label{sec:noisy-labels-problem}
+
+Traditional supervised learning assumes access to perfectly labeled training examples: pairs $(x, y)$ where $x$ represents input data and $y$ is the true label. In genomic sequencing, this assumption fails systematically. Consider the common practice of using reference genome alignments to label raw sequencing signals: the reference itself may contain errors, alignment algorithms introduce ambiguities, and structural variants create systematic mismatches. Even ``validated'' reference sequences from databases like RefSeq derive from earlier sequencing technologies with their own error profiles.
+
+\subsection{Sources of Label Noise}
+
+Label noise in sequencing arises from multiple independent sources that compound to create substantial training data degradation:
+
+\begin{enumerate}
+\item \textbf{Reference genome errors:} Despite rigorous curation, reference genomes contain assembly errors, unresolved structural variants, and population-specific alleles that differ from individual samples. These create systematic label noise when references are treated as ground truth.
+
+\item \textbf{PCR amplification artifacts:} Library preparation often involves PCR amplification that introduces mutations, chimeric sequences, and copy number biases. Reads containing PCR errors will be labeled according to the incorrect sequence they carry, not their original template.
+
+\item \textbf{DNA preparation artifacts:} Mechanical shearing, oxidative damage during extraction, and cross-contamination between samples create molecules with sequences differing from their genomic source. These artifacts are invisible to downstream analysis but corrupt training labels.
+
+\item \textbf{Alignment ambiguities:} Repetitive sequences, homopolymers, and structural variants create regions where alignment algorithms cannot confidently place reads. Different aligners produce different results for the same read, yielding inconsistent labels depending on computational choices.
+
+\item \textbf{Consensus-based labeling:} Many training pipelines use consensus sequences derived from multiple reads. This circular reasoning propagates basecaller biases into training data—if the basecaller systematically miscalls a motif, the consensus will reflect that error and reinforce it during retraining.
+\end{enumerate}
+
+\subsection{Impact on Model Training}
+
+The consequences of training on noisy labels are well-characterized in machine learning theory and consistently observed in genomics applications:
+
+\begin{theorem}[Label Noise Bias]
+Let $\theta^*$ denote optimal model parameters under perfect labels, and $\tilde{\theta}$ denote parameters obtained by training on noisy labels with noise rate $\eta \in (0,1)$. Under mild regularity conditions, the expected classification error satisfies:
+\begin{equation}
+\mathbb{E}[\mathcal{L}(\tilde{\theta})] \geq \mathbb{E}[\mathcal{L}(\theta^*)] + \mathcal{O}(\eta)
+\label{eq_12_1}
+\end{equation}
+where the $\mathcal{O}(\eta)$ term grows approximately linearly with noise rate for small $\eta$.
+\end{theorem}
+
+Empirically, even modest label noise rates (5-10\%) substantially degrade model performance. Worse, the degradation is often non-uniform: models preferentially overfit to the noisy labels, learning spurious patterns that reflect labeling artifacts rather than true signal structure. In sequencing contexts, this manifests as basecallers that confidently reproduce reference genome errors or systematically miscall sequences that were underrepresented in training data.
+
+\subsection{Why Perfect Labels Are Unattainable}
+
+Some readers may wonder: why not simply invest more effort in label curation to achieve perfect ground truth? The answer reveals fundamental limitations:
+
+\begin{itemize}
+\item \textbf{Measurement limitations:} All sequencing technologies have finite accuracy. Using Technology A to validate labels for Technology B only shifts the error source, not eliminates it.
+
+\item \textbf{Biological reality:} Somatic mutations, mosaic genomes, and sample heterogeneity mean there is no single ``true'' sequence—biological variation is real, not merely measurement error.
+
+\item \textbf{Structural complexity:} Highly repetitive regions, copy number variants, and inversions challenge all current technologies. Some genomic regions simply lack ground truth consensus across methods.
+
+\item \textbf{Economic constraints:} Achieving arbitrarily low error rates requires multiplicative increases in sequencing depth, orthogonal validation, and manual curation—costs that scale prohibitively for large training datasets.
+\end{itemize}
+
+The practical conclusion: we must train models under the assumption that labels contain errors, and develop methods robust to this inevitable noise.
+
+\begin{warningbox}[Critical Risk: Ignoring Label Noise]
+Training models on noisy labels without accounting for noise is not merely suboptimal—it creates \textbf{systematically misleading models} that fail predictably:
+
+\textbf{Failure Modes When Ignoring Label Noise:}
+\begin{itemize}
+\item \textbf{Overfitting to Artifacts:} Models learn reference genome errors as "truth," then confidently reproduce these errors in all future predictions
+
+\item \textbf{Systematic Bias Propagation:} PCR artifacts in training data become permanent biases in the model, miscalling identical motifs in clean clinical samples
+
+\item \textbf{False Confidence:} Models report high confidence (Q40+) on systematically wrong calls because the training data consistently mislabeled those positions
+
+\item \textbf{Catastrophic Degradation in Production:} Models trained on Technology A's errors fail spectacularly when deployed on Technology B, even if both have similar nominal accuracy
+\end{itemize}
+
+\textbf{Real-World Consequences:}
+\begin{itemize}
+\item Basecallers reproduce methylation-related basecalling errors at 100\% consistency (perfect overfitting to noisy training labels)
+\item Variant callers systematically miscall homopolymers because training consensus was dominated by systematic insertion/deletion errors
+\item Clinical assays fail CAP proficiency testing due to confident incorrect calls on sequences underrepresented in noisy training data
+\end{itemize}
+
+\textbf{The Only Defensible Approach:} Use physical standards with verified sequences (Chapter~\ref{chap:plasmid-standards}) to build high-quality signal databases, then apply robust training methods that explicitly account for residual label uncertainty. Anything less guarantees systematic failures that compromise clinical reliability.
+\end{warningbox}
+
+\section{Signal Database Construction}
+\label{sec:signal-database}
+
+The solution to noisy label learning in sequencing leverages physical standards with verified sequences: synthetic constructs where ground truth is established through orthogonal methods before sequencing. This section describes systematic protocols for constructing signal databases that provide high-quality training data despite inevitable biological and technical noise.
+
+\subsection{Standard Design Principles}
+
+Effective signal database construction begins with thoughtful standard design. We established key principles in Chapter~\ref{chap:plasmid-standards}; here we emphasize their role in label quality:
+
+\begin{enumerate}
+\item \textbf{Sequence verification:} All standards undergo independent sequence confirmation via Sanger sequencing, synthesis verification reports, or multiple orthogonal long-read platforms. Verification must cover 100\% of the target region, not merely check terminal sequence tags.
+
+\item \textbf{Purity quantification:} PCR product standards should be sequence-purified (e.g., gel extraction, SPRI size selection) to remove primer dimers and amplification artifacts. Plasmid preparations should be verified via restriction digests and quality metrics (260/280 and 260/230 ratios $> 1.8$). Chapter~\ref{chap:purity} provides detailed purity assessment protocols.
+
+\item \textbf{Context diversity:} The signal database must span the sequence space relevant to target applications. For pharmacogenomics, this includes all common star alleles, flanking intronic sequences, and known problematic motifs (long homopolymers, GC extremes, tandem repeats).
+
+\item \textbf{Structural fidelity:} Standards should maintain native structural context where possible. For example, standards for genes with complex structural variants should preserve phasing information and local sequence architecture that might affect nanopore signal or optical mapping patterns.
+\end{enumerate}
+
+\subsection{Signal-Label Pair Collection}
+
+Raw signal collection follows the same experimental workflow as production sequencing, ensuring that training data reflects operational conditions:
+
+\textbf{Protocol outline:}
+\begin{enumerate}[itemsep=2pt]
+\item Sequence each physical standard using the target platform (ONT, PacBio, etc.)
+\item Extract raw signal files (FAST5/POD5 for ONT, BAM for PacBio) before basecalling
+\item Store signals with metadata linking each read to its known source standard
+\item Basecall using the model to be fine-tuned, generating both sequences and quality scores
+\item For each raw signal $x_i$, store the tuple $(x_i, s_{\text{true}}, \hat{s}_i, Q_i)$ where:
+  \begin{itemize}[itemsep=1pt]
+  \item $x_i$ = raw electrical signal or pulse sequence
+  \item $s_{\text{true}}$ = verified sequence of source standard
+  \item $\hat{s}_i$ = basecalled sequence from current model
+  \item $Q_i$ = per-base quality scores from current model
+  \end{itemize}
+\end{enumerate}
+
+This signal-label pairing enables both evaluation (comparing $\hat{s}_i$ to $s_{\text{true}}$) and retraining (using $x_i$ and $s_{\text{true}}$ to optimize model parameters).
+
+\subsection{Database Organization and Versioning}
+
+Professional signal databases require careful organization to support reproducible research and quality control:
+
+\begin{table}[!htbp]
+\centering
+\caption{Signal Database Schema}
+\label{tab:signal-db-schema}
+\begin{tabular}{p{3cm}p{3cm}p{6cm}}
+\toprule
+\textbf{Field} & \textbf{Type} & \textbf{Description} \\
+\midrule
+\texttt{signal\_id} & UUID & Unique identifier for this signal \\
+\texttt{raw\_signal} & Binary blob & FAST5/POD5/BAM file or extracted array \\
+\texttt{standard\_id} & String & Identifier for source physical standard \\
+\texttt{true\_sequence} & String & Verified sequence from standard \\
+\texttt{platform} & Enum & ONT R9.4.1, R10.4.1, PacBio Revio, etc. \\
+\texttt{flowcell\_id} & String & Hardware identifier for traceability \\
+\texttt{run\_date} & Timestamp & Sequencing date for temporal QC \\
+\texttt{basecaller\_version} & String & Model used to generate comparison calls \\
+\texttt{basecalled\_seq} & String & Sequence from initial basecalling \\
+\texttt{quality\_scores} & Array & Per-base Q-scores from initial basecalling \\
+\texttt{edit\_distance} & Integer & Levenshtein distance to true sequence \\
+\texttt{qc\_flags} & Bitfield & Pass/fail flags for various QC criteria \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Version control:} Signal databases should be versioned (e.g., SigDB-v1.0, SigDB-v2.0) with full provenance documentation. Each version documents:
+\begin{itemize}[itemsep=1pt]
+\item Standards included (with sequence accessions)
+\item Sequencing platforms and flowcell types
+\item Collection dates and operators
+\item QC criteria and filtering thresholds
+\item Known issues or limitations
+\end{itemize}
+
+This versioning enables reproducible training: specifying ``trained on SigDB-v1.3'' unambiguously defines the training data, facilitating future comparisons and regulatory audits.
+
+\subsubsection{Manifest-aware enrichment for ONT datasets}
+
+ONT signal libraries should carry forward the structured metadata available in
+\texttt{sequencing\_summary.tsv}. Rather than hand-maintaining duplicate fields,
+ingestion pipelines can join each read in the signal database to its manifest
+row using the \texttt{read\_id} and \texttt{run\_id}. Doing so provides a single
+source of truth for hardware telemetry, consumable lots, and basecalling
+context---all of which influence downstream model interpretation.
+
+\begin{table}[!htbp]
+\centering
+\caption{Mapping ONT manifest fields into the signal database}
+\label{tab:signal-db-manifest}
+\begin{tabular}{p{0.3\textwidth}p{0.55\textwidth}}
+\toprule
+\textbf{Manifest fields} & \textbf{Signal database use} \\
+\midrule
+\texttt{run\_id}, \texttt{batch\_id} & Partition raw signals by production run
+and offline re-basecalling batch; enable stratified sampling for drift studies.
+\\
+\texttt{instrument\_serial\_number}, \texttt{asic\_temp}, \texttt{pore\_type} &
+Track instrumentation effects on standards; anomalous instruments can be
+quarantined without deleting valuable signals. \\
+\texttt{flow\_cell\_id}, \texttt{sequencing\_kit}, \texttt{pore\_version} & Link
+consumable lots to training outcomes; regression tests can weight records when
+chemistry transitions occur. \\
+\texttt{filename\_pod5}/\texttt{filename\_fast5} & Persist pointers to the exact
+signal container that produced a database row, enabling byte-for-byte recovery
+years later. \\
+\texttt{mean\_qscore\_template}, \texttt{passes\_filtering} & Store the initial
+model assessment so that label-noise research can correlate downstream
+confidence with basecaller self-reports. \\
+\texttt{barcode\_*}, \texttt{sample\_id} & Automate multiplexed standard curation
+and prevent mis-labelled reads from entering the training split. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+To keep the schema manageable, normalize nested \texttt{tracking\_id.*}
+structures into a key-value extension table keyed by \texttt{signal\_id}. This
+accommodates evolving ONT tracking cards without requiring database migrations.
+
+\textbf{Recommended cross-checks:}
+\begin{itemize}
+  \item Recompute manifest checksums when importing signals and store them in
+  the database so that corruption can be detected without opening the original
+  POD5/FAST5 bundle.
+  \item Assert one-to-one mapping between \texttt{signal\_id} and
+  \texttt{read\_id}; duplicates imply a bookkeeping fault that must be resolved
+  before the database is released to modelers.
+  \item Verify that \texttt{schema\_version} values match the validator code used
+  at ingestion time; mixing schema versions silently complicates feature
+  engineering.
+\end{itemize}
+
+\subsection{Coverage Requirements}
+
+How many signals must the database contain to enable effective training? This depends on multiple factors:
+
+\begin{itemize}
+\item \textbf{K-mer diversity:} For $k$-mer based models, the database should contain adequate examples of each relevant $k$-mer. With 4 nucleotides, there are $4^k$ possible $k$-mers; for $k=5$, this is 1,024 contexts. Aiming for 100+ examples per $k$-mer suggests databases with $\sim$100,000 reads.
+
+\item \textbf{Rare variant coverage:} If training targets include rare alleles (e.g., pharmacogene star alleles with <1\% population frequency), deliberate oversampling of these variants is essential. Without oversampling, standard allele frequencies would require millions of reads to provide sufficient rare variant examples.
+
+\item \textbf{Error mode diversity:} Training robust to diverse error types requires examples of insertion errors, deletion errors, and all possible substitution patterns. Balanced representation of error modes may require synthetic construction or deliberate selection of challenging standards.
+\end{itemize}
+
+\begin{proposition}[Minimum Database Size]
+For a target sequence space $\mathcal{S}$ with $K$ distinct $k$-mers and desired mean coverage $C$ reads per $k$-mer, the minimum database size is:
+\begin{equation}
+N_{\min} = \frac{CK}{\mathbb{E}[M_k]}
+\label{eq_12_2}
+\end{equation}
+where $\mathbb{E}[M_k]$ is the expected number of $k$-mer occurrences per read. For human pharmacogenes with typical $k=5$, $K \approx 800$, $\mathbb{E}[M_k] \approx 10$, and $C=100$, this yields $N_{\min} \approx 8,000$ reads.
+\end{proposition}
+
+In practice, databases should exceed these minimums by factors of 5-10 to ensure robust coverage of sequence contexts and enable held-out validation sets.
+
+\section{Confusion Matrix Estimation from Noisy Labels}
+\label{sec:confusion-matrix-estimation}
+
+When all labels are noisy, how can we estimate the true confusion matrix that would result from perfect labels? This section presents mathematical frameworks for denoising confusion matrices and recovering true error rates despite label corruption.
+
+\subsection{Noise Model Formulation}
+
+Let $Y \in \{1, 2, \ldots, K\}$ denote the true label (unknown) and $\tilde{Y} \in \{1, 2, \ldots, K\}$ denote the observed noisy label. The noise process is characterized by a label transition matrix $\mathbf{T}$:
+
+\begin{eqbox}{Label Transition Matrix}
+T_{ij} = \Prob(\tilde{Y} = j \mid Y = i)
+\label{eq_12_3}
+\end{equation}
+
+where $T_{ij}$ gives the probability that true label $i$ is observed as label $j$. The diagonal elements $T_{ii}$ represent label accuracy for class $i$, while off-diagonal elements quantify specific label confusion patterns.
+
+Under this model, the observed confusion matrix $\tilde{\mathbf{C}}$ (based on noisy labels) relates to the true confusion matrix $\mathbf{C}$ via:
+
+\begin{equation}
+\tilde{\mathbf{C}} = \mathbf{C} \cdot \mathbf{T}
+\label{eq_12_4}
+\end{equation}
+
+This matrix equation shows that observed confusions are a mixture of true confusions and label noise.
+
+\subsection{Estimating the Transition Matrix}
+
+If we have a small set of examples with validated labels (from high-quality standards as in Section~\ref{sec:signal-database}), we can estimate $\mathbf{T}$ directly:
+
+\begin{equation}
+\hat{T}_{ij} = \frac{\text{count}(\text{true} = i, \text{observed} = j)}{\text{count}(\text{true} = i)}
+\label{eq_12_5}
+\end{equation}
+
+Given $\hat{\mathbf{T}}$ and the observed confusion matrix $\tilde{\mathbf{C}}$ from noisy-label data, we can estimate the true confusion matrix via:
+
+\begin{eqbox}{Confusion Matrix Denoising}
+\hat{\mathbf{C}} = \tilde{\mathbf{C}} \cdot \hat{\mathbf{T}}^{-1}
+\label{eq_12_6}
+\end{equation}
+
+This inversion requires that $\hat{\mathbf{T}}$ be nonsingular, which holds when label noise is not too severe (all $T_{ii} > 1/K$) and we have sufficient validation data for reliable estimation.
+
+\subsection{Confidence Bounds}
+
+Uncertainty in $\hat{\mathbf{T}}$ propagates to uncertainty in $\hat{\mathbf{C}}$. Using the delta method:
+
+\begin{theorem}[Confusion Matrix Confidence]
+Let $\hat{\mathbf{C}}$ be the denoised confusion matrix estimate from Equation~\ref{eq_12_6}. Under multinomial sampling with $n_i$ validation examples for class $i$, the asymptotic standard error for element $\hat{C}_{ij}$ is:
+\begin{equation}
+\text{SE}(\hat{C}_{ij}) \approx \sqrt{\frac{\hat{C}_{ij}(1-\hat{C}_{ij})}{n_i} + \sum_{k} \left(\frac{\partial \hat{C}_{ij}}{\partial T_{ik}}\right)^2 \frac{T_{ik}(1-T_{ik})}{m_i}}
+\label{eq_12_7}
+\end{equation}
+where $m_i$ is the number of examples used to estimate $\hat{T}_{i\cdot}$.
+\end{theorem}
+
+This quantifies the additional uncertainty introduced by label noise. Confidence intervals for classification accuracy derived from $\hat{\mathbf{C}}$ should account for both sampling variability and label noise propagation.
+
+\subsection{Label Quality Assessment}
+
+Before trusting denoised estimates, we must validate that label quality is sufficient for reliable estimation. Several diagnostics are useful:
+
+\begin{enumerate}
+\item \textbf{Diagonal dominance:} The transition matrix should satisfy $T_{ii} > \sum_{j \neq i} T_{ij}$ for all $i$. If this fails, labels are so noisy that class identity is lost—no estimation can recover true performance.
+
+\item \textbf{Consistency checks:} If we have multiple independent label sources (e.g., different validators), their transition matrices should be similar. Large discrepancies suggest systematic differences in labeling criteria.
+
+\item \textbf{Cross-validation:} Partition validation data, estimate $\hat{\mathbf{T}}$ on one partition, and verify predictions on the other. Systematically poor predictions indicate model misspecification or insufficient validation data.
+\end{enumerate}
+
+\begin{example}[Label Quality Threshold]
+\label{ex:label-quality}
+Consider a binary classification task (haplotype present/absent) with validation data:
+\begin{itemize}
+\item 200 truly positive examples, 190 labeled positive (95\% accuracy)
+\item 200 truly negative examples, 185 labeled negative (92.5\% accuracy)
+\end{itemize}
+
+The estimated transition matrix is:
+\begin{equation*}
+\hat{\mathbf{T}} = \begin{bmatrix} 0.95 & 0.05 \\ 0.075 & 0.925 \end{bmatrix}
+\end{equation*}
+
+Both classes achieve $>90\%$ label accuracy, satisfying the diagonal dominance criterion. The condition number of $\hat{\mathbf{T}}$ is approximately 3.2, indicating stable inversion. We conclude that label quality is sufficient for denoising, though confidence intervals should be widened by approximately $\sqrt{2}$ to account for label noise contribution.
+\end{example}
+
+\section{Training Strategies for Robust Models}
+\label{sec:training-strategies}
+
+Given that some label noise is inevitable, how should we modify training algorithms to achieve robust performance? This section presents several complementary strategies.
+
+\subsection{Robust Loss Functions}
+
+Standard cross-entropy loss is highly sensitive to label noise: a single mislabeled example can dominate gradient computations if its predicted probability is very low. Robust losses downweight uncertain examples:
+
+\begin{eqbox}{Robust Loss Function with Label Smoothing}
+\mathcal{L}_{\text{robust}}(\hat{y}, y) = -\sum_c \left[(1-\epsilon)y_c + \frac{\epsilon}{K}\right] \log \hat{y}_c
+\label{eq_12_8}
+\end{equation}
+
+where $\epsilon \in (0,1)$ is the label smoothing parameter and $K$ is the number of classes. This loss interpolates between the true label $y$ and a uniform distribution, preventing overconfidence on potentially mislabeled examples.
+
+Alternatively, the Generalized Cross-Entropy (GCE) loss family provides tunable robustness:
+
+\begin{equation}
+\mathcal{L}_{\text{GCE}}(\hat{y}, y; q) = \frac{1-\sum_c y_c \hat{y}_c^q}{q}
+\label{eq_12_9}
+\end{equation}
+
+For $q \to 0$, GCE reduces to standard cross-entropy; for $q=1$, it becomes mean absolute error. Intermediate values (e.g., $q=0.7$) provide noise robustness while maintaining gradient signal.
+
+\subsection{Sample Weighting Approaches}
+
+Not all training examples are equally reliable. Weighting examples by estimated label quality focuses learning on high-confidence data:
+
+\begin{eqbox}{Sample Weighting for Noisy Labels}
+\mathcal{L}_{\text{weighted}} = \sum_{i=1}^N w_i \mathcal{L}(f(x_i; \theta), y_i)
+\label{eq_12_10}
+\end{equation}
+
+where $w_i \in [0,1]$ reflects confidence in label $y_i$. Several weighting schemes are effective:
+
+\textbf{1. Consensus-based weighting:} If multiple labelers annotated example $i$, set $w_i$ proportional to agreement fraction. Full consensus yields $w_i = 1$; complete disagreement yields $w_i \to 0$.
+
+\textbf{2. Quality-score weighting:} For sequencing data with per-base quality scores, compute $w_i$ as the product of base quality probabilities. Low-quality reads receive reduced weight automatically.
+
+\textbf{3. Validation-based weighting:} For examples similar to validated standards, use high weights. For examples in sequence space distant from any standard, reduce weights proportionally.
+
+\textbf{4. Self-consistency weighting:} After initial training, evaluate model predictions on the training set. Examples where predicted and observed labels disagree likely contain label errors; reduce their weights in subsequent training iterations.
+
+\subsection{Iterative Refinement Methods}
+
+Combining robust losses with sample weighting enables iterative refinement that progressively identifies and downweights noisy labels:
+
+\begin{algorithm}[H]
+\caption{Iterative Label Refinement Training}
+\label{alg:iterative-refinement}
+\begin{algorithmic}[1]
+\STATE Initialize all weights: $w_i \gets 1$ for $i = 1, \ldots, N$
+\STATE Initialize model parameters $\theta$ via standard training
+\FOR{epoch $t = 1, 2, \ldots, T$}
+  \STATE Train model on weighted dataset: $\theta^{(t)} \gets \argmin_\theta \sum_i w_i^{(t-1)} \mathcal{L}_{\text{robust}}(f(x_i; \theta), y_i)$
+  \STATE Evaluate model predictions: $\hat{y}_i^{(t)} \gets f(x_i; \theta^{(t)})$ for all $i$
+  \STATE Compute label agreement: $a_i^{(t)} \gets \mathbb{I}\{\text{argmax}(\hat{y}_i^{(t)}) = y_i\}$
+  \STATE Update weights: $w_i^{(t)} \gets \alpha w_i^{(t-1)} + (1-\alpha) a_i^{(t)}$ (exponential moving average)
+  \IF{validation loss increases or $t > T_{\max}$}
+    \STATE \textbf{break} (early stopping)
+  \ENDIF
+\ENDFOR
+\STATE \textbf{return} $\theta^{(t)}$
+\end{algorithmic}
+\end{algorithm}
+
+This algorithm progressively focuses learning on consistently classified examples while downweighting likely labeling errors. The hyperparameter $\alpha \in [0,1]$ controls adaptation speed: $\alpha \approx 0.9$ provides stable learning with gradual weight adjustment.
+
+\subsection{Regularization for Generalization}
+
+Noisy labels encourage overfitting: models learn specific label errors rather than general patterns. Aggressive regularization combats this tendency:
+
+\begin{itemize}
+\item \textbf{$L_2$ regularization:} Add $\lambda \|\theta\|^2$ to loss, penalizing parameter magnitude. Use larger $\lambda$ (e.g., $10^{-3}$ instead of $10^{-5}$) when label noise is substantial.
+
+\item \textbf{Dropout:} Randomly deactivate neurons during training with probability $p \in [0.3, 0.5]$. Higher dropout rates prevent memorization of noisy training examples.
+
+\item \textbf{Early stopping:} Monitor validation loss on clean validation data (from verified standards). Stop training when validation loss plateaus, even if training loss continues decreasing—further training likely fits noise.
+
+\item \textbf{Data augmentation:} For sequence data, augment via reversals, complementation, or k-mer permutations. Augmentation increases effective training set size and reduces overfitting to specific noisy examples.
+\end{itemize}
+
+\section{Integration with SMA-seq}
+\label{sec:sma-seq-integration}
+
+The SMA-seq framework (Chapter~\ref{chap:sma-seq}) provides empirical error measurements from physical standards. These measurements directly inform noisy label learning strategies, creating a virtuous cycle of improvement.
+
+\subsection{Signal Database as SMA-seq Output}
+
+SMA-seq experiments naturally generate signal databases:
+\begin{enumerate}
+\item Standards designed following Chapter~\ref{chap:plasmid-standards} provide verified sequences ($s_{\text{true}}$)
+\item Sequencing generates raw signals ($x_i$) and basecalled sequences ($\hat{s}_i$)
+\item Confusion matrices from SMA-seq quantify current model performance
+\item These (signal, true label, predicted label) tuples form the signal database
+\end{enumerate}
+
+Thus, signal database construction is not a separate activity but rather a natural output of SMA-seq validation experiments. Every SMA-seq run contributes to the growing training resource.
+
+\subsection{Prioritizing Standards for Database Expansion}
+
+Not all standards contribute equally to model improvement. Active learning principles guide selection of new standards to add:
+
+\textbf{Selection criteria:}
+\begin{itemize}
+\item Sequences with high current error rates (low TPR in SMA-seq confusion matrix)
+\item Sequence contexts underrepresented in existing database (low $k$-mer coverage)
+\item Clinically relevant haplotypes requiring high confidence classification
+\item Challenging motifs: long homopolymers, extreme GC content, tandem repeats
+\end{itemize}
+
+\textbf{Example workflow:}
+\begin{enumerate}[itemsep=2pt]
+\item Run SMA-seq on current standard panel (Chapter~\ref{chap:sma-seq})
+\item Identify sequences with TPR $< 0.90$ or quality overestimation $d > 0.30$
+\item For each problematic sequence, check representation in signal database
+\item If underrepresented ($<$ 50 examples), add to next database expansion round
+\item Synthesize new standards incorporating problematic contexts
+\item Sequence new standards and append signals to database
+\item Retrain basecaller using expanded database (Chapter~\ref{chap:basecaller})
+\item Re-evaluate via SMA-seq to confirm improvement
+\end{enumerate}
+
+This closed-loop process ensures that database expansion targets actual performance gaps rather than theoretical concerns.
+
+\subsection{Quality Control Checkpoints}
+
+Several QC gates ensure that noisy label learning doesn't inadvertently degrade model performance:
+
+\begin{table}[!htbp]
+\centering
+\caption{Noisy Label Learning QC Gates}
+\label{tab:noisy-label-qc}
+\begin{tabular}{p{4cm}p{4cm}p{4cm}}
+\toprule
+\textbf{Metric} & \textbf{Threshold} & \textbf{Action if Failed} \\
+\midrule
+Validation set accuracy & $> 0.95$ & Increase regularization, expand validation set \\
+Label transition matrix diagonal & $T_{ii} > 0.85$ for all $i$ & Improve label quality before training \\
+Training-validation gap & $< 0.10$ accuracy difference & Increase dropout, reduce model capacity \\
+SMA-seq TPR on standards & $> 0.90$ for all standards & Identify and fix systematic errors \\
+Quality overestimation $d$ & $< 0.30$ & Recalibrate quality scores (Chapter~\ref{chap:basecaller}) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Models failing any gate require investigation before deployment. Notably, the SMA-seq TPR gate connects noisy label learning directly to empirical validation: theoretical robustness claims must be verified experimentally.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Variable Summary and Reference}
+\label{sec:noisy-labels-variable-summary}
+
+This section provides a comprehensive summary of all variables used in noisy label learning, including physical descriptions, units, and methods of measurement or determination. These variables form the core notation for robust training under label uncertainty.
+
+\subsection{Variable Summary Table}
+
+\begin{vartable}
+\varrow{$\mathbf{T}$}{Label transition matrix: $T_{ij} = P(\text{observed label } j \mid \text{true label } i)$. Characterizes the noise process that corrupts ground truth labels.}
+       {dimensionless probability matrix}
+       {Estimated from validation data with known ground truth (Equation~\ref{eq:transition-estimate}); validated standards from Chapter~\ref{chap:plasmid-standards}.}
+
+\varrow{$\mathbf{C}$, $\tilde{\mathbf{C}}$, $\hat{\mathbf{C}}$}{Confusion matrices: $\mathbf{C}$ is the true confusion matrix (unknown), $\tilde{\mathbf{C}}$ is the observed confusion matrix from noisy labels, $\hat{\mathbf{C}}$ is the denoised estimate.}
+       {dimensionless probability matrix}
+       {$\tilde{\mathbf{C}}$ computed from training data; $\hat{\mathbf{C}}$ estimated via Equation~\ref{eq:denoised-confusion}; $\mathbf{C}$ validated via SMA-seq standards.}
+
+\varrow{$w_i$}{Sample weight for training example $i$: reflects confidence in label quality.}
+       {dimensionless weight in [0,1]}
+       {Computed from consensus agreement, quality scores, validation similarity, or self-consistency (Section~\ref{sec:training-strategies}).}
+
+\varrow{$\eta$}{Label noise rate: fraction of training examples with incorrect labels.}
+       {fraction (0--1)}
+       {Estimated from validation data or theoretical bounds; affects bias term in learning (Theorem on Label Noise Bias).}
+
+\varrow{$\epsilon$}{Label smoothing parameter: interpolation weight between true label and uniform distribution in robust loss.}
+       {hyperparameter in (0,1)}
+       {Set empirically; typical values $\epsilon \in [0.05, 0.2]$ depending on estimated noise rate $\eta$.}
+
+\varrow{$K$}{Number of classes in classification problem.}
+       {dimensionless count}
+       {Determined by problem structure (e.g., number of haplotypes, number of base classes).}
+
+\varrow{$\theta$}{Model parameters (e.g., neural network weights).}
+       {dimensionless parameter vector}
+       {Optimized during training via gradient descent; $\theta^*$ denotes optimal parameters under perfect labels.}
+
+\varrow{$N$}{Number of training examples.}
+       {dimensionless count}
+       {Determined by signal database size; minimum requirements given by Equation~\ref{eq:min-database-size}.}
+
+\varrow{$s_{\text{true}}$}{True (verified) sequence of a physical standard.}
+       {DNA sequence string}
+       {Verified via Sanger sequencing, synthesis reports, or orthogonal platforms (Section~\ref{sec:signal-database}).}
+
+\varrow{$\hat{s}$}{Basecalled sequence from current model.}
+       {DNA sequence string}
+       {Output of basecaller applied to raw signal; compared to $s_{\text{true}}$ for validation.}
+
+\varrow{$x_i$}{Raw sequencing signal (electrical current or pulse sequence).}
+       {platform-dependent units}
+       {Measured directly by sequencing instrument; stored in FAST5/POD5/BAM files.}
+
+\varrow{$Q$}{Quality score (Phred-scale).}
+       {Phred units (dimensionless)}
+       {Reported by basecaller; related to error probability by $p_{\text{err}} = 10^{-Q/10}$.}
+\end{vartable}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Detailed Variable Reference Boxes}
+
+This section provides in-depth reference information for the most critical variables in noisy label learning, including physical descriptions, units, measurement methods, and concrete examples.
+
+\begin{varbox}{$\mathbf{T}$}
+\textbf{Physical description.}
+The label transition matrix $\mathbf{T}$ is a $K \times K$ probability matrix where $T_{ij}$ represents the probability that a training example with true label $i$ is observed with noisy label $j$. Diagonal elements $T_{ii}$ represent label accuracy for each class, while off-diagonal elements capture specific confusion patterns (e.g., systematic mislabeling of one haplotype as another).
+
+\textbf{Units.}
+Dimensionless probability matrix; each row sums to 1: $\sum_j T_{ij} = 1$ for all $i$.
+
+\textbf{Measurement / determination.}
+Estimated from a validation dataset with known ground truth labels. For sequencing applications, physical standards with verified sequences (Chapter~\ref{chap:plasmid-standards}) provide the gold standard. Count occurrences of each (true, observed) label pair and normalize by row (Equation~\ref{eq:transition-estimate}).
+
+\textbf{Example.}
+For binary haplotype classification (present/absent) with validation data showing:
+\begin{itemize}
+\item 950 true positives labeled correctly, 50 mislabeled as negative
+\item 920 true negatives labeled correctly, 80 mislabeled as positive
+\end{itemize}
+The transition matrix is:
+\[
+\mathbf{T} = \begin{bmatrix} 0.95 & 0.05 \\ 0.08 & 0.92 \end{bmatrix}
+\]
+Diagonal dominance ($T_{11} = 0.95 > 0.05$, $T_{22} = 0.92 > 0.08$) indicates sufficient label quality for denoising.
+\end{varbox}
+
+\begin{varbox}{$\tilde{\mathbf{C}}$, $\hat{\mathbf{C}}$}
+\textbf{Physical description.}
+$\tilde{\mathbf{C}}$ is the observed confusion matrix computed from model predictions and noisy training labels. $\hat{\mathbf{C}}$ is the denoised estimate of the true confusion matrix, obtained by inverting the noise process via $\hat{\mathbf{C}} = \tilde{\mathbf{C}} \cdot \mathbf{T}^{-1}$ (Equation~\ref{eq:denoised-confusion}).
+
+\textbf{Units.}
+Dimensionless probability matrices; each row represents the distribution of predicted labels for a given true label.
+
+\textbf{Measurement / determination.}
+$\tilde{\mathbf{C}}$ is computed directly from training data by cross-tabulating model predictions against training labels. $\hat{\mathbf{C}}$ requires estimating the transition matrix $\mathbf{T}$ from validation data, then applying matrix inversion. This inversion is stable when $\mathbf{T}$ is well-conditioned (all $T_{ii} > 1/K$).
+
+\textbf{Example.}
+Suppose the observed confusion matrix on noisy labels is:
+\[
+\tilde{\mathbf{C}} = \begin{bmatrix} 0.88 & 0.12 \\ 0.10 & 0.90 \end{bmatrix}
+\]
+With transition matrix from previous example, the denoised confusion matrix is:
+\[
+\hat{\mathbf{C}} = \tilde{\mathbf{C}} \cdot \mathbf{T}^{-1}
+\approx \begin{bmatrix} 0.92 & 0.08 \\ 0.06 & 0.94 \end{bmatrix}
+\]
+The denoising process recovers higher true accuracy (diagonal elements) by accounting for label corruption.
+\end{varbox}
+
+\begin{varbox}{$w_i$}
+\textbf{Physical description.}
+Sample weight for training example $i$, reflecting estimated confidence in the correctness of its label. Examples with high $w_i$ (close to 1) are trusted and contribute strongly to gradient updates; examples with low $w_i$ (close to 0) are likely mislabeled and are downweighted during training.
+
+\textbf{Units.}
+Dimensionless weight in $[0, 1]$.
+
+\textbf{Measurement / determination.}
+Multiple strategies exist (Section~\ref{sec:training-strategies}):
+\begin{itemize}
+\item \textbf{Consensus-based:} $w_i =$ fraction of labelers agreeing on label $y_i$
+\item \textbf{Quality-score:} $w_i = \prod_j 10^{-Q_j/10}$ from per-base quality scores
+\item \textbf{Self-consistency:} $w_i$ increases when model predictions agree with training labels across multiple epochs
+\item \textbf{Validation-based:} $w_i$ higher for examples similar to validated standards
+\end{itemize}
+
+\textbf{Example.}
+For a read with mean quality score $Q = 25$ and model prediction agreeing with training label, initial $w_i = 1.0$. If subsequent training iterations show consistent disagreement between model and label, iterative refinement (Algorithm~\ref{alg:iterative-refinement}) gradually reduces $w_i$ to $\sim 0.3$, indicating likely label error.
+\end{varbox}
+
+\begin{varbox}{$\eta$, $\epsilon$}
+\textbf{Physical description.}
+$\eta$ is the label noise rate (fraction of training examples with incorrect labels). $\epsilon$ is the label smoothing parameter used in robust loss functions (Equation~\ref{eq:robust-loss}) to interpolate between hard labels and uniform distribution.
+
+\textbf{Units.}
+Both are dimensionless fractions in $(0, 1)$.
+
+\textbf{Measurement / determination.}
+$\eta$ is estimated from validation data: count mismatch rate between noisy labels and ground truth. Alternatively, estimate from diagonal of $\mathbf{T}$: $\eta \approx 1 - \text{mean}(T_{ii})$.
+
+$\epsilon$ is a hyperparameter set based on estimated $\eta$. Common heuristic: $\epsilon \approx \eta/2$ to $\eta$, with typical values $\epsilon \in [0.05, 0.2]$. Larger $\epsilon$ provides more robustness but may slow convergence.
+
+\textbf{Example.}
+Validation data shows 850 correct labels and 150 incorrect labels out of 1,000 examples, yielding $\eta = 0.15$ (15\% noise rate). For robust training, set $\epsilon = 0.10$ in the label smoothing loss. This interpolates each hard label with 10\% weight on the uniform distribution, reducing sensitivity to the 15\% mislabeled examples.
+\end{varbox}
+
+\begin{varbox}{$s_{\text{true}}$, $x_i$}
+\textbf{Physical description.}
+$s_{\text{true}}$ is the verified DNA sequence of a physical standard, confirmed by orthogonal methods (Sanger, synthesis verification, multiple platforms). $x_i$ is the raw sequencing signal (electrical current trace for ONT, pulse sequence for PacBio) before basecalling.
+
+\textbf{Units.}
+$s_{\text{true}}$: DNA sequence string over alphabet $\{A, C, G, T\}$, length in base pairs.
+$x_i$: Platform-dependent (picoamperes for ONT, inter-pulse durations for PacBio).
+
+\textbf{Measurement / determination.}
+$s_{\text{true}}$ is determined during standard design (Chapter~\ref{chap:plasmid-standards}): synthetic constructs are verified via Sanger sequencing (100\% coverage), synthesis verification reports, or consensus from multiple orthogonal platforms.
+
+$x_i$ is measured directly by the sequencing instrument and stored in raw signal files (FAST5/POD5 for ONT, BAM for PacBio). These signals form the input to basecalling models.
+
+\textbf{Example.}
+A CYP2D6*10 plasmid standard has $s_{\text{true}} =$ 4,382 bp verified sequence from synthesis vendor and Sanger confirmation. Sequencing generates 5,000 reads, each with raw signal $x_i$ (e.g., 30,000 time points at 4 kHz sampling for ONT). The signal database stores tuples $(x_i, s_{\text{true}}, \hat{s}_i, Q_i)$ for model training and validation (Table~\ref{tab:signal-db-schema}).
+\end{varbox}
+
+\begin{keytakeaways}
+This chapter addressed the fundamental challenge of learning from imperfect labels in genomic sequencing applications:
+
+\textbf{The Noisy Labels Problem:}
+\begin{itemize}
+\item \textbf{Label Noise is Inevitable:} Ground truth in genomic sequencing is inherently imperfect due to reference genome errors, PCR artifacts, alignment ambiguities, DNA preparation artifacts, and consensus-based labeling bias
+
+\item \textbf{Performance Degradation} (Theorem~\ref{thm:noise-bias}): Training on noisy labels with noise rate $\eta$ introduces expected classification error $\mathcal{O}(\eta)$ above optimal, even with modest noise rates (5-10\%)
+
+\item \textbf{Fundamental Limitations:} Perfect labels are unattainable due to measurement limitations, biological reality (somatic mutations, mosaicism), structural complexity, and economic constraints
+\end{itemize}
+
+\textbf{Signal Database Construction:}
+\begin{itemize}
+\item \textbf{Physical Standards Solution:} Verified sequence standards from Chapter~\ref{chap:plasmid-standards} provide high-quality signal-label pairs with orthogonal validation (Sanger, synthesis verification, multiple platforms)
+
+\item \textbf{Purity Quantification:} Standards require 260/280 and 260/230 ratios $> 1.8$, restriction digest verification, and purity $\pi \geq 0.95$ (Chapter~\ref{chap:purity})
+
+\item \textbf{Context Diversity:} Databases must span relevant sequence space including common star alleles, problematic motifs (homopolymers, GC extremes, tandem repeats), and flanking intronic sequences
+
+\item \textbf{Provenance Documentation:} Versioned databases with full experimental metadata (platform, flowcell, basecaller version, quality metrics) enable reproducible model training
+\end{itemize}
+
+\textbf{Robust Training Strategies:}
+\begin{itemize}
+\item \textbf{Loss Function Robustness:} Symmetric cross-entropy (Equation~\ref{eq:symmetric-loss}), generalized cross-entropy, and focal loss reduce sensitivity to mislabeled examples
+
+\item \textbf{Sample Weighting:} Importance weighting (Equation~\ref{eq:importance-weight}) and iterative reweighting (Algorithm) progressively downweight likely label errors while focusing on clean examples
+
+\item \textbf{Aggressive Regularization:} Larger $L_2$ penalty ($\lambda \sim 10^{-3}$), higher dropout ($p \in [0.3, 0.5]$), early stopping on clean validation data, and data augmentation prevent overfitting to noisy labels
+\end{itemize}
+
+\textbf{SMA-seq Integration:}
+\begin{itemize}
+\item \textbf{Natural Database Generation:} SMA-seq experiments (Chapter~\ref{chap:sma-seq}) automatically produce signal databases as (signal, true label, predicted label) tuples from standard sequencing
+
+\item \textbf{Active Learning Prioritization:} Expand databases with sequences showing high current error rates (TPR $< 0.90$), underrepresented $k$-mer contexts, clinically relevant haplotypes, and challenging motifs
+
+\item \textbf{Validation Gates:} Database quality metrics include coverage uniformity (CV $< 0.3$), SMA-seq TPR on standards ($> 0.90$), and quality overestimation $d < 0.30$
+\end{itemize}
+
+\textbf{Key Principles:}
+\begin{itemize}
+\item Quantify label quality via transition matrices estimated from validation data
+\item Use robust loss functions and sample weighting to reduce noise sensitivity
+\item Apply iterative refinement to progressively identify and downweight errors
+\item Integrate label quality assessment with SMA-seq validation framework
+\item Maintain versioned signal databases with full provenance documentation
+\item Validate improvements experimentally, not just on held-out training data
+\end{itemize}
+
+\textbf{Framework Integration:} These strategies integrate seamlessly with the SMA-seq framework (Chapter~\ref{chap:sma-seq}) and enable the basecaller fine-tuning approaches (Chapter~\ref{chap:basecaller}). Together, they provide a complete methodology for empirical error characterization and model improvement despite inherent challenges of noisy ground truth in genomic sequencing.
+
+\textbf{Related Topics:} See Chapter~\ref{chap:sma-seq} for confusion matrix construction from physical standards, Chapter~\ref{chap:basecaller} for neural network fine-tuning strategies, and Chapter~\ref{chap:qc-gates} for quality control frameworks incorporating label quality assessment.
+\end{keytakeaways}

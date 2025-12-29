@@ -1,0 +1,554 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% DEMONSTRATION CHAPTER - Bayesian Framework with New Equation System
+%% This chapter demonstrates the new equation numbering and variable framework
+%% Version 1.0 - November 2025
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{Bayesian Framework for Haplotype Classification}
+\label{chap:bayesian-framework-demo}
+
+This chapter establishes the core probabilistic framework for single-molecule haplotype classification. We develop the Bayesian inference machinery that transforms raw sequencing reads into posterior probability distributions over candidate haplotypes. The framework integrates empirical error models, quality score calibration, and purity constraints to enable rigorous uncertainty quantification suitable for clinical decision-making.
+
+\begin{learningobjectives}
+By the end of this chapter, you will be able to:
+\begin{itemize}
+\item Apply Bayes' rule to compute posterior haplotype probabilities from sequencing reads
+\item Construct per-read likelihoods using position-wise error models and quality scores
+\item Use log-likelihood ratios to quantify evidence for competing hypotheses
+\item Compute and interpret classification entropy as a measure of uncertainty
+\item Understand the relationship between molecular purity and achievable classification accuracy
+\item Apply mixture models to diploid and contaminated samples
+\end{itemize}
+\end{learningobjectives}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Core Bayesian Inference}
+\label{sec:core-bayesian}
+
+Single-molecule haplotype classification is fundamentally a problem of statistical inference: given a collection of noisy observations (sequencing reads), we seek to determine which true haplotype generated those observations. Bayesian inference provides the optimal framework for this task by combining prior knowledge about haplotype frequencies with empirical evidence from the data.
+
+\subsection{Bayes' Rule for Single Reads}
+
+The foundation of our classification system is Bayes' rule, which allows us to invert conditional probabilities. Given a single read $r$ and a candidate haplotype $h$, we wish to compute the posterior probability $P(h \mid r)$ that the read originated from haplotype $h$.
+
+\begin{eqbox}{Bayes' rule for a single read}
+\begin{equation}
+P(h \mid r)
+  = \frac{P(h)\,P(r \mid h)}{P(r)}
+  = \frac{P(h)\,P(r \mid h)}{\sum_{h' \in \mathcal{H}} P(h')\,P(r \mid h')}.
+\label{eq:bayes-single-read}
+\end{equation}
+\end{eqbox}
+
+Here $\mathcal{H}$ is the haplotype space (the set of all candidate haplotypes under consideration), $P(h)$ is the prior probability of haplotype $h$ (typically derived from population frequencies), $P(r \mid h)$ is the likelihood of observing read $r$ if the true haplotype is $h$, and the denominator $P(r)$ is the marginal probability of observing read $r$ under any haplotype (computed by summing over all candidates).
+
+The likelihood $P(r \mid h)$ captures the sequencing error process and is the focus of our empirical calibration efforts (Chapter~\ref{chap:sma-seq}). The posterior $P(h \mid r)$ quantifies our belief about the true haplotype after observing the read.
+
+\subsection{Position-Wise Error Model}
+
+For long-read sequencing platforms, the basecaller typically provides per-base quality scores $q_i$ in Phred units. These quality scores can be converted to error probabilities and used to construct a position-wise likelihood model.
+
+\begin{eqbox}{Per-base error model}
+\begin{equation}
+P(\hat{s} \mid s)
+  = \prod_{i=1}^{L} P(\hat{s}_i \mid s_i, q_i),
+\qquad
+P(\text{error at position } i) = 10^{-q_i/10}.
+\label{eq:position-error}
+\end{equation}
+\end{eqbox}
+
+In this model, $s$ represents the true sequence (from haplotype $h$), $\hat{s}$ is the observed basecalled sequence, $L$ is the sequence length, and $q_i$ is the Phred quality score at position $i$. The independence assumption (the product form) is standard but should be validated empirically, particularly for homopolymer regions where errors may be correlated.
+
+The Phred quality score $q_i$ is related to the basecaller's predicted error probability $p_{\text{err},i}$ by the standard formula:
+\[
+q_i = -10 \log_{10} p_{\text{err},i},
+\qquad
+p_{\text{err},i} = 10^{-q_i/10}.
+\]
+A quality score of $Q=30$ corresponds to a $0.1\%$ error rate, while $Q=20$ corresponds to $1\%$ errors.
+
+\subsection{Log-Likelihood Ratio for Hypothesis Testing}
+
+When comparing two specific haplotypes $h_i$ and $h_j$, it is often more convenient to work with log-likelihood ratios rather than raw likelihoods or posteriors.
+
+\begin{eqbox}{Log-likelihood ratio for two haplotypes}
+\begin{equation}
+\mathrm{LLR}(r; h_i, h_j)
+  = \log \frac{P(r \mid h_i)}{P(r \mid h_j)}
+  = \log P(r \mid h_i) - \log P(r \mid h_j).
+\label{eq:log-likelihood-ratio}
+\end{equation}
+\end{eqbox}
+
+The log-likelihood ratio $\mathrm{LLR}(r; h_i, h_j)$ quantifies the evidence in favor of $h_i$ over $h_j$ from a single read $r$. Positive values support $h_i$, negative values support $h_j$, and values near zero indicate that the read is uninformative for distinguishing these two haplotypes. Working in log-space prevents numerical underflow and allows evidence from multiple reads to be summed rather than multiplied.
+
+\subsection{Classification Entropy}
+
+Even after observing data, there may remain uncertainty about which haplotype is correct. The entropy of the posterior distribution quantifies this residual uncertainty.
+
+\begin{eqbox}{Entropy of a discrete distribution}
+\begin{equation}
+H(p) = - \sum_{i} p_i \log p_i.
+\label{eq:entropy}
+\end{equation}
+\end{eqbox}
+
+Here $p = (p_i)$ is a probability distribution (typically the posterior over haplotypes after observing all reads). Entropy $H(p)$ is maximized when all outcomes are equally likely (maximum uncertainty) and minimized (to zero) when one outcome has probability 1 (complete certainty). In practice, high-entropy posteriors indicate that additional data may be needed for confident classification.
+
+For a posterior distribution over $|\mathcal{H}|$ haplotypes, the maximum possible entropy is $\log |\mathcal{H}|$ (achieved by a uniform distribution). Normalized entropy $H(p) / \log |\mathcal{H}|$ ranges from 0 to 1 and provides a scale-invariant measure of classification uncertainty.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Likelihood Computation from Reads}
+\label{sec:likelihood-computation}
+
+To apply Bayes' rule in practice, we must compute the per-read likelihood $P(r \mid h)$ for each read $r$ and each candidate haplotype $h$. This section develops the machinery for likelihood computation that accounts for fragmentation, alignment uncertainty, and basecalling errors.
+
+\subsection{Per-Read Likelihood Under a Haplotype}
+
+A single sequencing read $r$ may originate from any of many possible genomic fragments (due to random fragmentation during library preparation). We marginalize over all possible source fragments to obtain the per-read likelihood.
+
+\begin{eqbox}{Per-read likelihood under haplotype $h_i$}
+\begin{equation}
+P(r_n \mid h_i) =
+  \sum_{s \in S_i} P(r_n \mid s; \theta)\,\pi_i(s).
+\label{eq:per-read-likelihood}
+\end{equation}
+\end{eqbox}
+
+Here $S_i$ is the set of all possible source fragments from haplotype $h_i$ (determined by the target region and expected fragment length distribution), $P(r_n \mid s; \theta)$ is the sequencing error model parameterized by $\theta$ (typically a confusion matrix or quality-score-based model), and $\pi_i(s)$ is the prior probability of fragment $s$ (determined by the fragmentation model and coverage distribution).
+
+In practice, the sum over $S_i$ can be replaced by identifying the best-matching fragment via alignment and using only that term, which is valid when one fragment dominates the likelihood (i.e., the read aligns uniquely to one location).
+
+\subsection{Dataset Likelihood}
+
+Given a collection of $N$ independent reads $R = \{r_1, \ldots, r_N\}$, the dataset likelihood is the product of per-read likelihoods.
+
+\begin{eqbox}{Dataset likelihood for haplotype $h_i$}
+\begin{equation}
+P(R \mid h_i) = \prod_{n=1}^{N} P(r_n \mid h_i),
+\qquad
+\log P(R \mid h_i) = \sum_{n=1}^N \log P(r_n \mid h_i).
+\label{eq:dataset-likelihood}
+\end{equation}
+\end{eqbox}
+
+The independence assumption is reasonable when reads originate from different molecules and sequencing errors are uncorrelated across reads. Working in log-space (right-hand side of the equation) prevents numerical underflow when $N$ is large.
+
+\subsection{Posterior Probability and Bayes Factor}
+
+Combining the dataset likelihood with priors yields the posterior distribution over haplotypes. The Bayes factor quantifies the strength of evidence for one haplotype over another.
+
+\begin{eqbox}{Posterior probability and Bayes factor}
+\begin{equation}
+P(h_i \mid R)
+  = \frac{P(h_i)\,P(R \mid h_i)}
+         {\sum_{j} P(h_j)\,P(R \mid h_j)},
+\qquad
+\text{BF}_{i:j}
+  = \frac{P(R \mid h_i)}{P(R \mid h_j)}.
+\label{eq:posterior-bayes-factor}
+\end{equation}
+\end{eqbox}
+
+The posterior $P(h_i \mid R)$ is our final belief about haplotype $h_i$ after observing all reads. The Bayes factor $\text{BF}_{i:j}$ is the ratio of likelihoods and quantifies the evidence in favor of $h_i$ versus $h_j$. A Bayes factor of $100$ means the data are 100 times more likely under $h_i$ than under $h_j$; a Bayes factor of $0.01$ means the opposite.
+
+Common thresholds for interpretation: $\text{BF} > 100$ is considered strong evidence, $3 < \text{BF} < 100$ is moderate evidence, and $\text{BF} < 3$ is weak or inconclusive evidence (following the Jeffreys scale).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Quality Score Calibration and Empirical Validation}
+\label{sec:quality-calibration}
+
+Basecaller-reported quality scores are predictions of error rates. These predictions must be validated empirically to ensure that likelihood computations are accurate. We use Single Molecule Accuracy sequencing (SMA-seq) of known standards to measure empirical error rates and compare them to predicted error rates.
+
+\subsection{Quality Overstatement Fraction}
+
+A critical quality control metric is the fraction of reads for which the basecaller's predicted quality exceeds the empirically measured quality. Systematic overstatement of quality leads to overconfident (poorly calibrated) posteriors.
+
+\begin{eqbox}{Quality overstatement fraction}
+\begin{equation}
+d = \frac{1}{N}
+    \sum_{n=1}^{N} \mathbf{1}\{Q_{\mathrm{pred},n} > Q_{\mathrm{emp},n}\},
+\label{eq:quality-overstatement}
+\end{equation}
+\end{eqbox}
+
+where $Q_{\mathrm{pred},n}$ is the mean predicted quality (from basecaller quality scores) for read $n$, and $Q_{\mathrm{emp},n}$ is the empirical quality computed from the actual error rate when aligning to the known ground truth. The indicator function $\mathbf{1}\{\cdot\}$ is 1 when the condition is true and 0 otherwise.
+
+A well-calibrated basecaller should have $d \approx 0.5$ (quality is equally likely to be overestimated or underestimated). Values of $d > 0.5$ indicate systematic quality overstatement. In practice, we set a QC threshold of $d \leq 0.30$ to ensure acceptable calibration.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Purity Constraints on Classification Accuracy}
+\label{sec:purity-constraints}
+
+Physical standards used for empirical calibration are subject to replication errors during plasmid amplification. These errors impose a fundamental ceiling on achievable classification accuracy, even with perfect sequencing.
+
+\subsection{Purity Ceiling from Replication Errors}
+
+If a plasmid standard undergoes $k$ replication cycles with a per-base error rate $r$, the molecular purity $\pi$ (fraction of molecules with the correct sequence) is bounded above by the error-free replication probability.
+
+\begin{eqbox}{Purity ceiling on achievable accuracy}
+\begin{equation}
+\pi_{\max} \approx (1 - r)^{kL},
+\qquad
+Q_{\mathrm{purity}} = -10 \log_{10}(1 - \pi),
+\qquad
+\mathrm{TPR} \leq \pi_{\max}.
+\label{eq:purity-ceiling}
+\end{equation}
+\end{eqbox}
+
+Here $r$ is the per-base replication error rate (typically $r \approx 10^{-6}$ for high-fidelity polymerases), $k$ is the number of replication cycles, $L$ is the molecule length in base pairs, $\pi$ is the molecular purity (which has an upper bound $\pi_{\max}$), $Q_{\mathrm{purity}}$ is the Phred-scale quality corresponding to the impurity $1 - \pi$, and $\mathrm{TPR}$ is the true positive rate from the confusion matrix diagonal (which cannot exceed the purity ceiling).
+
+This constraint is fundamental: no amount of sequencing data or improved algorithms can overcome errors introduced during plasmid replication. For a 5,000 bp molecule with $r = 10^{-6}$ and $k = 20$ cycles, we have:
+\[
+\pi_{\max} \approx (1 - 10^{-6})^{20 \cdot 5000} = (1 - 10^{-6})^{100000} \approx e^{-0.1} \approx 0.905,
+\]
+which limits the TPR to approximately 90.5\%. If the empirically measured TPR exceeds this bound, it indicates either an error in the purity model or contamination in the standard.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Mixture Models for Diploid and Contaminated Samples}
+\label{sec:mixture-models}
+
+Clinical samples are diploid (containing two haplotypes per gene locus) and may also contain contamination from other sources. Mixture models extend the single-haplotype framework to these more complex scenarios.
+
+\subsection{Diploid Mixture Model}
+
+For a diploid sample containing haplotypes $h_i$ and $h_j$, reads are drawn from a mixture of the two haplotypes. The mixture fraction $\lambda$ represents the proportion of reads originating from $h_i$ (with $1 - \lambda$ from $h_j$).
+
+\begin{eqbox}{Diploid mixture model}
+\begin{equation}
+P(r_n \mid h_i, h_j; \lambda)
+  = \lambda\,P(r_n \mid h_i)
+    + (1 - \lambda)\,P(r_n \mid h_j).
+\label{eq:diploid-mixture}
+\end{equation}
+\end{eqbox}
+
+For a balanced diploid with no copy number variation, we expect $\lambda \approx 0.5$. Deviations from 0.5 may indicate copy number changes, allelic imbalance due to expression differences (for RNA-seq), or preferential amplification during library preparation. The mixture fraction $\lambda$ can be estimated by maximum likelihood or via the EM algorithm when the haplotypes $h_i$ and $h_j$ are known.
+
+This model extends naturally to contamination scenarios: if a sample contains $99\%$ patient DNA and $1\%$ contaminant DNA, we can model this as $\lambda = 0.99$ for the patient haplotype and $0.01$ for the contaminant haplotype.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Variable Summary and Reference}
+\label{sec:variable-summary}
+
+This section provides a comprehensive summary of all variables used in this chapter, including physical descriptions, units, and methods of measurement or determination. These variables form the core notation for Bayesian haplotype classification throughout the framework.
+
+\subsection{Variable Summary Table}
+
+\begin{vartable}
+\varrow{$\mathcal{H}$}{Haplotype space: set of all candidate haplotypes considered in the model.}
+       {dimensionless set}
+       {Defined by assay design and reference catalog (e.g. PharmVar allele list for CYP2D6).}
+
+\varrow{$h, h_i, h_j$}{Individual haplotypes (indexed elements of $\mathcal{H}$).}
+       {dimensionless categorical}
+       {Conceptual objects; instantiated as specific DNA sequences in the haplotype reference panel.}
+
+\varrow{$r, r_n$}{Single basecalled read sequence with quality scores.}
+       {bp (length), sequence string}
+       {Measured by the sequencing instrument and basecaller; extracted from raw signal $S$.}
+
+\varrow{$R$}{Dataset of reads $R = \{r_1,\dots,r_N\}$.}
+       {counted collection}
+       {Collection of all reads passing QC from a sample; size $N$ is measured.}
+
+\varrow{$P(h_i)$}{Prior probability of haplotype $h_i$ before observing reads.}
+       {probability (0--1)}
+       {Set from population frequencies or chosen as uniform / sparsity-inducing prior.}
+
+\varrow{$P(r_n \mid h_i)$}{Per-read likelihood under haplotype $h_i$.}
+       {probability (0--1)}
+       {Computed via error model or confusion matrix calibrated by SMA-seq/SEER.}
+
+\varrow{$P(R \mid h_i)$}{Dataset likelihood under haplotype $h_i$.}
+       {probability (0--1)}
+       {Product of per-read likelihoods across all reads (or sum of log-likelihoods).}
+
+\varrow{$P(h_i \mid R)$}{Posterior probability of haplotype $h_i$ given all reads.}
+       {probability (0--1)}
+       {Computed with Bayes' rule using $P(h_i)$ and $P(R \mid h_i)$.}
+
+\varrow{$\mathrm{LLR}(r; h_i,h_j)$}{Log-likelihood ratio comparing $h_i$ vs. $h_j$ for read $r$.}
+       {log-probability (dimensionless)}
+       {Derived from the likelihood model $P(r\mid h_i)$ and $P(r\mid h_j)$.}
+
+\varrow{$H(p)$}{Entropy of probability distribution $p$ over haplotypes.}
+       {nats (if $\ln$) or bits (if $\log_2$)}
+       {Computed from posteriors or priors to quantify uncertainty.}
+
+\varrow{$S_i$}{Set of possible source fragments from haplotype $h_i$.}
+       {finite set}
+       {Derived from in silico fragmentation of $h_i$ given library prep protocol.}
+
+\varrow{$\pi_i(s)$}{Prior probability for fragment $s \in S_i$ under haplotype $h_i$.}
+       {probability (0--1)}
+       {Determined from empirical fragment length distributions and fragmentation model.}
+
+\varrow{$\theta$}{Vector of error model parameters (e.g., confusion matrix entries).}
+       {dimensionless parameter vector}
+       {Estimated from SMA-seq standards via SEER.}
+
+\varrow{$Q$}{Per-base Phred quality score.}
+       {Phred units (dimensionless log-scale)}
+       {Reported by basecaller; related to error probability by $p_{\mathrm{err}} = 10^{-Q/10}$.}
+
+\varrow{$Q_{\mathrm{pred}}$}{Predicted mean quality for a read (from basecaller).}
+       {Phred units}
+       {Average of per-base $Q$ over a read, output by basecalling software.}
+
+\varrow{$Q_{\mathrm{emp}}$}{Empirical quality computed from actual error rate.}
+       {Phred units}
+       {Estimated from alignment of each read to known reference standard.}
+
+\varrow{$d$}{Quality overstatement fraction.}
+       {fraction (0--1)}
+       {Computed as fraction of reads where $Q_{\mathrm{pred}} > Q_{\mathrm{emp}}$ in SMA-seq/SEER experiments.}
+
+\varrow{$\pi$}{Molecular purity of a standard (fraction of molecules with correct sequence).}
+       {fraction (0--1)}
+       {Measured via clone-level Sanger sequencing or deep NGS on plasmid/strain.}
+
+\varrow{$\pi_{\max}$}{Purity ceiling: maximal achievable TPR given replication errors.}
+       {fraction (0--1)}
+       {Computed from $(1-r)^{kL}$ using replication error rate $r$, cycles $k$, molecule length $L$.}
+
+\varrow{$\mathrm{TPR}$}{True positive rate from confusion matrix diagonal $C_{ii}$.}
+       {fraction (0--1)}
+       {Measured empirically from SMA-seq confusion matrix rows.}
+
+\varrow{$r$}{Per-base replication error rate in plasmid model.}
+       {probability per base per cycle}
+       {Estimated from polymerase error specifications or measured empirically.}
+
+\varrow{$k$}{Number of replication cycles.}
+       {cycle count}
+       {Experimental design parameter; number of plasmid growth/replication cycles.}
+
+\varrow{$L$}{Molecule length (bp).}
+       {base pairs}
+       {Measured from known construct design or reference coordinates.}
+
+\varrow{$\lambda$}{Mixture fraction of haplotype $h_i$ in a diploid/mixed sample.}
+       {fraction (0--1)}
+       {Estimated by fitting mixture model to read likelihoods (e.g., via EM) or set as 0.5 for balanced diploid.}
+\end{vartable}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Detailed Variable Reference Boxes}
+
+This section provides in-depth reference information for each variable, including physical descriptions, units, measurement methods, and concrete examples.
+
+\begin{varbox}{$\mathcal{H}$}
+\textbf{Physical description.}
+The haplotype space: the complete set of candidate genomic haplotypes the classifier
+considers for the sample. Each element corresponds to a specific fully phased DNA
+sequence (e.g., a PharmVar star allele for CYP2D6).
+
+\textbf{Units.}
+Dimensionless set (categorical); elements are sequences, not numeric quantities.
+
+\textbf{Measurement / determination.}
+$\mathcal{H}$ is not measured directly; it is defined by assay design and reference
+databases (e.g., PharmVar for pharmacogenes, curated structural models for hybrids).
+
+\textbf{Example.}
+For a CYP2D6 pharmacogenomics panel in an East Asian cohort, one might define
+\[
+\mathcal{H}
+  = \{\text{*1}, \text{*2}, \text{*4}, \text{*10}, \text{*36+*10}, \text{*5 (deletion)}\},
+\]
+where each element corresponds to a fully specified haplotype sequence (including
+structural variants and hybrids).
+\end{varbox}
+
+\begin{varbox}{$h_i$}
+\textbf{Physical description.}
+A single candidate haplotype (indexed element of $\mathcal{H}$), representing one
+specific DNA sequence that could be present in the sample.
+
+\textbf{Units.}
+Categorical; an index plus an associated DNA sequence.
+
+\textbf{Measurement / determination.}
+The sequence of $h_i$ is defined from external resources (e.g., reference genome plus
+known variants). The posterior probability $P(h_i \mid R)$ is inferred from sequencing
+data using Equation~\ref{eq:posterior-bayes-factor}.
+
+\textbf{Example.}
+In a CYP2D6 assay,
+\[
+h_1 = \text{CYP2D6*1},\quad
+h_2 = \text{CYP2D6*10},\quad
+h_3 = \text{CYP2D6*36+*10}.
+\]
+If the posterior for a patient is $P(h_2 \mid R)=0.98$, then $h_2$ is the most likely
+haplotype on that chromosome.
+\end{varbox}
+
+\begin{varbox}{$r_n$, $R$}
+\textbf{Physical description.}
+$r_n$ is the $n$-th basecalled read (nucleotide sequence with quality scores) produced
+by the sequencer and basecaller. $R = \{r_1,\dots,r_N\}$ is the full set of reads
+analyzed for a sample.
+
+\textbf{Units.}
+Each read has a length in base pairs (bp) and a string over $\{A,C,G,T\}$; $N$ is a
+dimensionless count.
+
+\textbf{Measurement / determination.}
+Reads are directly measured by the sequencing platform and basecalling software. After
+QC (filtering by length, quality, and mapping), the remaining reads constitute $R$.
+
+\textbf{Example.}
+An ONT run might produce $N = 30{,}000$ reads for a CYP2D6 capture. A single read
+$r_{42}$ could be a 7.3 kb sequence spanning the gene; its per-base quality scores
+yield a mean $\bar{Q}_{\mathrm{pred},42} = 29.7$.
+\end{varbox}
+
+\begin{varbox}{$P(h_i)$}
+\textbf{Physical description.}
+Prior probability that haplotype $h_i$ is present in the sample before observing any
+sequencing data.
+
+\textbf{Units.}
+Dimensionless probability in $[0,1]$; $\sum_i P(h_i) = 1$.
+
+\textbf{Measurement / determination.}
+Typically set from external data:
+population haplotype frequencies (gnomAD, 1000 Genomes), cohort-specific statistics,
+or expert priors (e.g. penalizing complex structural variants). Alternatively, a
+uniform prior $P(h_i)=1/|\mathcal{H}|$ can be used.
+
+\textbf{Example.}
+If CYP2D6*10 has population frequency 0.4 and *1 has 0.3 in the relevant ancestry,
+a simple population prior might assign $P(h=\text{*10})=0.4$, $P(h=\text{*1})=0.3$,
+and distribute the remaining 0.3 across other alleles.
+\end{varbox}
+
+\begin{varbox}{$P(r_n \mid h_i)$, $P(R \mid h_i)$}
+\textbf{Physical description.}
+$P(r_n \mid h_i)$: likelihood of observing read $r_n$ if the true haplotype is $h_i$.
+$P(R \mid h_i)$: joint likelihood of observing the entire dataset $R$ under $h_i$,
+assuming reads are conditionally independent given $h_i$.
+
+\textbf{Units.}
+Both are probabilities in $[0,1]$.
+
+\textbf{Measurement / determination.}
+$P(r_n \mid h_i)$ is computed via the calibrated error model (Equation~\ref{eq:per-read-likelihood}) using
+confusion matrices derived from SMA-seq/SEER standards. $P(R \mid h_i)$ is then the
+product (or sum of logs) over reads (Equation~\ref{eq:dataset-likelihood}).
+
+\textbf{Example.}
+For a high-quality standard, a read perfectly matching $h_i$ might have
+$P(r_n \mid h_i) \approx 0.999$ and $P(r_n \mid h_j) \approx 10^{-6}$ for all $j\neq i$.
+With $N=500$ such reads, $\log P(R \mid h_i)$ will be close to $500\log(0.999)$,
+while $\log P(R \mid h_j)$ will be extremely negative for $j\neq i$.
+\end{varbox}
+
+\begin{varbox}{$Q$, $Q_{\mathrm{pred}}$, $Q_{\mathrm{emp}}$, $d$}
+\textbf{Physical description.}
+$Q$: per-base Phred quality score encoding the basecaller's confidence.
+$Q_{\mathrm{pred}}$: mean predicted per-read quality (from the basecaller).
+$Q_{\mathrm{emp}}$: empirical per-read quality computed from actual error rate vs.
+ground truth. $d$: fraction of reads for which $Q_{\mathrm{pred}} > Q_{\mathrm{emp}}$,
+quantifying quality overstatement.
+
+\textbf{Units.}
+$Q$, $Q_{\mathrm{pred}}$, $Q_{\mathrm{emp}}$: Phred units (dimensionless logarithmic scale).
+$d$: dimensionless fraction in $[0,1]$.
+
+\textbf{Measurement / determination.}
+$Q$ and $Q_{\mathrm{pred}}$ are reported by the basecaller; $Q_{\mathrm{emp}}$ is computed
+in SEER by aligning reads from known standards and converting observed error rate
+to Phred scale. $d$ is computed from Equation~\ref{eq:quality-overstatement} across reads from standards.
+
+\textbf{Example.}
+If 10,000 reads from a standard have $Q_{\mathrm{pred}}$ approximately 30 but empirical
+quality $Q_{\mathrm{emp}}$ around 27 for 2,400 of them, then
+\[
+d = 2400 / 10000 = 0.24,
+\]
+which passes the $d \le 0.30$ QC criterion, indicating acceptable but imperfect
+calibration.
+\end{varbox}
+
+\begin{varbox}{$\pi$, $\pi_{\max}$, $\mathrm{TPR}$, $r$, $k$, $L$}
+\textbf{Physical description.}
+$\pi$ is the molecular purity of a physical standard (fraction of molecules with the
+correct sequence). $\pi_{\max} \approx (1-r)^{kL}$ is the theoretical upper bound on
+purity (and thus TPR) given replication errors. $\mathrm{TPR}$ is the empirically
+observed true positive rate from the confusion matrix diagonal. $r$ is the per-base
+replication error rate; $k$ is the number of replication cycles; $L$ is molecule
+length in bp.
+
+\textbf{Units.}
+$\pi$, $\pi_{\max}$, $\mathrm{TPR}$: fractions in $[0,1]$.
+$r$: probability per base per cycle.
+$k$: dimensionless count.
+$L$: base pairs (bp).
+
+\textbf{Measurement / determination.}
+$r$, $k$, and $L$ are determined by experimental design and polymerase properties.
+$\pi$ can be estimated from colony-level Sanger sequencing or deep sequencing of
+the plasmid/strain. $\mathrm{TPR}$ is measured from the SEER confusion matrix as
+$C_{ii}$. $\pi_{\max}$ is then computed via Equation~\ref{eq:purity-ceiling} and compared to $\mathrm{TPR}$
+to detect purity violations.
+
+\textbf{Example.}
+Suppose plasmid length $L = 5{,}000$ bp, replication error rate $r = 10^{-6}$ per base
+per cycle, and $k = 20$ cycles. Then
+\[
+\pi_{\max} \approx (1 - 10^{-6})^{20 \cdot 5000}
+           \approx e^{-0.1} \approx 0.905.
+\]
+If the empirically measured $\mathrm{TPR}$ from SEER is 0.90, the assay is operating
+near the purity ceiling; if $\mathrm{TPR} = 0.98$, this would violate the theoretical
+bound and indicate a modeling or measurement error.
+\end{varbox}
+
+\begin{varbox}{$\lambda$}
+\textbf{Physical description.}
+Mixture fraction of haplotype $h_i$ in a diploid or mixed sample; the remaining
+fraction $(1-\lambda)$ corresponds to haplotype $h_j$ in Equation~\ref{eq:diploid-mixture}.
+
+\textbf{Units.}
+Fraction in $[0,1]$.
+
+\textbf{Measurement / determination.}
+Estimated by fitting the mixture model to read likelihoods (e.g., maximizing the
+likelihood of observed reads under Equation~\ref{eq:diploid-mixture} via EM). In a balanced diploid,
+$\lambda$ is expected to be close to 0.5; deviations indicate copy number variation
+or contamination.
+
+\textbf{Example.}
+For a heterozygous sample with a mild copy number imbalance, you might estimate
+$\lambda = 0.6$ for haplotype *1 and $0.4$ for haplotype *10. For contamination
+detection, a minor contaminant at 1\% would correspond to $\lambda = 0.99$ (main)
+and $0.01$ (contaminant).
+\end{varbox}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Summary and Outlook}
+\label{sec:summary-outlook}
+
+This chapter established the core Bayesian framework for single-molecule haplotype classification. We introduced Bayes' rule (Equation~\ref{eq:bayes-single-read}) as the foundation for computing posterior probabilities, developed position-wise error models (Equation~\ref{eq:position-error}) for likelihood computation, and defined log-likelihood ratios (Equation~\ref{eq:log-likelihood-ratio}) and entropy (Equation~\ref{eq:entropy}) as key metrics for quantifying evidence and uncertainty.
+
+The practical machinery for likelihood computation (Equations~\ref{eq:per-read-likelihood}--\ref{eq:posterior-bayes-factor}) transforms raw sequencing reads into posterior distributions over candidate haplotypes. Quality score calibration (Equation~\ref{eq:quality-overstatement}) ensures that these posteriors are properly calibrated. Purity constraints (Equation~\ref{eq:purity-ceiling}) impose fundamental limits on achievable accuracy. Finally, mixture models (Equation~\ref{eq:diploid-mixture}) extend the framework to diploid and contaminated samples.
+
+The variable summary table and detailed variable reference boxes provide a comprehensive notation guide for implementing these methods in practice. Subsequent chapters will build on this foundation to address specific challenges: empirical error measurement (Chapter~\ref{chap:sma-seq}), diplotype-level inference, haplotagging, and clinical decision rules.
+
+\begin{keytakeaways}
+\begin{itemize}
+\item Bayes' rule (Eq.~\ref{eq:bayes-single-read}) is the foundation of haplotype classification, combining priors with likelihood evidence to compute posteriors.
+\item Per-read likelihoods (Eq.~\ref{eq:per-read-likelihood}) marginalize over possible source fragments and account for basecalling errors via calibrated models.
+\item Dataset likelihoods (Eq.~\ref{eq:dataset-likelihood}) combine evidence from all reads assuming conditional independence.
+\item Posteriors (Eq.~\ref{eq:posterior-bayes-factor}) and Bayes factors quantify our final belief and the strength of evidence for competing hypotheses.
+\item Quality overstatement fraction (Eq.~\ref{eq:quality-overstatement}) measures basecaller calibration; $d \leq 0.30$ is a key QC threshold.
+\item Purity ceiling (Eq.~\ref{eq:purity-ceiling}) imposes a fundamental limit on achievable TPR due to replication errors in physical standards.
+\item Mixture models (Eq.~\ref{eq:diploid-mixture}) extend to diploid and contaminated samples by modeling reads as originating from multiple haplotypes.
+\item The comprehensive variable reference (Table and boxes) provides standardized notation for the entire framework.
+\end{itemize}
+\end{keytakeaways}

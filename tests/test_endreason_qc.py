@@ -7,6 +7,7 @@ import sys
 import json
 import tempfile
 from pathlib import Path
+import pytest
 
 # Add bin to path
 sys.path.insert(0, str(Path(__file__).parent.parent / 'bin'))
@@ -17,25 +18,21 @@ def test_imports():
         import numpy as np
         print("✓ numpy available")
     except ImportError:
-        print("✗ numpy NOT available")
-        return False
-    
+        pytest.skip("numpy not available")
+
     try:
         from scipy.ndimage import gaussian_filter1d
         print("✓ scipy available")
     except ImportError:
         print("! scipy NOT available (KDE smoothing limited)")
-    
+
     try:
         import matplotlib
         matplotlib.use('Agg')
         import matplotlib.pyplot as plt
         print("✓ matplotlib available")
     except ImportError:
-        print("✗ matplotlib NOT available")
-        return False
-    
-    return True
+        pytest.skip("matplotlib not available")
 
 def create_mock_summary(tmpdir, exp_name, n_reads=1000):
     """Create a mock sequencing_summary.txt"""
@@ -83,9 +80,8 @@ def test_analysis():
         assert stats.signal_positive.count > 0, "No signal_positive reads found"
         assert stats.signal_positive.pct > 80, f"Signal positive {stats.signal_positive.pct}% < 80%"
         assert stats.quality_grade in ['A', 'B', 'C', 'D'], f"Invalid grade: {stats.quality_grade}"
-        
+
         print(f"  Analysis: ✓ PASSED (grade={stats.quality_grade}, sp={stats.signal_positive.pct:.1f}%)")
-        return True
 
 def test_kde_plot():
     """Test KDE plot generation"""
@@ -101,9 +97,8 @@ def test_kde_plot():
         
         assert output_png.exists(), "KDE plot not created"
         assert output_png.stat().st_size > 10000, "KDE plot too small"
-        
+
         print(f"  KDE Plot: ✓ PASSED ({output_png.stat().st_size} bytes)")
-        return True
 
 def test_multizoom_plot():
     """Test multi-zoom plot generation"""
@@ -119,9 +114,8 @@ def test_multizoom_plot():
         
         assert output_png.exists(), "Multizoom plot not created"
         assert output_png.stat().st_size > 20000, "Multizoom plot too small"
-        
+
         print(f"  MultiZoom: ✓ PASSED ({output_png.stat().st_size} bytes)")
-        return True
 
 def test_json_output():
     """Test JSON statistics output"""
@@ -147,9 +141,8 @@ def test_json_output():
         
         assert parsed["total_reads"] == 500
         assert "quality_grade" in parsed
-        
+
         print(f"  JSON: ✓ PASSED")
-        return True
 
 def main():
     print("=" * 60)

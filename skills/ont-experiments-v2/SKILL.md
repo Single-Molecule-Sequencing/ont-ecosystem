@@ -1,11 +1,53 @@
 ---
 name: ont-experiments-v2
-description: Enhanced Oxford Nanopore experiment management with event-sourced registry, pipeline orchestration, and unified QC aggregation. Discover, track, and orchestrate nanopore sequencing experiments with full provenance tracking. This is the core skill that other ONT analysis skills integrate with via Pattern B orchestration.
+description: Enhanced Oxford Nanopore experiment management with event-sourced registry, pipeline orchestration, unified QC aggregation, and GitHub-synced storage. Discover, track, and orchestrate nanopore sequencing experiments with full provenance tracking. Works both on HPC (full read/write) and remotely via GitHub (read-only fallback). This is the core skill that other ONT analysis skills integrate with via Pattern B orchestration.
 ---
 
 # ONT Experiments v2 - Enhanced Registry
 
 Foundational tool for discovering, tracking, and orchestrating Oxford Nanopore sequencing experiments with improved pipeline integration.
+
+## Dual-Mode Operation
+
+This tool operates in two modes:
+
+### HPC Mode (Full Features)
+When running on HPC with local filesystem access:
+- Full read/write to local registry (`~/.ont-registry/experiments.yaml`)
+- Experiment discovery and registration
+- Pipeline execution with provenance tracking
+- QC and batch operations
+
+### GitHub Mode (Read-Only)
+When running remotely without HPC access:
+- Fetches registry from GitHub automatically
+- List, search, and view experiment details
+- Always available - works anywhere with internet
+
+```bash
+# Force GitHub mode (useful for remote access)
+ont_experiments.py list --github
+ont_experiments.py info exp-abc123 --github
+
+# Automatic fallback: if local registry doesn't exist, uses GitHub
+ont_experiments.py list
+```
+
+## GitHub Registry
+
+The canonical registry is synced to GitHub:
+```
+https://raw.githubusercontent.com/Single-Molecule-Sequencing/ont-ecosystem/main/registry/experiments.yaml
+```
+
+### Syncing Local Changes to GitHub
+```bash
+# On HPC after discovering/modifying experiments
+cd ~/.ont-registry
+git add experiments.yaml
+git commit -m "Update experiments"
+git push
+```
 
 ## What's New in v2
 
@@ -62,7 +104,11 @@ ont_experiments.py watch /data/sequencing --interval 60 --register
 
 ## Registry Location
 
-`~/.ont-registry/experiments.yaml` (git-initializable for sync across machines)
+**Local (HPC):** `~/.ont-registry/experiments.yaml` (git-initializable for sync)
+
+**GitHub (Remote):** `https://github.com/Single-Molecule-Sequencing/ont-ecosystem/blob/main/registry/experiments.yaml`
+
+The tool automatically uses GitHub as a fallback when local registry is unavailable.
 
 ## Quick Start
 
@@ -89,8 +135,8 @@ ont_experiments.py qc exp-abc123 --format html
 | `init [--git] [--pipelines]` | Initialize registry |
 | `discover <dir> [--register]` | Scan for experiments |
 | `register <dir>` | Add single experiment |
-| `list [--tag] [--status]` | List experiments |
-| `info <id>` | Show details |
+| `list [--tag] [--status] [--github]` | List experiments |
+| `info <id> [--github]` | Show details |
 | `run <analysis> <id> [args]` | Run analysis with logging |
 | `history <id>` | Show event history |
 | `export <id>` | Export commands as script |

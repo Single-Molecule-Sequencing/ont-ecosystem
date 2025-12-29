@@ -1,0 +1,23 @@
+\begin{table}[!htbp]
+\centering
+\caption{Examples of schema-constrained ONT sequencing summary fields}
+\label{tab:ont-sequencing-summary-types}
+\begin{tabular}{p{0.23\textwidth}p{0.18\textwidth}p{0.49\textwidth}}
+\toprule
+\textbf{Field} & \textbf{Type / units} & \textbf{Constraint or ingestion note} \\
+\midrule
+\texttt{start\_time} & Integer (ms) & Must be $\geq 0$; combine with
+\texttt{duration} to reconstruct wall-clock timestamps. \\
+\texttt{calibration\_strain\_rate} & Float & Limited to 0--500; clamp
+out-of-range values and alert instrumentation team. \\
+\texttt{experiment\_type} & Enum & Allowed values listed in specification;
+use to drive protocol-specific QC. \\
+\texttt{tracking\_id.user\_specified\_run\_id} & Regex string & Accepts
+alphanumeric, dash, and underscore; block whitespace during validation. \\
+\texttt{passes\_filtering} & Boolean & Represented as 0/1; convert to logical
+type in downstream warehouses. \\
+\texttt{run\_id} & UUID (string) & Validate length (36 including hyphens) and
+hyphen positions to detect truncated identifiers. \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -1,0 +1,1126 @@
+{
+  "figures": [
+    {
+      "filename": "chapter10_populated_fig01.tex",
+      "source_file": "src/chapters/chapter10_populated.tex",
+      "label": "fig:complete-workflow",
+      "caption": "End-to-end workflow from biological sample to clinical classification result. Dashed boxes indicate optional steps depending on application.",
+      "line_number": 32
+    },
+    {
+      "filename": "chapter10_populated_REORGANIZED_fig01.tex",
+      "source_file": "src/chapters/chapter10_populated_REORGANIZED.tex",
+      "label": "fig:complete-workflow",
+      "caption": "End-to-end workflow from biological sample to clinical classification result. Dashed boxes indicate optional steps depending on application.",
+      "line_number": 33
+    },
+    {
+      "filename": "chapter10_populated_backup_20251118_101124_fig01.tex",
+      "source_file": "src/chapters/chapter10_populated_backup_20251118_101124.tex",
+      "label": "fig:complete-workflow",
+      "caption": "End-to-end workflow from biological sample to clinical classification result. Dashed boxes indicate optional steps depending on application.",
+      "line_number": 32
+    },
+    {
+      "filename": "chapter11_populated_fig01.tex",
+      "source_file": "src/chapters/chapter11_populated.tex",
+      "label": "fig:seer-pipeline",
+      "caption": "The SEER/SMA-seq pipeline for empirical error measurement. Physical standards with known sequences undergo sequencing, producing reads that populate the confusion matrix. Empirical error rates derived from the matrix enable quality score calibration and inform Bayesian classification.",
+      "line_number": 160
+    },
+    {
+      "filename": "chapter11_populated_REORGANIZED_fig01.tex",
+      "source_file": "src/chapters/chapter11_populated_REORGANIZED.tex",
+      "label": "fig:seer-pipeline",
+      "caption": "The SEER/SMA-seq pipeline for empirical error measurement. Physical standards with known sequences undergo sequencing, producing reads that populate the confusion matrix. Empirical error rates derived from the matrix enable quality score calibration and inform Bayesian classification.",
+      "line_number": 153
+    },
+    {
+      "filename": "chapter11_populated_backup_20251118_101124_fig01.tex",
+      "source_file": "src/chapters/chapter11_populated_backup_20251118_101124.tex",
+      "label": "fig:seer-pipeline",
+      "caption": "The SEER/SMA-seq pipeline for empirical error measurement. Physical standards with known sequences undergo sequencing, producing reads that populate the confusion matrix. Empirical error rates derived from the matrix enable quality score calibration and inform Bayesian classification.",
+      "line_number": 153
+    },
+    {
+      "filename": "chapter17_placeholder_fig01.tex",
+      "source_file": "src/chapters/chapter17_placeholder.tex",
+      "label": "fig:singapore-phenotype-distribution",
+      "caption": "Phenotype distribution in the Singapore cohort showing predominance of non-normal metabolizers and high frequency of ambiguous/complex genotypes.",
+      "line_number": 134
+    },
+    {
+      "filename": "chapter18_populated_fig01.tex",
+      "source_file": "src/chapters/chapter18_populated.tex",
+      "label": "fig:ch18-clinical-workflow",
+      "caption": "Integrated clinical workflow for Tamoxifen therapy optimization using SMS-based CYP2D6 genotyping and multifactorial endoxifen prediction",
+      "line_number": 704
+    },
+    {
+      "filename": "chapter18_populated_backup_20251118_101124_fig01.tex",
+      "source_file": "src/chapters/chapter18_populated_backup_20251118_101124.tex",
+      "label": "fig:ch18-clinical-workflow",
+      "caption": "Integrated clinical workflow for Tamoxifen therapy optimization using SMS-based CYP2D6 genotyping and multifactorial endoxifen prediction",
+      "line_number": 704
+    },
+    {
+      "filename": "chapter4_populated_fig01.tex",
+      "source_file": "src/chapters/chapter4_populated.tex",
+      "label": "fig:classification-pipeline",
+      "caption": "Complete haplotype classification pipeline showing the flow from candidate haplotypes through genomic molecules, fragmentation, library preparation, sequencing, and basecalling to observed reads. Each arrow represents a conditional probability distribution. The confusion matrix (bottom) captures empirical error patterns measured via SMA-seq (Chapter~{chap:sma-seq",
+      "line_number": 59
+    },
+    {
+      "filename": "chapter4_populated_REORGANIZED_fig01.tex",
+      "source_file": "src/chapters/chapter4_populated_REORGANIZED.tex",
+      "label": "fig:classification-pipeline",
+      "caption": "Complete haplotype classification pipeline showing the flow from candidate haplotypes through genomic molecules, fragmentation, library preparation, sequencing, and basecalling to observed reads. Each arrow represents a conditional probability distribution. The confusion matrix (bottom) captures empirical error patterns measured via SMA-seq (Chapter~{chap:sma-seq",
+      "line_number": 107
+    },
+    {
+      "filename": "chapter4_populated_backup_20251118_101124_fig01.tex",
+      "source_file": "src/chapters/chapter4_populated_backup_20251118_101124.tex",
+      "label": "fig:classification-pipeline",
+      "caption": "Complete haplotype classification pipeline showing the flow from candidate haplotypes through genomic molecules, fragmentation, library preparation, sequencing, and basecalling to observed reads. Each arrow represents a conditional probability distribution. The confusion matrix (bottom) captures empirical error patterns measured via SMA-seq (Chapter~{chap:sma-seq",
+      "line_number": 55
+    },
+    {
+      "filename": "chapter7_populated_fig01.tex",
+      "source_file": "src/chapters/chapter7_populated.tex",
+      "label": "fig:detection-heatmap",
+      "caption": "Statistical power for detecting quality score overstatement. The heatmap shows how read count (N), read length (L), claimed quality (Q), and overstatement magnitude (d) interact to determine detection power.",
+      "line_number": 347
+    },
+    {
+      "filename": "chapter7_populated_REORGANIZED_fig01.tex",
+      "source_file": "src/chapters/chapter7_populated_REORGANIZED.tex",
+      "label": "fig:detection-heatmap",
+      "caption": "Statistical power for detecting quality score overstatement. The heatmap shows how read count (N), read length (L), claimed quality (Q), and overstatement magnitude (d) interact to determine detection power.",
+      "line_number": 827
+    },
+    {
+      "filename": "chapter7_populated_backup_20251118_101124_fig01.tex",
+      "source_file": "src/chapters/chapter7_populated_backup_20251118_101124.tex",
+      "label": "fig:detection-heatmap",
+      "caption": "Statistical power for detecting quality score overstatement. The heatmap shows how read count (N), read length (L), claimed quality (Q), and overstatement magnitude (d) interact to determine detection power.",
+      "line_number": 379
+    }
+  ],
+  "tables": [
+    {
+      "filename": "haplotype_v6_complete_FIXED_table01.tex",
+      "source_file": "haplotype_v6_complete_FIXED.tex",
+      "label": "table_haplotype_v6_complete_FIXED_1",
+      "caption": "Variable summary for Chapter~",
+      "line_number": 145
+    },
+    {
+      "filename": "haplotype_v6_complete_FIXED_table02.tex",
+      "source_file": "haplotype_v6_complete_FIXED.tex",
+      "label": "tab:chapter-dependencies",
+      "caption": "Chapter dependency map showing prerequisites and suggested reading paths",
+      "line_number": 859
+    },
+    {
+      "filename": "chapter10_populated_table01.tex",
+      "source_file": "src/chapters/chapter10_populated.tex",
+      "label": "tab:ont-sequencing-summary",
+      "caption": "Selected fields in the ONT {sequencing\\_summary",
+      "line_number": 125
+    },
+    {
+      "filename": "chapter10_populated_table02.tex",
+      "source_file": "src/chapters/chapter10_populated.tex",
+      "label": "tab:ont-sequencing-summary-types",
+      "caption": "Examples of schema-constrained ONT sequencing summary fields",
+      "line_number": 232
+    },
+    {
+      "filename": "chapter10_populated_table03.tex",
+      "source_file": "src/chapters/chapter10_populated.tex",
+      "label": "tab:ont-module-capabilities",
+      "caption": "Operational modules signaled by {sequencing\\_summary.tsv",
+      "line_number": 359
+    },
+    {
+      "filename": "chapter10_populated_table04.tex",
+      "source_file": "src/chapters/chapter10_populated.tex",
+      "label": "tab:alignment-tools",
+      "caption": "Alignment Software for Quality Control",
+      "line_number": 546
+    },
+    {
+      "filename": "chapter10_populated_table05.tex",
+      "source_file": "src/chapters/chapter10_populated.tex",
+      "label": "tab:compute-requirements",
+      "caption": "Computational Resource Requirements",
+      "line_number": 755
+    },
+    {
+      "filename": "chapter10_populated_table06.tex",
+      "source_file": "src/chapters/chapter10_populated.tex",
+      "label": "tab:software-dependencies",
+      "caption": "Required Software Tools",
+      "line_number": 814
+    },
+    {
+      "filename": "chapter10_populated_table07.tex",
+      "source_file": "src/chapters/chapter10_populated.tex",
+      "label": "tab:qc-workflow-integration",
+      "caption": "QC Gates in Workflow",
+      "line_number": 887
+    },
+    {
+      "filename": "chapter10_populated_table08.tex",
+      "source_file": "src/chapters/chapter10_populated.tex",
+      "label": "tab:file-sizes",
+      "caption": "Data File Sizes (10\u00d7 coverage, 5 kb target)",
+      "line_number": 923
+    },
+    {
+      "filename": "chapter10_populated_table09.tex",
+      "source_file": "src/chapters/chapter10_populated.tex",
+      "label": "tab:workflow-troubleshooting",
+      "caption": "Workflow Troubleshooting Guide",
+      "line_number": 942
+    },
+    {
+      "filename": "chapter10_populated_REORGANIZED_table01.tex",
+      "source_file": "src/chapters/chapter10_populated_REORGANIZED.tex",
+      "label": "tab:ont-sequencing-summary",
+      "caption": "Selected fields in the ONT {sequencing\\_summary",
+      "line_number": 126
+    },
+    {
+      "filename": "chapter10_populated_REORGANIZED_table02.tex",
+      "source_file": "src/chapters/chapter10_populated_REORGANIZED.tex",
+      "label": "tab:ont-sequencing-summary-types",
+      "caption": "Examples of schema-constrained ONT sequencing summary fields",
+      "line_number": 233
+    },
+    {
+      "filename": "chapter10_populated_REORGANIZED_table03.tex",
+      "source_file": "src/chapters/chapter10_populated_REORGANIZED.tex",
+      "label": "tab:ont-module-capabilities",
+      "caption": "Operational modules signaled by {sequencing\\_summary.tsv",
+      "line_number": 360
+    },
+    {
+      "filename": "chapter10_populated_REORGANIZED_table04.tex",
+      "source_file": "src/chapters/chapter10_populated_REORGANIZED.tex",
+      "label": "tab:alignment-tools",
+      "caption": "Alignment Software for Quality Control",
+      "line_number": 547
+    },
+    {
+      "filename": "chapter10_populated_REORGANIZED_table05.tex",
+      "source_file": "src/chapters/chapter10_populated_REORGANIZED.tex",
+      "label": "tab:compute-requirements",
+      "caption": "Computational Resource Requirements",
+      "line_number": 756
+    },
+    {
+      "filename": "chapter10_populated_REORGANIZED_table06.tex",
+      "source_file": "src/chapters/chapter10_populated_REORGANIZED.tex",
+      "label": "tab:software-dependencies",
+      "caption": "Required Software Tools",
+      "line_number": 815
+    },
+    {
+      "filename": "chapter10_populated_REORGANIZED_table07.tex",
+      "source_file": "src/chapters/chapter10_populated_REORGANIZED.tex",
+      "label": "tab:qc-workflow-integration",
+      "caption": "QC Gates in Workflow",
+      "line_number": 888
+    },
+    {
+      "filename": "chapter10_populated_REORGANIZED_table08.tex",
+      "source_file": "src/chapters/chapter10_populated_REORGANIZED.tex",
+      "label": "tab:file-sizes",
+      "caption": "Data File Sizes (10\u00d7 coverage, 5 kb target)",
+      "line_number": 924
+    },
+    {
+      "filename": "chapter10_populated_REORGANIZED_table09.tex",
+      "source_file": "src/chapters/chapter10_populated_REORGANIZED.tex",
+      "label": "tab:workflow-troubleshooting",
+      "caption": "Workflow Troubleshooting Guide",
+      "line_number": 943
+    },
+    {
+      "filename": "chapter10_populated_REORGANIZED_table10.tex",
+      "source_file": "src/chapters/chapter10_populated_REORGANIZED.tex",
+      "label": "tab:ch10-variables",
+      "caption": "Key Variables in Chapter 10",
+      "line_number": 1087
+    },
+    {
+      "filename": "chapter10_populated_backup_20251118_101124_table01.tex",
+      "source_file": "src/chapters/chapter10_populated_backup_20251118_101124.tex",
+      "label": "tab:ont-sequencing-summary",
+      "caption": "Selected fields in the ONT {sequencing\\_summary",
+      "line_number": 125
+    },
+    {
+      "filename": "chapter10_populated_backup_20251118_101124_table02.tex",
+      "source_file": "src/chapters/chapter10_populated_backup_20251118_101124.tex",
+      "label": "tab:ont-sequencing-summary-types",
+      "caption": "Examples of schema-constrained ONT sequencing summary fields",
+      "line_number": 232
+    },
+    {
+      "filename": "chapter10_populated_backup_20251118_101124_table03.tex",
+      "source_file": "src/chapters/chapter10_populated_backup_20251118_101124.tex",
+      "label": "tab:ont-module-capabilities",
+      "caption": "Operational modules signaled by {sequencing\\_summary.tsv",
+      "line_number": 359
+    },
+    {
+      "filename": "chapter10_populated_backup_20251118_101124_table04.tex",
+      "source_file": "src/chapters/chapter10_populated_backup_20251118_101124.tex",
+      "label": "tab:alignment-tools",
+      "caption": "Alignment Software for Quality Control",
+      "line_number": 546
+    },
+    {
+      "filename": "chapter10_populated_backup_20251118_101124_table05.tex",
+      "source_file": "src/chapters/chapter10_populated_backup_20251118_101124.tex",
+      "label": "tab:compute-requirements",
+      "caption": "Computational Resource Requirements",
+      "line_number": 755
+    },
+    {
+      "filename": "chapter10_populated_backup_20251118_101124_table06.tex",
+      "source_file": "src/chapters/chapter10_populated_backup_20251118_101124.tex",
+      "label": "tab:software-dependencies",
+      "caption": "Required Software Tools",
+      "line_number": 814
+    },
+    {
+      "filename": "chapter10_populated_backup_20251118_101124_table07.tex",
+      "source_file": "src/chapters/chapter10_populated_backup_20251118_101124.tex",
+      "label": "tab:qc-workflow-integration",
+      "caption": "QC Gates in Workflow",
+      "line_number": 887
+    },
+    {
+      "filename": "chapter10_populated_backup_20251118_101124_table08.tex",
+      "source_file": "src/chapters/chapter10_populated_backup_20251118_101124.tex",
+      "label": "tab:file-sizes",
+      "caption": "Data File Sizes (10\u00d7 coverage, 5 kb target)",
+      "line_number": 923
+    },
+    {
+      "filename": "chapter10_populated_backup_20251118_101124_table09.tex",
+      "source_file": "src/chapters/chapter10_populated_backup_20251118_101124.tex",
+      "label": "tab:workflow-troubleshooting",
+      "caption": "Workflow Troubleshooting Guide",
+      "line_number": 942
+    },
+    {
+      "filename": "chapter12_populated_table01.tex",
+      "source_file": "src/chapters/chapter12_populated.tex",
+      "label": "tab:signal-db-schema",
+      "caption": "Signal Database Schema",
+      "line_number": 144
+    },
+    {
+      "filename": "chapter12_populated_table02.tex",
+      "source_file": "src/chapters/chapter12_populated.tex",
+      "label": "tab:signal-db-manifest",
+      "caption": "Mapping ONT manifest fields into the signal database",
+      "line_number": 188
+    },
+    {
+      "filename": "chapter12_populated_table03.tex",
+      "source_file": "src/chapters/chapter12_populated.tex",
+      "label": "tab:noisy-label-qc",
+      "caption": "Noisy Label Learning QC Gates",
+      "line_number": 473
+    },
+    {
+      "filename": "chapter12_populated_REORGANIZED_table01.tex",
+      "source_file": "src/chapters/chapter12_populated_REORGANIZED.tex",
+      "label": "tab:signal-db-schema",
+      "caption": "Signal Database Schema",
+      "line_number": 152
+    },
+    {
+      "filename": "chapter12_populated_REORGANIZED_table02.tex",
+      "source_file": "src/chapters/chapter12_populated_REORGANIZED.tex",
+      "label": "tab:signal-db-manifest",
+      "caption": "Mapping ONT manifest fields into the signal database",
+      "line_number": 196
+    },
+    {
+      "filename": "chapter12_populated_REORGANIZED_table03.tex",
+      "source_file": "src/chapters/chapter12_populated_REORGANIZED.tex",
+      "label": "tab:noisy-label-qc",
+      "caption": "Noisy Label Learning QC Gates",
+      "line_number": 553
+    },
+    {
+      "filename": "chapter12_populated_backup_20251118_101124_table01.tex",
+      "source_file": "src/chapters/chapter12_populated_backup_20251118_101124.tex",
+      "label": "tab:signal-db-schema",
+      "caption": "Signal Database Schema",
+      "line_number": 144
+    },
+    {
+      "filename": "chapter12_populated_backup_20251118_101124_table02.tex",
+      "source_file": "src/chapters/chapter12_populated_backup_20251118_101124.tex",
+      "label": "tab:signal-db-manifest",
+      "caption": "Mapping ONT manifest fields into the signal database",
+      "line_number": 188
+    },
+    {
+      "filename": "chapter12_populated_backup_20251118_101124_table03.tex",
+      "source_file": "src/chapters/chapter12_populated_backup_20251118_101124.tex",
+      "label": "tab:noisy-label-qc",
+      "caption": "Noisy Label Learning QC Gates",
+      "line_number": 473
+    },
+    {
+      "filename": "chapter13_populated_table01.tex",
+      "source_file": "src/chapters/chapter13_populated.tex",
+      "label": "tab:platform-characteristics",
+      "caption": "Platform-Specific Basecaller Characteristics",
+      "line_number": 69
+    },
+    {
+      "filename": "chapter13_populated_table02.tex",
+      "source_file": "src/chapters/chapter13_populated.tex",
+      "label": "tab:data-splits",
+      "caption": "Recommended Data Splits for Fine-Tuning",
+      "line_number": 286
+    },
+    {
+      "filename": "chapter13_populated_table03.tex",
+      "source_file": "src/chapters/chapter13_populated.tex",
+      "label": "tab:hyperparameters",
+      "caption": "Key Fine-Tuning Hyperparameters",
+      "line_number": 414
+    },
+    {
+      "filename": "chapter13_populated_table04.tex",
+      "source_file": "src/chapters/chapter13_populated.tex",
+      "label": "tab:basecaller-qc",
+      "caption": "Basecaller Fine-Tuning QC Gates",
+      "line_number": 608
+    },
+    {
+      "filename": "chapter13_populated_REORGANIZED_table01.tex",
+      "source_file": "src/chapters/chapter13_populated_REORGANIZED.tex",
+      "label": "tab:platform-characteristics",
+      "caption": "Platform-Specific Basecaller Characteristics",
+      "line_number": 69
+    },
+    {
+      "filename": "chapter13_populated_REORGANIZED_table02.tex",
+      "source_file": "src/chapters/chapter13_populated_REORGANIZED.tex",
+      "label": "tab:data-splits",
+      "caption": "Recommended Data Splits for Fine-Tuning",
+      "line_number": 292
+    },
+    {
+      "filename": "chapter13_populated_REORGANIZED_table03.tex",
+      "source_file": "src/chapters/chapter13_populated_REORGANIZED.tex",
+      "label": "tab:hyperparameters",
+      "caption": "Key Fine-Tuning Hyperparameters",
+      "line_number": 451
+    },
+    {
+      "filename": "chapter13_populated_REORGANIZED_table04.tex",
+      "source_file": "src/chapters/chapter13_populated_REORGANIZED.tex",
+      "label": "tab:basecaller-qc",
+      "caption": "Basecaller Fine-Tuning QC Gates",
+      "line_number": 692
+    },
+    {
+      "filename": "chapter13_populated_backup_20251118_101124_table01.tex",
+      "source_file": "src/chapters/chapter13_populated_backup_20251118_101124.tex",
+      "label": "tab:platform-characteristics",
+      "caption": "Platform-Specific Basecaller Characteristics",
+      "line_number": 69
+    },
+    {
+      "filename": "chapter13_populated_backup_20251118_101124_table02.tex",
+      "source_file": "src/chapters/chapter13_populated_backup_20251118_101124.tex",
+      "label": "tab:data-splits",
+      "caption": "Recommended Data Splits for Fine-Tuning",
+      "line_number": 284
+    },
+    {
+      "filename": "chapter13_populated_backup_20251118_101124_table03.tex",
+      "source_file": "src/chapters/chapter13_populated_backup_20251118_101124.tex",
+      "label": "tab:hyperparameters",
+      "caption": "Key Fine-Tuning Hyperparameters",
+      "line_number": 411
+    },
+    {
+      "filename": "chapter13_populated_backup_20251118_101124_table04.tex",
+      "source_file": "src/chapters/chapter13_populated_backup_20251118_101124.tex",
+      "label": "tab:basecaller-qc",
+      "caption": "Basecaller Fine-Tuning QC Gates",
+      "line_number": 604
+    },
+    {
+      "filename": "chapter14_populated_table01.tex",
+      "source_file": "src/chapters/chapter14_populated.tex",
+      "label": "tab:mixture-ratios",
+      "caption": "Standard mixture ratios for validation scenarios",
+      "line_number": 71
+    },
+    {
+      "filename": "chapter14_populated_table02.tex",
+      "source_file": "src/chapters/chapter14_populated.tex",
+      "label": "tab:troubleshooting",
+      "caption": "Troubleshooting guide for accuracy discrepancies",
+      "line_number": 375
+    },
+    {
+      "filename": "chapter14_populated_table03.tex",
+      "source_file": "src/chapters/chapter14_populated.tex",
+      "label": "table_chapter14_populated_3",
+      "caption": "CLIA validation requirements",
+      "line_number": 501
+    },
+    {
+      "filename": "chapter14_populated_REORGANIZED_table01.tex",
+      "source_file": "src/chapters/chapter14_populated_REORGANIZED.tex",
+      "label": "tab:mixture-ratios",
+      "caption": "Standard mixture ratios for validation scenarios",
+      "line_number": 71
+    },
+    {
+      "filename": "chapter14_populated_REORGANIZED_table02.tex",
+      "source_file": "src/chapters/chapter14_populated_REORGANIZED.tex",
+      "label": "tab:troubleshooting",
+      "caption": "Troubleshooting guide for accuracy discrepancies",
+      "line_number": 360
+    },
+    {
+      "filename": "chapter14_populated_REORGANIZED_table03.tex",
+      "source_file": "src/chapters/chapter14_populated_REORGANIZED.tex",
+      "label": "table_chapter14_populated_REORGANIZED_3",
+      "caption": "CLIA validation requirements",
+      "line_number": 485
+    },
+    {
+      "filename": "chapter14_populated_backup_20251118_101124_table01.tex",
+      "source_file": "src/chapters/chapter14_populated_backup_20251118_101124.tex",
+      "label": "tab:mixture-ratios",
+      "caption": "Standard mixture ratios for validation scenarios",
+      "line_number": 71
+    },
+    {
+      "filename": "chapter14_populated_backup_20251118_101124_table02.tex",
+      "source_file": "src/chapters/chapter14_populated_backup_20251118_101124.tex",
+      "label": "tab:troubleshooting",
+      "caption": "Troubleshooting guide for accuracy discrepancies",
+      "line_number": 360
+    },
+    {
+      "filename": "chapter14_populated_backup_20251118_101124_table03.tex",
+      "source_file": "src/chapters/chapter14_populated_backup_20251118_101124.tex",
+      "label": "table_chapter14_populated_backup_20251118_101124_3",
+      "caption": "CLIA validation requirements",
+      "line_number": 485
+    },
+    {
+      "filename": "chapter15_populated_table01.tex",
+      "source_file": "src/chapters/chapter15_populated.tex",
+      "label": "tab:release-manifest",
+      "caption": "Manifest-derived release evidence",
+      "line_number": 81
+    },
+    {
+      "filename": "chapter15_populated_REORGANIZED_table01.tex",
+      "source_file": "src/chapters/chapter15_populated_REORGANIZED.tex",
+      "label": "tab:release-manifest",
+      "caption": "Manifest-derived release evidence",
+      "line_number": 105
+    },
+    {
+      "filename": "chapter16_placeholder_table01.tex",
+      "source_file": "src/chapters/chapter16_placeholder.tex",
+      "label": "tab:ch16-target-summary",
+      "caption": "Placeholder --- Candidate Targets and Validation Requirements",
+      "line_number": 45
+    },
+    {
+      "filename": "chapter16_placeholder_table02.tex",
+      "source_file": "src/chapters/chapter16_placeholder.tex",
+      "label": "tab:ch16-variable-map",
+      "caption": "Placeholder --- Variable Reference Map",
+      "line_number": 61
+    },
+    {
+      "filename": "chapter16_placeholder_table03.tex",
+      "source_file": "src/chapters/chapter16_placeholder.tex",
+      "label": "tab:ch16-validation-metrics",
+      "caption": "Placeholder --- Validation Metric Summary",
+      "line_number": 91
+    },
+    {
+      "filename": "chapter16_placeholder_table04.tex",
+      "source_file": "src/chapters/chapter16_placeholder.tex",
+      "label": "tab:ch16-case-timeline",
+      "caption": "Placeholder --- Case Study Timeline Snapshot",
+      "line_number": 121
+    },
+    {
+      "filename": "chapter17_placeholder_table01.tex",
+      "source_file": "src/chapters/chapter17_placeholder.tex",
+      "label": "tab:endoxifen-prediction-variables",
+      "caption": "Variables for Precision Endoxifen Prediction Algorithm",
+      "line_number": 31
+    },
+    {
+      "filename": "chapter17_placeholder_table02.tex",
+      "source_file": "src/chapters/chapter17_placeholder.tex",
+      "label": "tab:singapore-diplotypes",
+      "caption": "Singapore cohort CYP2D6 diplotypes and phenotypes (subset of 42 patients)",
+      "line_number": 110
+    },
+    {
+      "filename": "chapter17_populated_table01.tex",
+      "source_file": "src/chapters/chapter17_populated.tex",
+      "label": "tab:ch17-cpic-summary",
+      "caption": "CPIC Guideline Recommendations for CYP2D6 Substrates (Abbreviated)",
+      "line_number": 283
+    },
+    {
+      "filename": "chapter17_populated_table02.tex",
+      "source_file": "src/chapters/chapter17_populated.tex",
+      "label": "tab:ch17-resolution-examples",
+      "caption": "SMS Resolution of Ambiguous CYP2D6 Diplotypes in Pain/Psychiatry Cohort",
+      "line_number": 403
+    },
+    {
+      "filename": "chapter18_placeholder_table01.tex",
+      "source_file": "src/chapters/chapter18_placeholder.tex",
+      "label": "tab:ch18-enrollment",
+      "caption": "Placeholder --- Enrollment Summary",
+      "line_number": 45
+    },
+    {
+      "filename": "chapter18_placeholder_table02.tex",
+      "source_file": "src/chapters/chapter18_placeholder.tex",
+      "label": "tab:ch18-gene-performance",
+      "caption": "Placeholder --- Per-Gene Performance",
+      "line_number": 84
+    },
+    {
+      "filename": "chapter18_placeholder_table03.tex",
+      "source_file": "src/chapters/chapter18_placeholder.tex",
+      "label": "tab:ch18-appendix-mapping",
+      "caption": "Placeholder --- Appendix Artifact Tracker",
+      "line_number": 126
+    },
+    {
+      "filename": "chapter18_populated_table01.tex",
+      "source_file": "src/chapters/chapter18_populated.tex",
+      "label": "tab:ch18-demographics",
+      "caption": "Singapore Cohort Demographics and Clinical Characteristics (N=42)",
+      "line_number": 173
+    },
+    {
+      "filename": "chapter18_populated_table02.tex",
+      "source_file": "src/chapters/chapter18_populated.tex",
+      "label": "tab:ch18-diplotype-frequency",
+      "caption": "CYP2D6 Diplotype Frequency in Singapore Tamoxifen Cohort (N=42)",
+      "line_number": 294
+    },
+    {
+      "filename": "chapter18_populated_table03.tex",
+      "source_file": "src/chapters/chapter18_populated.tex",
+      "label": "tab:ch18-endoxifen-factors",
+      "caption": "Factors for Precision Endoxifen Prediction Algorithm",
+      "line_number": 664
+    },
+    {
+      "filename": "chapter18_populated_backup_20251118_101124_table01.tex",
+      "source_file": "src/chapters/chapter18_populated_backup_20251118_101124.tex",
+      "label": "tab:ch18-demographics",
+      "caption": "Singapore Cohort Demographics and Clinical Characteristics (N=42)",
+      "line_number": 173
+    },
+    {
+      "filename": "chapter18_populated_backup_20251118_101124_table02.tex",
+      "source_file": "src/chapters/chapter18_populated_backup_20251118_101124.tex",
+      "label": "tab:ch18-diplotype-frequency",
+      "caption": "CYP2D6 Diplotype Frequency in Singapore Tamoxifen Cohort (N=42)",
+      "line_number": 294
+    },
+    {
+      "filename": "chapter18_populated_backup_20251118_101124_table03.tex",
+      "source_file": "src/chapters/chapter18_populated_backup_20251118_101124.tex",
+      "label": "tab:ch18-endoxifen-factors",
+      "caption": "Factors for Precision Endoxifen Prediction Algorithm",
+      "line_number": 664
+    },
+    {
+      "filename": "chapter19_placeholder_table01.tex",
+      "source_file": "src/chapters/chapter19_placeholder.tex",
+      "label": "tab:ch19-preanalytical-checklist",
+      "caption": "Placeholder --- Pre-Analytical Checklist",
+      "line_number": 45
+    },
+    {
+      "filename": "chapter19_placeholder_table02.tex",
+      "source_file": "src/chapters/chapter19_placeholder.tex",
+      "label": "tab:ch19-roles",
+      "caption": "Placeholder --- Analytical Roles and Handoffs",
+      "line_number": 73
+    },
+    {
+      "filename": "chapter19_placeholder_table03.tex",
+      "source_file": "src/chapters/chapter19_placeholder.tex",
+      "label": "tab:ch19-quality-matrix",
+      "caption": "Placeholder --- Quality Management Matrix",
+      "line_number": 107
+    },
+    {
+      "filename": "chapter1_expanded_table01.tex",
+      "source_file": "src/chapters/chapter1_expanded.tex",
+      "label": "tab:ch1-operational",
+      "caption": "Operational metrics reported by hospital pharmacogenomics programs",
+      "line_number": 97
+    },
+    {
+      "filename": "chapter1_expanded_table02.tex",
+      "source_file": "src/chapters/chapter1_expanded.tex",
+      "label": "tab:ch1-method-comparison",
+      "caption": "Comparative Performance of Pharmacogenomic Testing Technologies",
+      "line_number": 150
+    },
+    {
+      "filename": "chapter20_placeholder_table01.tex",
+      "source_file": "src/chapters/chapter20_placeholder.tex",
+      "label": "tab:ch20-cost-components",
+      "caption": "Placeholder --- Cost Component Breakdown",
+      "line_number": 46
+    },
+    {
+      "filename": "chapter20_placeholder_table02.tex",
+      "source_file": "src/chapters/chapter20_placeholder.tex",
+      "label": "tab:ch20-throughput-scenarios",
+      "caption": "Placeholder --- Scenario Summary",
+      "line_number": 74
+    },
+    {
+      "filename": "chapter20_placeholder_table03.tex",
+      "source_file": "src/chapters/chapter20_placeholder.tex",
+      "label": "tab:ch20-reimbursement",
+      "caption": "Placeholder --- Reimbursement Snapshot",
+      "line_number": 99
+    },
+    {
+      "filename": "chapter20_placeholder_table04.tex",
+      "source_file": "src/chapters/chapter20_placeholder.tex",
+      "label": "tab:ch20-appendix-registry",
+      "caption": "Placeholder --- Appendix Data Registry",
+      "line_number": 133
+    },
+    {
+      "filename": "chapter2_expanded_table01.tex",
+      "source_file": "src/chapters/chapter2_expanded.tex",
+      "label": "tab:ch2-sv-frequency",
+      "caption": "Frequency of Structural Variants in Key Pharmacogenes by Ancestry",
+      "line_number": 62
+    },
+    {
+      "filename": "chapter2_expanded_table02.tex",
+      "source_file": "src/chapters/chapter2_expanded.tex",
+      "label": "tab:ch2-tech-comparison",
+      "caption": "Diplotype Concordance: Short-Read vs.\\ Long-Read Sequencing",
+      "line_number": 121
+    },
+    {
+      "filename": "chapter3_expanded_table01.tex",
+      "source_file": "src/chapters/chapter3_expanded.tex",
+      "label": "tab:ch3-ont-metadata",
+      "caption": "Representative ONT metadata patterns and framework usage",
+      "line_number": 141
+    },
+    {
+      "filename": "chapter3_expanded_table02.tex",
+      "source_file": "src/chapters/chapter3_expanded.tex",
+      "label": "tab:ch3-platform-comparison",
+      "caption": "ONT and PacBio Platform Comparison for Clinical Pharmacogenomics",
+      "line_number": 205
+    },
+    {
+      "filename": "chapter4_enhancements_table01.tex",
+      "source_file": "src/chapters/chapter4_enhancements.tex",
+      "label": "tab:ch4-variables",
+      "caption": "Quick Reference: Variables in the Classification Model",
+      "line_number": 11
+    },
+    {
+      "filename": "chapter4_enhancements_table02.tex",
+      "source_file": "src/chapters/chapter4_enhancements.tex",
+      "label": "tab:ch4-confusion-counts",
+      "caption": "Single-Base Confusion Matrix Example (counts from 1,000 reads)",
+      "line_number": 166
+    },
+    {
+      "filename": "chapter4_enhancements_table03.tex",
+      "source_file": "src/chapters/chapter4_enhancements.tex",
+      "label": "tab:ch4-confusion-matrix",
+      "caption": "Normalized Single-Base Confusion Matrix ${C",
+      "line_number": 186
+    },
+    {
+      "filename": "chapter4_enhancements_table04.tex",
+      "source_file": "src/chapters/chapter4_enhancements.tex",
+      "label": "tab:ch4-homopolymer",
+      "caption": "Homopolymer Confusion: Observed Lengths for True {AAAA",
+      "line_number": 238
+    },
+    {
+      "filename": "chapter4_enhancements_table05.tex",
+      "source_file": "src/chapters/chapter4_enhancements.tex",
+      "label": "tab:ch4-pipeline-summary",
+      "caption": "Complete Sequencing Pipeline Transformations",
+      "line_number": 261
+    },
+    {
+      "filename": "chapter4_enhancements_table06.tex",
+      "source_file": "src/chapters/chapter4_enhancements.tex",
+      "label": "tab:ch4-equation-index",
+      "caption": "Equation Quick Reference for Chapter 4",
+      "line_number": 301
+    },
+    {
+      "filename": "chapter4_populated_REORGANIZED_table01.tex",
+      "source_file": "src/chapters/chapter4_populated_REORGANIZED.tex",
+      "label": "tab:variables-chapter4",
+      "caption": "Summary of key variables in Chapter~{chap:classification-model",
+      "line_number": 601
+    },
+    {
+      "filename": "chapter5_populated_table01.tex",
+      "source_file": "src/chapters/chapter5_populated.tex",
+      "label": "tab:purity-qvalues",
+      "caption": "Purity values and equivalent quality scores",
+      "line_number": 274
+    },
+    {
+      "filename": "chapter5_populated_REORGANIZED_table01.tex",
+      "source_file": "src/chapters/chapter5_populated_REORGANIZED.tex",
+      "label": "tab:purity-qvalues",
+      "caption": "Purity values and equivalent quality scores",
+      "line_number": 528
+    },
+    {
+      "filename": "chapter5_populated_REORGANIZED_table02.tex",
+      "source_file": "src/chapters/chapter5_populated_REORGANIZED.tex",
+      "label": "tab:ch5-variables",
+      "caption": "Chapter 5 Key Variables Summary",
+      "line_number": 640
+    },
+    {
+      "filename": "chapter5_populated_backup_20251118_101124_table01.tex",
+      "source_file": "src/chapters/chapter5_populated_backup_20251118_101124.tex",
+      "label": "tab:purity-qvalues",
+      "caption": "Purity values and equivalent quality scores",
+      "line_number": 258
+    },
+    {
+      "filename": "chapter6_populated_table01.tex",
+      "source_file": "src/chapters/chapter6_populated.tex",
+      "label": "tab:bayes-factor-scale",
+      "caption": "Bayes Factor Interpretation Scale",
+      "line_number": 258
+    },
+    {
+      "filename": "chapter6_populated_REORGANIZED_table01.tex",
+      "source_file": "src/chapters/chapter6_populated_REORGANIZED.tex",
+      "label": "tab:bayes-factor-scale",
+      "caption": "Bayes Factor Interpretation Scale",
+      "line_number": 460
+    },
+    {
+      "filename": "chapter6_populated_REORGANIZED_table02.tex",
+      "source_file": "src/chapters/chapter6_populated_REORGANIZED.tex",
+      "label": "tab:chapter6-variables",
+      "caption": "Chapter 6 Key Variables Summary",
+      "line_number": 691
+    },
+    {
+      "filename": "chapter6_populated_backup_20251118_101124_table01.tex",
+      "source_file": "src/chapters/chapter6_populated_backup_20251118_101124.tex",
+      "label": "tab:bayes-factor-scale",
+      "caption": "Bayes Factor Interpretation Scale",
+      "line_number": 246
+    },
+    {
+      "filename": "chapter7_populated_table01.tex",
+      "source_file": "src/chapters/chapter7_populated.tex",
+      "label": "tab:sample-sizes",
+      "caption": "Sample sizes for detecting 1 Phred unit overstatement ($=0.05$, power=0.80)",
+      "line_number": 121
+    },
+    {
+      "filename": "chapter7_populated_table02.tex",
+      "source_file": "src/chapters/chapter7_populated.tex",
+      "label": "table_chapter7_populated_2",
+      "caption": "Validation experiment design checklist",
+      "line_number": 389
+    },
+    {
+      "filename": "chapter7_populated_REORGANIZED_table01.tex",
+      "source_file": "src/chapters/chapter7_populated_REORGANIZED.tex",
+      "label": "tab:sample-sizes",
+      "caption": "Sample sizes for detecting 1 Phred unit overstatement ($=0.05$, power=0.80)",
+      "line_number": 296
+    },
+    {
+      "filename": "chapter7_populated_REORGANIZED_table02.tex",
+      "source_file": "src/chapters/chapter7_populated_REORGANIZED.tex",
+      "label": "table_chapter7_populated_REORGANIZED_2",
+      "caption": "Validation experiment design checklist",
+      "line_number": 869
+    },
+    {
+      "filename": "chapter7_populated_REORGANIZED_table03.tex",
+      "source_file": "src/chapters/chapter7_populated_REORGANIZED.tex",
+      "label": "tab:variables-ch7",
+      "caption": "Key Variables in Experimental Design (Chapter 7)",
+      "line_number": 904
+    },
+    {
+      "filename": "chapter7_populated_backup_20251118_101124_table01.tex",
+      "source_file": "src/chapters/chapter7_populated_backup_20251118_101124.tex",
+      "label": "tab:sample-sizes",
+      "caption": "Sample sizes for detecting 1 Phred unit overstatement ($=0.05$, power=0.80)",
+      "line_number": 141
+    },
+    {
+      "filename": "chapter7_populated_backup_20251118_101124_table02.tex",
+      "source_file": "src/chapters/chapter7_populated_backup_20251118_101124.tex",
+      "label": "table_chapter7_populated_backup_20251118_101124_2",
+      "caption": "Validation experiment design checklist",
+      "line_number": 421
+    },
+    {
+      "filename": "chapter8_populated_table01.tex",
+      "source_file": "src/chapters/chapter8_populated.tex",
+      "label": "tab:typeIIS-enzymes",
+      "caption": "Type IIS Enzyme Comparison for Golden Gate Assembly",
+      "line_number": 56
+    },
+    {
+      "filename": "chapter8_populated_table02.tex",
+      "source_file": "src/chapters/chapter8_populated.tex",
+      "label": "table_chapter8_populated_2",
+      "caption": "Golden Gate Assembly Reaction Components",
+      "line_number": 90
+    },
+    {
+      "filename": "chapter8_populated_table03.tex",
+      "source_file": "src/chapters/chapter8_populated.tex",
+      "label": "tab:ecoli-methylation",
+      "caption": "E. coli Methylation Systems",
+      "line_number": 218
+    },
+    {
+      "filename": "chapter8_populated_table04.tex",
+      "source_file": "src/chapters/chapter8_populated.tex",
+      "label": "table_chapter8_populated_4",
+      "caption": "Recommended E. coli Strains for Plasmid Standards",
+      "line_number": 234
+    },
+    {
+      "filename": "chapter8_populated_table05.tex",
+      "source_file": "src/chapters/chapter8_populated.tex",
+      "label": "tab:standard-troubleshooting",
+      "caption": "Common Issues in Standard Construction",
+      "line_number": 353
+    },
+    {
+      "filename": "chapter8_populated_REORGANIZED_table01.tex",
+      "source_file": "src/chapters/chapter8_populated_REORGANIZED.tex",
+      "label": "tab:typeIIS-enzymes",
+      "caption": "Type IIS Enzyme Comparison for Golden Gate Assembly",
+      "line_number": 57
+    },
+    {
+      "filename": "chapter8_populated_REORGANIZED_table02.tex",
+      "source_file": "src/chapters/chapter8_populated_REORGANIZED.tex",
+      "label": "table_chapter8_populated_REORGANIZED_2",
+      "caption": "Golden Gate Assembly Reaction Components",
+      "line_number": 91
+    },
+    {
+      "filename": "chapter8_populated_REORGANIZED_table03.tex",
+      "source_file": "src/chapters/chapter8_populated_REORGANIZED.tex",
+      "label": "tab:ecoli-methylation",
+      "caption": "E. coli Methylation Systems",
+      "line_number": 219
+    },
+    {
+      "filename": "chapter8_populated_REORGANIZED_table04.tex",
+      "source_file": "src/chapters/chapter8_populated_REORGANIZED.tex",
+      "label": "table_chapter8_populated_REORGANIZED_4",
+      "caption": "Recommended E. coli Strains for Plasmid Standards",
+      "line_number": 235
+    },
+    {
+      "filename": "chapter8_populated_REORGANIZED_table05.tex",
+      "source_file": "src/chapters/chapter8_populated_REORGANIZED.tex",
+      "label": "tab:standard-troubleshooting",
+      "caption": "Common Issues in Standard Construction",
+      "line_number": 433
+    },
+    {
+      "filename": "chapter8_populated_REORGANIZED_table06.tex",
+      "source_file": "src/chapters/chapter8_populated_REORGANIZED.tex",
+      "label": "tab:ch8-variables",
+      "caption": "Key Variables in Chapter 8",
+      "line_number": 517
+    },
+    {
+      "filename": "chapter8_populated_backup_20251118_101124_table01.tex",
+      "source_file": "src/chapters/chapter8_populated_backup_20251118_101124.tex",
+      "label": "tab:typeIIS-enzymes",
+      "caption": "Type IIS Enzyme Comparison for Golden Gate Assembly",
+      "line_number": 56
+    },
+    {
+      "filename": "chapter8_populated_backup_20251118_101124_table02.tex",
+      "source_file": "src/chapters/chapter8_populated_backup_20251118_101124.tex",
+      "label": "table_chapter8_populated_backup_20251118_101124_2",
+      "caption": "Golden Gate Assembly Reaction Components",
+      "line_number": 90
+    },
+    {
+      "filename": "chapter8_populated_backup_20251118_101124_table03.tex",
+      "source_file": "src/chapters/chapter8_populated_backup_20251118_101124.tex",
+      "label": "tab:ecoli-methylation",
+      "caption": "E. coli Methylation Systems",
+      "line_number": 218
+    },
+    {
+      "filename": "chapter8_populated_backup_20251118_101124_table04.tex",
+      "source_file": "src/chapters/chapter8_populated_backup_20251118_101124.tex",
+      "label": "table_chapter8_populated_backup_20251118_101124_4",
+      "caption": "Recommended E. coli Strains for Plasmid Standards",
+      "line_number": 234
+    },
+    {
+      "filename": "chapter8_populated_backup_20251118_101124_table05.tex",
+      "source_file": "src/chapters/chapter8_populated_backup_20251118_101124.tex",
+      "label": "tab:standard-troubleshooting",
+      "caption": "Common Issues in Standard Construction",
+      "line_number": 353
+    },
+    {
+      "filename": "chapter9_populated_table01.tex",
+      "source_file": "src/chapters/chapter9_populated.tex",
+      "label": "table_chapter9_populated_1",
+      "caption": "Cas9 Cutting Reaction Components",
+      "line_number": 210
+    },
+    {
+      "filename": "chapter9_populated_table02.tex",
+      "source_file": "src/chapters/chapter9_populated.tex",
+      "label": "tab:cas9-troubleshooting",
+      "caption": "Troubleshooting Cas9 Enrichment Issues",
+      "line_number": 342
+    },
+    {
+      "filename": "chapter9_populated_table03.tex",
+      "source_file": "src/chapters/chapter9_populated.tex",
+      "label": "tab:cost-comparison",
+      "caption": "Cost Comparison: Whole-Genome vs. Targeted Sequencing",
+      "line_number": 370
+    },
+    {
+      "filename": "chapter9_populated_REORGANIZED_table01.tex",
+      "source_file": "src/chapters/chapter9_populated_REORGANIZED.tex",
+      "label": "table_chapter9_populated_REORGANIZED_1",
+      "caption": "Cas9 Cutting Reaction Components",
+      "line_number": 249
+    },
+    {
+      "filename": "chapter9_populated_REORGANIZED_table02.tex",
+      "source_file": "src/chapters/chapter9_populated_REORGANIZED.tex",
+      "label": "tab:cas9-troubleshooting",
+      "caption": "Troubleshooting Cas9 Enrichment Issues",
+      "line_number": 442
+    },
+    {
+      "filename": "chapter9_populated_REORGANIZED_table03.tex",
+      "source_file": "src/chapters/chapter9_populated_REORGANIZED.tex",
+      "label": "tab:cost-comparison",
+      "caption": "Cost Comparison: Whole-Genome vs. Targeted Sequencing",
+      "line_number": 470
+    },
+    {
+      "filename": "chapter9_populated_REORGANIZED_table04.tex",
+      "source_file": "src/chapters/chapter9_populated_REORGANIZED.tex",
+      "label": "tab:ch9-variables",
+      "caption": "Key Variables in Chapter 9",
+      "line_number": 578
+    },
+    {
+      "filename": "chapter9_populated_backup_20251118_101124_table01.tex",
+      "source_file": "src/chapters/chapter9_populated_backup_20251118_101124.tex",
+      "label": "table_chapter9_populated_backup_20251118_101124_1",
+      "caption": "Cas9 Cutting Reaction Components",
+      "line_number": 209
+    },
+    {
+      "filename": "chapter9_populated_backup_20251118_101124_table02.tex",
+      "source_file": "src/chapters/chapter9_populated_backup_20251118_101124.tex",
+      "label": "tab:cas9-troubleshooting",
+      "caption": "Troubleshooting Cas9 Enrichment Issues",
+      "line_number": 339
+    },
+    {
+      "filename": "chapter9_populated_backup_20251118_101124_table03.tex",
+      "source_file": "src/chapters/chapter9_populated_backup_20251118_101124.tex",
+      "label": "tab:cost-comparison",
+      "caption": "Cost Comparison: Whole-Genome vs. Targeted Sequencing",
+      "line_number": 367
+    },
+    {
+      "filename": "appendixA_notation_table01.tex",
+      "source_file": "src/appendices/appendixA_notation.tex",
+      "label": "tab:navigation-guide",
+      "caption": "Navigation guide to key concepts and their locations",
+      "line_number": 411
+    },
+    {
+      "filename": "appendixC_populated_table01.tex",
+      "source_file": "src/appendices/appendixC_populated.tex",
+      "label": "tab:qc-gates-summary",
+      "caption": "Core Quality Control Gates and Thresholds",
+      "line_number": 18
+    },
+    {
+      "filename": "appendixC_populated_table02.tex",
+      "source_file": "src/appendices/appendixC_populated.tex",
+      "label": "tab:corrective-actions",
+      "caption": "Recommended Corrective Actions for QC Failures",
+      "line_number": 113
+    },
+    {
+      "filename": "appendixD_populated_table01.tex",
+      "source_file": "src/appendices/appendixD_populated.tex",
+      "label": "tab:runtime_estimates",
+      "caption": "Estimated Runtime by Application Scale",
+      "line_number": 351
+    },
+    {
+      "filename": "appendixE_populated_table01.tex",
+      "source_file": "src/appendices/appendixE_populated.tex",
+      "label": "tab:v5_to_v6_mapping",
+      "caption": "v5 to v6 Chapter Migration Map",
+      "line_number": 47
+    }
+  ]
+}

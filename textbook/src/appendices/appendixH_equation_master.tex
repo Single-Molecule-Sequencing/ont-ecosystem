@@ -1,0 +1,735 @@
+\chapter{Master Equation Reference Table}
+\label{app:equation-master}
+
+\section*{Overview}
+
+This appendix provides a comprehensive catalog of all numbered equations in the SMS Haplotype Classification Framework. Equations are presented as boxed reference cards organized by functional category to enable systematic navigation across chapters. Use the equation labels (e.g., \texttt{eq:posterior-bayes}) with \verb|\ref{}| or \verb|\eqref{}| for citations.
+
+\subsection*{Cross-Reference Codes}
+
+Each equation is assigned a unique label following the pattern \texttt{eq:descriptive-name}. Core equations (CE\#1--15) use labels \texttt{eq:ce1} through \texttt{eq:ce14} and are cataloged in Appendix~B.
+
+\subsection*{Organization}
+
+Equations are grouped into seven functional categories:
+\begin{enumerate}
+\item \textbf{Core Equations (CE\#1--14):} Foundational mathematical models (Appendix~B)
+\item \textbf{Pipeline Foundations (Ch.~4--6):} Bayesian haplotype classification framework
+\item \textbf{Experimental Design (Ch.~7):} Coverage, sample size, power calculations
+\item \textbf{Reference Standards (Ch.~8--9):} Plasmid purity, enrichment efficiency
+\item \textbf{Computational Methods (Ch.~10--13):} Quality models, noisy labels, fine-tuning
+\item \textbf{Validation \& Quality Control (Ch.~14, Appendices):} Mixture validation, QC gates
+\item \textbf{Clinical Applications (Ch.~17--18):} Pharmacogenomic outcomes, diplotype resolution
+\end{enumerate}
+
+\clearpage
+
+%==============================================================================
+\section{Core Equations (Appendix B)}
+\label{sec:eqmaster-core}
+%==============================================================================
+
+\MasterEqBox
+  {CE-01}% ID
+  {eq:ce1}% Label
+  {Haplotype Posterior Probability}% Name
+  {\Prob(h | \mathbf{r}) = \frac{\Prob(\mathbf{r} | h) \Prob(h)}{\Prob(\mathbf{r})}}% Equation
+  {Defines the posterior probability of haplotype $h$ given observed reads $\mathbf{r}$ as the normalized product of likelihood and prior, fundamental to Bayesian haplotype classification.}% Definition/Role
+  {Core Equation}% Category
+  {App.~B.1}% First defined
+  {$h$, $\mathbf{r}$, $\Prob(\mathbf{r}\mid h)$, $\Prob(h)$, $\Prob(\mathbf{r})$}% Key variables
+
+\MasterEqBox
+  {CE-02}% ID
+  {eq:ce2}% Label
+  {Per-Base Likelihood Model}% Name
+  {\Prob(r | h) = \begin{cases} 1 - \epsilon_b & \text{if } r = h[j] \\ \epsilon_b/3 & \text{otherwise} \end{cases}}% Equation
+  {Symmetric error model for per-base sequencing likelihood with uniform mismatch probabilities, where $\epsilon_b$ is the per-base error rate.}% Definition/Role
+  {Core Equation}% Category
+  {App.~B.2}% First defined
+  {$r$, $h$, $\epsilon_b$}% Key variables
+
+\MasterEqBox
+  {CE-03}% ID
+  {eq:ce3}% Label
+  {Empirical Purity}% Name
+  {\pi = \frac{\mathbb{E}[\text{perfect reads}]}{N}}% Equation
+  {Defines empirical purity as the expected fraction of error-free reads in a dataset of size $N$, central to understanding classification performance ceilings.}% Definition/Role
+  {Core Equation}% Category
+  {App.~B.3}% First defined
+  {$\pi$, $N$}% Key variables
+
+\MasterEqBox
+  {CE-04}% ID
+  {eq:ce4}% Label
+  {Purity Ceiling (TPR Bound)}% Name
+  {\text{TPR}(h_i) \leq \pi}% Equation
+  {Establishes that true positive rate for any haplotype cannot exceed empirical purity, creating fundamental limit on classification accuracy.}% Definition/Role
+  {Core Equation}% Category
+  {App.~B.4}% First defined
+  {$\text{TPR}$, $\pi$, $h_i$}% Key variables
+
+\MasterEqBox
+  {CE-05}% ID
+  {eq:ce5}% Label
+  {Predicted Quality Score}% Name
+  {Q_{\text{pred}} = -10 \log_{10} \mathbb{E}[\epsilon]}% Equation
+  {Defines predicted Phred quality score as log-scaled expectation of per-base error rate $\epsilon$, as implied by basecaller's probabilistic model.}% Definition/Role
+  {Core Equation}% Category
+  {App.~B.5}% First defined
+  {$Q_{\text{pred}}$, $\epsilon$}% Key variables
+
+\MasterEqBox
+  {CE-06}% ID
+  {eq:ce6}% Label
+  {Empirical Quality Score}% Name
+  {Q_{\text{emp}} = -10 \log_{10} \widehat{\epsilon}}% Equation
+  {Defines empirical quality score from observed error rate $\widehat{\epsilon}$ in validation data, enabling calibration assessment.}% Definition/Role
+  {Core Equation}% Category
+  {App.~B.6}% First defined
+  {$Q_{\text{emp}}$, $\widehat{\epsilon}$}% Key variables
+
+\MasterEqBox
+  {CE-07}% ID
+  {eq:ce7}% Label
+  {Single Molecule Accuracy (Definition)}% Name
+  {\text{SMA} = \Prob(\text{all bases correct})}% Equation
+  {Defines single-molecule accuracy as the probability that every base in a read is correctly called, representing read-level correctness rather than base-level accuracy.}% Definition/Role
+  {Core Equation}% Category
+  {App.~B.7}% First defined
+  {$\text{SMA}$, $L$}% Key variables
+
+\MasterEqBox
+  {CE-08}% ID
+  {eq:ce8}% Label
+  {SMA Factorization}% Name
+  {\text{SMA} = \prod_{j=1}^{L} (1 - \epsilon_j)}% Equation
+  {Factorizes single-molecule accuracy over base positions, assuming independence of base-calling errors across positions.}% Definition/Role
+  {Core Equation}% Category
+  {App.~B.8}% First defined
+  {$\text{SMA}$, $L$, $\epsilon_j$}% Key variables
+
+\MasterEqBox
+  {CE-09}% ID
+  {eq:ce9}% Label
+  {Effective Coverage}% Name
+  {N_{\text{eff}} = N \cdot \mathbb{E}[\text{informative fraction}]}% Equation
+  {Defines effective coverage as total read count $N$ weighted by expected fraction of reads spanning discriminating positions, accounting for fragment length distribution.}% Definition/Role
+  {Core Equation}% Category
+  {App.~B.9}% First defined
+  {$N_{\text{eff}}$, $N$}% Key variables
+
+\MasterEqBox
+  {CE-10}% ID
+  {eq:ce10}% Label
+  {Calibration Gap}% Name
+  {\Delta Q = Q_{\text{emp}} - Q_{\text{pred}}}% Equation
+  {Quantifies quality score calibration gap, with $\Delta Q < 0$ indicating basecaller overestimation of accuracy.}% Definition/Role
+  {Core Equation}% Category
+  {App.~B.10}% First defined
+  {$\Delta Q$, $Q_{\text{emp}}$, $Q_{\text{pred}}$}% Key variables
+
+\MasterEqBox
+  {CE-12}% ID
+  {eq:ce12}% Label
+  {Mixture Proportion (Heterozygote)}% Name
+  {\lambda = \frac{N_A}{N_A + N_B}}% Equation
+  {Defines mixture proportion for diploid heterozygote where $N_A$ and $N_B$ are read counts supporting each haplotype, with theoretical value $\lambda = 0.5$ for balanced diploid.}% Definition/Role
+  {Core Equation}% Category
+  {App.~B.12}% First defined
+  {$\lambda$, $N_A$, $N_B$}% Key variables
+
+\MasterEqBox
+  {CE-13}% ID
+  {eq:ce13}% Label
+  {Sequencing QC Gate}% Name
+  {\text{SMA}_{\text{seq}} \geq \text{SMA}_{\text{min}}}% Equation
+  {Defines sequencing quality control gate requiring single-molecule accuracy to exceed minimum threshold for data acceptance.}% Definition/Role
+  {Core Equation}% Category
+  {App.~B.13}% First defined
+  {$\text{SMA}_{\text{seq}}$, $\text{SMA}_{\text{min}}$}% Key variables
+
+\MasterEqBox
+  {CE-14}% ID
+  {eq:ce14}% Label
+  {Binary Confusion Matrix}% Name
+  {\mathbf{C} = \begin{bmatrix} \text{TP} & \text{FP} \\ \text{FN} & \text{TN} \end{bmatrix}}% Equation
+  {Standard 2×2 confusion matrix for binary classification with true positives (TP), false positives (FP), false negatives (FN), and true negatives (TN).}% Definition/Role
+  {Core Equation}% Category
+  {App.~B.14}% First defined
+  {$\mathbf{C}$, TP, FP, FN, TN}% Key variables
+
+%==============================================================================
+\section{Pipeline Foundations (Chapters 4--6)}
+\label{sec:eqmaster-pipeline}
+%==============================================================================
+
+\MasterEqBox
+  {EQ-PIPELINE-FACTOR}% ID
+  {eq:pipeline-factorization-sma}% Label
+  {Pipeline Factorization}% Name
+  {P_{\text{correct}} = P_{\text{extraction}} \cdot P_{\text{sequencing}} \cdot P_{\text{classification}}}% Equation
+  {Factorizes overall probability of correct haplotype assignment into independent extraction, sequencing, and classification stages.}% Definition/Role
+  {Pipeline Foundations}% Category
+  {Ch.~4.2}% First defined
+  {$P_{\text{correct}}$, $P_{\text{extraction}}$, $P_{\text{sequencing}}$, $P_{\text{classification}}$}% Key variables
+
+\MasterEqBox
+  {EQ-PURITY-DEF}% ID
+  {eq:purity-def}% Label
+  {Asymptotic Purity Definition}% Name
+  {\pi = \lim_{N \to \infty} \frac{1}{N} \sum_{n=1}^{N} \mathbbm{1}\{r_n \text{ error-free}\}}% Equation
+  {Formal asymptotic definition of empirical purity as the long-run fraction of error-free reads when sample size approaches infinity.}% Definition/Role
+  {Pipeline Foundations}% Category
+  {Ch.~5.1}% First defined
+  {$\pi$, $N$, $r_n$}% Key variables
+
+\MasterEqBox
+  {EQ-TPR-CEILING}% ID
+  {eq:tpr-ceiling}% Label
+  {True Positive Rate Ceiling}% Name
+  {\text{TPR}(h_i) \leq \pi}% Equation
+  {Restates purity bound: no haplotype can achieve TPR exceeding dataset purity, establishing fundamental performance limit.}% Definition/Role
+  {Pipeline Foundations}% Category
+  {Ch.~5.2}% First defined
+  {$\text{TPR}$, $h_i$, $\pi$}% Key variables
+
+\MasterEqBox
+  {EQ-PURITY-BRACKET}% ID
+  {eq:purity-bracket}% Label
+  {Purity Bracketing Inequality}% Name
+  {(1 - \epsilon)^L \leq \pi \leq e^{-L\epsilon}}% Equation
+  {Provides tight lower and upper bounds on purity as function of read length $L$ and average error rate $\epsilon$, with exponential upper bound tighter for small $\epsilon$.}% Definition/Role
+  {Pipeline Foundations}% Category
+  {Ch.~5.4}% First defined
+  {$\pi$, $L$, $\epsilon$}% Key variables
+
+\MasterEqBox
+  {EQ-LIKELIHOOD-FACTOR}% ID
+  {eq:likelihood-factorization}% Label
+  {Likelihood Factorization (Independence)}% Name
+  {\Prob(\mathbf{r} | h) = \prod_{n=1}^{N} \Prob(r_n | h)}% Equation
+  {Factorizes dataset likelihood over independent reads, enabling efficient log-likelihood computation.}% Definition/Role
+  {Pipeline Foundations}% Category
+  {Ch.~6.2}% First defined
+  {$\mathbf{r}$, $h$, $N$, $r_n$}% Key variables
+
+\MasterEqBox
+  {EQ-PER-READ-LIKE}% ID
+  {eq:per-read-likelihood}% Label
+  {Per-Read Likelihood (Base Factorization)}% Name
+  {\Prob(r | h) = \prod_{j=1}^{L} \Prob(r[j] | h[j])}% Equation
+  {Further factorizes per-read likelihood over base positions, assuming independence of base-calling errors within a read.}% Definition/Role
+  {Pipeline Foundations}% Category
+  {Ch.~6.2}% First defined
+  {$r$, $h$, $L$}% Key variables
+
+\MasterEqBox
+  {EQ-POSTERIOR-BAYES}% ID
+  {eq:posterior-bayes}% Label
+  {Normalized Bayesian Posterior}% Name
+  {\Prob(h | \mathbf{r}) = \frac{\Prob(\mathbf{r} | h) \Prob(h)}{\sum_{h'} \Prob(\mathbf{r} | h') \Prob(h')}}% Equation
+  {Computes posterior probability of haplotype $h$ given reads $\mathbf{r}$, normalizing over entire haplotype panel $H$ to ensure probabilities sum to unity.}% Definition/Role
+  {Pipeline Foundations}% Category
+  {Ch.~6.3}% First defined
+  {$h$, $H$, $\mathbf{r}$, $\Prob(\mathbf{r}\mid h)$, $\Prob(h)$}% Key variables
+
+\MasterEqBox
+  {EQ-MAP}% ID
+  {eq:map-classification}% Label
+  {Maximum A Posteriori (MAP) Rule}% Name
+  {\widehat{h}_{\text{MAP}} = \arg\max_{h \in \mathcal{H}} \Prob(h | \mathbf{r})}% Equation
+  {Selects haplotype with maximum posterior probability as the classification decision, minimizing expected misclassification rate under 0-1 loss.}% Definition/Role
+  {Pipeline Foundations}% Category
+  {Ch.~6.4}% First defined
+  {$\widehat{h}_{\text{MAP}}$, $\mathcal{H}$, $\mathbf{r}$}% Key variables
+
+\MasterEqBox
+  {EQ-BAYES-FACTOR}% ID
+  {eq:bayes-factor}% Label
+  {Bayes Factor (Likelihood Ratio)}% Name
+  {\text{BF}_{12} = \frac{\Prob(\mathbf{r} | h_1)}{\Prob(\mathbf{r} | h_2)}}% Equation
+  {Quantifies relative evidence for haplotype $h_1$ versus $h_2$ independent of priors, with $\text{BF}_{12} > 1$ favoring $h_1$.}% Definition/Role
+  {Pipeline Foundations}% Category
+  {Ch.~6.5}% First defined
+  {$\text{BF}_{12}$, $h_1$, $h_2$, $\mathbf{r}$}% Key variables
+
+%==============================================================================
+\section{Experimental Design (Chapter 7)}
+\label{sec:eqmaster-design}
+%==============================================================================
+
+\MasterEqBox
+  {EQ-PERFECT-READ}% ID
+  {eq:perfect-read}% Label
+  {Error-Free Read Probability}% Name
+  {p_{\text{perfect}} = (1 - \epsilon)^L}% Equation
+  {Probability that a read of length $L$ has no errors under independent per-base error model with rate $\epsilon$.}% Definition/Role
+  {Experimental Design}% Category
+  {Ch.~7.2}% First defined
+  {$p_{\text{perfect}}$, $L$, $\epsilon$}% Key variables
+
+\MasterEqBox
+  {EQ-EXPECTED-PERFECT}% ID
+  {eq:expected-perfect}% Label
+  {Expected Perfect Read Count}% Name
+  {\mathbb{E}[N_{\text{perfect}}] = N \cdot (1 - \epsilon)^L}% Equation
+  {Expected number of error-free reads in dataset of size $N$ with per-base error rate $\epsilon$ and read length $L$.}% Definition/Role
+  {Experimental Design}% Category
+  {Ch.~7.2}% First defined
+  {$N_{\text{perfect}}$, $N$, $L$, $\epsilon$}% Key variables
+
+\MasterEqBox
+  {EQ-EXPECTED-ERRORS}% ID
+  {eq:expected-errors}% Label
+  {Expected Errors Per Read}% Name
+  {\mathbb{E}[\text{errors per read}] = L \cdot \epsilon}% Equation
+  {Expected number of base errors in a single read under independent error model, linear in both read length and error rate.}% Definition/Role
+  {Experimental Design}% Category
+  {Ch.~7.2}% First defined
+  {$L$, $\epsilon$}% Key variables
+
+\MasterEqBox
+  {EQ-SAMPLE-SIZE-QUALITY}% ID
+  {eq:sample-size-quality}% Label
+  {Sample Size for Error Rate Estimation}% Name
+  {N \geq \frac{z_{\alpha/2}^2 \cdot \epsilon(1 - \epsilon)}{\delta^2}}% Equation
+  {Minimum sample size needed to estimate per-base error rate $\epsilon$ with precision half-width $\delta$ at significance level $\alpha$, based on normal approximation to binomial.}% Definition/Role
+  {Experimental Design}% Category
+  {Ch.~7.3}% First defined
+  {$N$, $z_{\alpha/2}$, $\epsilon$, $\delta$}% Key variables
+
+\MasterEqBox
+  {EQ-EXACT-BINOM-PVALUE}% ID
+  {eq:exact-binomial-pvalue}% Label
+  {Exact Binomial P-Value}% Name
+  {p = \sum_{k=k_{\text{obs}}}^{n} \binom{n}{k} \epsilon_0^k (1 - \epsilon_0)^{n-k}}% Equation
+  {Exact $p$-value for one-sided binomial test of null hypothesis $H_0: \epsilon = \epsilon_0$ given observed $k_{\text{obs}}$ errors in $n$ bases.}% Definition/Role
+  {Experimental Design}% Category
+  {Ch.~7.3}% First defined
+  {$p$, $k_{\text{obs}}$, $n$, $\epsilon_0$}% Key variables
+
+\MasterEqBox
+  {EQ-COVERAGE-CONFIDENCE}% ID
+  {eq:coverage-confidence}% Label
+  {Minimum Coverage for Confidence}% Name
+  {N \geq \frac{\log(\epsilon_0/\epsilon_1) + z_{\alpha}\sqrt{2\log(\epsilon_1/\epsilon_0)}}{D_{\text{KL}}(h_{\text{true}} || h_{\text{closest}})}}% Equation
+  {Minimum read count required to distinguish true haplotype from closest competitor with confidence $1-\alpha$, inversely proportional to KL divergence between haplotypes.}% Definition/Role
+  {Experimental Design}% Category
+  {Ch.~7.4}% First defined
+  {$N$, $z_\alpha$, $D_{\text{KL}}$, $h_{\text{true}}$, $h_{\text{closest}}$}% Key variables
+
+%==============================================================================
+\section{Reference Standards (Chapters 8--9)}
+\label{sec:eqmaster-standards}
+%==============================================================================
+
+\MasterEqBox
+  {EQ-PLASMID-PURITY}% ID
+  {eq:plasmid-purity-bound}% Label
+  {Plasmid Purity Specification}% Name
+  {\pi_{\text{plasmid}} \geq 0.95}% Equation
+  {Minimum acceptable purity for plasmid reference standards, ensuring high-quality ground truth for basecaller training and validation.}% Definition/Role
+  {Reference Standards}% Category
+  {Ch.~8.5}% First defined
+  {$\pi_{\text{plasmid}}$}% Key variables
+
+\MasterEqBox
+  {EQ-DUAL-CUT}% ID
+  {eq:dual-cut-prob}% Label
+  {Dual Enzymatic Cleavage Probability}% Name
+  {P_{\text{dual cut}} = \left(1 - e^{-\lambda t}\right)^2}% Equation
+  {Probability that both restriction sites are cut by time $t$ under exponential cleavage kinetics with rate $\lambda$, squared due to independence.}% Definition/Role
+  {Reference Standards}% Category
+  {Ch.~9.2}% First defined
+  {$P_{\text{dual cut}}$, $\lambda$, $t$}% Key variables
+
+\MasterEqBox
+  {EQ-FRAGMENT-CDF}% ID
+  {eq:fragment-cdf}% Label
+  {Fragment Size CDF (Exponential)}% Name
+  {F(x) = 1 - e^{-\lambda x}}% Equation
+  {Cumulative distribution function for fragment size under exponential fragmentation model with rate parameter $\lambda$.}% Definition/Role
+  {Reference Standards}% Category
+  {Ch.~9.2}% First defined
+  {$F(x)$, $\lambda$, $x$}% Key variables
+
+\MasterEqBox
+  {EQ-T7E1-EFF}% ID
+  {eq:t7e1-efficiency}% Label
+  {T7 Endonuclease I Cleavage Efficiency}% Name
+  {E_{\text{T7E1}} = \frac{N_{\text{cleaved}}}{N_{\text{heteroduplex}}}}% Equation
+  {Measures fraction of heteroduplex molecules successfully cleaved by T7 endonuclease I, critical for enrichment quality.}% Definition/Role
+  {Reference Standards}% Category
+  {Ch.~9.3}% First defined
+  {$E_{\text{T7E1}}$, $N_{\text{cleaved}}$, $N_{\text{heteroduplex}}$}% Key variables
+
+\MasterEqBox
+  {EQ-ENRICHMENT-FOLD}% ID
+  {eq:enrichment-fold}% Label
+  {Fold-Enrichment Metric}% Name
+  {\text{Enrichment fold} = \frac{\text{On-target fraction}}{\text{Genomic fraction}}}% Equation
+  {Quantifies enrichment efficiency as ratio of on-target read fraction to target's genomic fraction, with values $>$ 1000× typical for successful targeted sequencing.}% Definition/Role
+  {Reference Standards}% Category
+  {Ch.~9.4}% First defined
+  {On-target fraction, Genomic fraction}% Key variables
+
+%==============================================================================
+\section{Computational Methods (Chapters 10--13)}
+\label{sec:eqmaster-computational}
+%==============================================================================
+
+\MasterEqBox
+  {EQ-DATASET-LOGLIK}% ID
+  {eq:dataset-loglik}% Label
+  {Dataset Log-Likelihood Factorization}% Name
+  {\log \Prob(\mathbf{r} | h_i) = \sum_{n=1}^{N} \log \Prob(r_n | h_i)}% Equation
+  {Expresses dataset log-likelihood as sum over reads, enabling numerical stability and efficient computation in log-space.}% Definition/Role
+  {Computational Methods}% Category
+  {Ch.~10.3}% First defined
+  {$\mathbf{r}$, $h_i$, $N$, $r_n$}% Key variables
+
+\MasterEqBox
+  {EQ-POSTERIOR-WORKFLOW}% ID
+  {eq:posterior-workflow}% Label
+  {Numerically Stable Posterior Computation}% Name
+  {\Prob(h | \mathbf{r}) = \frac{\exp\left(\sum \log \Prob(r_n | h)\right) \Prob(h)}{\sum_{h'} \exp\left(\sum \log \Prob(r_n | h')\right) \Prob(h')}}% Equation
+  {Computes posterior in log-space to avoid numerical underflow, critical for long reads or large read counts where raw probabilities become vanishingly small.}% Definition/Role
+  {Computational Methods}% Category
+  {Ch.~10.4}% First defined
+  {$h$, $\mathbf{r}$, $\Prob(h)$}% Key variables
+
+\MasterEqBox
+  {EQ-PURITY-CEILING-SMA}% ID
+  {eq:purity-ceiling-sma}% Label
+  {Purity-SMA Relationship}% Name
+  {\pi \leq \text{SMA}}% Equation
+  {Establishes that empirical purity cannot exceed single-molecule accuracy, since perfect reads are necessary (but not sufficient) for correct classification.}% Definition/Role
+  {Computational Methods}% Category
+  {Ch.~11.2}% First defined
+  {$\pi$, $\text{SMA}$}% Key variables
+
+\MasterEqBox
+  {EQ-SMA-EXACT-PROB}% ID
+  {eq:sma-exact-probability}% Label
+  {SMA Exact Definition}% Name
+  {\text{SMA} = \Prob(\text{all } L \text{ bases correct})}% Equation
+  {Formal definition of single-molecule accuracy as joint probability that all $L$ bases in a read are correctly called.}% Definition/Role
+  {Computational Methods}% Category
+  {Ch.~11.7}% First defined
+  {$\text{SMA}$, $L$}% Key variables
+
+\MasterEqBox
+  {EQ-SMA-PREDICTED}% ID
+  {eq:sma-predicted}% Label
+  {Predicted SMA from Quality Scores}% Name
+  {\text{SMA}_{\text{pred}} = \prod_{j=1}^{L} (1 - 10^{-Q_j/10})}% Equation
+  {Computes predicted single-molecule accuracy from per-base Phred quality scores $Q_j$, assuming independence and accurate calibration.}% Definition/Role
+  {Computational Methods}% Category
+  {Ch.~11.8}% First defined
+  {$\text{SMA}_{\text{pred}}$, $L$, $Q_j$}% Key variables
+
+\MasterEqBox
+  {EQ-SMA-CALIB-GAP}% ID
+  {eq:sma-calibration-gap}% Label
+  {SMA Calibration Gap}% Name
+  {\Delta_{\text{SMA}} = \text{SMA}_{\text{pred}} - \text{SMA}_{\text{emp}}}% Equation
+  {Quantifies read-level calibration gap, with $\Delta_{\text{SMA}} > 0$ indicating basecaller overconfidence in read-level accuracy.}% Definition/Role
+  {Computational Methods}% Category
+  {Ch.~11.9}% First defined
+  {$\Delta_{\text{SMA}}$, $\text{SMA}_{\text{pred}}$, $\text{SMA}_{\text{emp}}$}% Key variables
+
+\MasterEqBox
+  {EQ-MIN-DATABASE-SIZE}% ID
+  {eq:min-database-size}% Label
+  {Minimum Reference Database Size}% Name
+  {N_{\text{db}} \geq \frac{|\mathcal{H}| \cdot k}{\pi_{\text{min}}}}% Equation
+  {Minimum database size required to achieve $k$-fold coverage per haplotype in panel $\mathcal{H}$ with minimum purity $\pi_{\text{min}}$, accounting for error-free read requirement.}% Definition/Role
+  {Computational Methods}% Category
+  {Ch.~12.3}% First defined
+  {$N_{\text{db}}$, $|\mathcal{H}|$, $k$, $\pi_{\text{min}}$}% Key variables
+
+\MasterEqBox
+  {EQ-LABEL-TRANSITION}% ID
+  {eq:label-transition}% Label
+  {Label Noise Transition Model}% Name
+  {\widetilde{y} = T(y) \text{ where } T_{ij} = \Prob(\widetilde{y} = j | y = i)}% Equation
+  {Models label noise via transition matrix $T$ where noisy label $\widetilde{y}$ depends on true label $y$ through conditional probabilities $T_{ij}$.}% Definition/Role
+  {Computational Methods}% Category
+  {Ch.~12.4}% First defined
+  {$\widetilde{y}$, $y$, $T$, $T_{ij}$}% Key variables
+
+\MasterEqBox
+  {EQ-OBSERVED-CONFUSION}% ID
+  {eq:observed-confusion}% Label
+  {Noisy Confusion Matrix Decomposition}% Name
+  {\widetilde{\mathbf{C}} = \mathbf{C}_{\text{true}} \cdot \mathbf{T}}% Equation
+  {Decomposes observed confusion matrix $\widetilde{\mathbf{C}}$ as product of true classifier confusion $\mathbf{C}_{\text{true}}$ and label noise transition matrix $\mathbf{T}$.}% Definition/Role
+  {Computational Methods}% Category
+  {Ch.~12.4}% First defined
+  {$\widetilde{\mathbf{C}}$, $\mathbf{C}_{\text{true}}$, $\mathbf{T}$}% Key variables
+
+\MasterEqBox
+  {EQ-CE-LOSS}% ID
+  {eq:ce-loss}% Label
+  {Cross-Entropy Loss}% Name
+  {L_{\text{CE}} = -\sum_{i=1}^{C} y_i \log(\widehat{y}_i)}% Equation
+  {Standard cross-entropy loss for classification with $C$ classes, where $y$ is one-hot true label and $\widehat{y}$ is predicted probability distribution.}% Definition/Role
+  {Computational Methods}% Category
+  {Ch.~13.5}% First defined
+  {$L_{\text{CE}}$, $C$, $y_i$, $\widehat{y}_i$}% Key variables
+
+\MasterEqBox
+  {EQ-FOCAL-LOSS}% ID
+  {eq:focal-loss}% Label
+  {Focal Loss (Hard Example Mining)}% Name
+  {L_{\text{focal}} = -(1 - \widehat{y})^\gamma \log(\widehat{y})}% Equation
+  {Down-weights easy examples (high $\widehat{y}$) via modulating factor $(1-\widehat{y})^\gamma$, focusing training on hard negatives where $\widehat{y}$ is low.}% Definition/Role
+  {Computational Methods}% Category
+  {Ch.~13.5}% First defined
+  {$L_{\text{focal}}$, $\widehat{y}$, $\gamma$}% Key variables
+
+\MasterEqBox
+  {EQ-CALIBRATION-ERROR}% ID
+  {eq:calibration-error}% Label
+  {Expected Calibration Error (ECE)}% Name
+  {\text{ECE} = \sum_{m=1}^{M} \frac{|B_m|}{N} |\text{acc}(B_m) - \text{conf}(B_m)|}% Equation
+  {Measures calibration by partitioning predictions into $M$ bins $B_m$ and computing weighted average of accuracy-confidence gaps.}% Definition/Role
+  {Computational Methods}% Category
+  {Ch.~13.6}% First defined
+  {$\text{ECE}$, $M$, $B_m$, $N$}% Key variables
+
+%==============================================================================
+\section{Validation \& Quality Control (Chapter 14, Appendices)}
+\label{sec:eqmaster-validation}
+%==============================================================================
+
+\MasterEqBox
+  {EQ-MIXTURE-PROP-SS}% ID
+  {eq:mixture-proportion-sample-size}% Label
+  {Sample Size for Mixture Proportion Estimation}% Name
+  {N \geq \frac{z_{1-\delta/2}^2}{4\epsilon^2 \cdot [\lambda(1-\lambda)]}}% Equation
+  {Minimum read count needed to estimate mixture proportion $\lambda$ with relative precision $\epsilon$ at confidence $1-\delta$, with denominator maximized when $\lambda = 0.5$.}% Definition/Role
+  {Validation \& QC}% Category
+  {Ch.~14.3}% First defined
+  {$N$, $z_{1-\delta/2}$, $\epsilon$, $\lambda$}% Key variables
+
+\MasterEqBox
+  {EQ-MINOR-DETECTION}% ID
+  {eq:minor-detection-limit}% Label
+  {Minor Haplotype Detection Limit}% Name
+  {N \geq \frac{(z_\alpha + z_\beta)^2}{\lambda_{\text{min}}^2}}% Equation
+  {Minimum coverage required to detect minor haplotype at fraction $\lambda_{\text{min}}$ with significance $\alpha$ and power $1-\beta$.}% Definition/Role
+  {Validation \& QC}% Category
+  {Ch.~14.4}% First defined
+  {$N$, $z_\alpha$, $z_\beta$, $\lambda_{\text{min}}$}% Key variables
+
+\MasterEqBox
+  {EQ-DIPLOTYPE-ERROR}% ID
+  {eq:diplotype-error}% Label
+  {Diplotype Classification Error Probability}% Name
+  {P(\text{error}) = 1 - \Prob(\text{correct diplotype})}% Equation
+  {Defines diplotype-level error probability as complement of correct diplotype posterior, accounting for phase ambiguity in heterozygotes.}% Definition/Role
+  {Validation \& QC}% Category
+  {Ch.~14.5}% First defined
+  {$P(\text{error})$, $\Prob(\text{correct diplotype})$}% Key variables
+
+%==============================================================================
+\section{Clinical Applications (Chapters 17--18)}
+\label{sec:eqmaster-clinical}
+%==============================================================================
+
+\MasterEqBox
+  {EQ-PHENOCONV}% ID
+  {eq:phenoconversion}% Label
+  {Phenoconversion (Drug-Drug Interaction)}% Name
+  {\text{AS}_{\text{eff}} = \text{AS}_{\text{geno}} \cdot (1 - I)}% Equation
+  {Adjusts genotypic activity score for enzyme inhibition fraction $I$ due to co-administered drugs, modeling phenoconversion from normal to poor metabolizer.}% Definition/Role
+  {Clinical Applications}% Category
+  {Ch.~17.4}% First defined
+  {$\text{AS}_{\text{eff}}$, $\text{AS}_{\text{geno}}$, $I$}% Key variables
+
+\MasterEqBox
+  {EQ-DIPLOTYPE-POSTERIOR}% ID
+  {eq:diplotype-posterior}% Label
+  {Diplotype Posterior (Ambiguity Resolution)}% Name
+  {P(D_k | \mathbf{R}) = \frac{P(\mathbf{R} | D_k) \cdot P(D_k)}{\sum_{j=1}^{K} P(\mathbf{R} | D_j) \cdot P(D_j)}}% Equation
+  {Computes posterior probability of diplotype $D_k$ among $K$ phase-ambiguous candidates, integrating read evidence with population frequency priors.}% Definition/Role
+  {Clinical Applications}% Category
+  {Ch.~18.3}% First defined
+  {$D_k$, $K$, $\mathbf{R}$, $P(D_k)$}% Key variables
+
+\MasterEqBox
+  {EQ-ENDOXIFEN-PRED}% ID
+  {eq:ch18-endoxifen-prediction}% Label
+  {Endoxifen Concentration Model}% Name
+  {[\text{endoxifen}] = \beta_0 + \beta_1 \cdot \text{AS} + \beta_2 \cdot [\text{tamoxifen}]}% Equation
+  {Linear regression model predicting endoxifen plasma concentration from CYP2D6 activity score and parent tamoxifen concentration, validated in Singapore cohort.}% Definition/Role
+  {Clinical Applications}% Category
+  {Ch.~18.5}% First defined
+  {$[\text{endoxifen}]$, AS, $[\text{tamoxifen}]$, $\beta_0$, $\beta_1$, $\beta_2$}% Key variables
+
+%==============================================================================
+\section{Cross-Reference Index by Chapter}
+\label{sec:eqmaster-index}
+%==============================================================================
+
+\subsection*{Appendix B: Core Mathematical Models}
+\texttt{eq:ce1}, \texttt{eq:ce2}, \texttt{eq:ce3}, \texttt{eq:ce4}, \texttt{eq:ce5}, \texttt{eq:ce6}, \texttt{eq:ce7}, \texttt{eq:ce8}, \texttt{eq:ce9}, \texttt{eq:ce10}, \texttt{eq:ce12}, \texttt{eq:ce13}, \texttt{eq:ce14}, \texttt{eq:bayes-posterior}
+
+\subsection*{Chapter 4: Haplotype Classification Model}
+\texttt{eq:pipeline-factorization-sma}
+
+\subsection*{Chapter 5: Purity Theory}
+\texttt{eq:purity-def}, \texttt{eq:tpr-ceiling}, \texttt{eq:purity-ce-lower}, \texttt{eq:purity-upper}, \texttt{eq:purity-upper-poisson}, \texttt{eq:purity-bracket}, \texttt{eq:qpurity}, \texttt{eq:mismatch-ambiguity}
+
+\subsection*{Chapter 6: Posterior Computation}
+\texttt{eq:likelihood-factorization}, \texttt{eq:per-read-likelihood}, \texttt{eq:posterior-bayes}, \texttt{eq:map-classification}, \texttt{eq:bayes-factor}
+
+\subsection*{Chapter 7: Experimental Design}
+\texttt{eq:perfect-read}, \texttt{eq:expected-perfect}, \texttt{eq:expected-errors}, \texttt{eq:sample-size-quality}, \texttt{eq:exact-binomial-pvalue}, \texttt{eq:coverage-confidence}
+
+\subsection*{Chapter 8: Plasmid Standards}
+\texttt{eq:plasmid-purity-bound}
+
+\subsection*{Chapter 9: Targeted Enrichment}
+\texttt{eq:dual-cut-prob}, \texttt{eq:fragment-cdf}, \texttt{eq:t7e1-efficiency}, \texttt{eq:on-target}, \texttt{eq:off-target}, \texttt{eq:nonspecific}, \texttt{eq:enrichment-fold}, \texttt{eq:spike-in-efficiency}
+
+\subsection*{Chapter 10: Haplotype Mixtures}
+\texttt{eq:dataset-loglik}, \texttt{eq:posterior-workflow}
+
+\subsection*{Chapter 11: Basecaller Quality Models}
+\texttt{eq:purity-ceiling-sma}, \texttt{eq:purity-upper-sma}, \texttt{eq:confusion-matrix-sma}, \texttt{eq:overestimation-sma}, \texttt{eq:seer-matrix-normalization}, \texttt{eq:indel-rates}, \texttt{eq:error-indicator}, \texttt{eq:empirical-error-rate}, \texttt{eq:empirical-q-read}, \texttt{eq:predicted-q-read-formal}, \texttt{eq:sma-exact-probability}, \texttt{eq:sma-exact-estimator}, \texttt{eq:wilson-interval-sma}, \texttt{eq:sma-base}, \texttt{eq:sma-base-decomposition}, \texttt{eq:sma-predicted}, \texttt{eq:sma-calibration-gap}, \texttt{eq:purity-bias-sma}
+
+\subsection*{Chapter 12: Noisy Label Learning}
+\texttt{eq:noise-bias}, \texttt{eq:min-database-size}, \texttt{eq:label-transition}, \texttt{eq:observed-confusion}, \texttt{eq:transition-estimate}, \texttt{eq:denoised-confusion}, \texttt{eq:confusion-se}, \texttt{eq:robust-loss}, \texttt{eq:gce-loss}, \texttt{eq:weighted-loss}
+
+\subsection*{Chapter 13: Basecaller Fine-Tuning}
+\texttt{eq:learning-rate-reduction}, \texttt{eq:fine-tuning}, \texttt{eq:ce-loss}, \texttt{eq:ctc-loss}, \texttt{eq:focal-loss}, \texttt{eq:quality-overestimation}, \texttt{eq:calibration-error}, \texttt{eq:linear-recal}, \texttt{eq:isotonic-recal}, \texttt{eq:seer-workflow-weight}, \texttt{eq:sma-seq-qc-gate}
+
+\subsection*{Chapter 14: Library Preparation Quality Control}
+\texttt{eq:mixture-proportion-sample-size}, \texttt{eq:minor-detection-limit}, \texttt{eq:diplotype-error}
+
+\subsection*{Chapter 17: CYP2D6 Pain Management \& Psychiatry}
+\texttt{eq:phenoconversion}
+
+\subsection*{Chapter 18: Singapore Tamoxifen Cohort}
+\texttt{eq:diplotype-posterior}, \texttt{eq:ch18-endoxifen-prediction}
+
+\subsection*{Appendix D: Computational Protocols}
+\texttt{eq:seer-matrix}
+
+%==============================================================================
+\section{Usage Guidelines}
+\label{sec:eqmaster-usage}
+%==============================================================================
+
+\subsection*{Citing Equations}
+
+Use \verb|\ref{}| for equation numbers only or \verb|\eqref{}| for parenthetical equation numbers:
+
+\begin{verbatim}
+As shown in Equation~\ref{eq:posterior-bayes}, the posterior probability...
+The Bayesian update rule \eqref{eq:posterior-bayes} can be applied...
+\end{verbatim}
+
+For core equations with CE\# codes, use the \verb|\CEref{}| command:
+
+\begin{verbatim}
+The purity ceiling \CEref{4} limits classification performance...
+\end{verbatim}
+
+\subsection*{Related Equations}
+
+\textbf{Bayesian Inference Chain:}
+\begin{itemize}
+\item \texttt{eq:ce1} $\to$ \texttt{eq:posterior-bayes} $\to$ \texttt{eq:map-classification}
+\item \texttt{eq:likelihood-factorization} $\to$ \texttt{eq:per-read-likelihood}
+\item \texttt{eq:dataset-loglik} $\to$ \texttt{eq:posterior-workflow}
+\end{itemize}
+
+\textbf{Purity Theory Chain:}
+\begin{itemize}
+\item \texttt{eq:ce3} $\to$ \texttt{eq:purity-def} $\to$ \texttt{eq:purity-bracket}
+\item \texttt{eq:ce4} $\to$ \texttt{eq:tpr-ceiling} $\to$ \texttt{eq:purity-ceiling-sma}
+\end{itemize}
+
+\textbf{Quality Score Chain:}
+\begin{itemize}
+\item \texttt{eq:ce5} $\to$ \texttt{eq:ce6} $\to$ \texttt{eq:ce10}
+\item \texttt{eq:empirical-q-read} $\to$ \texttt{eq:predicted-q-read-formal} $\to$ \texttt{eq:quality-overestimation}
+\item \texttt{eq:linear-recal} $\to$ \texttt{eq:isotonic-recal}
+\end{itemize}
+
+\textbf{SMA (Single Molecule Accuracy) Chain:}
+\begin{itemize}
+\item \texttt{eq:ce7} $\to$ \texttt{eq:ce8} $\to$ \texttt{eq:sma-base}
+\item \texttt{eq:sma-exact-probability} $\to$ \texttt{eq:sma-exact-estimator}
+\item \texttt{eq:sma-predicted} $\to$ \texttt{eq:sma-calibration-gap}
+\end{itemize}
+
+\textbf{Sample Size \& Power Chain:}
+\begin{itemize}
+\item \texttt{eq:sample-size-quality} $\to$ \texttt{eq:coverage-confidence}
+\item \texttt{eq:mixture-proportion-sample-size} $\to$ \texttt{eq:minor-detection-limit}
+\item \texttt{eq:min-database-size}
+\end{itemize}
+
+\textbf{Noisy Label Learning Chain:}
+\begin{itemize}
+\item \texttt{eq:label-transition} $\to$ \texttt{eq:observed-confusion} $\to$ \texttt{eq:denoised-confusion}
+\item \texttt{eq:robust-loss} $\to$ \texttt{eq:gce-loss} $\to$ \texttt{eq:weighted-loss}
+\end{itemize}
+
+\subsection*{Equation Naming Conventions}
+
+\begin{itemize}
+\item \textbf{Core equations:} \texttt{eq:ce1} through \texttt{eq:ce14} (reserved for Appendix~B)
+\item \textbf{Descriptive names:} Use kebab-case: \texttt{eq:posterior-bayes}, \texttt{eq:sample-size-quality}
+\item \textbf{Chapter-specific:} Prefix with chapter identifier if ambiguous: \texttt{eq:ch18-endoxifen-prediction}
+\item \textbf{Avoid generic names:} Don't use \texttt{eq:equation1} or \texttt{eq:main} — use descriptive labels
+\end{itemize}
+
+\subsection*{Missing Equation Labels}
+
+If you encounter an unlabeled equation that should be referenced, add a label following the conventions above. Example:
+
+\begin{verbatim}
+\begin{equation}
+\text{New important equation}
+\label{eq:descriptive-name}
+\end{equation}
+\end{verbatim}
+
+Then add the equation to this master table in the appropriate category section.
+
+%==============================================================================
+\section{Equation Variable Cross-Reference}
+\label{sec:eqmaster-var-xref}
+%==============================================================================
+
+For detailed variable definitions, see Appendix~G (Master Variable Reference Table). Key variable-equation relationships:
+
+\begin{itemize}
+\item \textbf{$h$ (haplotype):} Used in \texttt{eq:ce1}, \texttt{eq:ce2}, \texttt{eq:posterior-bayes}, \texttt{eq:likelihood-factorization}, \texttt{eq:per-read-likelihood}, \texttt{eq:map-classification}
+
+\item \textbf{$\pi$ (purity):} Defined in \texttt{eq:ce3}, \texttt{eq:purity-def}; used in \texttt{eq:ce4}, \texttt{eq:tpr-ceiling}, \texttt{eq:purity-bracket}, \texttt{eq:purity-bias-sma}
+
+\item \textbf{$Q$ (quality score):} Used in \texttt{eq:ce5}, \texttt{eq:ce6}, \texttt{eq:ce10}, \texttt{eq:empirical-q-read}, \texttt{eq:predicted-q-read-formal}, \texttt{eq:quality-overestimation}, \texttt{eq:linear-recal}, \texttt{eq:isotonic-recal}
+
+\item \textbf{SMA (single molecule accuracy):} Defined in \texttt{eq:ce7}, \texttt{eq:ce8}; used in \texttt{eq:sma-exact-probability}, \texttt{eq:sma-base}, \texttt{eq:sma-predicted}, \texttt{eq:sma-calibration-gap}, \texttt{eq:sma-seq-qc-gate}
+
+\item \textbf{$N$ (sample size):} Used in \texttt{eq:sample-size-quality}, \texttt{eq:coverage-confidence}, \texttt{eq:mixture-proportion-sample-size}, \texttt{eq:minor-detection-limit}, \texttt{eq:min-database-size}
+
+\item \textbf{$\mathbf{C}$ (confusion matrix):} Defined in \texttt{eq:ce14}, \texttt{eq:confusion-matrix-sma}; used in \texttt{eq:observed-confusion}, \texttt{eq:denoised-confusion}, \texttt{eq:confusion-se}, \texttt{eq:seer-matrix-normalization}
+
+\item \textbf{$\lambda$ (mixture proportion):} Defined in \texttt{eq:ce12}; used in \texttt{eq:mixture-proportion-sample-size}, \texttt{eq:minor-detection-limit}
+
+\item \textbf{$D$ (diplotype):} Used in \texttt{eq:diplotype-posterior}, \texttt{eq:diplotype-error}
+
+\item \textbf{AS (activity score):} Used in \texttt{eq:phenoconversion}, \texttt{eq:ch18-endoxifen-prediction}
+\end{itemize}
+
+%==============================================================================
+% End of Appendix H
+%==============================================================================

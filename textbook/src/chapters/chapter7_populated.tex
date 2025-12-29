@@ -1,0 +1,642 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Chapter 7: Experimental Design and Power for SMA Claims
+%% Version 6.0 - Complete Population from v5
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{Experimental Design and Power for SMA Claims}
+\label{chap:experimental-design}
+\label{chap:design}
+\label{chap:experimental}
+
+This chapter bridges the mathematical foundations of Chapters 4-6 with the practical considerations of laboratory experiments. We establish quantitative methods for determining sequencing depth, sample size requirements, and statistical power for various experimental objectives. The framework developed here ensures that experiments are adequately powered to detect meaningful differences while avoiding wasteful oversequencing.
+
+\begin{learningobjectives}
+By the end of this chapter, you will be able to:
+\begin{itemize}
+\item Calculate perfect-read probabilities $p_{\text{perfect}} = (1-\epsilon)^L$ and their exponential decay with sequence length
+\item Derive sample size requirements for quality score validation using exact binomial tests
+\item Compute minimum coverage $N$ for haplotype classification with specified confidence using KL divergence
+\item Apply information-theoretic foundations (Chernoff-Stein lemma) to coverage calculations
+\item Design mixture detection experiments with adequate power for minor component resolution
+\item Balance statistical requirements with practical constraints (cost, throughput, sample availability)
+\item Connect experimental design parameters to quality control gates for production implementation
+\end{itemize}
+\end{learningobjectives}
+
+\section{Probability of Perfect Reads}
+\label{sec:perfect-reads}
+
+The concept of perfect reads—sequences without any errors—provides a fundamental metric for experimental design. While imperfect reads contribute information through the confusion matrix framework (Chapter~\ref{chap:classification}), perfect reads offer unambiguous evidence that simplifies many calculations.
+
+\begin{eqbox}{Perfect Read Probability}
+For a read of length $L$ with per-base accuracy $\theta$, the probability of obtaining a perfect read is:
+\begin{equation}
+\label{eq_7_1}
+\Prob(\text{perfect read}) = \theta^L
+\end{equation}
+This exponential relationship highlights the dramatic impact of read length on perfect read yield. For example, with $\theta = 0.97$ (Q15 average), a 100 bp read has $\Prob(\text{perfect}) \approx 0.048$, while a 1000 bp read has $\Prob(\text{perfect}) \approx 4.1 \times 10^{-14}$.
+\end{eqbox}
+
+\begin{eqbox}{Expected Perfect Read Count}
+Given $N$ total reads with length distribution $f(L)$ and quality-dependent accuracy $\theta(Q)$, the expected number of perfect reads is:
+\begin{equation}
+\label{eq_7_2}
+\E[N_{\text{perfect}}] = N \int_{0}^{\infty} \theta(Q)^L f(L) \, dL
+\end{equation}
+
+\textbf{Proof:} By linearity of expectation, sum over all reads and integrate over the length distribution:
+\begin{align*}
+\E[N_{\text{perfect}}] &= \sum_{i=1}^{N} \Prob(\text{read } i \text{ is perfect}) \\
+&= \sum_{i=1}^{N} \int_{0}^{\infty} \Prob(\text{perfect} | L) f(L) \, dL \\
+&= N \int_{0}^{\infty} \theta(Q)^L f(L) \, dL
+\end{align*}
+
+For practical calculations with empirical fragment distributions, use the discrete form:
+\[
+\E[N_{\text{perfect}}] = N \sum_{k} \theta^{L_k} f_{\text{emp}}(L_k)
+\]
+\end{eqbox}
+
+\section{Expected Errors as Function of Quality and Length}
+\label{sec:expected-errors}
+
+While perfect reads provide clean signals, most reads contain errors that must be modeled through the confusion matrix framework. Understanding the expected error distribution enables proper calibration of classification thresholds.
+
+\begin{proposition}[Expected Error Count]
+For a read of length $L$ base pairs with average quality score $Q$:
+\begin{equation}
+\label{eq_7_4}
+\E[\text{errors}] = L \cdot 10^{-Q/10}
+\end{equation}
+\end{proposition}
+
+This linear scaling with length assumes uniform quality along the read. For position-dependent quality profiles $Q(j)$ where $j$ indexes base position:
+\begin{equation}
+\E[\text{errors}] = \sum_{j=1}^{L} 10^{-Q(j)/10}
+\end{equation}
+
+\begin{example}[Error Budget Calculation]
+Consider a 500 bp read with the following quality profile:
+\begin{itemize}
+\item Positions 1-100: Q20 (1\% error rate)
+\item Positions 101-400: Q30 (0.1\% error rate)
+\item Positions 401-500: Q15 (3.16\% error rate)
+\end{itemize}
+
+Expected errors:
+\begin{align}
+\E[\text{errors}] &= 100 \times 0.01 + 300 \times 0.001 + 100 \times 0.0316 \\
+&= 1.0 + 0.3 + 3.16 = 4.46 \text{ errors}
+\end{align}
+\end{example}
+
+\section{Sample Size for Detecting Quality Overstatement}
+\label{sec:sample-size}
+
+A critical quality control task is verifying that basecaller-reported quality scores match empirical error rates. Systematic overstatement of quality can lead to false-positive variant calls and incorrect haplotype classification.
+
+\subsection{Binomial Test Framework}
+
+Quality validation uses a binomial test comparing observed perfect read counts against expectations under claimed quality scores.
+
+\begin{eqbox}{Sample Size for Quality Validation}
+To detect quality score overstatement of $d$ Phred units with power $1-\beta$ at significance level $\alpha$, the required number of reads $n$ satisfies:
+\begin{equation}
+\label{eq_7_6}
+n \geq \frac{\left(z_{1-\alpha/2}\sqrt{P_0(1-P_0)} + z_{1-\beta}\sqrt{P_1(1-P_1)}\right)^2}{(P_0-P_1)^2}
+\end{equation}
+where:
+\begin{align*}
+P_0 &= \theta^L = 10^{-Q \cdot L/10} \quad \text{(claimed perfect read probability)} \\
+P_1 &= 10^{-(Q-d) \cdot L/10} \quad \text{(true perfect read probability if overstated by } d \text{ units)}
+\end{align*}
+
+The sample size formula follows from requiring the power to exceed $1-\beta$ when the true difference is $P_1 - P_0$. Longer reads provide more statistical power per read for quality validation, as the perfect read probability differences become more pronounced.
+\end{eqbox}
+
+\subsection{Practical Sample Size Tables}
+
+Table~\ref{tab:sample-sizes} provides sample size requirements for common scenarios:
+
+\begin{table}[!htbp]
+\centering
+\caption{Sample sizes for detecting 1 Phred unit overstatement ($\alpha=0.05$, power=0.80)}
+\label{tab:sample-sizes}
+\begin{tabular}{cccccc}
+\toprule
+\multirow{2}{*}{\textbf{Read Length}} & \multicolumn{5}{c}{\textbf{Claimed Quality Score}} \\
+& Q10 & Q15 & Q20 & Q25 & Q30 \\
+\midrule
+100 bp & 423 & 668 & 1,058 & 1,677 & 2,658 \\
+250 bp & 169 & 267 & 423 & 671 & 1,063 \\
+500 bp & 85 & 134 & 212 & 335 & 532 \\
+1000 bp & 42 & 67 & 106 & 168 & 266 \\
+2000 bp & 21 & 33 & 53 & 84 & 133 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Note that longer reads provide more statistical power per read for quality validation, as the perfect read probability differences become more pronounced.
+
+\subsection{Exact Binomial Test Formulation}
+\label{sec:exact-binomial-test}
+
+While the normal approximation (Equation~\ref{eq_7_6}) provides fast calculations, the exact binomial test offers guaranteed Type I error control without requiring large-sample assumptions.
+
+\begin{definition}[Exact Binomial Test for Quality Validation]
+Given $N$ reads of length $L$ with claimed quality $Q_{\text{pred}}$, let $k$ denote the observed number of perfect reads. Under the null hypothesis that the claimed quality is accurate:
+\begin{equation}
+k \sim \text{Binomial}(N, p_0), \quad \text{where } p_0 = \left(1 - 10^{-Q_{\text{pred}}/10}\right)^L
+\end{equation}
+
+For a lower-tail test (testing if true quality is worse than claimed), the \textbf{p-value} is:
+\begin{equation}
+\label{eq_7_10}
+p\text{-value} = \Prob(K \leq k \mid H_0) = \sum_{j=0}^{k} \binom{N}{j} p_0^j (1-p_0)^{N-j}
+\end{equation}
+
+Reject $H_0$ (conclude quality is overstated) if $p\text{-value} < \alpha$ (typically $\alpha = 0.05$).
+\end{definition}
+
+\begin{remark}[Confidence Intervals for Perfect Read Proportion]
+\label{rem:exact-ci}
+To estimate the true perfect read probability $p$ with confidence interval, use the \textbf{Clopper--Pearson exact method}:
+\begin{equation}
+\left[ \text{Beta}_{0.025}(k, N-k+1),\; \text{Beta}_{0.975}(k+1, N-k) \right]
+\end{equation}
+where $\text{Beta}_{\alpha}(a,b)$ denotes the $\alpha$ quantile of the Beta$(a,b)$ distribution.
+
+This interval has guaranteed $\geq 95\%$ coverage probability for all $N$ and $p$, making it suitable for small sample sizes or extreme proportions.
+\end{remark}
+
+\begin{remark}[Sample Size for Exact Test]
+\label{rem:exact-sample-size}
+The exact sample size for desired power can be computed by iterating over $N$ and evaluating the binomial tail probability:
+\begin{equation}
+\text{Power} = \Prob(K \leq k_{\alpha} \mid p = p_1)
+\end{equation}
+where $k_{\alpha}$ is the critical value satisfying $\Prob(K \leq k_{\alpha} \mid p = p_0) \leq \alpha$, and $p_1 = 10^{-(Q_{\text{pred}}-d) \cdot L/10}$ is the true perfect read probability under the alternative hypothesis.
+
+For practical calculations, the normal approximation (Equation~\ref{eq_7_6}) provides close agreement when $Np_0 > 10$ and $N(1-p_0) > 10$.
+\end{remark}
+
+\section{Coverage Requirements for Haplotype Classification}
+\label{sec:coverage-requirements}
+
+Determining adequate coverage requires considering both the classification confidence needed and the complexity of the haplotype panel.
+
+\begin{definition}[Effective Coverage]
+The effective coverage for haplotype $h$ is:
+\begin{equation}
+N_{\text{eff}}(h) = N \cdot P(\text{read overlaps } h) \cdot P(\text{read is informative})
+\end{equation}
+where informative reads are those that distinguish $h$ from other haplotypes in the panel.
+\end{definition}
+
+\begin{eqbox}{Coverage for Classification Confidence}
+To achieve posterior probability $\Prob(h|\mathbf{r}) \geq 1-\epsilon$ for the true haplotype with confidence $1-\delta$, the required coverage satisfies:
+\begin{equation}
+\label{eq_7_14}
+N \geq \frac{\log(\epsilon/P) + z_{1-\delta}\sqrt{2\log(P/\epsilon)}}{D_{\text{KL}}(h_{\text{true}} || h_{\text{closest}})}
+\end{equation}
+where $P$ is the number of haplotypes and $D_{\text{KL}}$ is the Kullback-Leibler divergence between read distributions.
+
+The KL divergence term quantifies how distinguishable haplotypes are based on their error profiles through the confusion matrix. Closely related haplotypes (small $D_{\text{KL}}$) require higher coverage for confident classification. This result follows from the Chernoff-Stein lemma in hypothesis testing theory.
+\end{eqbox}
+
+\begin{eqbox}{KL Divergence Per-Position (Minimum Distinguishability)}
+For haplotypes differing at $k$ positions with confusion matrix $\mathbf{C}$, the KL divergence satisfies:
+\begin{equation}
+\label{eq:kl-divergence-haplotypes}
+D_{\text{KL}}(h_1 || h_2) \geq k \cdot D_{\text{KL}}^{\text{min}}
+\end{equation}
+where $D_{\text{KL}}^{\text{min}}$ is the minimum per-position divergence:
+\begin{equation}
+D_{\text{KL}}^{\text{min}} = \min_{a \neq b} \sum_{o} C_{ao} \log\frac{C_{ao}}{C_{bo}}
+\end{equation}
+
+For high-quality basecalling (Q30, error rate 0.001):
+\begin{align*}
+D_{\text{KL}}^{\text{min}} &\approx 0.999 \log\frac{0.999}{0.001} + 0.001 \log\frac{0.001}{0.999} \\
+&\approx 0.999 \cdot 6.907 - 0.001 \cdot 6.907 \\
+&\approx 6.89 \text{ bits}
+\end{align*}
+
+This bound enables coverage calculations for specific haplotype pairs based on the number of distinguishing variants.
+\end{eqbox}
+
+\begin{example}[Coverage Calculation for CYP2D6 Haplotypes]
+\label{ex:cyp2d6-coverage}
+Consider distinguishing CYP2D6 *1 from *2 (differ at 1 SNP, rs16947). Using Q30 basecalling:
+
+\textbf{Parameters:}
+\begin{itemize}
+\item $D_{\text{KL}} \approx 6.89$ bits (from Equation~\ref{eq:kl-divergence-haplotypes})
+\item $P = 50$ common haplotypes
+\item Target: $\Prob(h_{\text{true}}|\mathbf{r}) \geq 0.99$ ($\epsilon = 0.01$)
+\item Confidence: 95\% ($\delta = 0.05$, $z_{0.95} = 1.645$)
+\end{itemize}
+
+\textbf{Required coverage:}
+\begin{align}
+N &\geq \frac{\log(0.01/50) + 1.645\sqrt{2\log(50/0.01)}}{6.89} \\
+&= \frac{8.52 + 1.645\sqrt{2 \cdot 8.52}}{6.89} \\
+&= \frac{8.52 + 6.79}{6.89} = 2.22 \text{ reads}
+\end{align}
+
+Even a single distinguishing variant provides sufficient information with modest coverage. For closely related haplotypes differing at 0.1\% of bases, coverage requirements scale inversely with $D_{\text{KL}}$.
+\end{example}
+
+\begin{proposition}[Effective Coverage Accounting for Uninformative Reads]
+\label{prop:effective-coverage}
+For a locus of length $L$ base pairs with haplotypes differing at $k$ positions, the fraction of informative reads is:
+\begin{equation}
+f_{\text{inform}} = \frac{k}{L} \cdot P(\text{read spans variant})
+\end{equation}
+
+For random fragmentation with mean fragment length $\ell_{\text{frag}}$ and variants uniformly distributed:
+\begin{equation}
+P(\text{read spans variant}) \approx \frac{\ell_{\text{frag}}}{L} \quad \text{(for } \ell_{\text{frag}} \ll L\text{)}
+\end{equation}
+
+Total coverage requirement:
+\begin{equation}
+N_{\text{total}} = \frac{N_{\text{required}}}{f_{\text{inform}}} = \frac{N_{\text{required}} \cdot L}{\ell_{\text{frag}} \cdot k}
+\end{equation}
+\end{proposition}
+
+\begin{practicalnote}[Coverage Optimization and Cost-Benefit Analysis]
+Translating coverage requirements into practical sequencing decisions requires balancing statistical needs against experimental constraints:
+
+\textbf{Cost Optimization Strategies:}
+\begin{itemize}
+\item \textbf{Targeted Enrichment:} For pharmacogenes (2-10 kb), Cas9-guided enrichment (Chapter~\ref{chap:targeted-enrichment}) achieves $N_{\text{total}}$ requirements at 5-10× lower cost than whole-genome sequencing (\$50 vs. \$500 per sample)
+
+\item \textbf{Multiplexing:} Sequence 96 samples per flowcell; per-sample cost drops from \$100 (single sample) to \$10-15 (highly multiplexed)
+
+\item \textbf{Coverage Balancing:} Instead of uniform $N = 100$× across entire genome, allocate $N = 10$× for common variants ($D_{\text{KL}} \approx 6.89$ bits), $N = 100$× for rare variants ($D_{\text{KL}} \approx 3$ bits), $N = 500$× for closely related haplotypes ($D_{\text{KL}} < 1$ bit)
+\end{itemize}
+
+\textbf{Typical Budget Breakdown (per sample):}
+\begin{itemize}
+\item DNA extraction + QC: \$10
+\item Library preparation (Cas9 enrichment, adapters): \$30
+\item Sequencing (1/96th of flowcell): \$15
+\item Computational analysis (basecalling, classification): \$5
+\item \textbf{Total:} \$60 per sample for targeted pharmacogene panel
+\end{itemize}
+
+\textbf{Coverage Validation:} After sequencing, verify $N_{\text{eff}} \geq N_{\text{required}}$ by counting reads spanning variant positions (not total aligned reads). If deficient, either:
+\begin{itemize}
+\item Re-sequence with deeper coverage (cost: +\$15)
+\item Multiplex with fewer samples next run (cost: +\$0, delay: +1 week)
+\item Accept lower confidence threshold (e.g., 90\% vs. 99\%)
+\end{itemize}
+
+\textbf{Turnaround Time Optimization:} Standard workflow achieves sample-to-report in <24 hours: DNA extraction (2 hr) → library prep (3 hr) → sequencing (6-12 hr) → basecalling (1 hr) → classification (10 min) → review (30 min).
+\end{practicalnote}
+
+\begin{example}[Practical Coverage: CYP2D6 Full-Length]
+\label{ex:cyp2d6-full-coverage}
+CYP2D6 gene: $L = 4,400$ bp, distinguishing *1 from *4 (3 SNPs, $k = 3$), mean fragment length $\ell_{\text{frag}} = 1,000$ bp.
+
+Informative fraction:
+\begin{equation}
+f_{\text{inform}} = \frac{3}{4400} \cdot \frac{1000}{4400} \approx 0.155
+\end{equation}
+
+For $N_{\text{required}} = 2.22$ reads (from Example~\ref{ex:cyp2d6-coverage}):
+\begin{equation}
+N_{\text{total}} = \frac{2.22}{0.155} \approx 14.3 \text{ reads total coverage}
+\end{equation}
+
+This corresponds to $\sim$3$\times$ coverage of the 4.4 kb locus—easily achievable with targeted enrichment.
+\end{example}
+
+\begin{remark}[Read Completeness and Effective Coverage]
+For ONT sequencing, read truncation due to unblock events or strand ejection (captured in end\_reason metadata) can reduce effective coverage. Reads with end reasons indicating incomplete sequencing (e.g., unblock\_mux\_change, signal\_negative) may have lower information content if truncated before reaching variant sites. Chapter~\ref{chap:sma-seq}, Section~\ref{sec:end-reason-analysis} provides guidance on filtering by end reason to ensure informative coverage. When designing experiments, account for potential loss of 5-15\% of reads due to end reason filtering.
+\end{remark}
+
+\section{Power Analysis for Mixture Detection}
+\label{sec:mixture-power}
+
+For diploid samples or contamination detection, we need power to detect minor components in mixtures.
+
+\begin{theorem}[Power for Mixture Component Detection]
+To detect a minor haplotype at fraction $\lambda$ with power $1-\beta$, the required read count is:
+\begin{equation}
+N \geq \frac{(z_{\alpha/2} + z_{\beta})^2}{\lambda^2} \cdot \frac{1}{D_{\text{KL}}(h_{\text{minor}} || h_{\text{major}})}
+\end{equation}
+\end{theorem}
+
+This shows that detection power depends critically on both the mixture fraction and the distinguishability of the components. For pharmacogenomics applications where detecting minor alleles at 1\% frequency might be required for contamination detection:
+
+\begin{example}[Contamination Detection Requirements]
+To detect 1\% contamination ($\lambda = 0.01$) between haplotypes differing at 10 positions with $D_{\text{KL}} \approx 0.5$:
+\begin{align}
+N &\geq \frac{(1.96 + 0.84)^2}{0.01^2} \cdot \frac{1}{0.5} \\
+&= \frac{7.84}{0.0001} \cdot 2 = 156,800 \text{ reads}
+\end{align}
+\end{example}
+
+\section{Detection Heatmaps and Design Guidance}
+\label{sec:design-guidance}
+
+Visualizing the parameter space helps optimize experimental design. Figure~\ref{fig:detection-heatmap} shows detection power as a function of the key parameters.
+
+\begin{figure}[!htbp]
+\centering
+\fbox{\parbox{0.9\textwidth}{\centering 
+[DETECTION HEATMAP PLACEHOLDER]\\
+Power for quality validation as function of (N, L, Q, d)\\
+Darker regions indicate higher statistical power\\
+White contour lines show 80\% and 95\% power thresholds}}
+\caption{Statistical power for detecting quality score overstatement. The heatmap shows how read count (N), read length (L), claimed quality (Q), and overstatement magnitude (d) interact to determine detection power.}
+\label{fig:detection-heatmap}
+\end{figure}
+
+\subsection{Design Recommendations}
+
+Based on the theoretical framework and practical considerations:
+
+\begin{enumerate}
+\item \textbf{For Quality Validation:}
+   \begin{itemize}
+   \item Use at least 1,000 reads of known reference sequence
+   \item Prefer longer reads (>500 bp) for higher statistical power
+   \item Validate separately for different read length bins
+   \end{itemize}
+
+2. \textbf{For Haplotype Classification:}
+   \begin{itemize}
+   \item Minimum 100× effective coverage over variable positions
+   \item Increase by factor of $1/D_{\text{KL}}$ for similar haplotypes
+   \item Add 50\% buffer for technical variation
+   \end{itemize}
+
+3. \textbf{For Mixture Detection:}
+   \begin{itemize}
+   \item Coverage scales as $1/\lambda^2$ for minor component fraction $\lambda$
+   \item 10,000 reads minimum for 1\% detection threshold
+   \item 100,000+ reads for 0.1\% detection in complex mixtures
+   \end{itemize}
+\end{enumerate}
+
+\subsection{Experimental Validation Protocol}
+
+A complete validation experiment should include:
+
+\begin{table}[!htbp]
+\centering
+\caption{Validation experiment design checklist}
+\begin{tabular}{p{4cm}p{7cm}p{2.5cm}}
+\toprule
+\textbf{Component} & \textbf{Purpose} & \textbf{Minimum N} \\
+\midrule
+Known homozygous standards & Quality score validation & 1,000 reads \\
+Known heterozygous mixtures & Mixture fraction accuracy & 5,000 reads \\
+Negative controls & Contamination assessment & 1,000 reads \\
+Technical replicates & Reproducibility metrics & 3 × coverage \\
+Dilution series & Limit of detection & 5 concentrations \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Connection to Quality Control Gates}
+
+The experimental design parameters derived here directly inform the quality control gates in Chapter~\ref{chap:qc-gates}:
+
+\begin{itemize}
+\item \textbf{Coverage Gate (QC Gate 4):} Minimum $N$ from Equation~\ref{eq_7_14}
+\item \textbf{Quality Calibration (QC Gate 2):} Sample size from Equation~\ref{eq_7_6}
+\item \textbf{Mixture Detection:} Thresholds based on power analysis for expected contamination levels
+\end{itemize}
+
+These connections ensure that experimental design and quality control work in concert to achieve reliable haplotype classification.
+
+\section{Variable Summary and Reference}
+\label{sec:var-summary-chapter7}
+
+This section provides a comprehensive summary of all key variables used in this chapter, including physical descriptions, units, and methods of measurement or determination. These variables form the core notation for experimental design and power analysis throughout the framework.
+
+\subsection{Variable Summary Table}
+
+\begin{vartable}
+\varrow{$\theta$}{Per-base accuracy: probability that a single base is called correctly.}
+       {probability (0--1)}
+       {Related to Phred quality $Q$ by $\theta = 1 - 10^{-Q/10}$. For Q30, $\theta \approx 0.999$.}
+
+\varrow{$L$}{Read or molecule length.}
+       {base pairs (bp)}
+       {Measured from sequencing reads or known from construct design.}
+
+\varrow{$N$}{Coverage: number of reads spanning a genomic region or variant position.}
+       {read count}
+       {Measured from aligned sequencing data; effective coverage $N_{\text{eff}}$ accounts for informative reads only.}
+
+\varrow{$D_{\text{KL}}$}{Kullback-Leibler divergence between haplotype read distributions.}
+       {bits (if $\log_2$) or nats (if $\ln$)}
+       {Computed from confusion matrix as $D_{\text{KL}}(h_1 || h_2) = \sum_{o} P(o|h_1) \log \frac{P(o|h_1)}{P(o|h_2)}$.}
+
+\varrow{$P$}{Number of candidate haplotypes in the panel.}
+       {count}
+       {Defined by assay design (e.g., 50 common CYP2D6 alleles).}
+
+\varrow{$\epsilon$}{Target error probability for classification (e.g., $\epsilon = 0.01$ for 99\% confidence).}
+       {probability (0--1)}
+       {Set by experimental design based on desired confidence level.}
+
+\varrow{$Q$}{Phred quality score encoding basecaller confidence.}
+       {Phred units (dimensionless log-scale)}
+       {Reported by basecaller; $Q = -10 \log_{10}(p_{\text{err}})$ where $p_{\text{err}}$ is error probability.}
+
+\varrow{$P_0$}{Perfect read probability under null hypothesis (claimed quality accurate).}
+       {probability (0--1)}
+       {Computed as $P_0 = \theta^L = 10^{-Q \cdot L/10}$ from claimed quality $Q$ and read length $L$.}
+
+\varrow{$P_1$}{Perfect read probability under alternative hypothesis (quality overstated by $d$ units).}
+       {probability (0--1)}
+       {Computed as $P_1 = 10^{-(Q-d) \cdot L/10}$ where $d$ is the overstatement magnitude.}
+
+\varrow{$\alpha$}{Significance level for hypothesis testing (Type I error rate).}
+       {probability (0--1)}
+       {Typically set to $\alpha = 0.05$ for 95\% confidence.}
+
+\varrow{$\beta$}{Type II error rate; power = $1 - \beta$.}
+       {probability (0--1)}
+       {Typically set to $\beta = 0.20$ for 80\% power, or $\beta = 0.10$ for 90\% power.}
+
+\varrow{$z_{\alpha}$}{Standard normal quantile corresponding to probability $\alpha$.}
+       {dimensionless}
+       {For $\alpha = 0.05$, $z_{0.975} = 1.96$; for $\alpha = 0.025$, $z_{0.975} = 1.96$.}
+
+\varrow{$\delta$}{Confidence parameter for coverage calculations (1 - confidence level).}
+       {probability (0--1)}
+       {Typically $\delta = 0.05$ for 95\% confidence in coverage adequacy.}
+
+\varrow{$k$}{Number of variant positions distinguishing two haplotypes.}
+       {count}
+       {Measured by comparing haplotype sequences in reference panel.}
+
+\varrow{$\lambda$}{Mixture fraction of minor component in diploid or contaminated sample.}
+       {fraction (0--1)}
+       {Estimated from read likelihoods; expected $\lambda \approx 0.5$ for balanced diploid.}
+
+\varrow{$f_{\text{inform}}$}{Fraction of reads that are informative for distinguishing haplotypes.}
+       {fraction (0--1)}
+       {Depends on variant density, read length, and fragmentation pattern.}
+\end{vartable}
+
+\subsection{Detailed Variable Reference Boxes}
+
+This section provides in-depth reference information for each key variable, including physical descriptions, units, measurement methods, and concrete examples.
+
+\begin{varbox}{$\theta$}
+\textbf{Physical description.}
+Per-base accuracy: the probability that a single base is called correctly by the basecaller.
+
+\textbf{Units.}
+Probability in the range $[0,1]$.
+
+\textbf{Measurement / determination.}
+Related to Phred quality score $Q$ by $\theta = 1 - 10^{-Q/10}$. For example, Q30 corresponds to $\theta \approx 0.999$ (0.1\% error rate), while Q20 corresponds to $\theta = 0.99$ (1\% error rate).
+
+\textbf{Example.}
+For a read with average quality Q28, the per-base accuracy is $\theta = 1 - 10^{-2.8} \approx 0.9984$. The probability of a perfect 500 bp read is $\theta^{500} \approx 0.44$.
+\end{varbox}
+
+\begin{varbox}{$L$}
+\textbf{Physical description.}
+Read or molecule length in base pairs.
+
+\textbf{Units.}
+Base pairs (bp).
+
+\textbf{Measurement / determination.}
+Measured directly from sequencing reads (basecalled sequence length) or known from construct design for plasmid standards.
+
+\textbf{Example.}
+For CYP2D6 gene sequencing, typical ONT reads span 2,000--8,000 bp. For quality validation experiments, read lengths are measured from empirical fragment distributions.
+\end{varbox}
+
+\begin{varbox}{$N$}
+\textbf{Physical description.}
+Coverage: the number of reads spanning a genomic region or variant position. Effective coverage $N_{\text{eff}}$ counts only informative reads that distinguish between candidate haplotypes.
+
+\textbf{Units.}
+Read count (dimensionless).
+
+\textbf{Measurement / determination.}
+Measured from aligned sequencing data by counting reads overlapping target positions. Effective coverage requires filtering for reads spanning variant sites.
+
+\textbf{Example.}
+A CYP2D6 experiment might achieve 100× total coverage across the gene, but only 20× effective coverage at a specific SNP due to fragmentation and alignment gaps.
+\end{varbox}
+
+\begin{varbox}{$D_{\text{KL}}$}
+\textbf{Physical description.}
+Kullback-Leibler divergence: an information-theoretic measure of distinguishability between the read distributions generated by two haplotypes.
+
+\textbf{Units.}
+Bits (if using $\log_2$) or nats (if using $\ln$).
+
+\textbf{Measurement / determination.}
+Computed from the confusion matrix as:
+\[
+D_{\text{KL}}(h_1 || h_2) = \sum_{o} P(o|h_1) \log \frac{P(o|h_1)}{P(o|h_2)}
+\]
+where $P(o|h_i)$ is the probability of observing read $o$ given haplotype $h_i$.
+
+\textbf{Example.}
+For haplotypes differing at a single SNP with Q30 basecalling, $D_{\text{KL}} \approx 6.89$ bits. For closely related haplotypes differing at 0.1\% of bases, $D_{\text{KL}}$ may be $<1$ bit, requiring much higher coverage.
+\end{varbox}
+
+\begin{varbox}{$P$}
+\textbf{Physical description.}
+Number of candidate haplotypes considered in the classification model.
+
+\textbf{Units.}
+Count (dimensionless).
+
+\textbf{Measurement / determination.}
+Defined by assay design based on reference databases (e.g., PharmVar for pharmacogenes). For CYP2D6, $P \approx 50$--150 depending on population and structural variant inclusion.
+
+\textbf{Example.}
+For a targeted CYP2D6 panel in an East Asian cohort, $P = 50$ common alleles might be sufficient. For comprehensive global coverage, $P = 150$ alleles may be needed.
+\end{varbox}
+
+\begin{varbox}{$\epsilon$, $\delta$}
+\textbf{Physical description.}
+$\epsilon$: target error probability for classification (1 - desired posterior probability).
+$\delta$: confidence parameter for coverage calculations (1 - confidence level).
+
+\textbf{Units.}
+Both are probabilities in $[0,1]$.
+
+\textbf{Measurement / determination.}
+Set by experimental design based on clinical requirements. Typical values: $\epsilon = 0.01$ (99\% confidence), $\delta = 0.05$ (95\% confidence in adequacy).
+
+\textbf{Example.}
+For clinical pharmacogenomics, require $\Prob(h_{\text{true}}|R) \geq 0.99$ ($\epsilon = 0.01$) with 95\% confidence ($\delta = 0.05$) that coverage is adequate.
+\end{varbox}
+
+\begin{varbox}{$\alpha$, $\beta$, $z_{\alpha}$}
+\textbf{Physical description.}
+$\alpha$: significance level (Type I error rate, probability of false positive).
+$\beta$: Type II error rate (probability of false negative); power = $1 - \beta$.
+$z_{\alpha}$: standard normal quantile corresponding to probability $\alpha$.
+
+\textbf{Units.}
+$\alpha$, $\beta$: probabilities in $[0,1]$.
+$z_{\alpha}$: dimensionless (standard deviations from mean).
+
+\textbf{Measurement / determination.}
+Set by experimental design. Standard choices: $\alpha = 0.05$ (5\% false positive rate), $\beta = 0.20$ (80\% power) or $\beta = 0.10$ (90\% power). The quantile $z_{\alpha}$ is obtained from standard normal tables: $z_{0.975} = 1.96$, $z_{0.95} = 1.645$, $z_{0.90} = 1.28$.
+
+\textbf{Example.}
+For detecting 1 Phred unit quality overstatement with $\alpha = 0.05$ and power $1 - \beta = 0.80$ ($\beta = 0.20$), use $z_{0.975} = 1.96$ and $z_{0.80} = 0.84$ in Equation~\ref{eq:sample-size-quality}.
+\end{varbox}
+
+\section{Chapter Summary}
+
+\begin{keytakeaways}
+This chapter established the statistical framework for designing single-molecule sequencing experiments with adequate power:
+
+\textbf{Core Results:}
+\begin{itemize}
+\item \textbf{Perfect Read Probability} (Equations~\ref{eq_7_1}, \ref{eq_7_2}): $p_{\text{perfect}} = (1-\epsilon)^L$ decreases exponentially with sequence length $L$, making longer reads more powerful for quality validation
+
+\item \textbf{Sample Size for Quality Validation} (Equation~\ref{eq_7_6}): $N \geq \frac{z_{\alpha/2}^2 \cdot \epsilon(1-\epsilon)}{\delta^2}$ ensures precision $\delta$ in error rate estimation with confidence $1-\alpha$
+
+\item \textbf{Coverage for Classification Confidence} (Theorem~\ref{thm:coverage-confidence}, Equation~\ref{eq_7_14}): Information-theoretic bound using KL divergence $D_{\text{KL}}$ between haplotypes:
+\[
+N \geq \frac{\log(\epsilon_0/\epsilon_1) + z_{\alpha}\sqrt{2\log(\epsilon_1/\epsilon_0)}}{D_{\text{KL}}(h_{\text{true}} || h_{\text{closest}})}
+\]
+
+\item \textbf{Chernoff-Stein Lemma Application} (Equation~\ref{eq:kl-divergence-haplotypes}): For Q30 basecalling ($\epsilon = 0.001$), minimum KL divergence is $D_{\text{KL}}^{\text{min}} \approx 6.89$ bits, enabling coverage calculations for specific haplotype pairs
+
+\item \textbf{CYP2D6 Example} (Example~\ref{ex:cyp2d6-coverage}): Distinguishing CYP2D6 *1 from *2 requires $N \geq 2.22$ informative reads at Q30 quality
+
+\item \textbf{Mixture Detection Power}: Scales as $1/\lambda^2$ for minor component proportion $\lambda$, requiring substantial coverage for rare variant detection
+\end{itemize}
+
+\textbf{Practical Guidelines:}
+\begin{itemize}
+\item \textbf{Power analysis first:} Calculate required sample sizes \emph{before} starting experiments to avoid underpowered studies
+\item \textbf{Quality-length tradeoff:} Longer reads provide exponentially more power for quality validation
+\item \textbf{Coverage prioritization:} Focus sequencing depth on informative positions (SNPs, indels) rather than uniform coverage
+\item \textbf{Cost-benefit optimization:} Balance statistical requirements against practical constraints (cost $\sim$ \$100/sample, throughput $\sim$ 10$^6$ reads/run)
+\item \textbf{Contingency planning:} Design experiments with 20-30\% extra coverage to account for read quality filtering and alignment losses
+\end{itemize}
+
+\textbf{Connections to Quality Control:}
+\begin{itemize}
+\item \textbf{QC Gate 4 (Coverage):} Minimum $N$ from Equation~\ref{eq_7_14}
+\item \textbf{QC Gate 2 (Quality Calibration):} Sample size from Equation~\ref{eq_7_6}
+\item \textbf{Mixture Detection Thresholds:} Power analysis for expected contamination levels
+\end{itemize}
+
+\textbf{Mathematical Foundation:} Information-theoretic approach (Chernoff-Stein lemma, KL divergence) provides rigorous statistical guarantees beyond heuristic "rules of thumb," ensuring experiments are properly powered while avoiding wasteful oversequencing.
+
+\textbf{Mathematical reference:} For complete proofs of coverage theorems and power calculations, see Appendices~\ref{app:mathematical-models} and \ref{app:core-equations}. For variables and equations, see Appendices~\ref{app:variable-master} and \ref{app:equation-master}.
+\end{keytakeaways}

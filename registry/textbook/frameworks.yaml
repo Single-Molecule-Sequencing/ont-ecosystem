@@ -1,0 +1,246 @@
+# SMS Haplotype Framework - Core Frameworks
+# The SMA-SEER system and related methodologies
+
+version: "1.0"
+source: "SMS_Haplotype_Framework_Textbook 96.pdf"
+last_extracted: "2025-12-28"
+
+frameworks:
+  # =============================================================================
+  # SMA-SEER: The Core Learning System
+  # =============================================================================
+
+  - id: "sma_seer"
+    name: "SMA-SEER Learning System"
+    description: >
+      A cyclical system for continuous improvement of single-molecule sequencing
+      accuracy. Iteratively measures, models, improves, and deploys basecaller
+      calibration using physical reference standards.
+    chapters: [11, 12, 13]
+
+    components:
+      - name: "SMA-seq"
+        full_name: "Single Molecule Accuracy sequencing"
+        purpose: "Establish physical ground truth by sequencing plasmid standards"
+        outputs:
+          - "Aligned reads against known reference"
+          - "Per-base error profiles"
+          - "Confusion matrices"
+          - "Quality score calibration data"
+        related_equations: ["eq_sma", "eq_identity", "eq_confusion_matrix"]
+
+      - name: "SEER"
+        full_name: "Sequencing Empirical Error Rate"
+        purpose: "Convert SMA-seq data into parameterized error models"
+        outputs:
+          - "Confusion matrices C[a→b]"
+          - "Calibration curves Q_predicted vs Q_empirical"
+          - "Quality overestimation metrics"
+          - "Per-base error models"
+        related_equations: ["eq_phred", "eq_confusion_matrix"]
+
+    cycle:
+      - phase: "Measure"
+        description: "Generate reads from high-purity plasmid standards"
+        tools: ["SMA-seq protocol"]
+        outputs: ["Raw POD5/FAST5", "Basecalled FASTQ", "Alignment BAM"]
+
+      - phase: "Model"
+        description: "Construct empirical confusion matrices and error models"
+        tools: ["SEER framework"]
+        outputs: ["Confusion matrix", "Calibration curves", "SMA metrics"]
+
+      - phase: "Improve"
+        description: "Retrain or recalibrate basecaller using empirical models"
+        tools: ["Basecaller fine-tuning (Ch. 13)"]
+        outputs: ["Updated model weights", "Recalibrated Q-scores"]
+
+      - phase: "Deploy"
+        description: "Apply improved models to classify patient samples"
+        tools: ["Haplotype classifier"]
+        outputs: ["Diplotype calls", "Posterior probabilities", "QC metrics"]
+
+    key_insight: >
+      The probabilistic term P(r|σ) in the Pipeline Factorization is no longer
+      a black box but a measurable, tunable component. Each cycle iteration
+      converges toward higher SMA and better-calibrated quality scores.
+
+  # =============================================================================
+  # Pipeline Factorization Framework
+  # =============================================================================
+
+  - id: "pipeline_factorization"
+    name: "Pipeline Factorization Framework"
+    description: >
+      Decomposes the joint probability P(h,g,u,d,l,σ,r) into seven conditional
+      distributions, enabling modular analysis and calibration.
+    chapters: [4]
+
+    stages:
+      - symbol: "h"
+        name: "Haplotype Selection"
+        term: "P(h)"
+        description: "Prior probability from population genetics"
+        calibration: "Population frequency databases (PharmVar, CPIC)"
+
+      - symbol: "g"
+        name: "Standard Construction"
+        term: "P(g|h)"
+        description: "Plasmid assembly and purity"
+        calibration: "Sanger sequencing, CE purity measurement"
+
+      - symbol: "u"
+        name: "Guide Design"
+        term: "P(u|g)"
+        description: "gRNA design and predicted fragmentation"
+        calibration: "In silico cutting prediction"
+
+      - symbol: "d"
+        name: "Post-Cas9 Fragmentation"
+        term: "P(d|u,C)"
+        description: "Actual fragmentation results"
+        calibration: "Fragment length distributions"
+
+      - symbol: "l"
+        name: "Library Loading"
+        term: "P(l|d,C)"
+        description: "Library preparation efficiency"
+        calibration: "Qubit, TapeStation QC"
+
+      - symbol: "σ"
+        name: "Signal Acquisition"
+        term: "P(σ|l,A)"
+        description: "Raw electrical signals"
+        calibration: "Pore occupancy, read length distributions"
+
+      - symbol: "r"
+        name: "Basecalling"
+        term: "P(r|σ,A)"
+        description: "Neural network decoding"
+        calibration: "SMA-SEER framework"
+
+    toggles:
+      - symbol: "C"
+        name: "Cas9 Toggle"
+        values: ["0 (no enrichment)", "1 (Cas9 enrichment)"]
+
+      - symbol: "A"
+        name: "Adaptive Sampling Toggle"
+        values: ["0 (all reads)", "1 (adaptive sampling)"]
+
+  # =============================================================================
+  # End Reason Classification
+  # =============================================================================
+
+  - id: "end_reason"
+    name: "End Reason Classification Framework"
+    description: >
+      Taxonomy for classifying why nanopore reads terminated. Critical for
+      identifying complete vs incomplete reads in SMA-seq analysis.
+    chapters: [11]
+
+    categories:
+      - name: "signal_positive"
+        description: "Read completed naturally - molecule fully traversed pore"
+        complete: true
+        use_for_sma: true
+
+      - name: "signal_negative"
+        description: "Read rejected due to poor signal quality"
+        complete: false
+        use_for_sma: false
+
+      - name: "mux_change"
+        description: "Pore switched to different mux group"
+        complete: false
+        use_for_sma: false
+
+      - name: "unblock_mux_change"
+        description: "Read rejected by adaptive sampling"
+        complete: false
+        use_for_sma: false
+
+      - name: "data_service_unblock_mux_change"
+        description: "Read rejected by data service"
+        complete: false
+        use_for_sma: false
+
+    theorem: >
+      Theorem 11.29: For a homogeneous sample with true molecule length L,
+      only reads with end_reason = signal_positive represent complete molecules.
+
+    qc_implications:
+      - "Filter to signal_positive for SMA calculations"
+      - "Monitor signal_positive fraction as run health metric"
+      - "High mux_change rate indicates flow cell issues"
+
+  # =============================================================================
+  # Purity Framework
+  # =============================================================================
+
+  - id: "purity"
+    name: "Purity Theory Framework"
+    description: >
+      Mathematical framework for quantifying and bounding the fraction of
+      correct molecules in a physical standard.
+    chapters: [5]
+
+    key_results:
+      - name: "Purity Ceiling Theorem"
+        statement: "TPR ≤ π"
+        implication: "No algorithm can exceed the purity of input material"
+
+      - name: "Replication Upper Bound"
+        formula: "π_upper = (1-r)^(kL)"
+        parameters:
+          - "k: replication cycles"
+          - "L: sequence length"
+          - "r: per-base error rate"
+
+      - name: "CE Lower Bound"
+        method: "Capillary electrophoresis purity measurement"
+
+      - name: "Combined Bounds"
+        formula: "π_lower ≤ π ≤ π_upper"
+
+    practical_guidance:
+      - "Target purity > 0.99 for SMA-seq standards"
+      - "Minimize replication cycles to preserve purity"
+      - "Shorter constructs have higher purity (exponential in L)"
+
+# =============================================================================
+# Cross-References
+# =============================================================================
+
+cross_references:
+  pipeline_to_skills:
+    - stage: "σ"
+      skills: ["end-reason", "ont-monitor"]
+    - stage: "r"
+      skills: ["dorado-bench", "ont-align"]
+    - stage: "A"
+      skills: ["ont-pipeline", "ont-experiments"]
+
+  framework_to_equations:
+    sma_seer:
+      - "eq_sma"
+      - "eq_identity"
+      - "eq_confusion_matrix"
+      - "eq_phred"
+    pipeline_factorization:
+      - "eq_4_8"
+      - "eq_6_6"
+    purity:
+      - "eq_5_1"
+      - "eq_5_2"
+      - "eq_5_4"
+      - "eq_5_5"
+
+  framework_to_definitions:
+    sma_seer:
+      - "def_11_19"
+      - "def_11_21"
+      - "def_11_28"
+    purity:
+      - "def_5_1"
+      - "thm_5_3"

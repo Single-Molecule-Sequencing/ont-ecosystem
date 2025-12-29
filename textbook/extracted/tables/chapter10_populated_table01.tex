@@ -1,0 +1,74 @@
+\begin{table}[!htbp]
+\centering
+\caption{Selected fields in the ONT \texttt{sequencing\_summary} specification}
+\label{tab:ont-sequencing-summary}
+\begin{tabular}{p{0.28\textwidth}p{0.62\textwidth}}
+\toprule
+\textbf{Field(s)} & \textbf{Description and workflow use} \\
+\midrule
+\texttt{filename\_fastq}/\texttt{filename\_fast5}/\texttt{filename\_pod5}/\texttt{filename\_bam}/\texttt{input\_filename} &
+Online basecalling populates per-read pointers to FASTQ, FAST5/POD5, and BAM
+artifacts, while offline re-basecalling records the originating POD5/FAST5 in
+\texttt{input\_filename}. Keeping these paths in laboratory notebooks enables
+auditable linkage between archived signal, emitted basecalls, and tertiary
+analysis inputs. \\
+\texttt{batch\_id}, \texttt{parent\_read\_id}, \texttt{read\_id}, \texttt{run\_id} & A
+numeric \texttt{batch\_id} differentiates processing batches in offline
+workflows. UUIDs identify the sequencing run, the parent raw signal chunk, and
+any child reads produced by splitting or duplex polishing, supporting
+deduplication and duplex traceability. \\
+\texttt{channel}, \texttt{mux}, \texttt{minknow\_events}, \texttt{start\_time}, \texttt{duration}, \texttt{template\_start}, \texttt{template\_duration}, \texttt{num\_events\_template} &
+Per-pore acquisition metadata reveals pore loading, mux cycling, and
+electrical stability. Tracking event counts and dwell times across these
+columns helps flag failing pores and validates hardware interventions noted in
+run logs. \\
+\texttt{passes\_filtering}, \texttt{sequence\_length\_template}, \texttt{mean\_qscore\_template} &
+Instrument filters and basecaller-reported length/Q-score statistics provide a
+lightweight proxy for Gate~4 calibration checks and dataset-wide length
+distribution monitoring without reparsing FASTQ files. \\
+\texttt{end\_reason} & Categorical reason for read termination. Reported values
+include \texttt{signal\_positive}, \texttt{signal\_negative}, \texttt{mux\_change},
+\texttt{unblock\_mux\_change}, \texttt{data\_service\_unblock\_mux\_change},
+\texttt{analysis\_config\_change}, \texttt{device\_data\_error}, \texttt{api\_request},
+\texttt{paused}, and \texttt{unknown}. Yield stratified by termination mode
+distinguishes natural completion from active unblocks or hardware faults. \\
+\texttt{pore\_type}, \texttt{experiment\_id}, \texttt{sample\_id} & User-supplied run
+metadata should reconcile with laboratory information systems. Automated
+validations prevent sample swaps, enforce chemistry-specific model selection,
+and ensure the correct pore type was used during downstream analysis. \\
+\texttt{poly\_tail\_*} (RNA only) & Poly-A tail length and positional estimates
+are emitted when the poly-A estimation module runs. They support RNA-specific
+QC such as verifying tail trimming parameters or detecting incomplete cDNA
+synthesis. \\
+\texttt{barcode\_*} (when barcoding) & Barcode kit, arrangement, alias, and front
+/ rear confidence scores drive demultiplexing QC. Monitoring barcode scores and
+\texttt{type} (test sample vs controls) guards against barcode hopping and
+incorrect control labelling. \\
+\texttt{alignment\_*} (when aligning) & Optional alignment genome, orientation,
+accuracy, and BED hit metrics summarise exploratory mapping performed within
+MinKNOW/Dorado, enabling rapid on-target assessment without rebuilding reports.
+\\
+\texttt{duplex\_parent\_template}/\texttt{duplex\_parent\_complement} (duplex) & When
+duplex polishing succeeds these UUIDs link the fused read back to its template
+and complement parents, preserving provenance for re-analysis or auditing. \\
+\texttt{instrument\_type}, \texttt{instrument\_serial\_number}, \texttt{asic\_id}, \texttt{asic\_temp}, \texttt{asic\_version} &
+Hardware identifiers and temperature telemetry capture real-time instrument
+state. Tracking \texttt{asic\_temp} alongside throughput highlights thermal
+drift, while \texttt{instrument\_serial\_number} links deviations to specific
+devices for service reports. \\
+\texttt{flow\_cell\_id}, \texttt{flow\_cell\_product\_code}, \texttt{pore\_version}, \texttt{sequencing\_kit}, \texttt{flow\_cell\_position} &
+Consumable metadata documents chemistry lots and loading positions. Pairing
+these fields with inventory databases accelerates root-cause analysis of pore
+failure and enforces compatibility checks during automated run provisioning. \\
+\texttt{protocol\_group\_id}, \texttt{protocol\_run\_id}, \texttt{protocol}, \texttt{protocol\_version}, \texttt{protocol\_start}, \texttt{protocol\_duration} &
+Protocol identifiers mirror MinKNOW scheduling metadata. They support
+comparisons between protocol variants (for example, adaptive sampling vs.
+standard sequencing) and reconstruct pauses or restarts observed in the run
+log. \\
+\texttt{tracking\_id.*} & Nested tracking-card entries---covering operator,
+laboratory, and sample alias fields---provide the linkage required for
+regulatory record keeping. Populate them consistently to enable cross-run
+analytics on operator effects or training interventions. \\
+\bottomrule
+\end{tabular}
+\end{table}

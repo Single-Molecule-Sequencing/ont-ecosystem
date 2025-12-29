@@ -1,0 +1,15 @@
+\begin{table}[!htbp]
+\centering
+\caption{Computational Resource Requirements}
+\label{tab:compute-requirements}
+\begin{tabular}{llll}
+\toprule
+\textbf{Analysis Stage} & \textbf{CPU} & \textbf{RAM} & \textbf{Storage} \\
+\midrule
+Basecalling (ONT, GPU) & 8+ cores & 16-32 GB & 10× raw data \\
+Basecalling (ONT, CPU) & 32+ cores & 64 GB & 10× raw data \\
+Alignment (minimap2) & 8-16 cores & 8-16 GB & 2× FASTQ size \\
+Tertiary analysis & 4-8 cores & 8 GB & 1 GB/million reads \\
+\bottomrule
+\end{tabular}
+\end{table}

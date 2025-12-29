@@ -1,6 +1,6 @@
 # ONT Ecosystem Makefile
 
-.PHONY: install test lint clean package help
+.PHONY: install test lint clean package help validate validate-skills validate-registry
 
 PYTHON := python3
 PIP := pip3
@@ -13,20 +13,20 @@ help:
 	@echo "  install-dev Install with development dependencies"
 	@echo "  test        Run tests"
 	@echo "  lint        Check Python syntax"
-	@echo "  validate    Validate all skill files"
+	@echo "  validate    Validate skills and registry schemas"
 	@echo "  package     Create skill packages"
 	@echo "  clean       Remove build artifacts"
 	@echo "  dashboard   Start web dashboard"
 	@echo ""
 
 install:
-	$(PIP) install pyyaml
+	$(PIP) install pyyaml jsonschema
 	chmod +x bin/*.py
 	@echo "✅ Installation complete"
 	@echo "Run: source install.sh to set up PATH"
 
 install-dev:
-	$(PIP) install pyyaml pytest pysam edlib numpy pandas matplotlib flask
+	$(PIP) install pyyaml jsonschema pytest pysam edlib numpy pandas matplotlib flask
 	chmod +x bin/*.py
 	@echo "✅ Development installation complete"
 
@@ -38,13 +38,21 @@ lint:
 		$(PYTHON) -m py_compile "$$script" && echo "✅ $$script"; \
 	done
 
-validate:
+validate: validate-skills validate-registry
+	@echo "✅ All validations complete"
+
+validate-skills:
+	@echo "Validating SKILL.md files..."
 	@$(PYTHON) -c "\
 import yaml, re; \
 from pathlib import Path; \
-[print(f'✅ {d.name}') for d in Path('skills').iterdir() if d.is_dir() and \
+[print(f'  ✅ {d.name}') for d in Path('skills').iterdir() if d.is_dir() and \
  (d / 'SKILL.md').exists() and \
  re.match(r'^---\n.*?\n---', (d / 'SKILL.md').read_text(), re.DOTALL)]"
+
+validate-registry:
+	@echo "Validating registry schemas..."
+	@$(PYTHON) bin/ont_experiments.py validate
 
 package:
 	@for skill in skills/*/; do \

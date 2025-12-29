@@ -1,0 +1,1638 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Appendix G: Master Variable Reference Table
+%% Version 6.2 - Boxed Reference Cards (November 2025)
+%% Comprehensive cross-reference for all variables in the framework
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{Master Variable Reference Table}
+\label{app:variable-master}
+\label{app:variables}
+
+This appendix provides a comprehensive, alphabetically organized reference table for all mathematical variables, symbols, and notation used throughout the SMS Haplotype Classification Framework. Each entry is presented as a boxed reference card including:
+\begin{itemize}
+\item \textbf{Symbol}: The mathematical notation
+\item \textbf{Name/Description}: Full name and meaning
+\item \textbf{Definition}: Full prose definition of the variable
+\item \textbf{Type}: Scalar, vector, matrix, set, random variable, etc.
+\item \textbf{Domain/Range}: Valid values or mathematical space
+\item \textbf{Units}: Physical or mathematical units where applicable
+\item \textbf{First Definition}: Chapter and section where formally introduced
+\item \textbf{Key Uses}: Primary chapters where the variable plays a central role
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Latin Alphabet (Uppercase)}
+\label{sec:variables-latin-upper}
+
+\MasterVarBox
+  {V-A}% ID
+  {A}% Symbol
+  {Accuracy}% Name
+  {Overall fraction of correct classifications in a given evaluation set, often measured at the diplotype or haplotype level.}% Definition
+  {Scalar}% Type
+  {[0, 1]}% Domain
+  {dimensionless}% Units
+  {Ch.~4.2}% First defined
+  {Ch.~4, 11, 14}% Key uses
+
+\MasterVarBox
+  {V-AS}% ID
+  {\text{AS}}% Symbol
+  {Activity Score}% Name
+  {Composite measure of CYP2D6 metabolic capacity derived from star allele genotypes, used to define phenotype categories such as normal or poor metabolizer.}% Definition
+  {Scalar}% Type
+  {\mathbb{R}_{\geq 0}}% Domain
+  {dimensionless}% Units
+  {Ch.~17.3, 18.2}% First defined
+  {Ch.~17, 18}% Key uses
+
+\MasterVarBox
+  {V-AS-EFF}% ID
+  {\text{AS}_{\text{eff}}}% Symbol
+  {Effective Activity Score (phenoconverted)}% Name
+  {Activity score adjusted for drug-drug interactions or enzyme inhibition, representing the actual metabolic capacity in the presence of inhibitors.}% Definition
+  {Scalar}% Type
+  {\mathbb{R}_{\geq 0}}% Domain
+  {dimensionless}% Units
+  {Ch.~17.3}% First defined
+  {Ch.~17}% Key uses
+
+\MasterVarBox
+  {V-AS-GENO}% ID
+  {\text{AS}_{\text{geno}}}% Symbol
+  {Genotypic Activity Score}% Name
+  {Activity score derived solely from genotype without environmental or drug interaction adjustments.}% Definition
+  {Scalar}% Type
+  {\mathbb{R}_{\geq 0}}% Domain
+  {dimensionless}% Units
+  {Ch.~17.3}% First defined
+  {Ch.~17}% Key uses
+
+\MasterVarBox
+  {V-C-IJ}% ID
+  {C_{ij}}% Symbol
+  {Confusion Matrix Entry}% Name
+  {Individual entry in confusion matrix representing count or probability of classifying true class $i$ as predicted class $j$.}% Definition
+  {Matrix entry}% Type
+  {\mathbb{N}}% Domain
+  {count}% Units
+  {Ch.~4.3}% First defined
+  {Ch.~4, 6, 11}% Key uses
+
+\MasterVarBox
+  {V-C-MATRIX}% ID
+  {\mathbf{C}}% Symbol
+  {Confusion Matrix}% Name
+  {Matrix representation of classification performance where entry $(i,j)$ represents the count or probability of true class $i$ being classified as class $j$.}% Definition
+  {Matrix}% Type
+  {\mathbb{R}^{P \times P}}% Domain
+  {prob. or count}% Units
+  {Ch.~4.3}% First defined
+  {Ch.~4, 6, 11, 14}% Key uses
+
+\MasterVarBox
+  {V-C-STRAIN}% ID
+  {C_{\text{strain}}}% Symbol
+  {Bacterial Strain Identifier}% Name
+  {Categorical identifier for bacterial strain used in validation experiments or antimicrobial resistance typing.}% Definition
+  {Categorical}% Type
+  {---}% Domain
+  {---}% Units
+  {Ch.~16.1}% First defined
+  {Ch.~16}% Key uses
+
+\MasterVarBox
+  {V-C-TEST}% ID
+  {C_{\text{test}}}% Symbol
+  {Cost of Genotyping Test}% Name
+  {Dollar cost of performing a single genotyping test, used in cost-effectiveness analyses.}% Definition
+  {Scalar}% Type
+  {\mathbb{R}_{> 0}}% Domain
+  {USD}% Units
+  {Ch.~17.5, 20.2}% First defined
+  {Ch.~17, 20}% Key uses
+
+\MasterVarBox
+  {V-C-TOTAL}% ID
+  {C_{\text{total}}}% Symbol
+  {Total Cost}% Name
+  {Total cost including testing, treatment, and adverse event management in health economic analyses.}% Definition
+  {Scalar}% Type
+  {\mathbb{R}}% Domain
+  {USD}% Units
+  {Ch.~17.5}% First defined
+  {Ch.~17, 20}% Key uses
+
+\MasterVarBox
+  {V-D}% ID
+  {D}% Symbol
+  {Diplotype}% Name
+  {Ordered or unordered pair of haplotypes representing the complete genotype at a locus, written as $(h_1, h_2)$ or $h_1/h_2$.}% Definition
+  {Tuple}% Type
+  {\mathcal{H} \times \mathcal{H}}% Domain
+  {---}% Units
+  {Ch.~6.4, 18.4}% First defined
+  {Ch.~6, 14, 17, 18}% Key uses
+
+\MasterVarBox
+  {V-D-AMR}% ID
+  {D_{\text{AMR}}}% Symbol
+  {Depth Threshold for AMR Locus}% Name
+  {Minimum read depth required at antimicrobial resistance loci for confident variant calling.}% Definition
+  {Scalar}% Type
+  {\mathbb{N}}% Domain
+  {reads}% Units
+  {Ch.~16.1}% First defined
+  {Ch.~16}% Key uses
+
+\MasterVarBox
+  {V-D-KL}% ID
+  {D_{\text{KL}}}% Symbol
+  {Kullback-Leibler Divergence}% Name
+  {Statistical distance measure between two probability distributions, quantifying information loss when one distribution is used to approximate another.}% Definition
+  {Scalar}% Type
+  {\mathbb{R}_{\geq 0}}% Domain
+  {bits or nats}% Units
+  {Ch.~7.4}% First defined
+  {Ch.~7, 14}% Key uses
+
+\MasterVarBox
+  {V-D-REPORTED}% ID
+  {D_{\text{reported}}}% Symbol
+  {Reported Diplotype}% Name
+  {Diplotype classification reported by the haplotype calling algorithm, which may differ from the true diplotype due to classification errors.}% Definition
+  {Tuple}% Type
+  {\mathcal{H} \times \mathcal{H}}% Domain
+  {---}% Units
+  {Ch.~17.2}% First defined
+  {Ch.~17, 18}% Key uses
+
+\MasterVarBox
+  {V-D-TRUE}% ID
+  {D_{\text{true}}}% Symbol
+  {True Diplotype}% Name
+  {Ground truth diplotype for a sample, typically established by orthogonal validation methods or known synthetic standards.}% Definition
+  {Tuple}% Type
+  {\mathcal{H} \times \mathcal{H}}% Domain
+  {---}% Units
+  {Ch.~17.2}% First defined
+  {Ch.~17, 18}% Key uses
+
+\MasterVarBox
+  {V-d}% ID
+  {d}% Symbol
+  {DNA Fragment}% Name
+  {DNA sequence fragment resulting from physical fragmentation or enzymatic digestion of genomic molecules.}% Definition
+  {Sequence}% Type
+  {\mathcal{A}^*}% Domain
+  {---}% Units
+  {Ch.~4.1}% First defined
+  {Ch.~4, 8}% Key uses
+
+\MasterVarBox
+  {V-d-I}% ID
+  {d^{(i)}}% Symbol
+  {Fragment $i$}% Name
+  {The $i$-th DNA fragment in a collection of fragments, indexed by $i$.}% Definition
+  {Sequence}% Type
+  {\mathcal{A}^{L_i}}% Domain
+  {---}% Units
+  {Ch.~4.1}% First defined
+  {Ch.~4, 8}% Key uses
+
+\MasterVarBox
+  {V-d-EDIT}% ID
+  {d_{\text{edit}}}% Symbol
+  {Levenshtein Edit Distance}% Name
+  {Minimum number of single-character edits (insertions, deletions, or substitutions) required to transform one string into another.}% Definition
+  {Scalar}% Type
+  {\mathbb{N}}% Domain
+  {bases}% Units
+  {Ch.~4.2}% First defined
+  {Ch.~4, 11, 14}% Key uses
+
+\MasterVarBox
+  {V-E}% ID
+  {E}% Symbol
+  {Expected Value Operator}% Name
+  {Mathematical expectation operator computing the average value of a random variable over its distribution.}% Definition
+  {Operator}% Type
+  {---}% Domain
+  {---}% Units
+  {Ch.~5.3, 7.2}% First defined
+  {Ch.~5, 7, 14}% Key uses
+
+\MasterVarBox
+  {V-E-I}% ID
+  {E_{\text{I}}}% Symbol
+  {Type I Error Indicator}% Name
+  {Binary indicator variable equal to 1 if a false positive classification occurs (normal metabolizer called as poor metabolizer).}% Definition
+  {Binary}% Type
+  {\{0, 1\}}% Domain
+  {---}% Units
+  {Ch.~17.2}% First defined
+  {Ch.~17}% Key uses
+
+\MasterVarBox
+  {V-E-II}% ID
+  {E_{\text{II}}}% Symbol
+  {Type II Error Indicator}% Name
+  {Binary indicator variable equal to 1 if a false negative classification occurs (poor metabolizer called as normal metabolizer).}% Definition
+  {Binary}% Type
+  {\{0, 1\}}% Domain
+  {---}% Units
+  {Ch.~17.2}% First defined
+  {Ch.~17}% Key uses
+
+\MasterVarBox
+  {V-E-CLINICAL}% ID
+  {E_{\text{clinical}}}% Symbol
+  {Clinically Actionable Error Indicator}% Name
+  {Binary indicator for genotyping errors that would alter clinical treatment decisions or dosing recommendations.}% Definition
+  {Binary}% Type
+  {\{0, 1\}}% Domain
+  {---}% Units
+  {Ch.~17.2}% First defined
+  {Ch.~17}% Key uses
+
+\MasterVarBox
+  {V-E-PHENO}% ID
+  {E_{\text{pheno}}}% Symbol
+  {Phenotype Misclassification Indicator}% Name
+  {Binary indicator equal to 1 if diplotype errors result in incorrect metabolizer phenotype assignment.}% Definition
+  {Binary}% Type
+  {\{0, 1\}}% Domain
+  {---}% Units
+  {Ch.~17.2}% First defined
+  {Ch.~17}% Key uses
+
+\MasterVarBox
+  {V-F}% ID
+  {F}% Symbol
+  {Fragmentation Distribution}% Name
+  {Probability distribution governing DNA fragment sizes after physical or enzymatic fragmentation.}% Definition
+  {Function}% Type
+  {---}% Domain
+  {---}% Units
+  {Ch.~4.1}% First defined
+  {Ch.~4, 8}% Key uses
+
+\MasterVarBox
+  {V-f}% ID
+  {f}% Symbol
+  {Basecaller Function}% Name
+  {Function mapping raw sequencing signals (in signal space $\mathcal{S}$) to basecalled reads (in read space $\mathcal{R}$).}% Definition
+  {Function}% Type
+  {\mathcal{S} \to \mathcal{R}}% Domain
+  {---}% Units
+  {Ch.~4.2}% First defined
+  {Ch.~4, 11}% Key uses
+
+\MasterVarBox
+  {V-f-INFORM}% ID
+  {f_{\text{inform}}}% Symbol
+  {Informative Read Fraction}% Name
+  {Fraction of sequencing reads that span variant positions and can contribute to haplotype discrimination.}% Definition
+  {Scalar}% Type
+  {[0, 1]}% Domain
+  {dimensionless}% Units
+  {Ch.~7.4}% First defined
+  {Ch.~7, 14}% Key uses
+
+\MasterVarBox
+  {V-f-POP}% ID
+  {f_{\text{pop}}}% Symbol
+  {Population Haplotype Frequency}% Name
+  {Frequency of a specific haplotype in the reference population, used as prior probability in Bayesian haplotype calling.}% Definition
+  {Scalar}% Type
+  {[0, 1]}% Domain
+  {dimensionless}% Units
+  {Ch.~6.2}% First defined
+  {Ch.~6, 17, 18}% Key uses
+
+\MasterVarBox
+  {V-G}% ID
+  {G}% Symbol
+  {Genomic Locus}% Name
+  {Specific region or coordinate range in the genome targeted for sequencing and haplotype analysis.}% Definition
+  {Set}% Type
+  {---}% Domain
+  {---}% Units
+  {Ch.~4.1}% First defined
+  {Ch.~4}% Key uses
+
+\MasterVarBox
+  {V-g}% ID
+  {g}% Symbol
+  {Genomic Molecule}% Name
+  {DNA molecule extracted from genomic DNA prior to library preparation, representing native sequence content.}% Definition
+  {Sequence}% Type
+  {\mathcal{A}^*}% Domain
+  {---}% Units
+  {Ch.~4.1}% First defined
+  {Ch.~4, 8}% Key uses
+
+\MasterVarBox
+  {V-H}% ID
+  {H}% Symbol
+  {Haplotype Set}% Name
+  {Complete set of candidate haplotypes considered in classification, typically defined by a reference panel such as PharmVar.}% Definition
+  {Set}% Type
+  {\mathcal{H}}% Domain
+  {---}% Units
+  {Ch.~4.1, 6.1}% First defined
+  {Ch.~4--6, 17, 18}% Key uses
+
+\MasterVarBox
+  {V-H-0}% ID
+  {H_0}% Symbol
+  {Null Hypothesis}% Name
+  {Baseline hypothesis in statistical hypothesis testing, typically representing no effect or no difference.}% Definition
+  {Hypothesis}% Type
+  {---}% Domain
+  {---}% Units
+  {Ch.~7.3, 14.3}% First defined
+  {Ch.~7, 14, 17, 18}% Key uses
+
+\MasterVarBox
+  {V-H-1}% ID
+  {H_1}% Symbol
+  {Alternative Hypothesis}% Name
+  {Alternative hypothesis in statistical testing, representing the effect or difference of interest.}% Definition
+  {Hypothesis}% Type
+  {---}% Domain
+  {---}% Units
+  {Ch.~7.3, 14.3}% First defined
+  {Ch.~7, 14, 17, 18}% Key uses
+
+\MasterVarBox
+  {V-h}% ID
+  {h}% Symbol
+  {Haplotype}% Name
+  {Single linear sequence of nucleotides at a genomic locus, representing one of the two copies inherited from parents.}% Definition
+  {Sequence}% Type
+  {\mathcal{A}^L}% Domain
+  {---}% Units
+  {Ch.~4.1}% First defined
+  {Ch.~4--6, 14, 17, 18}% Key uses
+
+\MasterVarBox
+  {V-h-I}% ID
+  {h_i}% Symbol
+  {Haplotype $i$}% Name
+  {The $i$-th haplotype in the reference panel or candidate set, indexed by $i$.}% Definition
+  {Sequence}% Type
+  {\mathcal{A}^L}% Domain
+  {---}% Units
+  {Ch.~4.1}% First defined
+  {Ch.~4--6, 14, 17, 18}% Key uses
+
+\MasterVarBox
+  {V-h-CLOSEST}% ID
+  {h_{\text{closest}}}% Symbol
+  {Closest Competing Haplotype}% Name
+  {Haplotype in the panel with minimum edit distance to the true haplotype, representing the most likely misclassification target.}% Definition
+  {Sequence}% Type
+  {\mathcal{A}^L}% Domain
+  {---}% Units
+  {Ch.~7.4}% First defined
+  {Ch.~7}% Key uses
+
+\MasterVarBox
+  {V-h-MAJOR}% ID
+  {h_{\text{major}}}% Symbol
+  {Major Haplotype in Mixture}% Name
+  {Haplotype present at higher frequency in a diploid mixture or contaminated sample.}% Definition
+  {Sequence}% Type
+  {\mathcal{A}^L}% Domain
+  {---}% Units
+  {Ch.~7.5, 14.1}% First defined
+  {Ch.~7, 14}% Key uses
+
+\MasterVarBox
+  {V-h-MINOR}% ID
+  {h_{\text{minor}}}% Symbol
+  {Minor Haplotype in Mixture}% Name
+  {Haplotype present at lower frequency in a diploid mixture, often more difficult to detect and classify.}% Definition
+  {Sequence}% Type
+  {\mathcal{A}^L}% Domain
+  {---}% Units
+  {Ch.~7.5, 14.1}% First defined
+  {Ch.~7, 14}% Key uses
+
+\MasterVarBox
+  {V-h-TRUE}% ID
+  {h_{\text{true}}}% Symbol
+  {True Haplotype}% Name
+  {Ground truth haplotype for a sample, established by independent validation or known synthetic controls.}% Definition
+  {Sequence}% Type
+  {\mathcal{A}^L}% Domain
+  {---}% Units
+  {Ch.~6.3, 7.4}% First defined
+  {Ch.~6, 7, 14}% Key uses
+
+\MasterVarBox
+  {V-I}% ID
+  {I}% Symbol
+  {Enzyme Inhibition Fraction}% Name
+  {Fraction of enzyme activity lost due to competitive or non-competitive inhibition by co-administered drugs.}% Definition
+  {Scalar}% Type
+  {[0, 1]}% Domain
+  {dimensionless}% Units
+  {Ch.~17.3}% First defined
+  {Ch.~17}% Key uses
+
+\MasterVarBox
+  {V-K}% ID
+  {K}% Symbol
+  {Number of Events/Reads}% Name
+  {Random variable representing count of events (reads, errors, or successes) in binomial or Poisson models.}% Definition
+  {Random Var.}% Type
+  {\mathbb{N}}% Domain
+  {count}% Units
+  {Ch.~7.3, 14.3}% First defined
+  {Ch.~7, 14}% Key uses
+
+\MasterVarBox
+  {V-k-DIST}% ID
+  {k}% Symbol
+  {Number of Distinguishing Positions}% Name
+  {Number of base positions at which two haplotypes differ, determining their discriminability given sequencing errors.}% Definition
+  {Scalar}% Type
+  {\mathbb{N}}% Domain
+  {bases}% Units
+  {Ch.~7.4}% First defined
+  {Ch.~7, 14}% Key uses
+
+\MasterVarBox
+  {V-k-CYCLE}% ID
+  {k}% Symbol
+  {Replication Cycle Count}% Name
+  {Number of PCR or plasmid replication cycles, affecting error accumulation in library preparation.}% Definition
+  {Scalar}% Type
+  {\mathbb{N}}% Domain
+  {cycles}% Units
+  {Ch.~5.2}% First defined
+  {Ch.~5, 8}% Key uses
+
+\MasterVarBox
+  {V-k-ALPHA}% ID
+  {k_\alpha}% Symbol
+  {Critical Value at Significance $\alpha$}% Name
+  {Critical threshold value for hypothesis test at significance level $\alpha$, used to determine rejection regions.}% Definition
+  {Scalar}% Type
+  {\mathbb{R} \text{ or } \mathbb{N}}% Domain
+  {---}% Units
+  {Ch.~7.3, 14.3}% First defined
+  {Ch.~7, 14}% Key uses
+
+\MasterVarBox
+  {V-L}% ID
+  {L}% Symbol
+  {Sequence Length}% Name
+  {Length of haplotype, read, or genomic region in base pairs.}% Definition
+  {Scalar}% Type
+  {\mathbb{N}}% Domain
+  {bases}% Units
+  {Ch.~4.1}% First defined
+  {Ch.~4--7, 11, 14}% Key uses
+
+\MasterVarBox
+  {V-L-I}% ID
+  {L_i}% Symbol
+  {Length of Read $i$}% Name
+  {Length in bases of the $i$-th sequencing read, which may vary across reads.}% Definition
+  {Scalar}% Type
+  {\mathbb{N}}% Domain
+  {bases}% Units
+  {Ch.~4.2}% First defined
+  {Ch.~4, 7, 11}% Key uses
+
+\MasterVarBox
+  {V-L-FRAG}% ID
+  {L_{\text{frag}}}% Symbol
+  {Mean Fragment Length}% Name
+  {Average length of DNA fragments after physical or enzymatic fragmentation.}% Definition
+  {Scalar}% Type
+  {\mathbb{R}_{> 0}}% Domain
+  {bases}% Units
+  {Ch.~7.4, 8.2}% First defined
+  {Ch.~7, 8, 14}% Key uses
+
+\MasterVarBox
+  {V-L-MOL}% ID
+  {L_{\text{mol}}}% Symbol
+  {Molecule Length}% Name
+  {Length of intact genomic or plasmid DNA molecule prior to fragmentation.}% Definition
+  {Scalar}% Type
+  {\mathbb{N}}% Domain
+  {bases}% Units
+  {Ch.~4.1, 5.2}% First defined
+  {Ch.~4, 5, 8}% Key uses
+
+\MasterVarBox
+  {V-M}% ID
+  {M}% Symbol
+  {Confusion Matrix (SMA context)}% Name
+  {Confusion matrix specifically for single-molecule accuracy evaluation, tracking read-level correctness.}% Definition
+  {Matrix}% Type
+  {\mathbb{R}^{P \times P}}% Domain
+  {probability}% Units
+  {Ch.~11.2}% First defined
+  {Ch.~11, 14}% Key uses
+
+\MasterVarBox
+  {V-M-AB}% ID
+  {M_{ab}}% Symbol
+  {SEER Matrix Entry}% Name
+  {Entry in SEER (Sequence Error Rate Estimate) matrix representing transition probability from nucleotide $a$ to $b$.}% Definition
+  {Matrix entry}% Type
+  {[0, 1]}% Domain
+  {probability}% Units
+  {Ch.~11.2}% First defined
+  {Ch.~11}% Key uses
+
+\MasterVarBox
+  {V-N}% ID
+  {N}% Symbol
+  {Total Read Count}% Name
+  {Total number of sequencing reads aligned to the target locus.}% Definition
+  {Scalar}% Type
+  {\mathbb{N}}% Domain
+  {reads}% Units
+  {Ch.~4.2, 6.3}% First defined
+  {Ch.~4, 6, 7, 14}% Key uses
+
+\MasterVarBox
+  {V-N-CORRECT}% ID
+  {N_{\text{correct}}}% Symbol
+  {Count of Correct Classifications}% Name
+  {Number of correctly classified reads or molecules in accuracy evaluation.}% Definition
+  {Scalar}% Type
+  {\mathbb{N}}% Domain
+  {reads}% Units
+  {Ch.~11.2, 14.2}% First defined
+  {Ch.~11, 14}% Key uses
+
+\MasterVarBox
+  {V-N-EFF}% ID
+  {N_{\text{eff}}}% Symbol
+  {Effective Coverage}% Name
+  {Effective number of informative reads after filtering for quality and informativeness criteria.}% Definition
+  {Scalar}% Type
+  {\mathbb{R}_{\geq 0}}% Domain
+  {reads}% Units
+  {Ch.~7.4}% First defined
+  {Ch.~7, 14}% Key uses
+
+\MasterVarBox
+  {V-N-PERFECT}% ID
+  {N_{\text{perfect}}}% Symbol
+  {Count of Perfect Reads}% Name
+  {Number of error-free reads with perfect match to reference haplotype.}% Definition
+  {Scalar}% Type
+  {\mathbb{N}}% Domain
+  {reads}% Units
+  {Ch.~7.1}% First defined
+  {Ch.~7}% Key uses
+
+\MasterVarBox
+  {V-N-REQUIRED}% ID
+  {N_{\text{required}}}% Symbol
+  {Required Read Count}% Name
+  {Minimum number of reads needed to achieve target classification confidence or statistical power.}% Definition
+  {Scalar}% Type
+  {\mathbb{N}}% Domain
+  {reads}% Units
+  {Ch.~7.3, 7.4}% First defined
+  {Ch.~7, 14}% Key uses
+
+\MasterVarBox
+  {V-N-TOTAL}% ID
+  {N_{\text{total}}}% Symbol
+  {Total Molecules/Reads}% Name
+  {Total count of molecules or reads in dataset, used as denominator in rate calculations.}% Definition
+  {Scalar}% Type
+  {\mathbb{N}}% Domain
+  {count}% Units
+  {Ch.~5.1, 7.4, 14.2}% First defined
+  {Ch.~5, 7, 11, 14}% Key uses
+
+\MasterVarBox
+  {V-N-I}% ID
+  {N_i}% Symbol
+  {Row Sum of Confusion Matrix}% Name
+  {Total count of true class $i$ instances, equal to the sum of row $i$ in confusion matrix.}% Definition
+  {Scalar}% Type
+  {\mathbb{N}}% Domain
+  {count}% Units
+  {Ch.~4.3}% First defined
+  {Ch.~4, 11}% Key uses
+
+\MasterVarBox
+  {V-P}% ID
+  {P}% Symbol
+  {Number of Haplotypes in Panel}% Name
+  {Cardinality of the haplotype reference panel, determining the size of the classification problem.}% Definition
+  {Scalar}% Type
+  {\mathbb{N}}% Domain
+  {count}% Units
+  {Ch.~6.1, 7.4}% First defined
+  {Ch.~6, 7, 17, 18}% Key uses
+
+\MasterVarBox
+  {V-P-A}% ID
+  {P(A)}% Symbol
+  {Probability of Event $A$}% Name
+  {Probability measure of event $A$, fundamental to all probabilistic models in the framework.}% Definition
+  {Scalar}% Type
+  {[0, 1]}% Domain
+  {dimensionless}% Units
+  {Ch.~4.1}% First defined
+  {All chapters}% Key uses
+
+\MasterVarBox
+  {V-P-0}% ID
+  {P_0}% Symbol
+  {Probability Under Null Hypothesis}% Name
+  {Probability or parameter value assumed true under the null hypothesis in hypothesis testing.}% Definition
+  {Scalar}% Type
+  {[0, 1]}% Domain
+  {dimensionless}% Units
+  {Ch.~7.3}% First defined
+  {Ch.~7}% Key uses
+
+\MasterVarBox
+  {V-P-1}% ID
+  {P_1}% Symbol
+  {Probability Under Alternative}% Name
+  {Probability or parameter value assumed true under the alternative hypothesis.}% Definition
+  {Scalar}% Type
+  {[0, 1]}% Domain
+  {dimensionless}% Units
+  {Ch.~7.3}% First defined
+  {Ch.~7}% Key uses
+
+\MasterVarBox
+  {V-P-ADR}% ID
+  {P_{\text{ADR}}}% Symbol
+  {Probability of Adverse Drug Reaction}% Name
+  {Probability of experiencing an adverse drug reaction given genotype and drug regimen.}% Definition
+  {Scalar}% Type
+  {[0, 1]}% Domain
+  {dimensionless}% Units
+  {Ch.~17.5}% First defined
+  {Ch.~17}% Key uses
+
+\MasterVarBox
+  {V-P-FAILURE}% ID
+  {P_{\text{failure}}}% Symbol
+  {Probability of Treatment Failure}% Name
+  {Probability of therapeutic failure due to genotype-drug interaction or metabolic phenotype.}% Definition
+  {Scalar}% Type
+  {[0, 1]}% Domain
+  {dimensionless}% Units
+  {Ch.~17.5}% First defined
+  {Ch.~17}% Key uses
+
+\MasterVarBox
+  {V-p}% ID
+  {p}% Symbol
+  {Error Probability (per base)}% Name
+  {Per-base error probability in sequencing, typically derived from Phred quality scores.}% Definition
+  {Scalar}% Type
+  {[0, 1]}% Domain
+  {dimensionless}% Units
+  {Ch.~4.2}% First defined
+  {Ch.~4, 7, 11}% Key uses
+
+\MasterVarBox
+  {V-p-I}% ID
+  {p_i}% Symbol
+  {Error Probability at Position $i$}% Name
+  {Position-specific error probability at base position $i$ in a read.}% Definition
+  {Scalar}% Type
+  {[0, 1]}% Domain
+  {dimensionless}% Units
+  {Ch.~4.2}% First defined
+  {Ch.~4, 7}% Key uses
+
+\MasterVarBox
+  {V-Q}% ID
+  {Q}% Symbol
+  {Phred Quality Score}% Name
+  {Phred-scaled measure of per-base error probability, defined by $Q = -10 \log_{10} p$, where $p$ is the probability that the base call is incorrect.}% Definition
+  {Scalar}% Type
+  {\mathbb{R}_{\geq 0}}% Domain
+  {Phred units}% Units
+  {Ch.~4.2}% First defined
+  {Ch.~4, 7, 11}% Key uses
+
+\MasterVarBox
+  {V-Q-EMP}% ID
+  {Q_{\text{emp}}}% Symbol
+  {Empirical Quality Score}% Name
+  {Phred quality score derived from observed error rates in validation data, representing actual rather than predicted accuracy.}% Definition
+  {Scalar}% Type
+  {\mathbb{R}_{\geq 0}}% Domain
+  {Phred units}% Units
+  {Ch.~7.2, 11.2}% First defined
+  {Ch.~7, 11}% Key uses
+
+\MasterVarBox
+  {V-Q-PRED}% ID
+  {Q_{\text{pred}}}% Symbol
+  {Predicted Quality Score}% Name
+  {Quality score predicted by basecaller model, which may overestimate or underestimate true accuracy.}% Definition
+  {Scalar}% Type
+  {\mathbb{R}_{\geq 0}}% Domain
+  {Phred units}% Units
+  {Ch.~4.2, 7.3}% First defined
+  {Ch.~4, 7, 11}% Key uses
+
+\MasterVarBox
+  {V-Q-WORKFLOW}% ID
+  {Q_{\text{workflow}}}% Symbol
+  {Pipeline QC Score}% Name
+  {Quality control score aggregating multiple metrics to assess overall pipeline performance.}% Definition
+  {Scalar}% Type
+  {\mathbb{R}_{\geq 0}}% Domain
+  {---}% Units
+  {Ch.~16.1}% First defined
+  {Ch.~16}% Key uses
+
+\MasterVarBox
+  {V-Q-IJ}% ID
+  {Q^{(i)}_j}% Symbol
+  {Quality Score Base $j$ Read $i$}% Name
+  {Phred quality score for base position $j$ in read $i$.}% Definition
+  {Scalar}% Type
+  {\mathbb{R}_{\geq 0}}% Domain
+  {Phred units}% Units
+  {Ch.~4.2}% First defined
+  {Ch.~4, 11}% Key uses
+
+\MasterVarBox
+  {V-R}% ID
+  {R}% Symbol
+  {Read Set}% Name
+  {Collection of $N$ sequencing reads aligned to target locus, written as $\mathbf{R} = \{r^{(1)}, r^{(2)}, \ldots, r^{(N)}\}$.}% Definition
+  {Set}% Type
+  {\mathcal{R}^N}% Domain
+  {---}% Units
+  {Ch.~4.2, 6.3}% First defined
+  {Ch.~4, 6, 7, 18}% Key uses
+
+\MasterVarBox
+  {V-R-SPLUS}% ID
+  {R_{S+}}% Symbol
+  {Signal-Positive Read Set}% Name
+  {Subset of reads passing signal quality thresholds in SEER workflow.}% Definition
+  {Set}% Type
+  {\mathcal{R}^*}% Domain
+  {---}% Units
+  {Ch.~11.3}% First defined
+  {Ch.~11}% Key uses
+
+\MasterVarBox
+  {V-r}% ID
+  {r}% Symbol
+  {Read (basecalled sequence)}% Name
+  {Basecalled DNA sequence produced by sequencing instrument, potentially containing sequencing errors.}% Definition
+  {Sequence}% Type
+  {\mathcal{A}^L}% Domain
+  {---}% Units
+  {Ch.~4.2}% First defined
+  {Ch.~4, 6, 11}% Key uses
+
+\MasterVarBox
+  {V-r-I}% ID
+  {r^{(i)}}% Symbol
+  {Read $i$}% Name
+  {The $i$-th read in a read set, indexed by $i$.}% Definition
+  {Sequence}% Type
+  {\mathcal{A}^{L_i}}% Domain
+  {---}% Units
+  {Ch.~4.2}% First defined
+  {Ch.~4, 6, 11, 18}% Key uses
+
+\MasterVarBox
+  {V-r-IJ}% ID
+  {r^{(i)}_j}% Symbol
+  {Base $j$ of Read $i$}% Name
+  {Nucleotide at position $j$ in read $i$, taking values in $\{A, C, G, T\}$.}% Definition
+  {Nucleotide}% Type
+  {\mathcal{A}}% Domain
+  {---}% Units
+  {Ch.~4.2}% First defined
+  {Ch.~4, 11}% Key uses
+
+\MasterVarBox
+  {V-r-ERROR}% ID
+  {r}% Symbol
+  {Per-Base Replication Error Rate}% Name
+  {Per-base error rate during PCR amplification or plasmid replication, distinct from sequencing error rate.}% Definition
+  {Scalar}% Type
+  {[0, 1]}% Domain
+  {dimensionless}% Units
+  {Ch.~5.2}% First defined
+  {Ch.~5, 8}% Key uses
+
+\MasterVarBox
+  {V-S}% ID
+  {S}% Symbol
+  {Signal Segmentation Model}% Name
+  {Model for segmenting raw instrument signal into base-level events, used in basecalling.}% Definition
+  {Function}% Type
+  {---}% Domain
+  {---}% Units
+  {Ch.~4.2}% First defined
+  {Ch.~4, 11}% Key uses
+
+\MasterVarBox
+  {V-s}% ID
+  {s}% Symbol
+  {True Sequence (Ground Truth)}% Name
+  {Ground truth DNA sequence for validation, typically from synthetic plasmids or orthogonally validated samples.}% Definition
+  {Sequence}% Type
+  {\mathcal{A}^L}% Domain
+  {---}% Units
+  {Ch.~4.2, 5.1}% First defined
+  {Ch.~4, 5, 11, 14}% Key uses
+
+\MasterVarBox
+  {V-s-I}% ID
+  {s^{(i)}}% Symbol
+  {True Sequence for Read $i$}% Name
+  {Ground truth sequence corresponding to read $i$ before sequencing errors.}% Definition
+  {Sequence}% Type
+  {\mathcal{A}^{L_i}}% Domain
+  {---}% Units
+  {Ch.~4.2}% First defined
+  {Ch.~4, 11}% Key uses
+
+\MasterVarBox
+  {V-s-HAT}% ID
+  {\hat{s}}% Symbol
+  {Predicted/Assigned Sequence}% Name
+  {Sequence assigned by classification algorithm, which may differ from true sequence due to errors.}% Definition
+  {Sequence}% Type
+  {\mathcal{A}^L}% Domain
+  {---}% Units
+  {Ch.~4.3}% First defined
+  {Ch.~4, 11}% Key uses
+
+\MasterVarBox
+  {V-TPR}% ID
+  {\mathrm{TPR}}% Symbol
+  {True Positive Rate}% Name
+  {Fraction of true positives correctly identified, also known as sensitivity or recall.}% Definition
+  {Scalar}% Type
+  {[0, 1]}% Domain
+  {dimensionless}% Units
+  {Ch.~4.3, 5.2}% First defined
+  {Ch.~4, 5, 11, 14}% Key uses
+
+\MasterVarBox
+  {V-SMA}% ID
+  {\mathrm{SMA}}% Symbol
+  {Single Molecule Accuracy}% Name
+  {Probability that all bases in a single read are correctly called, representing read-level accuracy.}% Definition
+  {Scalar}% Type
+  {[0, 1]}% Domain
+  {dimensionless}% Units
+  {Ch.~11.2}% First defined
+  {Ch.~11, 14}% Key uses
+
+\MasterVarBox
+  {V-X}% ID
+  {X}% Symbol
+  {Raw Signal Time Series}% Name
+  {Raw electrical or optical signal trace from sequencing instrument before basecalling.}% Definition
+  {Vector}% Type
+  {\mathbb{R}^T}% Domain
+  {instrument units}% Units
+  {Ch.~4.2}% First defined
+  {Ch.~4, 11}% Key uses
+
+\MasterVarBox
+  {V-x-I}% ID
+  {x^{(i)}}% Symbol
+  {Signal Segment $i$}% Name
+  {Signal segment corresponding to the $i$-th base or event.}% Definition
+  {Vector}% Type
+  {\mathbb{R}^{\ell_i}}% Domain
+  {instrument units}% Units
+  {Ch.~4.2}% First defined
+  {Ch.~4, 11}% Key uses
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Greek Alphabet}
+\label{sec:variables-greek}
+
+\MasterVarBox
+  {V-ALPHA}% ID
+  {\alpha}% Symbol
+  {Significance Level (Type I Error)}% Name
+  {Probability of rejecting null hypothesis when it is true, typically set to 0.05 or 0.01.}% Definition
+  {Scalar}% Type
+  {(0, 1)}% Domain
+  {dimensionless}% Units
+  {Ch.~7.3, 14.3}% First defined
+  {Ch.~7, 14, 17, 18}% Key uses
+
+\MasterVarBox
+  {V-ALPHA-I}% ID
+  {\alpha_i}% Symbol
+  {Dirichlet Concentration Parameter}% Name
+  {Concentration parameter for Dirichlet prior on haplotype frequencies.}% Definition
+  {Scalar}% Type
+  {\mathbb{R}_{> 0}}% Domain
+  {---}% Units
+  {Ch.~6.2}% First defined
+  {Ch.~6}% Key uses
+
+\MasterVarBox
+  {V-BETA}% ID
+  {\beta}% Symbol
+  {Type II Error Probability (1 - Power)}% Name
+  {Probability of failing to reject null hypothesis when alternative is true, related to statistical power by $\text{Power} = 1 - \beta$.}% Definition
+  {Scalar}% Type
+  {(0, 1)}% Domain
+  {dimensionless}% Units
+  {Ch.~7.3, 14.3}% First defined
+  {Ch.~7, 14, 17}% Key uses
+
+\MasterVarBox
+  {V-PI-VECTOR}% ID
+  {\boldsymbol{\pi}}% Symbol
+  {Haplotype Frequency Vector}% Name
+  {Vector of population haplotype frequencies forming a probability distribution over the haplotype panel.}% Definition
+  {Vector}% Type
+  {\Delta^{P-1}}% Domain
+  {dimensionless}% Units
+  {Ch.~6.2}% First defined
+  {Ch.~6}% Key uses
+
+\MasterVarBox
+  {V-DELTA}% ID
+  {\delta}% Symbol
+  {Confidence Parameter (1 - Confidence)}% Name
+  {Complement of confidence level, where confidence level $= 1 - \delta$.}% Definition
+  {Scalar}% Type
+  {(0, 1)}% Domain
+  {dimensionless}% Units
+  {Ch.~7.4}% First defined
+  {Ch.~7}% Key uses
+
+\MasterVarBox
+  {V-EPSILON-POST}% ID
+  {\epsilon}% Symbol
+  {Posterior Threshold (Misclass. Prob.)}% Name
+  {Threshold on posterior probability below which classification is rejected as insufficiently confident.}% Definition
+  {Scalar}% Type
+  {(0, 1)}% Domain
+  {dimensionless}% Units
+  {Ch.~6.3, 7.4}% First defined
+  {Ch.~6, 7, 14}% Key uses
+
+\MasterVarBox
+  {V-EPSILON-PREC}% ID
+  {\epsilon}% Symbol
+  {Precision Half-Width}% Name
+  {Half-width of confidence interval, determining precision of parameter estimates.}% Definition
+  {Scalar}% Type
+  {(0, 1)}% Domain
+  {dimensionless}% Units
+  {Ch.~14.3}% First defined
+  {Ch.~14}% Key uses
+
+\MasterVarBox
+  {V-VAREPSILON-I}% ID
+  {\varepsilon_i}% Symbol
+  {Misclassification Probability}% Name
+  {Probability of misclassifying true class $i$, equal to $1 - C_{ii}$ in confusion matrix.}% Definition
+  {Scalar}% Type
+  {[0, 1]}% Domain
+  {dimensionless}% Units
+  {Ch.~4.3}% First defined
+  {Ch.~4, 11}% Key uses
+
+\MasterVarBox
+  {V-THETA}% ID
+  {\theta}% Symbol
+  {Per-Base Accuracy}% Name
+  {Probability of correct base call at a single position, equal to $1 - p$ where $p$ is error rate.}% Definition
+  {Scalar}% Type
+  {[0, 1]}% Domain
+  {dimensionless}% Units
+  {Ch.~7.1}% First defined
+  {Ch.~7}% Key uses
+
+\MasterVarBox
+  {V-THETA-Q}% ID
+  {\theta(Q)}% Symbol
+  {Quality-Dependent Accuracy}% Name
+  {Per-base accuracy as a function of Phred quality score $Q$, typically $\theta(Q) = 1 - 10^{-Q/10}$.}% Definition
+  {Function}% Type
+  {[0, 1]}% Domain
+  {dimensionless}% Units
+  {Ch.~7.1}% First defined
+  {Ch.~7}% Key uses
+
+\MasterVarBox
+  {V-LAMBDA}% ID
+  {\lambda}% Symbol
+  {Mixture Fraction (Minor Component)}% Name
+  {Fraction of minor haplotype in diploid mixture, with major fraction $= 1 - \lambda$.}% Definition
+  {Scalar}% Type
+  {[0, 1]}% Domain
+  {dimensionless}% Units
+  {Ch.~6.4, 7.5, 14.1}% First defined
+  {Ch.~6, 7, 14}% Key uses
+
+\MasterVarBox
+  {V-LAMBDA-PENALTY}% ID
+  {\lambda}% Symbol
+  {Complexity Penalty Parameter}% Name
+  {Regularization parameter controlling model complexity in penalized likelihood or Bayesian inference.}% Definition
+  {Scalar}% Type
+  {\mathbb{R}_{> 0}}% Domain
+  {---}% Units
+  {Ch.~6.2, 12.3}% First defined
+  {Ch.~6, 12}% Key uses
+
+\MasterVarBox
+  {V-LAMBDA-MIN}% ID
+  {\lambda_{\text{min}}}% Symbol
+  {Minimum Detectable Fraction}% Name
+  {Smallest mixture fraction that can be reliably detected given coverage and error rates.}% Definition
+  {Scalar}% Type
+  {(0, 1)}% Domain
+  {dimensionless}% Units
+  {Ch.~7.5, 14.3}% First defined
+  {Ch.~7, 14}% Key uses
+
+\MasterVarBox
+  {V-LAMBDA-HAT}% ID
+  {\hat{\lambda}}% Symbol
+  {Observed Mixture Proportion}% Name
+  {Estimated mixture fraction from read counts or posterior inference.}% Definition
+  {Scalar}% Type
+  {[0, 1]}% Domain
+  {dimensionless}% Units
+  {Ch.~14.3}% First defined
+  {Ch.~14}% Key uses
+
+\MasterVarBox
+  {V-MU}% ID
+  {\mu}% Symbol
+  {Mean of Distribution}% Name
+  {Expected value or population mean of a probability distribution.}% Definition
+  {Scalar}% Type
+  {\mathbb{R}}% Domain
+  {variable}% Units
+  {Ch.~5.3, 7.2}% First defined
+  {Ch.~5, 7}% Key uses
+
+\MasterVarBox
+  {V-PI}% ID
+  {\pi}% Symbol
+  {Empirical Purity}% Name
+  {Fraction of error-free reads in a sequencing dataset, defined as the long-run proportion of perfectly sequenced molecules when read count $N \to \infty$.}% Definition
+  {Scalar}% Type
+  {[0, 1]}% Domain
+  {dimensionless}% Units
+  {Ch.~5.1}% First defined
+  {Ch.~5, 8, 11, 14}% Key uses
+
+\MasterVarBox
+  {V-PI-0}% ID
+  {\pi_0}% Symbol
+  {True Proportion Under Null}% Name
+  {Population proportion assumed under null hypothesis in proportion testing.}% Definition
+  {Scalar}% Type
+  {[0, 1]}% Domain
+  {dimensionless}% Units
+  {Ch.~18.2}% First defined
+  {Ch.~18}% Key uses
+
+\MasterVarBox
+  {V-PI-UPPER}% ID
+  {\pi_{\text{upper}}}% Symbol
+  {Theoretical Purity Upper Bound}% Name
+  {Theoretical upper bound on achievable purity given experimental parameters.}% Definition
+  {Function}% Type
+  {[0, 1]}% Domain
+  {dimensionless}% Units
+  {Ch.~5.2}% First defined
+  {Ch.~5}% Key uses
+
+\MasterVarBox
+  {V-PI-I}% ID
+  {\pi_i}% Symbol
+  {Prior Probability of Haplotype $i$}% Name
+  {Prior probability assigned to haplotype $i$, typically from population frequency data.}% Definition
+  {Scalar}% Type
+  {[0, 1]}% Domain
+  {dimensionless}% Units
+  {Ch.~6.2}% First defined
+  {Ch.~6}% Key uses
+
+\MasterVarBox
+  {V-RHO}% ID
+  {\rho}% Symbol
+  {Correlation Coefficient}% Name
+  {Pearson correlation coefficient measuring linear association between two variables.}% Definition
+  {Scalar}% Type
+  {[-1, 1]}% Domain
+  {dimensionless}% Units
+  {Ch.~14.3}% First defined
+  {Ch.~14}% Key uses
+
+\MasterVarBox
+  {V-SIGMA}% ID
+  {\sigma}% Symbol
+  {Standard Deviation}% Name
+  {Standard deviation of a probability distribution, measuring spread around the mean.}% Definition
+  {Scalar}% Type
+  {\mathbb{R}_{\geq 0}}% Domain
+  {variable}% Units
+  {Ch.~7.3, 14.3}% First defined
+  {Ch.~7, 14}% Key uses
+
+\MasterVarBox
+  {V-SIGMA-SIGNAL}% ID
+  {\sigma}% Symbol
+  {Instrument Signal}% Name
+  {Raw signal trace from sequencing instrument (context-dependent with signal space meaning).}% Definition
+  {Vector}% Type
+  {\mathbb{R}^T}% Domain
+  {instrument units}% Units
+  {Ch.~4.2}% First defined
+  {Ch.~4}% Key uses
+
+\MasterVarBox
+  {V-SIGMA-I}% ID
+  {\sigma^{(i)}}% Symbol
+  {Signal for Molecule $i$}% Name
+  {Signal trace for the $i$-th molecule or read.}% Definition
+  {Vector}% Type
+  {\mathbb{R}^{\ell_i}}% Domain
+  {instrument units}% Units
+  {Ch.~4.2}% First defined
+  {Ch.~4}% Key uses
+
+\MasterVarBox
+  {V-TAU}% ID
+  {\tau}% Symbol
+  {Threshold (General)}% Name
+  {General threshold parameter used in classification or hypothesis testing.}% Definition
+  {Scalar}% Type
+  {\mathbb{R}}% Domain
+  {variable}% Units
+  {Ch.~6.3, 11.3}% First defined
+  {Ch.~6, 11}% Key uses
+
+\MasterVarBox
+  {V-PHI}% ID
+  {\Phi}% Symbol
+  {Standard Normal CDF}% Name
+  {Cumulative distribution function of standard normal distribution.}% Definition
+  {Function}% Type
+  {[0, 1]}% Domain
+  {dimensionless}% Units
+  {Ch.~7.3}% First defined
+  {Ch.~7}% Key uses
+
+\MasterVarBox
+  {V-CHI-SQ}% ID
+  {\chi^2}% Symbol
+  {Chi-Square Statistic}% Name
+  {Test statistic for chi-square goodness-of-fit or independence tests.}% Definition
+  {Scalar}% Type
+  {\mathbb{R}_{\geq 0}}% Domain
+  {---}% Units
+  {Ch.~14.4}% First defined
+  {Ch.~14}% Key uses
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Special Mathematical Symbols}
+\label{sec:variables-special}
+
+\MasterVarBox
+  {V-E-X}% ID
+  {\mathbb{E}[X]}% Symbol
+  {Expectation of $X$}% Name
+  {Expected value of random variable $X$, integrating over its distribution.}% Definition
+  {Operator}% Type
+  {\mathbb{R}}% Domain
+  {variable}% Units
+  {Ch.~5.3, 7.2}% First defined
+  {Ch.~5, 7, 14}% Key uses
+
+\MasterVarBox
+  {V-IND-A}% ID
+  {\mathbbm{1}\{A\}}% Symbol
+  {Indicator Function of Event $A$}% Name
+  {Function equal to 1 if event $A$ occurs and 0 otherwise.}% Definition
+  {Function}% Type
+  {\{0, 1\}}% Domain
+  {---}% Units
+  {Ch.~11.2, 17.2}% First defined
+  {Ch.~11, 17}% Key uses
+
+\MasterVarBox
+  {V-ALPHABET}% ID
+  {\mathcal{A}}% Symbol
+  {Nucleotide Alphabet}% Name
+  {Set of nucleotide symbols, typically $\{A, C, G, T\}$ for DNA.}% Definition
+  {Set}% Type
+  {finite}% Domain
+  {---}% Units
+  {Ch.~4.1}% First defined
+  {All chapters}% Key uses
+
+\MasterVarBox
+  {V-A-STAR}% ID
+  {\mathcal{A}^*}% Symbol
+  {Set of All Sequences}% Name
+  {Kleene closure of nucleotide alphabet, representing sequences of any length.}% Definition
+  {Set}% Type
+  {infinite}% Domain
+  {---}% Units
+  {Ch.~4.1}% First defined
+  {Ch.~4, 6}% Key uses
+
+\MasterVarBox
+  {V-A-L}% ID
+  {\mathcal{A}^L}% Symbol
+  {Sequences of Length $L$}% Name
+  {Set of all nucleotide sequences of fixed length $L$.}% Definition
+  {Set}% Type
+  {finite}% Domain
+  {---}% Units
+  {Ch.~4.1}% First defined
+  {Ch.~4, 6}% Key uses
+
+\MasterVarBox
+  {V-D-I}% ID
+  {\mathcal{D}_i}% Symbol
+  {Fragment Set for Haplotype $i$}% Name
+  {Set of DNA fragments derived from haplotype $i$ after fragmentation.}% Definition
+  {Set}% Type
+  {---}% Domain
+  {---}% Units
+  {Ch.~4.1}% First defined
+  {Ch.~4}% Key uses
+
+\MasterVarBox
+  {V-G-I}% ID
+  {\mathcal{G}_i}% Symbol
+  {Genomic Molecule Set}% Name
+  {Set of genomic DNA molecules for sample $i$ prior to library preparation.}% Definition
+  {Set}% Type
+  {---}% Domain
+  {---}% Units
+  {Ch.~4.1}% First defined
+  {Ch.~4}% Key uses
+
+\MasterVarBox
+  {V-H-SET}% ID
+  {\mathcal{H}}% Symbol
+  {Haplotype Panel}% Name
+  {Complete set of reference haplotypes used for classification (e.g., PharmVar panel).}% Definition
+  {Set}% Type
+  {finite}% Domain
+  {---}% Units
+  {Ch.~4.1, 6.1}% First defined
+  {Ch.~4, 6, 17, 18}% Key uses
+
+\MasterVarBox
+  {V-L-I-SET}% ID
+  {\mathcal{L}_i}% Symbol
+  {Library Molecule Set}% Name
+  {Set of library molecules after amplification and adapter ligation.}% Definition
+  {Set}% Type
+  {---}% Domain
+  {---}% Units
+  {Ch.~4.1}% First defined
+  {Ch.~4, 8}% Key uses
+
+\MasterVarBox
+  {V-NORMAL}% ID
+  {\mathcal{N}(\mu, \sigma^2)}% Symbol
+  {Normal Distribution}% Name
+  {Gaussian distribution with mean $\mu$ and variance $\sigma^2$.}% Definition
+  {Distribution}% Type
+  {\mathbb{R}}% Domain
+  {---}% Units
+  {Ch.~7.3, 14.3}% First defined
+  {Ch.~7, 14}% Key uses
+
+\MasterVarBox
+  {V-BIG-O}% ID
+  {\mathcal{O}(n)}% Symbol
+  {Big-O Notation (Asymptotic)}% Name
+  {Asymptotic upper bound on computational complexity or growth rate.}% Definition
+  {Notation}% Type
+  {---}% Domain
+  {---}% Units
+  {Ch.~6.3, 14.3}% First defined
+  {Ch.~6, 14}% Key uses
+
+\MasterVarBox
+  {V-R-SPACE}% ID
+  {\mathcal{R}}% Symbol
+  {Read Space}% Name
+  {Space of all possible basecalled reads, including those with errors.}% Definition
+  {Set}% Type
+  {infinite}% Domain
+  {---}% Units
+  {Ch.~4.2}% First defined
+  {Ch.~4, 6}% Key uses
+
+\MasterVarBox
+  {V-S-SPACE}% ID
+  {\mathcal{S}}% Symbol
+  {Signal Space}% Name
+  {Space of raw instrument signals before basecalling.}% Definition
+  {Set}% Type
+  {infinite}% Domain
+  {---}% Units
+  {Ch.~4.2}% First defined
+  {Ch.~4}% Key uses
+
+\MasterVarBox
+  {V-U-I}% ID
+  {\mathcal{U}_i}% Symbol
+  {Mutated Sequence Set}% Name
+  {Set of sequences resulting from replication errors or PCR mutations.}% Definition
+  {Set}% Type
+  {---}% Domain
+  {---}% Units
+  {Ch.~4.1}% First defined
+  {Ch.~4}% Key uses
+
+\MasterVarBox
+  {V-PROB-A}% ID
+  {\Prob(A)}% Symbol
+  {Probability of Event $A$}% Name
+  {Probability measure of event $A$ under the probability space $(\Omega, \mathcal{F}, P)$.}% Definition
+  {Function}% Type
+  {[0, 1]}% Domain
+  {dimensionless}% Units
+  {Ch.~4.1}% First defined
+  {All chapters}% Key uses
+
+\MasterVarBox
+  {V-PROB-A-B}% ID
+  {\Prob(A \mid B)}% Symbol
+  {Conditional Probability}% Name
+  {Probability of event $A$ given that event $B$ has occurred.}% Definition
+  {Function}% Type
+  {[0, 1]}% Domain
+  {dimensionless}% Units
+  {Ch.~4.1, 6.1}% First defined
+  {All chapters}% Key uses
+
+\MasterVarBox
+  {V-NORM-2}% ID
+  {\|\mathbf{x}\|_2}% Symbol
+  {Euclidean Norm}% Name
+  {Euclidean (L2) norm of vector $\mathbf{x}$, equal to $\sqrt{\sum_i x_i^2}$.}% Definition
+  {Function}% Type
+  {\mathbb{R}_{\geq 0}}% Domain
+  {variable}% Units
+  {Ch.~14.3}% First defined
+  {Ch.~14}% Key uses
+
+\MasterVarBox
+  {V-NORM-F}% ID
+  {\|\mathbf{M}\|_F}% Symbol
+  {Frobenius Norm}% Name
+  {Frobenius norm of matrix $\mathbf{M}$, equal to $\sqrt{\sum_{i,j} M_{ij}^2}$.}% Definition
+  {Function}% Type
+  {\mathbb{R}_{\geq 0}}% Domain
+  {variable}% Units
+  {Ch.~14.2}% First defined
+  {Ch.~14}% Key uses
+
+\MasterVarBox
+  {V-z-ALPHA}% ID
+  {z_{\alpha}}% Symbol
+  {Standard Normal Quantile}% Name
+  {Quantile of standard normal distribution at probability level $\alpha$.}% Definition
+  {Scalar}% Type
+  {\mathbb{R}}% Domain
+  {---}% Units
+  {Ch.~7.3, 14.3}% First defined
+  {Ch.~7, 14, 17, 18}% Key uses
+
+\MasterVarBox
+  {V-z-1-ALPHA-2}% ID
+  {z_{1-\alpha/2}}% Symbol
+  {Two-Tailed Normal Quantile}% Name
+  {Critical value for two-tailed hypothesis test at significance level $\alpha$.}% Definition
+  {Scalar}% Type
+  {\mathbb{R}}% Domain
+  {---}% Units
+  {Ch.~7.3, 14.3}% First defined
+  {Ch.~7, 14, 17}% Key uses
+
+\MasterVarBox
+  {V-z-1-BETA}% ID
+  {z_{1-\beta}}% Symbol
+  {Power-Related Quantile}% Name
+  {Standard normal quantile related to power $(1-\beta)$ in sample size calculations.}% Definition
+  {Scalar}% Type
+  {\mathbb{R}}% Domain
+  {---}% Units
+  {Ch.~7.3, 14.3}% First defined
+  {Ch.~7, 14, 17}% Key uses
+
+\MasterVarBox
+  {V-z-1-DELTA}% ID
+  {z_{1-\delta}}% Symbol
+  {Confidence Quantile}% Name
+  {Standard normal quantile for confidence level $1-\delta$.}% Definition
+  {Scalar}% Type
+  {\mathbb{R}}% Domain
+  {---}% Units
+  {Ch.~7.4}% First defined
+  {Ch.~7}% Key uses
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Domain-Specific Variables}
+\label{sec:variables-domain-specific}
+
+\subsection{CYP2D6 Pharmacogenomics (Chapters 17--18)}
+
+\textbf{Note:} CYP2D6 allele nomenclature uses star (*) notation and is categorical rather than mathematical. Representative examples are provided below as boxed entries.
+
+\MasterVarBox
+  {V-ALLELE-1}% ID
+  {*1}% Symbol
+  {CYP2D6 *1 Allele (Reference/Wild-Type)}% Name
+  {Reference allele with normal enzyme function, serving as the baseline for activity scoring.}% Definition
+  {Categorical}% Type
+  {PharmVar}% Domain
+  {---}% Units
+  {Ch.~17, 18}% First defined
+  {Ch.~17, 18}% Key uses
+
+\MasterVarBox
+  {V-ALLELE-DUP}% ID
+  {*1\times2}% Symbol
+  {Gene Duplication (2 copies of *1)}% Name
+  {Copy number variant with two functional copies of *1 allele, associated with ultrarapid metabolizer phenotype.}% Definition
+  {Categorical}% Type
+  {PharmVar}% Domain
+  {---}% Units
+  {Ch.~17, 18}% First defined
+  {Ch.~17, 18}% Key uses
+
+\MasterVarBox
+  {V-ALLELE-FUSION}% ID
+  {*36+*10}% Symbol
+  {Tandem Fusion Allele}% Name
+  {Hybrid allele resulting from recombination between *36 and *10, common in Asian populations.}% Definition
+  {Categorical}% Type
+  {PharmVar}% Domain
+  {---}% Units
+  {Ch.~17, 18}% First defined
+  {Ch.~17, 18}% Key uses
+
+\MasterVarBox
+  {V-ALLELE-5}% ID
+  {*5}% Symbol
+  {Gene Deletion (Null Allele)}% Name
+  {Complete gene deletion resulting in no enzyme activity.}% Definition
+  {Categorical}% Type
+  {PharmVar}% Domain
+  {---}% Units
+  {Ch.~17, 18}% First defined
+  {Ch.~17, 18}% Key uses
+
+\MasterVarBox
+  {V-FREQ-36-10}% ID
+  {\widehat{f}(*36+*10)}% Symbol
+  {Observed Allele Frequency}% Name
+  {Empirical frequency of *36+*10 fusion allele in study cohort.}% Definition
+  {Scalar}% Type
+  {[0, 1]}% Domain
+  {dimensionless}% Units
+  {Ch.~18.2}% First defined
+  {Ch.~18}% Key uses
+
+\MasterVarBox
+  {V-PM}% ID
+  {\text{PM}}% Symbol
+  {Poor Metabolizer Phenotype}% Name
+  {Phenotype category with no or severely reduced enzyme activity (AS $\approx$ 0).}% Definition
+  {Categorical}% Type
+  {CPIC}% Domain
+  {---}% Units
+  {Ch.~17, 18}% First defined
+  {Ch.~17, 18}% Key uses
+
+\MasterVarBox
+  {V-IM}% ID
+  {\text{IM}}% Symbol
+  {Intermediate Metabolizer}% Name
+  {Phenotype category with reduced enzyme activity (AS $\approx$ 0.5--1.0).}% Definition
+  {Categorical}% Type
+  {CPIC}% Domain
+  {---}% Units
+  {Ch.~17, 18}% First defined
+  {Ch.~17, 18}% Key uses
+
+\MasterVarBox
+  {V-NM}% ID
+  {\text{NM}}% Symbol
+  {Normal Metabolizer}% Name
+  {Phenotype category with normal enzyme activity (AS $\approx$ 1.0--2.0).}% Definition
+  {Categorical}% Type
+  {CPIC}% Domain
+  {---}% Units
+  {Ch.~17, 18}% First defined
+  {Ch.~17, 18}% Key uses
+
+\MasterVarBox
+  {V-UM}% ID
+  {\text{UM}}% Symbol
+  {Ultrarapid Metabolizer}% Name
+  {Phenotype category with increased enzyme activity due to gene duplication (AS $>$ 2.0).}% Definition
+  {Categorical}% Type
+  {CPIC}% Domain
+  {---}% Units
+  {Ch.~17, 18}% First defined
+  {Ch.~17, 18}% Key uses
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Cross-Reference Index}
+\label{sec:variables-xref}
+
+This section provides a reverse index: for each chapter, which variables are introduced or play a central role.
+
+\subsection{Variables by Chapter}
+
+\textbf{Chapter 4 (Haplotype Classification Model):} $\mathcal{H}$, $h$, $h_i$, $g$, $d$, $\ell$, $\sigma$, $r$, $s$, $\mathcal{A}$, $L$, $C_{ij}$, $\mathbf{C}$, $d_{\text{edit}}$, $Q$, $p$, TPR, SMA
+
+\textbf{Chapter 5 (Purity Theory):} $\pi$, $\pi_{\text{upper}}$, $k$, $r$, $N_{\text{correct}}$, $N_{\text{total}}$, TPR
+
+\textbf{Chapter 6 (Posterior Computation):} $\Prob(h_i \mid R)$, $\Prob(R \mid h_i)$, $\Prob(h_i)$, $\pi_i$, $f_{\text{pop}}$, $D$, $\lambda$, $\epsilon$
+
+\textbf{Chapter 7 (Experimental Design):} $N$, $N_{\text{required}}$, $N_{\text{eff}}$, $N_{\text{perfect}}$, $L$, $\theta$, $Q_{\text{pred}}$, $Q_{\text{emp}}$, $d$, $\alpha$, $\beta$, $\delta$, $D_{\text{KL}}$, $P$, $k$, $\lambda_{\text{min}}$, $z_{\alpha}$, $p_0$, $p_1$
+
+\textbf{Chapter 11 (Basecaller Quality Models):} $Q$, $Q_{\text{pred}}$, $Q_{\text{emp}}$, $\bar{Q}$, $p$, $d_{\text{edit}}$, $\mathbf{C}$, $M$, $M_{ab}$, SMA, SEER, $R_{S+}$, $\pi$
+
+\textbf{Chapter 14 (Mixtures and Diplotype Accuracy):} $\lambda$, $\hat{\lambda}$, $D$, $h_{\text{major}}$, $h_{\text{minor}}$, $N_{\text{correct}}$, $N_{\text{total}}$, $\epsilon$, $\alpha$, $\beta$, $k_{\alpha}$, $\chi^2$, $\sigma$, $D_{\text{KL}}$
+
+\textbf{Chapter 17 (CYP2D6 Pain/Psychiatry):} $E_{\text{I}}$, $E_{\text{II}}$, $E_{\text{pheno}}$, $E_{\text{clinical}}$, AS, $\text{AS}_{\text{geno}}$, $\text{AS}_{\text{eff}}$, $I$, $D_{\text{reported}}$, $D_{\text{true}}$, $P_{\text{ADR}}$, $P_{\text{failure}}$, $C_{\text{test}}$, $C_{\text{total}}$, $z_{\alpha}$, $\alpha$
+
+\textbf{Chapter 18 (Singapore Tamoxifen Cohort):} $D$, $D_{\text{true}}$, $D_{\text{reported}}$, $P(D_k \mid \mathbf{R})$, $\widehat{f}(*36+*10)$, $\pi_0$, $p$, $H_0$, $H_1$, $\alpha$, AS
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Usage Notes and Best Practices}
+\label{sec:variables-usage}
+
+\subsection{Avoiding Notation Conflicts}
+
+\begin{enumerate}
+\item \textbf{Context Sensitivity:} Some symbols have different meanings in different contexts:
+\begin{itemize}
+\item $L$: Sequence length (most chapters) vs. molecule length $L_{\text{mol}}$ (Ch.~5)
+\item $\lambda$: Mixture fraction (Ch.~6, 14) vs. complexity penalty (Ch.~12)
+\item $d$: DNA fragment (Ch.~4) vs. Phred overstatement (Ch.~7)
+\item $\sigma$: Signal vector (Ch.~4) vs. standard deviation (Ch.~7, 14)
+\end{itemize}
+Always check the local context and chapter reference.
+
+\item \textbf{Subscript Disambiguation:}
+\begin{itemize}
+\item $Q_{\text{pred}}$ vs. $Q_{\text{emp}}$: Always use text subscripts for predicted/empirical
+\item $N_{\text{total}}$ vs. $N_{\text{correct}}$ vs. $N_i$: Use text for semantic meaning, numeric for index
+\end{itemize}
+
+\item \textbf{Probability Macro:} \textbf{Always use} \verb|\Prob(...)| for probability, never raw $P(...)$ or $\mathbb{P}(...)$
+\end{enumerate}
+
+\subsection{Variable Naming Conventions}
+
+\begin{itemize}
+\item \textbf{Observed/Estimated:} Use hat notation $\hat{\theta}$ for point estimates
+\item \textbf{True/Ground Truth:} Use subscript "true" for ground truth: $h_{\text{true}}$, $D_{\text{true}}$
+\item \textbf{Predicted:} Use subscript "pred": $Q_{\text{pred}}$
+\item \textbf{Empirical:} Use subscript "emp": $Q_{\text{emp}}$, $\bar{p}^{(i)}_{\text{emp}}$
+\end{itemize}
+
+\subsection{Cross-Referencing This Table}
+
+To cite this table in text:
+\begin{verbatim}
+See Appendix~\ref{app:variable-master},
+Section~\ref{sec:variables-latin-upper} for variable definitions.
+\end{verbatim}
+
+For specific variable lookup, use the alphabetical organization in Sections~\ref{sec:variables-latin-upper} (Latin), \ref{sec:variables-greek} (Greek), and \ref{sec:variables-special} (special symbols).

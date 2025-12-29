@@ -1,0 +1,243 @@
+# SMS Pipeline Stage Definitions
+# Version: 1.1.0
+# Last Updated: 2025-12-28
+#
+# Source: SMS Haplotype Framework Textbook v6.0, Chapter 4
+# Reference: Pipeline Factorization Theorem (CE.1)
+# LaTeX: P(h,g,u,d,ℓ,σ,r) = P(h)·P(g|h)·P(u|g)·P(d|u,C)·P(ℓ|d,C)·P(σ|ℓ,A)·P(r|σ,A)
+#
+# This file defines the 9 pipeline stages and their mappings to:
+# - ont-ecosystem skills
+# - Key equations from the textbook
+# - Analysis tools and methods
+
+stages:
+  - stage_id: "h"
+    symbol: "h"
+    name: "Haplotype Selection"
+    description: "Selection of haplotype hypotheses to test, defining the prior probability distribution P(h) based on population genetics, clinical relevance, and known pharmacogenomic variants."
+    probability_term: "P(h)"
+    primary_team: "PGx"
+    dependencies: []
+    outputs:
+      - "Haplotype hypothesis space"
+      - "Prior probability distributions"
+      - "Clinical significance annotations"
+    key_methods:
+      - "Population genetics analysis"
+      - "PharmVar database queries"
+      - "Clinical literature review"
+    example_references:
+      - "pharmvar2024"
+      - "cpic2024"
+
+  - stage_id: "g"
+    symbol: "g"
+    name: "Standard Construction"
+    description: "Construction of plasmid-based DNA standards for each haplotype using Golden Gate assembly, creating ground truth sequences with known composition for error calibration."
+    probability_term: "P(g|h)"
+    primary_team: "Golden Gate"
+    dependencies: ["h"]
+    outputs:
+      - "Plasmid DNA standards"
+      - "Verified sequences (Sanger)"
+      - "Assembly maps (SnapGene)"
+    key_methods:
+      - "Golden Gate hierarchical assembly"
+      - "Type IIS restriction enzymes (BsaI, BsmBI)"
+      - "Sanger sequencing validation"
+      - "Silent mutation design"
+    example_references:
+      - "potapov2018"
+      - "engler2009"
+
+  - stage_id: "u"
+    symbol: "u"
+    name: "Guide Design & Fragmentation"
+    description: "Design of guide RNAs for Cas9-mediated enrichment and prediction of fragmentation patterns, defining P(u|g) as the probability of obtaining specific fragments from standards."
+    probability_term: "P(u|g)"
+    primary_team: "Cas9 Enrichment"
+    dependencies: ["g"]
+    outputs:
+      - "gRNA sequences"
+      - "Predicted cut sites"
+      - "Fragment length distributions"
+    key_methods:
+      - "gRNA design algorithms"
+      - "Off-target prediction"
+      - "Fragment size optimization"
+    example_references:
+      - "doench2016"
+      - "hsu2013"
+
+  - stage_id: "d"
+    symbol: "d"
+    name: "Post-Cas9 Fragmentation"
+    description: "Actual fragmentation of DNA after optional Cas9 enrichment, with P(d|u,C) representing the probability of obtaining specific DNA fragments conditional on Cas9 being used (C=1) or not (C=0)."
+    probability_term: "P(d|u,C)"
+    primary_team: "Cas9 Enrichment"
+    dependencies: ["u", "C"]
+    outputs:
+      - "DNA fragments"
+      - "Size distributions"
+      - "Enrichment metrics"
+    key_methods:
+      - "Cas9 digestion"
+      - "DNA purification"
+      - "Fragment analysis"
+    example_references:
+      - "ran2013"
+
+  - stage_id: "ℓ"
+    symbol: "ℓ"
+    name: "Library Loading"
+    description: "Preparation and loading of sequencing libraries onto Oxford Nanopore flow cells, with P(ℓ|d,C) representing the probability of successful library loading conditional on fragmentation and enrichment."
+    probability_term: "P(ℓ|d,C)"
+    primary_team: "HTC"
+    dependencies: ["d", "C"]
+    outputs:
+      - "Sequencing libraries"
+      - "Flow cell loading metrics"
+      - "Pore occupancy statistics"
+    key_methods:
+      - "Library prep kits (LSK114)"
+      - "Barcoding (optional)"
+      - "Flow cell priming"
+      - "QC (Qubit, TapeStation)"
+    example_references:
+      - "ont_protocols2024"
+
+  - stage_id: "σ"
+    symbol: "σ"
+    name: "Signal Acquisition"
+    description: "Acquisition of raw electrical signals from nanopore sequencing, with P(σ|ℓ,A) representing the probability of obtaining specific signals conditional on library and adaptive sampling being active (A=1) or inactive (A=0)."
+    probability_term: "P(σ|ℓ,A)"
+    primary_team: "ONT Adaptive"
+    dependencies: ["ℓ", "A"]
+    outputs:
+      - "POD5 files (raw signals)"
+      - "FAST5 files (legacy format)"
+      - "Sequencing summary"
+      - "Run metadata"
+    key_methods:
+      - "MinION/PromethION sequencing"
+      - "Adaptive sampling (optional)"
+      - "Real-time basecalling"
+      - "ReadUntil API"
+    example_references:
+      - "loose2016"
+      - "payne2021"
+    # ont-ecosystem integration
+    skills:
+      - skill: "end-reason"
+        analysis_types: ["end_reasons", "endreason_qc"]
+        purpose: "Analyze signal termination patterns for QC"
+      - skill: "ont-monitor"
+        analysis_types: ["monitoring"]
+        purpose: "Real-time and retrospective run monitoring"
+    key_equations:
+      - id: "eq_signal_positive"
+        name: "Signal Positive Rate"
+        description: "Fraction of reads with natural signal termination"
+      - id: "eq_unblock_rate"
+        name: "Unblock Rate"
+        description: "Fraction of reads rejected by adaptive sampling"
+
+  - stage_id: "r"
+    symbol: "r"
+    name: "Basecalling"
+    description: "Conversion of raw electrical signals to DNA sequences using neural network basecallers, with P(r|σ,A) representing the probability of calling specific reads given signals and adaptive sampling settings."
+    probability_term: "P(r|σ,A)"
+    primary_team: "AI/Basecaller"
+    dependencies: ["σ", "A"]
+    outputs:
+      - "FASTQ files (sequences + quality scores)"
+      - "BAM files (aligned reads)"
+      - "Basecalling logs"
+      - "Q-score distributions"
+    key_methods:
+      - "Dorado basecaller"
+      - "SUP/HAC models"
+      - "Duplex basecalling"
+      - "Modified base detection"
+    example_references:
+      - "dorado2024"
+      - "teng2023"
+    # ont-ecosystem integration
+    skills:
+      - skill: "dorado-bench-v2"
+        analysis_types: ["basecalling"]
+        purpose: "GPU basecalling with model management and benchmarking"
+      - skill: "ont-align"
+        analysis_types: ["alignment", "align_qc"]
+        purpose: "Reference alignment and edit distance calculation"
+    key_equations:
+      - id: "1.1.1"
+        ref: "phred_to_error"
+        name: "Phred to Error Probability"
+        latex: "p_{r,ℓ} = 10^{-Q_{r,ℓ}/10}"
+      - id: "1.1.2"
+        ref: "levenshtein_distance"
+        name: "Levenshtein Edit Distance"
+        latex: "d(s,r) ∈ ℕ₀"
+      - id: "eq_identity"
+        name: "Sequence Identity"
+        latex: "I = M / (M + X + I + D)"
+      - id: "eq_sma"
+        name: "Single Molecule Accuracy"
+        latex: "SMA = Π(1 - p_i)"
+
+  - stage_id: "C"
+    symbol: "C"
+    name: "Cas9 Toggle"
+    description: "Binary indicator for whether Cas9 enrichment is used (C=1) or not (C=0), affecting fragmentation and library complexity."
+    probability_term: "P(C)"
+    primary_team: "Cas9 Enrichment"
+    dependencies: []
+    outputs:
+      - "Experimental design decision"
+      - "Cost/enrichment trade-off analysis"
+    key_methods:
+      - "Experimental design"
+      - "Cost-benefit analysis"
+    example_references: []
+
+  - stage_id: "A"
+    symbol: "A"
+    name: "Adaptive Sampling Toggle"
+    description: "Binary indicator for whether adaptive sampling is enabled (A=1) or disabled (A=0), affecting which reads are sequenced fully vs. rejected."
+    probability_term: "P(A)"
+    primary_team: "ONT Adaptive"
+    dependencies: []
+    outputs:
+      - "Adaptive sampling configuration"
+      - "Target/reject regions"
+      - "Enrichment statistics"
+    key_methods:
+      - "ReadUntil configuration"
+      - "Target region BED files"
+      - "Real-time alignment"
+    example_references:
+      - "loose2016"
+      - "payne2021"
+
+# Metadata
+version: "1.1.0"
+last_updated: "2025-12-28"
+maintainer: "SMS Core Math Team"
+schema_version: "1.0.0"
+source: "SMS Haplotype Framework Textbook v6.0"
+authoritative_math: "All_Math (4).pdf"
+textbook_chapters:
+  - chapter: 4
+    title: "Pipeline Factorization"
+    content: "Core factorization theorem and stage definitions"
+  - chapter: 5
+    title: "Purity and Standards"
+    content: "Physical standards and purity ceiling theorem"
+  - chapter: 11
+    title: "SMA-seq"
+    content: "Single molecule accuracy sequencing protocol"
+  - chapter: 12
+    title: "SEER"
+    content: "Confusion matrix construction and error modeling"

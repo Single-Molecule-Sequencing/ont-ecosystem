@@ -1,0 +1,51 @@
+\chapter{Algorithm Pseudocode}\label{app:algorithms}
+
+This appendix provides complete pseudocode for the haplotype classification pipeline, integrating all core equations into a unified computational workflow. The algorithm bridges theoretical foundations and practical implementation, serving as a reference for software development. Each step references relevant core equations (CE.1-CE.16) to maintain traceability between mathematical formulation and computational execution.
+
+\textbf{Implementation Notes:} The algorithm emphasizes numerical stability through log-space computation, computational efficiency through strategic alignment restriction, and quality control through integrated validation gates. Production implementations should include comprehensive error handling, progress monitoring, and diagnostic output generation beyond what is shown in this condensed pseudocode.
+
+\textbf{Computational Complexity:} The dominant cost is likelihood computation, scaling as $O(N \times P \times A)$ where $N$ is read count, $P$ is haplotype count, and $A$ is average alignments per read-haplotype pair. Strategic alignment filtering (restricting to high-quality alignments) reduces $A$ dramatically without sacrificing accuracy.
+
+\begin{algorithm}
+\caption{Complete Haplotype Classification Pipeline with Integrated Quality Control}
+\begin{algorithmic}
+\REQUIRE Sequencing reads $\mathbf{r}$, Reference haplotypes $\mathcal{H}$, Empirical distributions
+\ENSURE Posterior probabilities, Quality metrics
+\STATE // Preprocessing
+\STATE Load empirical fragment distribution $f_{\text{emp}}$
+\STATE Calibrate basecaller model using controls
+\STATE Initialize log-likelihood matrix $\mathbf{L} \in \mathbb{R}^{P \times N}$
+\STATE // Quality Gates
+\STATE Check $D_{KL}(f_{\text{emp}} \| f_{\text{frag}}) < 0.05$ bits (CE.9)
+\STATE Check $D_{KL}(f_{\text{emp}} \| f_{\text{read}})$ within assay bands (CE.10)
+\STATE // Likelihood Computation
+\FOR{each read $r_n \in \mathbf{r}$}
+    \FOR{each haplotype $h_i \in \mathcal{H}$}
+        \STATE Find alignments $\mathcal{A}_{ni}$ of $r_n$ to $h_i$
+        \STATE $L_{ni} \leftarrow 0$
+        \FOR{each alignment $a \in \mathcal{A}_{ni}$}
+            \STATE Extract fragment $s$ from alignment
+            \STATE Compute $\pi_i(s)$ using empirical weights (CE.11)
+            \STATE Compute $\Prob(r_n|s; \theta)$ from quality scores
+            \STATE $L_{ni} \leftarrow L_{ni} + \Prob(r_n|s) \cdot \pi_i(s)$
+        \ENDFOR
+        \STATE $L_{in} \leftarrow \log L_{ni}$
+    \ENDFOR
+\ENDFOR
+\STATE // Posterior Computation
+\FOR{each haplotype $h_i \in \mathcal{H}$}
+    \STATE $\log \Prob(\mathbf{r}|h_i) \leftarrow \sum_n L_{in}$ (CE.12)
+    \STATE $\Prob(h_i|\mathbf{r}) \leftarrow \frac{\Prob(h_i) \exp(\log \Prob(\mathbf{r}|h_i))}{\sum_j \Prob(h_j) \exp(\log \Prob(\mathbf{r}|h_j))}$ (CE.13)
+\ENDFOR
+\STATE // Quality Assessment
+\STATE Compute Bayes factors for top hypotheses (CE.13)
+\STATE Check quality overstatement $d \leq 0.30$ (CE.14)
+\STATE Verify TPR $\leq$ purity constraint (CE.15)
+\STATE Calculate posterior predictive distributions
+\STATE Generate diagnostic plots
+\RETURN Posterior probabilities, Quality metrics
+\end{algorithmic}
+\end{algorithm}
+
+\clearpage
+

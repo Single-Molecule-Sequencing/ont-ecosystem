@@ -1,36 +1,69 @@
 #!/bin/bash
 # ONT Ecosystem Installer
-# Usage: curl -sSL https://raw.githubusercontent.com/Single-Molecule-Sequencing/ont-ecosystem/main/install.sh | bash
+#
+# For Private Repository (recommended):
+#   git clone git@github.com:Single-Molecule-Sequencing/ont-ecosystem.git
+#   cd ont-ecosystem && ./install.sh
+#
+# For Public Repository:
+#   curl -sSL https://raw.githubusercontent.com/Single-Molecule-Sequencing/ont-ecosystem/main/install.sh | bash
 
 set -e
 
 INSTALL_DIR="${ONT_ECOSYSTEM_HOME:-$HOME/.ont-ecosystem}"
 REPO_URL="https://github.com/Single-Molecule-Sequencing/ont-ecosystem"
+SSH_URL="git@github.com:Single-Molecule-Sequencing/ont-ecosystem.git"
 
 echo "🧬 Installing ONT Ecosystem..."
 echo "   Install directory: $INSTALL_DIR"
 
 # Parse arguments
 HPC_MODE=false
+FORCE_CURL=false
 for arg in "$@"; do
     case $arg in
         --hpc) HPC_MODE=true ;;
+        --curl) FORCE_CURL=true ;;
     esac
 done
 
 # Create install directory
-mkdir -p "$INSTALL_DIR"/{bin,config,skills}
+mkdir -p "$INSTALL_DIR"/{bin,config,skills,lib}
 
 # Check if running from cloned repo or remote install
 if [ -f "bin/ont_experiments.py" ]; then
     echo "📂 Installing from local repository..."
     cp bin/*.py "$INSTALL_DIR/bin/"
+    cp -r lib/* "$INSTALL_DIR/lib/" 2>/dev/null || true
     cp -r skills/* "$INSTALL_DIR/skills/" 2>/dev/null || true
-else
-    echo "📥 Downloading from GitHub..."
-    for script in ont_experiments.py ont_align.py ont_pipeline.py end_reason.py ont_monitor.py dorado_basecall.py calculate_resources.py; do
+    cp -r registry "$INSTALL_DIR/" 2>/dev/null || true
+
+    # Store source repo path for updates
+    REPO_PATH="$(pwd)"
+    echo "REPO_SOURCE=$REPO_PATH" > "$INSTALL_DIR/config/source.conf"
+elif [ "$FORCE_CURL" = true ]; then
+    echo "📥 Downloading from GitHub (public repo mode)..."
+    echo "   Note: This requires the repository to be public."
+    for script in ont_experiments.py ont_align.py ont_pipeline.py end_reason.py ont_monitor.py dorado_basecall.py calculate_resources.py ont_endreason_qc.py experiment_db.py ont_config.py ont_context.py ont_manuscript.py; do
         curl -sSL "$REPO_URL/raw/main/bin/$script" -o "$INSTALL_DIR/bin/$script" 2>/dev/null || true
     done
+else
+    # Private repo mode - provide SSH clone instructions
+    echo ""
+    echo "❌ Remote installation requires the repository to be public."
+    echo ""
+    echo "For private repository access, clone via SSH first:"
+    echo ""
+    echo "   git clone $SSH_URL"
+    echo "   cd ont-ecosystem"
+    echo "   ./install.sh"
+    echo ""
+    echo "If you have a GitHub Personal Access Token, you can also use:"
+    echo "   git clone https://<TOKEN>@github.com/Single-Molecule-Sequencing/ont-ecosystem.git"
+    echo ""
+    echo "Or if the repo is public, use: ./install.sh --curl"
+    echo ""
+    exit 1
 fi
 
 # Make scripts executable

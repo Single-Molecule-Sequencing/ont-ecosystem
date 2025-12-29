@@ -1,0 +1,801 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Appendix D: Software Tools and Implementation
+%% Part: Appendices
+%% Version 6.0 - Migrated from v5.tex Appendix B (lines 2114-2164) + NEW sections
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{Software Tools and Implementation}
+\label{app:software}
+
+This appendix provides comprehensive guidance for implementing the haplotype classification framework, including algorithm pseudocode, software requirements, computational considerations, and integration guidelines. The content bridges theoretical foundations and practical deployment, enabling reproducible implementation across diverse computational environments.
+
+\section{Core Algorithm}
+
+The following pseudocode integrates all core equations into a unified computational workflow, serving as a reference for software development. Each step references relevant core equations (CE.1-CE.16) to maintain traceability between mathematical formulation and computational execution.
+
+\textbf{Implementation Notes:} The algorithm emphasizes numerical stability through log-space computation, computational efficiency through strategic alignment restriction, and quality control through integrated validation gates. Production implementations should include comprehensive error handling, progress monitoring, and diagnostic output generation beyond what is shown in this condensed pseudocode.
+
+\textbf{Computational Complexity:} The dominant cost is likelihood computation, scaling as $O(N \times P \times A)$ where $N$ is read count, $P$ is haplotype count, and $A$ is average alignments per read-haplotype pair. Strategic alignment filtering (restricting to high-quality alignments) reduces $A$ dramatically without sacrificing accuracy.
+
+\begin{algorithm}[H]
+\caption{Complete Haplotype Classification Pipeline with Integrated Quality Control}
+\label{alg:complete_pipeline}
+\begin{algorithmic}
+\REQUIRE Sequencing reads $\mathbf{r}$, Reference haplotypes $\mathcal{H}$, Empirical distributions
+\ENSURE Posterior probabilities, Quality metrics
+\STATE // Preprocessing
+\STATE Load empirical fragment distribution $f_{\text{emp}}$
+\STATE Calibrate basecaller model using controls
+\STATE Initialize log-likelihood matrix $\mathbf{L} \in \mathbb{R}^{P \times N}$
+\STATE // Quality Gates
+\STATE Check $D_{KL}(f_{\text{emp}} \| f_{\text{frag}}) < 0.05$ bits (CE.9)
+\STATE Check $D_{KL}(f_{\text{emp}} \| f_{\text{read}})$ within assay bands (CE.10)
+\STATE // Likelihood Computation
+\FOR{each read $r_n \in \mathbf{r}$}
+    \FOR{each haplotype $h_i \in \mathcal{H}$}
+        \STATE Find alignments $\mathcal{A}_{ni}$ of $r_n$ to $h_i$
+        \STATE $L_{ni} \leftarrow 0$
+        \FOR{each alignment $a \in \mathcal{A}_{ni}$}
+            \STATE Extract fragment $s$ from alignment
+            \STATE Compute $\pi_i(s)$ using empirical weights (CE.11)
+            \STATE Compute $P(r_n|s; \theta)$ from quality scores
+            \STATE $L_{ni} \leftarrow L_{ni} + P(r_n|s) \cdot \pi_i(s)$
+        \ENDFOR
+        \STATE $L_{in} \leftarrow \log L_{ni}$
+    \ENDFOR
+\ENDFOR
+\STATE // Posterior Computation
+\FOR{each haplotype $h_i \in \mathcal{H}$}
+    \STATE $\log P(\mathbf{r}|h_i) \leftarrow \sum_n L_{in}$ (CE.12)
+    \STATE $P(h_i|\mathbf{r}) \leftarrow \frac{P(h_i) \exp(\log P(\mathbf{r}|h_i))}{\sum_j P(h_j) \exp(\log P(\mathbf{r}|h_j))}$ (CE.13)
+\ENDFOR
+\STATE // Quality Assessment
+\STATE Compute Bayes factors for top hypotheses (CE.13)
+\STATE Check quality overstatement $d \leq 0.30$ (CE.14)
+\STATE Verify TPR $\leq$ purity constraint (CE.15)
+\STATE Calculate posterior predictive distributions
+\STATE Generate diagnostic plots
+\RETURN Posterior probabilities, Quality metrics
+\end{algorithmic}
+\end{algorithm}
+
+\section{Software Requirements}
+
+\subsection{Core Dependencies}
+
+\textbf{Programming Languages:}
+\begin{itemize}
+\item Python $\geq$ 3.8 (recommended for pipeline implementation)
+\item R $\geq$ 4.0 (recommended for statistical analysis and visualization)
+\item C/C++ (optional, for performance-critical alignment routines)
+\end{itemize}
+
+\textbf{Essential Python Packages:}
+\begin{itemize}
+\item \texttt{numpy} $\geq$ 1.20: Numerical computing and array operations
+\item \texttt{scipy} $\geq$ 1.7: Statistical functions and optimization
+\item \texttt{pandas} $\geq$ 1.3: Data manipulation and analysis
+\item \texttt{biopython} $\geq$ 1.79: Sequence analysis and file parsing
+\item \texttt{pysam} $\geq$ 0.17: BAM/SAM file manipulation
+\end{itemize}
+
+\textbf{Alignment Tools:}
+\begin{itemize}
+\item \texttt{minimap2} $\geq$ 2.24: Long-read alignment (primary recommendation)
+\item \texttt{bwa-mem} $\geq$ 0.7.17: Alternative aligner for shorter reads
+\item \texttt{GraphAligner} (optional): For pangenome graph alignment
+\end{itemize}
+
+\textbf{Quality Control Tools:}
+\begin{itemize}
+\item \texttt{NanoPlot} or \texttt{LongQC}: Read quality assessment
+\item \texttt{MultiQC}: Aggregate QC report generation
+\item Fragment analyzer software (Agilent Tapestation, AATI Fragment Analyzer)
+\end{itemize}
+
+\subsection{Optional Dependencies}
+
+\begin{itemize}
+\item \texttt{pytorch} or \texttt{tensorflow}: For basecaller fine-tuning (Chapter~\ref{chap:basecaller})
+\item \texttt{snakemake} or \texttt{nextflow}: Workflow management systems
+\item \texttt{matplotlib}, \texttt{seaborn}, \texttt{plotly}: Visualization libraries
+\item \texttt{jupyter}: Interactive analysis notebooks
+\end{itemize}
+
+\subsection{Oxford Nanopore-Specific Tools}
+
+\textbf{Official ONT Software:}
+\begin{itemize}
+\item \texttt{pod5} $\geq$ 0.3.0: POD5 file format library for Python and C++ (\texttt{pip install pod5})
+\item \texttt{dorado} (latest): ONT's production basecaller with transformer architecture
+\item \texttt{minknow-api}: Python bindings for MinKNOW control and metadata access
+\item \texttt{ont-fast5-api}: Legacy FAST5 file access (superseded by POD5)
+\item \texttt{guppy}: Earlier basecaller (being phased out in favor of Dorado)
+\end{itemize}
+
+\textbf{Community Tools:}
+\begin{itemize}
+\item \texttt{bonito}: Open-source basecaller using PyTorch
+\item \texttt{slow5tools}: Alternative to POD5/FAST5 with improved performance
+\item \texttt{NanoPlot}, \texttt{NanoFilt}, \texttt{NanoStat}: Quality control suite
+\item \texttt{modbam2bed}: Modified base call extraction from BAM files
+\end{itemize}
+
+\section{Oxford Nanopore File Format Specifications}
+\label{sec:ont-formats}
+
+This section provides comprehensive technical documentation for Oxford Nanopore Technologies file formats, metadata structures, and nomenclature used throughout the framework.
+
+\subsection{POD5 File Format}
+
+\textbf{Overview:} POD5 is ONT's current raw read format, based on Apache Arrow for efficient data access. It replaces the legacy HDF5-based FAST5 format.
+
+\textbf{Signal Data Structure:}
+\begin{itemize}
+\item \textbf{Storage:} 16-bit integers (int16) in ADC (analog-to-digital converter) space
+\item \textbf{Conversion to picoamperes:} $I_{\text{pA}} = (\text{ADC} - \text{offset}) \times \text{scale}$
+\item \textbf{Calibration parameters:} Per-read \texttt{offset} and \texttt{scale} values stored in metadata
+\item \textbf{Typical values:} Offset $\approx$ 200--220, scale $\approx$ 0.15--0.20 pA/ADC unit
+\item \textbf{Note:} These values vary by chemistry and pore condition; always use the per-read calibration parameters rather than assuming fixed values.
+\end{itemize}
+
+\textbf{Key Metadata Fields (POD5 Read Object):}
+\begin{itemize}
+\item \texttt{read\_id} (UUID): Unique read identifier, convert to string via \texttt{str(read.read\_id)}
+\item \texttt{signal} (int16 array): Raw current measurements in ADC space
+\item \texttt{calibration.offset} (float): ADC-to-pA offset
+\item \texttt{calibration.scale} (float): ADC-to-pA scaling factor
+\item \texttt{end\_reason} (enum): Read termination cause (Section~\ref{subsec:end-reason-enum})
+\item \texttt{sample\_count} (int): Number of signal samples
+\item \texttt{median\_before} (float): Median current before read (baseline, in pA)
+\item \texttt{channel} (int): Flow cell channel number (1--512 or 1--3000 depending on device)
+\item \texttt{well} (int): Well number within channel
+\item \texttt{pore\_type} (string): Nanopore protein variant (e.g., ``not\_set'', ``R9.4.1'', ``R10.4.1'')
+\end{itemize}
+
+\textbf{Python API Usage:}
+\begin{verbatim}
+import pod5
+import numpy as np
+
+with pod5.Reader("sequencing_output.pod5") as reader:
+    for read in reader.reads():
+        # Access metadata
+        read_id = str(read.read_id)
+        end_reason = read.end_reason.name  # e.g., 'signal_positive'
+
+        # Extract and calibrate signal
+        signal_adc = read.signal  # int16 array
+        signal_pa = (signal_adc - read.calibration.offset) * \
+                    read.calibration.scale
+\end{verbatim}
+
+\subsection{FASTQ Format (ONT-Specific Conventions)}
+
+\textbf{Quality Score Encoding:}
+\begin{itemize}
+\item \textbf{Format:} Sanger/Phred+33 (standard FASTQ)
+\item \textbf{ASCII range:} 33--126 (characters \texttt{!} through \texttt{\textasciitilde})
+\item \textbf{Phred score range:} Q0--Q93 (ONT-specific extended range)
+\item \textbf{Conversion:} $Q = \text{ASCII}(c) - 33$, where $c$ is quality character
+\item \textbf{Error probability:} $P(\text{error}) = 10^{-Q/10}$
+\end{itemize}
+
+\textbf{FASTQ Header Format:}
+\begin{verbatim}
+@read_id runid=<ID> sampleid=<ID> read=<N> ch=<CH> start_time=<T>
+\end{verbatim}
+
+\textbf{Header Fields:}
+\begin{itemize}
+\item \texttt{read\_id}: UUID matching POD5 read identifier
+\item \texttt{runid}: MinKNOW sequencing run identifier
+\item \texttt{sampleid}: User-defined sample identifier
+\item \texttt{read}: Read number within run
+\item \texttt{ch}: Channel number
+\item \texttt{start\_time}: Read start time (date-time string or timestamp)
+\item \texttt{barcode}: Barcode classification (if barcoding enabled), e.g., \texttt{barcode01} or \texttt{unclassified}
+\end{itemize}
+
+\textbf{MinKNOW Output Directory Structure:}
+\begin{itemize}
+\item \texttt{fastq\_pass/}: Reads passing quality threshold (typically Q $\geq$ 7)
+\item \texttt{fastq\_fail/}: Reads below quality threshold
+\item Files organized by barcode subdirectories if barcoding enabled
+\end{itemize}
+
+\subsection{BAM Format (ONT SAM Tags)}
+
+\textbf{Standard SAM Tags Used by Dorado:}
+\begin{itemize}
+\item \texttt{BC:Z:<sequence>}: Barcode assignment (e.g., \texttt{barcode01}, \texttt{unclassified})
+\item \texttt{TS:A:<+|->}: Strand orientation (+ for 5'$\to$3', - for 3'$\to$5')
+\item \texttt{MM:Z:<spec>}: Modified base call specification (SAM v1.7 format)
+\item \texttt{ML:B:C,<probs>}: Modified base call probabilities (unsigned byte array)
+\item \texttt{pi:Z:<read\_id>}: Parent read ID (for duplex/split reads)
+\item \texttt{pt:i:<length>}: Poly(A/T) tail length estimate (integer, for cDNA/dRNA)
+\item \texttt{RX:Z:<sequence>}: UMI (unique molecular identifier) sequence
+\item \texttt{mv:B:C,<moves>}: Move table (basecaller signal-to-base mapping, if \texttt{--emit-moves} enabled)
+\end{itemize}
+
+\textbf{Custom Tags for Framework Integration:}
+\begin{itemize}
+\item \texttt{ER:Z:<reason>}: End reason (user-added via integration pipeline, Chapter~\ref{chap:sma-seq})
+\item \texttt{QS:f:<score>}: Empirical quality score from SMA-seq calibration (optional)
+\end{itemize}
+
+\textbf{Read Group (@RG) Header Metadata:}
+Dorado populates standard SAM read group fields:
+\begin{itemize}
+\item \texttt{ID}: Read group identifier
+\item \texttt{SM}: Sample name
+\item \texttt{PL}: Platform (``ONT'' for Oxford Nanopore)
+\item \texttt{PM}: Platform model (e.g., ``MinION'', ``PromethION'')
+\item \texttt{DT}: Date-time of sequencing run
+\end{itemize}
+
+\subsection{End Reason Enumeration}
+\label{subsec:end-reason-enum}
+
+\textbf{Definition:} End reason classifies why each nanopore read terminated. Critical for data quality assessment (Chapter~\ref{chap:sma-seq}, Section~\ref{sec:end-reason-analysis}).
+
+\textbf{Official Enumeration Values (ONT Specification v1.1):}
+\begin{itemize}
+\item \texttt{signal\_positive}: Normal termination with return to open-pore baseline. Indicates complete strand translocation. \textbf{Recommended for analysis.}
+\item \texttt{signal\_negative}: Abnormal termination with large negative current excursion ($>$80 pA drop). Indicates pore failure or strand reversal.
+\item \texttt{mux\_change}: Forced termination due to multiplexer channel re-scan (periodic pore testing, 1--4 hour intervals).
+\item \texttt{unblock\_mux\_change}: Termination via voltage reversal to eject blocked strand (automatic pore clearing).
+\item \texttt{data\_service\_unblock\_mux\_change}: Software-triggered unblock combined with mux change.
+\item \texttt{analysis\_config\_change}: Read terminated due to analysis configuration update during run.
+\item \texttt{device\_data\_error}: Hardware or data acquisition error.
+\item \texttt{api\_request}: Read terminated by user/API command.
+\item \texttt{paused}: Read interrupted by run pause.
+\item \texttt{unknown}: Reason not recorded or unrecognized value.
+\end{itemize}
+
+\textbf{Filtering Recommendation:} For accuracy validation and clinical applications, use only reads with \texttt{end\_reason = signal\_positive} to ensure complete molecule observations (see Chapter~\ref{chap:sma-seq}). Reads with \texttt{mux\_change}, \texttt{unblock\_mux\_change}, or \texttt{data\_service\_unblock\_mux\_change} are typically truncated mid-sequence.
+
+\subsection{Sequencing Summary File}
+
+\textbf{File:} \texttt{sequencing\_summary.txt} (tab-separated values, ONT Specification v1.1)
+
+\textbf{Core Read Identification Columns:}
+\begin{itemize}
+\item \texttt{read\_id}: Unique UUID for sequenced read (UUID4/UUID5 format: \texttt{xxxxxxxx-xxxx-[45]xxx-[89ab]xxx-xxxxxxxxxxxx} where each \texttt{x} is a hexadecimal digit [0-9a-f]; $[45]$ indicates version 4 or 5, $[89ab]$ indicates variant)
+\item \texttt{run\_id}: Unique UUID for sequencing run
+\item \texttt{parent\_read\_id}: Source read UUID if read was split (duplex/adapter splitting)
+\end{itemize}
+
+\textbf{Sequencing Metadata:}
+\begin{itemize}
+\item \texttt{channel}: 1-indexed channel number (1--512 for MinION, 1--3000 for PromethION)
+\item \texttt{mux}: 1-indexed multiplexer value (1--4)
+\item \texttt{start\_time}: Read start time in seconds from run start (decimal precision)
+\item \texttt{duration}: Read duration in seconds (decimal precision)
+\item \texttt{end\_reason}: Read termination cause (see Section~\ref{subsec:end-reason-enum} for complete enum)
+\item \texttt{pore\_type}: Nanopore protein variant (e.g., ``r9.4.1'', ``r10.4.1'')
+\item \texttt{sample\_id}: User-specified sample identifier
+\item \texttt{experiment\_id}: User-specified experiment identifier
+\end{itemize}
+
+\textbf{Basecalling Columns (if basecalling performed):}
+\begin{itemize}
+\item \texttt{sequence\_length\_template}: Basecalled sequence length in bases (positive integer)
+\item \texttt{mean\_qscore\_template}: Mean Phred quality score across read (positive decimal)
+\item \texttt{passes\_filtering}: Quality filter result (\texttt{TRUE} or \texttt{FALSE})
+\item \texttt{template\_start}: Start time of template basecalling (seconds)
+\item \texttt{template\_duration}: Duration of template basecalling (seconds)
+\item \texttt{num\_events\_template}: Number of events detected in template
+\end{itemize}
+
+\textbf{File Reference Columns:}
+\begin{itemize}
+\item \texttt{filename\_fastq}: Output FASTQ file path (online mode, \texttt{.fastq.gz})
+\item \texttt{filename\_pod5}: Output POD5 file path (online mode, \texttt{.pod5})
+\item \texttt{filename\_bam}: Output BAM file path (online mode, \texttt{.bam})
+\item \texttt{input\_filename}: Input file path (offline mode only, \texttt{.fast5} or \texttt{.pod5})
+\end{itemize}
+\textit{Note: For each read, typically only one filename column is populated, depending on the processing mode and output format.}
+
+\textbf{Barcoding Columns (if barcoding enabled):}
+\begin{itemize}
+\item \texttt{barcode\_arrangement}: Barcode classification (e.g., \texttt{barcode01}, \texttt{unclassified})
+\item \texttt{alias}: User-supplied barcode alias/name
+\item \texttt{barcode\_score}: Overall barcode classification confidence score
+\item \texttt{barcode\_kit}: Barcode kit identifier
+\end{itemize}
+
+\textbf{RNA-Specific Columns (if poly-A tail estimation enabled):}
+\begin{itemize}
+\item \texttt{poly\_tail\_length}: Estimated poly-A/T tail length (bases, -1 if none detected)
+\item \texttt{poly\_tail\_start} / \texttt{poly\_tail\_end}: Tail start/end positions
+\end{itemize}
+
+\textbf{Duplex Sequencing Columns (if duplex mode):}
+\begin{itemize}
+\item \texttt{duplex\_parent\_template} / \texttt{duplex\_parent\_complement}: Parent read IDs for duplex assembly
+\end{itemize}
+
+\textbf{Usage Notes:}
+\begin{itemize}
+\item Join with FASTQ/BAM data by \texttt{read\_id} (exact UUID match required)
+\item Use \texttt{end\_reason} to filter for complete reads (\texttt{signal\_positive})
+\item \texttt{passes\_filtering} threshold typically Q $\geq$ 7 (configurable in MinKNOW)
+\item Column presence conditional on processing pipeline (basecalling, barcoding, alignment, duplex, poly-A estimation)
+\item All timestamps are relative to run start time (absolute times available in run metadata)
+\end{itemize}
+
+\section{Computational Considerations}
+
+\subsection{Memory Requirements}
+
+\begin{itemize}
+\item \textbf{Minimum:} 16 GB RAM for targeted sequencing ($<$10,000 reads)
+\item \textbf{Recommended:} 32-64 GB RAM for typical applications (10,000-100,000 reads)
+\item \textbf{Large-scale:} 128+ GB RAM for whole-genome applications ($>$1M reads)
+\end{itemize}
+
+\subsection{Storage Requirements}
+
+\begin{itemize}
+\item \textbf{Raw data:} 1-10 GB per sample (FASTQ files)
+\item \textbf{Aligned data:} 0.5-5 GB per sample (BAM files)
+\item \textbf{Intermediate files:} 2-20 GB per sample (alignment indices, temporary files)
+\item \textbf{Results:} $<$100 MB per sample (posterior probabilities, QC metrics)
+\end{itemize}
+
+\subsection{Runtime Estimates}
+
+Typical performance on modern workstation (16 cores, 64 GB RAM):
+
+\begin{table}[H]
+\centering
+\caption{Estimated Runtime by Application Scale}
+\label{tab:runtime_estimates}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Application} & \textbf{Reads} & \textbf{Haplotypes} & \textbf{Runtime} \\
+\midrule
+Targeted gene & 1,000 & 2 & 1-2 min \\
+Small gene panel & 10,000 & 4 & 10-20 min \\
+Multi-locus diplotype & 50,000 & 8 & 1-2 hours \\
+Complex region & 100,000 & 16 & 3-6 hours \\
+Whole genome (targeted) & 500,000 & 2 & 12-24 hours \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{File Formats and Data Structures}
+
+\subsection{Input Files}
+
+\begin{itemize}
+\item \textbf{Sequencing reads:} FASTQ or FAST5 (ONT), BAM (PacBio HiFi)
+\item \textbf{Reference haplotypes:} FASTA format with unique identifiers
+\item \textbf{Fragment distribution:} CSV with length (bp) and frequency columns
+\item \textbf{Quality calibration:} JSON with platform-specific parameters
+\end{itemize}
+
+\subsection{Output Files}
+
+\begin{itemize}
+\item \textbf{Posterior probabilities:} TSV with read ID, haplotype, log-likelihood, posterior
+\item \textbf{Classification summary:} JSON with sample-level posteriors, Bayes factors, QC metrics
+\item \textbf{Quality control report:} HTML with visualizations and diagnostic plots
+\item \textbf{Aligned reads:} BAM with custom tags for haplotype assignment
+\end{itemize}
+
+\subsection{Recommended File Structure}
+
+\begin{verbatim}
+project/
+|-- data/
+|   |-- raw/              # FASTQ/FAST5 files
+|   |-- references/       # FASTA haplotype references
+|   `-- empirical/        # Fragment distributions
+|-- results/
+|   |-- alignments/       # BAM files
+|   |-- posteriors/       # Classification results
+|   `-- qc/               # Quality control reports
+|-- config/
+|   |-- pipeline.yaml     # Pipeline configuration
+|   `-- calibration.json  # Quality calibration parameters
+`-- scripts/
+    |-- classify.py       # Main classification script
+    `-- visualize.py      # Plotting and diagnostics
+\end{verbatim}
+
+\section{Implementation Best Practices}
+
+\subsection{Numerical Stability}
+
+\begin{itemize}
+\item \textbf{Log-space computation:} Always compute likelihoods in log space to prevent underflow
+\item \textbf{Log-sum-exp trick:} Use $\log(\sum_i \exp(x_i)) = \max(x) + \log(\sum_i \exp(x_i - \max(x)))$
+\item \textbf{Quality score bounds:} Cap quality scores at reasonable maximum (e.g., Q60) to prevent numerical issues
+\item \textbf{Prior specification:} Use log-scale priors and normalize posteriors carefully
+\end{itemize}
+
+\subsection{Performance Optimization}
+
+\begin{itemize}
+\item \textbf{Alignment filtering:} Restrict to primary alignments with MAPQ $>$ 20
+\item \textbf{Parallel processing:} Distribute read processing across multiple cores
+\item \textbf{Caching:} Store computed fragment distributions and alignment indices
+\item \textbf{Memory mapping:} Use memory-mapped files for large BAM files
+\end{itemize}
+
+\subsection{Quality Control Integration}
+
+\begin{itemize}
+\item \textbf{Automated gates:} Implement QC checks as pipeline checkpoints with clear pass/fail criteria
+\item \textbf{Diagnostic output:} Generate plots and metrics for all QC gates (see Appendix~\ref{app:qc})
+\item \textbf{Alert system:} Configure notifications for QC failures requiring intervention
+\item \textbf{Documentation:} Log all QC metrics in standardized reports
+\end{itemize}
+
+\section{Testing and Validation}
+
+\subsection{Unit Tests}
+
+Test individual components with known inputs and outputs:
+\begin{itemize}
+\item Quality score conversion (CE.1)
+\item Perfect read probability calculation (CE.2-CE.3)
+\item Fragment distribution normalization (CE.7)
+\item Likelihood computation (CE.11-CE.12)
+\item Posterior calculation (CE.13)
+\end{itemize}
+
+\subsection{Integration Tests}
+
+Validate complete pipeline with synthetic data:
+\begin{itemize}
+\item Generate reads from known haplotypes with controlled error rates
+\item Verify classification accuracy matches theoretical predictions
+\item Test edge cases (low coverage, ambiguous variants, quality extremes)
+\item Confirm QC gates trigger appropriately
+\end{itemize}
+
+\subsection{Validation with Standards}
+
+Use physical standards for end-to-end validation:
+\begin{itemize}
+\item Plasmid standards with known sequences (Chapter~\ref{chap:plasmids})
+\item Genome-in-a-Bottle reference materials
+\item Cell line mixtures with known ratios
+\item Technical replicates for reproducibility assessment
+\end{itemize}
+
+\section{Integration with Existing Tools}
+
+\subsection{Workflow Managers}
+
+The pipeline integrates with standard workflow systems:
+
+\begin{itemize}
+\item \textbf{Snakemake:} Define rules for alignment, classification, and QC
+\item \textbf{Nextflow:} Create processes for each pipeline stage with automatic dependency resolution
+\item \textbf{CWL:} Use Common Workflow Language for maximum portability
+\end{itemize}
+
+\subsection{Cloud Deployment}
+
+The framework supports cloud-based execution:
+
+\begin{itemize}
+\item \textbf{AWS Batch:} Containerized pipeline execution with automatic scaling
+\item \textbf{Google Cloud Life Sciences:} Managed pipeline service for genomics
+\item \textbf{DNAnexus:} Integrated platform with applet packaging
+\end{itemize}
+
+\subsection{LIMS Integration}
+
+Connect to laboratory information management systems:
+
+\begin{itemize}
+\item \textbf{Input:} Sample metadata, sequencing run parameters
+\item \textbf{Output:} Classification results, QC metrics, reports
+\item \textbf{Tracking:} Pipeline version, analysis parameters, result provenance
+\end{itemize}
+
+\section{Troubleshooting Common Issues}
+
+\subsection{Low Classification Confidence}
+
+\textbf{Symptoms:} Maximum posterior $<$ 0.90, high entropy, weak Bayes factors
+
+\textbf{Possible causes:}
+\begin{itemize}
+\item Insufficient read coverage (check CE.5 coverage predictions)
+\item Poor read quality (review quality score distributions)
+\item Haplotype reference errors (verify reference sequences)
+\item Sample contamination (check negative controls)
+\end{itemize}
+
+\textbf{Solutions:}
+\begin{itemize}
+\item Increase sequencing depth
+\item Improve library preparation quality
+\item Update reference haplotypes
+\item Repeat sample preparation
+\end{itemize}
+
+\subsection{QC Gate Failures}
+
+\textbf{Fragment model violation:} $D_{KL} > 0.05$ bits (CE.9)
+\begin{itemize}
+\item Use empirical $f_{\text{emp}}$ directly rather than fitted model
+\item Document complex fragment distribution in QC report
+\end{itemize}
+
+\textbf{Read-length divergence:} $D_{KL}(f_{\text{emp}} \| f_{\text{read}})$ exceeds threshold (CE.10)
+\begin{itemize}
+\item Investigate size selection or ligation bias
+\item Check for read-length filtering in basecalling
+\item Review fragment preparation protocol
+\end{itemize}
+
+\textbf{Purity constraint violation:} TPR $>$ purity (CE.15)
+\begin{itemize}
+\item Check for sample contamination
+\item Verify reference sequence accuracy
+\item Review model assumptions
+\end{itemize}
+
+\subsection{Performance Issues}
+
+\textbf{Slow alignment:}
+\begin{itemize}
+\item Use minimap2 with preset parameters (\texttt{-x map-ont} or \texttt{-x map-pb})
+\item Build alignment indices once and reuse
+\item Consider prefiltering reads by quality
+\end{itemize}
+
+\textbf{Memory overflow:}
+\begin{itemize}
+\item Process reads in batches
+\item Use streaming BAM parsing
+\item Reduce alignment index size
+\end{itemize}
+
+\section{SEER/SMA Metric Specification}
+\label{sec:seer-sma-spec}
+
+This section provides rigorous mathematical definitions and estimators for (i) SEER matrix, (ii) Quality score (Q), and (iii) Single-molecule accuracy (SMA), each in predicted (from basecaller outputs) and empirical (from alignment to truth) forms, with end-reason gating and purity handling.
+
+\textbf{Critical constraint:} Compute metrics only on \texttt{signal\_positive} reads for completeness; report purity $\pi$ for the library and separate label-noise analyses (do not conflate with completeness).
+
+\subsection{Notation and Alphabet}
+\label{subsec:seer-notation}
+
+\begin{itemize}
+\item \textbf{Alphabet:} $\Sigma = \{\mathrm{A}, \mathrm{C}, \mathrm{G}, \mathrm{T}\}$; gap symbol $\varepsilon$.
+\item \textbf{Read:} For read $r$, length $\ell = |r|$. Basecaller emits per-base Q scores $Q_i$ and optionally per-base error probabilities $\hat{p}_i$.
+\item \textbf{True sequence:} For the molecule $s_\star$ (SMA-seq standard). Library purity $\pi = \Pr(Z = s_\star)$.
+\item \textbf{End reason:} $E \in \{\texttt{signal\_positive}, \texttt{unblock\_mux\_change}, \texttt{mux\_change}, \texttt{signal\_negative}, \ldots\}$ (see Section~\ref{subsec:end-reason-enum}).
+\item \textbf{Alignment:} Yields pairs $(g_j, r_j) \in (\Sigma \cup \{\varepsilon\}) \times (\Sigma \cup \{\varepsilon\})$, $j = 1, \ldots, m$, with no $(\varepsilon, \varepsilon)$ pairs.
+\end{itemize}
+
+\textbf{Convention:} All empirical metrics below are computed on the set $\mathcal{R}_{\mathrm{S+}}$ of reads with $E = \texttt{signal\_positive}$, unless stated otherwise.
+
+\subsection{SEER Matrix (Single-Molecule Empirical Error Rate Matrix)}
+\label{subsec:seer-matrix-def}
+
+\begin{definition}[Pairwise Confusion with Indels]
+Construct counts over all aligned base pairs:
+\begin{equation}
+C_{a,b} = \#\{j: (g_j, r_j) = (a, b)\}, \quad a, b \in \Sigma \cup \{\varepsilon\}, \ (a, b) \neq (\varepsilon, \varepsilon)
+\end{equation}
+
+Define the SEER matrix $\mathbf{M}$ by row-normalization over truth states:
+\begin{equation}
+M_{a,b} = \frac{C_{a,b}}{\sum_{b' \in \Sigma \cup \{\varepsilon\}} C_{a,b'}} \quad \text{for } a \in \Sigma \cup \{\varepsilon\}
+\label{eq:seer-matrix}
+\end{equation}
+\end{definition}
+
+\textbf{Interpretation:}
+\begin{itemize}
+\item \textbf{Substitutions:} Entries $M_{a,b}$ with $a, b \in \Sigma$, $a \neq b$.
+\item \textbf{Deletions:} $M_{a,\varepsilon}$, $a \in \Sigma$ (reference base $a$ deleted in read).
+\item \textbf{Insertions:} $M_{\varepsilon,b}$, $b \in \Sigma$ (base $b$ inserted in read). Normalize insertions by aligned reference length.
+\end{itemize}
+
+\textbf{Sequence-level SEER (per standard):} Average $\mathbf{M}$ over all reads in that standard; report:
+\begin{itemize}
+\item \textbf{Substitution matrix} $\mathbf{S} \in \mathbb{R}^{4 \times 4}$ with rows summing to 1 over $\Sigma$.
+\item \textbf{Insertion rate:}
+\begin{equation}
+r_{\text{ins}} = \frac{\sum_{b \in \Sigma} C_{\varepsilon,b}}{\sum_{a \in \Sigma} \sum_{b} C_{a,b}}
+\end{equation}
+\item \textbf{Deletion rate:}
+\begin{equation}
+r_{\text{del}} = \frac{\sum_{a \in \Sigma} C_{a,\varepsilon}}{\sum_{a \in \Sigma} \sum_{b} C_{a,b}}
+\end{equation}
+\end{itemize}
+
+\textbf{Confidence intervals:} Use nonparametric bootstrap over reads to obtain 95\% CIs for each matrix cell and for $r_{\text{ins}}$, $r_{\text{del}}$.
+
+\subsection{Quality Score (Q): Predicted vs. Empirical}
+\label{subsec:q-pred-emp}
+
+\begin{definition}[Predicted Per-Base Error Probability]
+From basecaller quality scores:
+\begin{equation}
+\hat{p}_i = 10^{-Q_i/10}, \quad Q_i \in \mathbb{R}
+\end{equation}
+\end{definition}
+
+\begin{definition}[Predicted Per-Read Error Rate]
+\begin{equation}
+\hat{e}^{\text{pred}}(r) = \frac{1}{\ell} \sum_{i=1}^{\ell} \hat{p}_i, \quad Q^{\text{pred}}_{\text{read}}(r) = -10 \log_{10}\bigl(\hat{e}^{\text{pred}}(r)\bigr)
+\end{equation}
+\end{definition}
+
+\begin{definition}[Empirical Per-Base Error Indicator]
+From alignment to truth:
+\begin{equation}
+Y_i = \begin{cases}
+1, & \text{if base } i \text{ in } r \text{ is a mismatch or involved in an indel} \\
+0, & \text{otherwise}
+\end{cases}
+\end{equation}
+Define $Y_i$ precisely based on alignment representation; e.g., count an insertion at position $i$ as $Y_i = 1$ for the inserted bases.
+\end{definition}
+
+\begin{definition}[Empirical Per-Read Error Rate]
+\begin{equation}
+\hat{e}^{\text{emp}}(r) = \frac{1}{\ell} \sum_{i=1}^{\ell} Y_i, \quad Q^{\text{emp}}_{\text{read}}(r) = -10 \log_{10}\bigl(\hat{e}^{\text{emp}}(r)\bigr)
+\end{equation}
+\end{definition}
+
+\textbf{Calibration (Reliability):}
+\begin{itemize}
+\item \textbf{Expected Calibration Error (ECE):} Bin predictions by $\hat{p}_i$ into bins $B_k$. Compute:
+\begin{equation}
+\text{ECE} = \sum_{k} \frac{|B_k|}{\sum_j |B_j|} \left| \frac{1}{|B_k|} \sum_{i \in B_k} Y_i - \frac{1}{|B_k|} \sum_{i \in B_k} \hat{p}_i \right|
+\end{equation}
+\item \textbf{Brier Score:}
+\begin{equation}
+\text{Brier} = \frac{1}{\sum_r \ell_r} \sum_{r} \sum_{i=1}^{\ell_r} (Y_i - \hat{p}_i)^2
+\end{equation}
+\item \textbf{Reliability curve:} Plot empirical error vs. predicted $\hat{p}$ per sequence (standard).
+\end{itemize}
+
+\subsection{Single-Molecule Accuracy (SMA): Predicted vs. Empirical}
+\label{subsec:sma-def}
+
+Two complementary definitions:
+
+\begin{definition}[Exact-Sequence SMA]
+Binary metric: reads equal the standard sequence end-to-end:
+\begin{equation}
+\text{SMA}_{\text{exact}} = \Pr(\hat{s} = s_\star \mid E = \texttt{S+}) \approx \frac{1}{|\mathcal{R}_{\mathrm{S+}}|} \sum_{r \in \mathcal{R}_{\mathrm{S+}}} \mathbb{I}\{\hat{s}(r) = s_\star\}
+\end{equation}
+Report with Wilson interval for binomial proportion.
+\end{definition}
+
+\begin{definition}[Per-Base SMA]
+Complement of per-base error rate:
+\begin{equation}
+\text{SMA}_{\text{base}} = 1 - \frac{\sum_r \sum_{i=1}^{\ell_r} Y_i}{\sum_r \ell_r}
+\end{equation}
+Report also stratified rates: mismatch, insertion, deletion components.
+\end{definition}
+
+\begin{definition}[Predicted SMA]
+From basecaller Q scores:
+\begin{equation}
+\widehat{\text{SMA}}_{\text{base}}^{\text{pred}} = 1 - \frac{\sum_r \sum_{i=1}^{\ell_r} \hat{p}_i}{\sum_r \ell_r}
+\end{equation}
+Report calibration gap: $\widehat{\text{SMA}}^{\text{pred}} - \text{SMA}^{\text{emp}}$.
+\end{definition}
+
+\subsection{Purity and Label Noise (SMA-seq Standards)}
+\label{subsec:purity-label-noise}
+
+If the library purity is $\pi = \Pr(Z = s_\star)$, then the measured exact-sequence accuracy on a dataset labeled as $s_\star$ obeys:
+\begin{equation}
+\mathbb{E}[\widehat{\text{SMA}}_{\text{exact}}] = \pi \, A + (1 - \pi) \, B
+\end{equation}
+with $A = \Pr(\hat{s} = s_\star \mid Z = s_\star)$ (the true target accuracy) and $B = \Pr(\hat{s} = s_\star \mid Z \neq s_\star)$.
+
+\textbf{Practice:} Report $\pi$ and never interpret claims of $\text{SMA}_{\text{exact}}$ beyond the purity regime without an independent test.
+
+\subsection{End-Reason Gating and Stratification}
+\label{subsec:end-reason-gating}
+
+\begin{itemize}
+\item \textbf{Default:} Compute all core metrics only on $\mathcal{R}_{\mathrm{S+}}$ (reads with $E = \texttt{signal\_positive}$).
+\item \textbf{Optional:} Provide side-tables for other end reasons (UMC/MUX/SN) for diagnosis, not for primary SMA reporting.
+\end{itemize}
+
+\subsection{Implementation Specification (Inputs $\to$ Outputs)}
+\label{subsec:seer-implementation}
+
+\textbf{Inputs:}
+\begin{itemize}
+\item \texttt{reads.bam} (unaligned or aligned)
+\item \texttt{sequencing\_summary.txt} (to join end\_reason)
+\item \texttt{truth\_s\_star.fasta} (per standard)
+\item Library purity $\pi$ with bounds
+\end{itemize}
+
+\textbf{Processing Steps:}
+\begin{enumerate}
+\item Join end\_reason to reads; select $\mathcal{R}_{\mathrm{S+}}$.
+\item Align $\mathcal{R}_{\mathrm{S+}}$ to \texttt{truth\_s\_star.fasta} (minimap2, \texttt{-x map-ont}, keep cs/MD tags).
+\item From alignments, derive $(g_j, r_j)$ and per-base indicators $Y_i$.
+\item Build SEER $\mathbf{M}$, insertion/deletion rates; bootstrap CIs.
+\item Compute $Q^{\text{pred}}_{\text{read}}$, $Q^{\text{emp}}_{\text{read}}$, ECE, Brier.
+\item Compute $\text{SMA}_{\text{exact}}$, $\text{SMA}_{\text{base}}$ and predicted counterparts.
+\item Emit per-sequence reports (JSON + PDF tables/plots).
+\end{enumerate}
+
+\textbf{Outputs (per sequence/standard):}
+\begin{itemize}
+\item \texttt{seer\_matrix.tsv} (4$\times$4 substitutions + ins/del rates)
+\item \texttt{sma\_metrics.tsv} (SMA\_exact, SMA\_base with CIs)
+\item \texttt{q\_calibration.tsv} (bin stats, ECE, Brier)
+\item \texttt{read\_metrics.tsv} (per-read predicted/empirical Q, length)
+\item \texttt{summary.json} (all numbers, versioned)
+\end{itemize}
+
+\subsection{Quality Gates \& Reporting Conventions}
+\label{subsec:seer-quality-gates}
+
+\begin{itemize}
+\item Exclude secondary/supplementary alignments; require MAPQ $\geq 20$ for counting.
+\item \textbf{Homopolymers:} Report separate SEER rows/columns conditioned on homopolymer context (optional, but recommended).
+\item \textbf{Length bins:} Stratify per-read metrics by length deciles.
+\item All tables carry \texttt{end\_reason = S+} stamp; others in appendix.
+\end{itemize}
+
+\subsection{Command Scaffolding}
+\label{subsec:seer-commands}
+
+\textbf{Join end\_reason to reads:}
+\begin{verbatim}
+python scripts/join_end_reason.py \
+  --summary sequencing_summary.txt \
+  --bam basecalls.bam \
+  --out tagged.bam \
+  --end-reason-tag ER
+\end{verbatim}
+
+\textbf{Map S+ reads to truth:}
+\begin{verbatim}
+samtools view -h tagged.bam | \
+  awk '$0 ~ /^@/ || $0 ~ /ER:Z:signal_positive/' | \
+  samtools view -bS - > splus.bam
+
+minimap2 -a -x map-ont truth_s_star.fasta splus.bam | \
+  samtools sort -o splus.aln.bam
+
+samtools index splus.aln.bam
+\end{verbatim}
+
+\textbf{Extract SEER \& SMA:}
+\begin{verbatim}
+python scripts/compute_seer_sma.py \
+  --bam splus.aln.bam \
+  --truth truth_s_star.fasta \
+  --out outdir/
+\end{verbatim}
+
+\subsection{Compact Definitions for Quick Reference}
+\label{subsec:seer-quick-ref}
+
+\begin{itemize}
+\item \textbf{SEER matrix $\mathbf{M}$:} Row-normalized confusion including $\varepsilon$; substitution submatrix $\mathbf{S}$, $r_{\text{ins}}$, $r_{\text{del}}$.
+\item \textbf{Q (pred):} $\hat{p}_i = 10^{-Q_i/10}$; $Q^{\text{pred}}_{\text{read}} = -10 \log_{10}(\frac{1}{\ell} \sum \hat{p}_i)$.
+\item \textbf{Q (emp):} From alignment indicators $Y_i$; $Q^{\text{emp}}_{\text{read}} = -10 \log_{10}(\frac{1}{\ell} \sum Y_i)$.
+\item \textbf{SMA (exact):} Fraction of S+ reads equal to $s_\star$; SMA (base): $1 -$ empirical per-base error rate.
+\item \textbf{Calibration:} ECE, Brier; reliability plots.
+\item \textbf{Purity:} Interpret results within $\pi$; report $\pi$ alongside SMA; do not claim beyond $\pi$ without extra assays.
+\end{itemize}
+
+\section{Summary}
+
+This appendix provides comprehensive implementation guidance for the haplotype classification framework, from algorithm pseudocode through production deployment considerations. The SEER/SMA metric specification (Section~\ref{sec:seer-sma-spec}) provides rigorous mathematical definitions for empirical error measurement with proper end-reason gating and purity handling. For additional protocol details, see Chapter~\ref{chap:workflow} (Complete Sample-to-Analysis Workflow). For quality control procedures, see Appendix~\ref{app:qc} (Laboratory Protocols and Quality Control).
