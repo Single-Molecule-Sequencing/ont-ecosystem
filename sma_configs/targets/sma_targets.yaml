@@ -149,65 +149,74 @@ targets:
   V0-15:
     cyp2d6_positions: "3909-4007"
     expected_length: 99
-    sequence: null  # Sequence pending
+    sequence: "GTCTAAAGAAAAAAAAAATAAAGCAACATATCCTGAACAAAGGATCCTCCATAACGTTCCCACCAGATTTCTAATCAGAAACATGGAGGCCAGAAAGCA"
     validated: false
-    notes: "Parts 66 - used in pilot experiments"
+    source: "CYP2D6*1 NG_008376.4 PharmVar reference"
+    notes: "Parts 66 - used in pilot experiments, extracted from PharmVar reference"
 
   V0-16:
     cyp2d6_positions: "4004-4115"
     expected_length: 112
-    sequence: null
+    sequence: "AGCAGTGGAGGAGGACGACCCTCAGGCAGCCCGGGAGGATGTTGTCACAGGCTGGGGCAAGGGCCTTCCGGCTACCAACTGGGAGCTCTGGGAACAGCCCTGTTGCAAACAA"
     validated: false
-    notes: "Parts 67 - used in pilot experiments"
+    source: "CYP2D6*1 NG_008376.4 PharmVar reference"
+    notes: "Parts 67 - used in pilot experiments, extracted from PharmVar reference"
 
   V0-17:
     cyp2d6_positions: "4112-4201"
     expected_length: 90
-    sequence: null
+    sequence: "ACAAGAAGCCATAGCCCGGCCAGAGCCCAGGAATGTGGGCTGGGCTGGGAGCAGCCTCTGGACAGGAGTGGTCCCATCCAGGAAACCTCC"
     validated: false
-    notes: "Parts 68 - used in pilot experiments"
+    source: "CYP2D6*1 NG_008376.4 PharmVar reference"
+    notes: "Parts 68 - used in pilot experiments, extracted from PharmVar reference"
 
   V0-18:
     cyp2d6_positions: "4198-4312"
     expected_length: 115
-    sequence: null
+    sequence: "CTCCGGCATGGCTGGGAAGTGGGGTACTTGGTGCCGGGTCTGTATGTGTGTGTGACTGGTGTGTGTGAGAGAGAATGTGTGCCCTAAGTGTCAGTGTGAGTCTGTGTATGTGTGA"
     validated: false
-    notes: "Parts 69 - used in pilot experiments"
+    source: "CYP2D6*1 NG_008376.4 PharmVar reference"
+    notes: "Parts 69 - used in pilot experiments, extracted from PharmVar reference"
 
   V0-19:
     cyp2d6_positions: "4309-4423"
     expected_length: 115
-    sequence: null
+    sequence: "GTGAATATTGTCTTTGTGTGGGTGATTTTCTGCGTGTGTAATCGTGTCCCTGCAAGTGTGAACAAGTGGACAAGTGTCTGGGAGTGGACAAGAGATCTGTGCACCATCAGGTGTG"
     validated: false
-    notes: "Parts 70 - used in pilot experiments"
+    source: "CYP2D6*1 NG_008376.4 PharmVar reference"
+    notes: "Parts 70 - used in pilot experiments, extracted from PharmVar reference"
 
   V0-20:
     cyp2d6_positions: "4420-4507"
     expected_length: 88
-    sequence: null
+    sequence: "TGTGTGCATAGCGTCTGTGCATGTCAAGAGTGCAAGGTGAAGTGAAGGGACCAGGCCCATGATGCCACTCATCATCAGGAGCTCTAAG"
     validated: false
-    notes: "Parts 71 - used in pilot experiments"
+    source: "CYP2D6*1 NG_008376.4 PharmVar reference"
+    notes: "Parts 71 - used in pilot experiments, extracted from PharmVar reference"
 
   V0-21:
     cyp2d6_positions: "4504-4609"
     expected_length: 106
-    sequence: null
+    sequence: "TAAGGCCCCAGGTAAGTGCCAGTGACAGATAAGGGTGCTGAAGGTCACTCTGGAGTGGGCAGGTGGGGGTAGGGAAAGGGCAAGGCCATGTTCTGGAGGAGGGGTT"
     validated: false
-    notes: "Parts 72 - used in pilot experiments"
+    source: "CYP2D6*1 NG_008376.4 PharmVar reference"
+    notes: "Parts 72 - used in pilot experiments, extracted from PharmVar reference"
 
   V0-22:
     cyp2d6_positions: "4606-4705"
     expected_length: 100
-    sequence: null
+    sequence: "GGTTGTGACTACATTAGGGTGTATGAGCCTAGCTGGGAGGTGGATGGCCGGGTCCACTGAAACCCTGGTTATCCCAGAAGGCTTTGCAGGCTTCAGGAGC"
     validated: false
-    notes: "Parts 73 - used in pilot experiments"
+    source: "CYP2D6*1 NG_008376.4 PharmVar reference"
+    notes: "Parts 73 - used in pilot experiments, extracted from PharmVar reference"
 
   V0-23:
     cyp2d6_positions: "4702-4802"
     expected_length: 101
-    sequence: null
+    sequence: "GAGCTTGGAGTGGGGAGAGGGGGTGACTTCTCCGACCAGGCCCCTCCACCGGCCTACCCTGGGTAAGGGCCTGGAGCAGGAAGCAGGGGCAAGAACCTCTG"
     validated: false
-    notes: "Parts 74 - used in pilot experiments"
+    source: "CYP2D6*1 NG_008376.4 PharmVar reference"
+    notes: "Parts 74 - used in pilot experiments, extracted from PharmVar reference"
 
   # ============================================
   # B2 Reference (existing, verified)
@@ -223,10 +232,26 @@ targets:
 
 # Size-based classification ranges
 size_ranges:
+  # V0-4.X Series (Exon 4)
   V0-4.1: { min: 143, max: 193, expected: 168, tolerance_pct: 15 }
   V0-4.2: { min: 140, max: 190, expected: 165, tolerance_pct: 15 }
   V0-4.3: { min: 160, max: 216, expected: 188, tolerance_pct: 15 }
   V0-4.4: { min: 136, max: 184, expected: 160, tolerance_pct: 15 }
+  V0-4.14: { min: 147, max: 199, expected: 173, tolerance_pct: 15 }
+  V0-4.15: { min: 148, max: 200, expected: 174, tolerance_pct: 15 }
+  V0-4.16: { min: 139, max: 189, expected: 164, tolerance_pct: 15 }
+  V0-4.17: { min: 150, max: 202, expected: 176, tolerance_pct: 15 }
+  # V0-15 to V0-23 Series (Upstream/Intron 3)
+  V0-15: { min: 84, max: 114, expected: 99, tolerance_pct: 15 }
+  V0-16: { min: 95, max: 129, expected: 112, tolerance_pct: 15 }
+  V0-17: { min: 77, max: 104, expected: 90, tolerance_pct: 15 }
+  V0-18: { min: 98, max: 132, expected: 115, tolerance_pct: 15 }
+  V0-19: { min: 98, max: 132, expected: 115, tolerance_pct: 15 }
+  V0-20: { min: 75, max: 101, expected: 88, tolerance_pct: 15 }
+  V0-21: { min: 90, max: 122, expected: 106, tolerance_pct: 15 }
+  V0-22: { min: 85, max: 115, expected: 100, tolerance_pct: 15 }
+  V0-23: { min: 86, max: 116, expected: 101, tolerance_pct: 15 }
+  # V0-39 to V0-47 Series (Exon 4-5 junction)
   V0-39: { min: 90, max: 122, expected: 106, tolerance_pct: 15 }
   V0-40: { min: 83, max: 113, expected: 98, tolerance_pct: 15 }
   V0-41: { min: 75, max: 101, expected: 88, tolerance_pct: 15 }
@@ -236,8 +261,5 @@ size_ranges:
   V0-45: { min: 91, max: 123, expected: 107, tolerance_pct: 15 }
   V0-46: { min: 71, max: 97, expected: 84, tolerance_pct: 15 }
   V0-47: { min: 93, max: 125, expected: 109, tolerance_pct: 15 }
-  V0-4.14: { min: 147, max: 199, expected: 173, tolerance_pct: 15 }
-  V0-4.15: { min: 148, max: 200, expected: 174, tolerance_pct: 15 }
-  V0-4.16: { min: 139, max: 189, expected: 164, tolerance_pct: 15 }
-  V0-4.17: { min: 150, max: 202, expected: 176, tolerance_pct: 15 }
+  # Other
   B2: { min: 201, max: 273, expected: 237, tolerance_pct: 15 }

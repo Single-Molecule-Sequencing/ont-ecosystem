@@ -104,9 +104,11 @@ run_stats:
 reference:
   targets_file: ../../targets/sma_targets.yaml
   barcodes_file: ../../targets/sma_barcodes.yaml
+  fasta: 10092025_IF_methyl_minus_SMA_seq/reference.fa
   use_sequence: designed
-  status: sequences_pending
-  notes: "V0-15 to V0-23 - same targets as pilot experiments"
+  status: sequences_available
+  source: "CYP2D6*1 NG_008376.4 PharmVar reference"
+  notes: "V0-15 to V0-23 - same targets as pilot experiments, sequences extracted from PharmVar"
 
 analysis:
   min_read_length: 80

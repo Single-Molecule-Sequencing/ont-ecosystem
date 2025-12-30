@@ -150,9 +150,10 @@ reference:
   barcodes_file: ../targets/sma_barcodes.yaml
   use_sequence: designed
   validate_against_sanger: true
-  fasta: references/reference.fa
-  status: sequences_pending
-  notes: "V0-15 to V0-23 sequences pending - different barcode scheme from Dec 2025 experiments"
+  fasta: IF_SMAseq_09112025/reference.fa
+  status: sequences_available
+  source: "CYP2D6*1 NG_008376.4 PharmVar reference"
+  notes: "V0-15 to V0-23 sequences extracted from PharmVar - different barcode scheme from Dec 2025 experiments"
 
 analysis:
   min_read_length: 80
