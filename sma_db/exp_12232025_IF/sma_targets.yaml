@@ -1,0 +1,36 @@
+# SMA-seq Targets for 12232025_IF_DoubleBC_SMA_seq
+# Double barcode experiment with V0-4.1 through V0-4.4 targets
+# Uses standard ONT NBD114-24 barcodes
+
+targets:
+  # V0-4.1 region (CYP2D6 positions 6944-7111)
+  # barcode01 = forward, barcode06 = reverse complement
+  V0-4.1:
+    forward_sequence: "ttcgagtacgacgaccctcGCTTCCTCAGGCTGCTGGACCTAGCTCAGGAGGGACTGAAGGAGGAGTCGGGCTTTCTGCGCGAGGTGCGGAGCGAGAGATCGAGGAGTCTCTGCAGGGCGAGCTCCCGAGAGGTGCCGGGGCTGGACTGGggcctcggaagagcagga"
+    forward_barcode: barcode01
+    reverse_barcode: barcode06
+    size_range: [150, 190]
+
+  # V0-4.2 region (CYP2D6 positions 7108-7272)
+  # barcode02 = forward, barcode07 = reverse complement
+  V0-4.2:
+    forward_sequence: "AGGATTTGCATAGATGGGTTTGGGAAAGGACATTCCAGGAGATCCCACTGTAAGAAGGGCCTGGAGGAGGAGGGGACATCTCAGACATGGTCGTGGGAGAGGTGTGCCCGGGTCAGGGGGCACCAGGAGAGGCCAAGGACTCTGTACCTCCTATCCACGTCAGAG"
+    forward_barcode: barcode02
+    reverse_barcode: barcode07
+    size_range: [145, 185]
+
+  # V0-4.3 region (CYP2D6 positions 7269-7456)
+  # barcode03 = forward, barcode08 = reverse complement
+  V0-4.3:
+    forward_sequence: "agagatttcgattttaggtttctcctcTGGGCAAGGAGAGAGGGTGGAGGCTGGCACTTGGGGAGGGACTTGGTGAGGTCAGTGGTAAGGACAGGCAGGCCCTGGGTCTACCTGGAGATGGCTGGGGCCTGAGACTTGTCCAGGTGAACGCAGAGCACAGGAGGGATTGAgaTcccgttctgtctggt"
+    forward_barcode: barcode03
+    reverse_barcode: barcode08
+    size_range: [168, 210]
+
+  # V0-4.4 region (CYP2D6 positions 7453-7612)
+  # barcode04 = forward, barcode09 = reverse complement
+  V0-4.4:
+    forward_sequence: "tggtgtaggtgctgaatgcTGTCCCCGTCCTCCTGCATATCCCAGCGCTGGCTGGCAAGGTCCTACGCTTCCAAAAGGCTTTCCTGACCCAGCTGGATGAGCTGCTAACTGAGCACAGGATGACCTGGGACCCAGCCCAGCCcccccgagaTctgactga"
+    forward_barcode: barcode04
+    reverse_barcode: barcode09
+    size_range: [140, 180]

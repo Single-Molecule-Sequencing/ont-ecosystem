@@ -1,0 +1,14 @@
+# SMA-seq Configuration for 081920205_IF_Pilot_SMA_seq
+experiment: "081920205_IF_Pilot_SMA_seq"
+demux_type: "standard_ont"
+kit: "SQK-NBD114-24"
+
+barcodes:
+  barcode01:
+    target: V0-4.1_forward
+    alias: V04_1
+    size_range: [150, 190]
+  barcode02:
+    target: V0-4.2_forward
+    alias: V04_2
+    size_range: [145, 185]

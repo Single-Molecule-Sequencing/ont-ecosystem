@@ -1,0 +1,22 @@
+# SMA-seq Configuration for 12182025_IF_NewBCPart4_Ex1_SMA_seq
+experiment: "12182025_IF_NewBCPart4_Ex1_SMA_seq"
+demux_type: "standard_ont"
+kit: "SQK-NBD114-24"
+
+barcodes:
+  barcode01:
+    target: V0-4.1_forward
+    alias: V04_1
+    size_range: [150, 190]
+  barcode02:
+    target: V0-4.2_forward
+    alias: V04_2
+    size_range: [145, 185]
+  barcode03:
+    target: V0-4.3_forward
+    alias: V04_3
+    size_range: [168, 210]
+  barcode04:
+    target: V0-4.4_forward
+    alias: V04_4
+    size_range: [140, 180]

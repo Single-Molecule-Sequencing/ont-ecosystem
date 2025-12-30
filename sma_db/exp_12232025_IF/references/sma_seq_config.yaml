@@ -1,0 +1,91 @@
+# SMA-seq Configuration for 12232025_IF_DoubleBC_SMA_seq
+# Uses standard ONT NBD114-24 barcodes (built-in Dorado demux)
+# Generated: 2025-12-30
+
+experiment: "12232025_IF_DoubleBC_SMA_seq"
+demux_type: "standard_ont"
+kit: "SQK-NBD114-24"
+
+library_structure:
+  description: "5'- PREFIX + ADAPTER + FLANK_F + BARCODE + FLANK_R + TARGET -3'"
+  elements:
+    PREFIX:
+      sequence: "CCTGTACTTCGTT"
+      length: 13
+    ADAPTER:
+      sequence: "CAGTTACGTATTGCT"
+      length: 15
+    FLANK_F:
+      sequence: "AAGGTTAA"
+      length: 8
+    FLANK_R:
+      sequence: "CAGCACCT"
+      length: 8
+
+targets:
+  V0-4.1_forward:
+    description: "V0-4.1 forward (CYP2D6 6944-7111)"
+    length: 168
+    sequence: "ttcgagtacgacgaccctcGCTTCCTCAGGCTGCTGGACCTAGCTCAGGAGGGACTGAAGGAGGAGTCGGGCTTTCTGCGCGAGGTGCGGAGCGAGAGATCGAGGAGTCTCTGCAGGGCGAGCTCCCGAGAGGTGCCGGGGCTGGACTGGggcctcggaagagcagga"
+  V0-4.1_reverse:
+    description: "V0-4.1 reverse complement"
+    length: 168
+    sequence: "tcctgctcttccgaggccCCAGTCCAGCCCCGGCACCTCTCGGGAGCTCGCCCTGCAGAGACTCCTCGATCTCTCGCTCCGCACCTCGCGCAGAAAGCCCGACTCCTCCTTCAGTCCCTCCTGAGCTAGGTCCAGCAGCCTGAGGAAGCgaggggtcgtcgtactcgaa"
+  V0-4.2_forward:
+    description: "V0-4.2 forward (CYP2D6 7108-7272)"
+    length: 165
+    sequence: "AGGATTTGCATAGATGGGTTTGGGAAAGGACATTCCAGGAGATCCCACTGTAAGAAGGGCCTGGAGGAGGAGGGGACATCTCAGACATGGTCGTGGGAGAGGTGTGCCCGGGTCAGGGGGCACCAGGAGAGGCCAAGGACTCTGTACCTCCTATCCACGTCAGAG"
+  V0-4.2_reverse:
+    description: "V0-4.2 reverse complement"
+    length: 165
+    sequence: "ctctgACGTGGATAGGAGGTACAGAGTCCTTGGCCTCTCCTGGTGCCCCCTGACCCGGGCACACCTCTCCCACGACCATGTCTGAGATGTCCCCTCCTCCTCCAGGCCCTTCTTACAGTGGGATCTCCTGGAATGTCCTTTCCCAAACCCATCTATGCAAATCCT"
+  V0-4.3_forward:
+    description: "V0-4.3 forward (CYP2D6 7269-7456)"
+    length: 188
+    sequence: "agagatttcgattttaggtttctcctcTGGGCAAGGAGAGAGGGTGGAGGCTGGCACTTGGGGAGGGACTTGGTGAGGTCAGTGGTAAGGACAGGCAGGCCCTGGGTCTACCTGGAGATGGCTGGGGCCTGAGACTTGTCCAGGTGAACGCAGAGCACAGGAGGGATTGAgaTcccgttctgtctggt"
+  V0-4.3_reverse:
+    description: "V0-4.3 reverse complement"
+    length: 188
+    sequence: "accagacagaacgggAtcTCAATCCCTCCTGTGCTCTGCGTTCACCTGGACAAGTCTCAGGCCCCAGCCATCTCCAGGTAGACCCAGGGCCTGCCTGTCCTTACCACTGACCTCACCAAGTCCCTCCCCAAGTGCCAGCCTCCACCCTCTCTCCTTGCCCAgaggagaaacctaaaatcgaaatctct"
+  V0-4.4_forward:
+    description: "V0-4.4 forward (CYP2D6 7453-7612)"
+    length: 160
+    sequence: "tggtgtaggtgctgaatgcTGTCCCCGTCCTCCTGCATATCCCAGCGCTGGCTGGCAAGGTCCTACGCTTCCAAAAGGCTTTCCTGACCCAGCTGGATGAGCTGCTAACTGAGCACAGGATGACCTGGGACCCAGCCCAGCCcccccgagaTctgactga"
+  V0-4.4_reverse:
+    description: "V0-4.4 reverse complement"
+    length: 160
+    sequence: "tcagtcaGatctcgggggGGCTGGGCTGGGTCCCAGGTCATCCTGTGCTCAGTTAGCAGCTCATCCAGCTGGGTCAGGAAAGCCTTTTGGAAGCGTAGGACCTTGCCAGCCAGCGCTGGGATATGCAGGAGGACGGGGACAgcattcagcacctacacca"
+
+barcodes:
+  barcode01:
+    target: V0-4.1_forward
+    alias: V04_1
+    size_range: [150, 190]
+  barcode02:
+    target: V0-4.2_forward
+    alias: V04_2
+    size_range: [145, 185]
+  barcode03:
+    target: V0-4.3_forward
+    alias: V04_3
+    size_range: [168, 210]
+  barcode04:
+    target: V0-4.4_forward
+    alias: V04_4
+    size_range: [140, 180]
+  barcode06:
+    target: V0-4.1_reverse
+    alias: V04_1_2
+    size_range: [150, 190]
+  barcode07:
+    target: V0-4.2_reverse
+    alias: V04_2_2
+    size_range: [145, 185]
+  barcode08:
+    target: V0-4.3_reverse
+    alias: V04_3_2
+    size_range: [168, 210]
+  barcode09:
+    target: V0-4.4_reverse
+    alias: V04_4_2
+    size_range: [140, 180]
