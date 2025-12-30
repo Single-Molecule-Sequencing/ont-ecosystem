@@ -1,0 +1,21 @@
+[arrangement]
+name = "SMA_custom"
+kit = "SQK-NBD114-24"
+
+# Flanking sequences from SQK-NBD114-24
+mask1_front = "ATTGCTAAGGTTAA"
+mask1_rear = "CAGCACCT"
+
+barcode1_pattern = "SMA_custom_NB%02i"
+
+first_index = 2
+last_index = 9
+
+[scoring]
+max_barcode_penalty = 14
+min_barcode_penalty_dist = 2
+min_separation_only_dist = 3
+barcode_end_proximity = 100
+flank_left_pad = 10
+flank_right_pad = 15
+front_barcode_window = 200

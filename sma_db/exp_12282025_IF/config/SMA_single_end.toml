@@ -1,0 +1,20 @@
+[arrangement]
+name = "SMA_single_end"
+kit = "SMA_GG_SingleBC"
+
+mask1_front = "AAGGTTAA"
+mask1_rear = "CAGCACCT"
+
+barcode1_pattern = "SMA_custom_NB%02i"
+
+first_index = 2
+last_index = 9
+
+[scoring]
+max_barcode_penalty = 11
+barcode_end_proximity = 75
+min_barcode_penalty_dist = 3
+min_separation_only_dist = 6
+flank_left_pad = 5
+flank_right_pad = 10
+front_barcode_window = 175

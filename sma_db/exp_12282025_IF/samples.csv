@@ -1,0 +1,5 @@
+barcode,sample_id,target,strand,condition,replicate,notes
+2,V04_2,V0-4.2,forward,CYP2D6_pos_7108-7272,1,BC02 end reads forward strand
+4,V04_4,V0-4.4,forward,CYP2D6_pos_7453-7612,1,BC04 end reads forward strand
+7,V04_2_2,V0-4.2,reverse,CYP2D6_pos_7108-7272,1,BC07 end reads reverse strand (RC)
+9,V04_4_2,V0-4.4,reverse,CYP2D6_pos_7453-7612,1,BC09 end reads reverse strand (RC)

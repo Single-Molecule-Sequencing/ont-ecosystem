@@ -1,0 +1,146 @@
+# SMA-seq Library Configuration
+# Experiment: 12282025_IF_DoubleBC_SMA_seq
+# Last updated: 2024-12-30
+
+# =============================================================================
+# LIBRARY STRUCTURE
+# =============================================================================
+# All reads are sequenced 5'→3' from the Native Adapter.
+# Structure: PREFIX + ADAPTER + FLANK_F + BARCODE + FLANK_R + TARGET
+#
+# The 4bp 5' overhang at each end of the target determines which barcode ligates:
+#   - One overhang ligates BC02/BC09 (forward target orientation)
+#   - Other overhang ligates BC07/BC04 (reverse complement target orientation)
+
+library_structure:
+  description: "5'- PREFIX + ADAPTER + FLANK_F + BARCODE + FLANK_R + TARGET -3'"
+  elements:
+    PREFIX:
+      sequence: "CCTGTACTTCGTT"
+      length: 13
+      description: "13bp prefix before adapter"
+    ADAPTER:
+      sequence: "CAGTTACGTATTGCT"
+      length: 15
+      description: "15bp Native Adapter end sequence"
+    FLANK_F:
+      sequence: "AAGGTTAA"
+      length: 8
+      description: "8bp front flank (between adapter and barcode)"
+    FLANK_R:
+      sequence: "CAGCACCT"
+      length: 8
+      description: "8bp rear flank (between barcode and target)"
+
+# =============================================================================
+# BARCODE CONFIGURATIONS
+# =============================================================================
+# Each barcode captures ONE specific target orientation.
+# Target sequences have last 4bp removed (not part of nicked reference).
+
+barcodes:
+  BC02:
+    sequence: "ACAGACGACTACAAACGGAATCGA"
+    length: 24
+    target: "V0-4.2_forward"
+    target_description: "TARGET_V04_2 (forward orientation)"
+    size_range: [200, 260]
+    reference_length: 229
+
+  BC07:
+    sequence: "GGATTCATTCCCACGGTAACAC"
+    length: 22
+    target: "V0-4.2_reverse"
+    target_description: "RC(TARGET_V04_2) (reverse complement)"
+    size_range: [200, 260]
+    reference_length: 227
+
+  BC04:
+    sequence: "TAGCAAACACGATAGAATCCGAA"
+    length: 23
+    target: "V0-4.4_reverse"
+    target_description: "RC(TARGET_V04_4) (reverse complement)"
+    size_range: [195, 255]
+    reference_length: 224
+
+  BC09:
+    sequence: "AACCAAGACTCGCTGTGCCTAGTT"
+    length: 24
+    target: "V0-4.4_forward"
+    target_description: "TARGET_V04_4 (forward orientation)"
+    size_range: [195, 255]
+    reference_length: 225
+
+# =============================================================================
+# TARGET SEQUENCES
+# =============================================================================
+# CYP2D6 pharmacogene target regions (last 4bp removed from nicked reference)
+
+targets:
+  V0-4.2_forward:
+    description: "CYP2D6_pos_7108-7268 forward strand"
+    length: 161
+    sequence: "AGGATTTGCATAGATGGGTTTGGGAAAGGACATTCCAGGAGATCCCACTGTAAGAAGGGCCTGGAGGAGGAGGGGACATCTCAGACATGGTCGTGGGAGAGGTGTGCCCGGGTCAGGGGGCACCAGGAGAGGCCAAGGACTCTGTACCTCCTATCCACGTC"
+
+  V0-4.2_reverse:
+    description: "CYP2D6_pos_7108-7268 reverse complement"
+    length: 161
+    sequence: "GACGTGGATAGGAGGTACAGAGTCCTTGGCCTCTCCTGGTGCCCCCTGACCCGGGCACACCTCTCCCACGACCATGTCTGAGATGTCCCCTCCTCCTCCAGGCCCTTCTTACAGTGGGATCTCCTGGAATGTCCTTTCCCAAACCCATCTATGCAAATCCT"
+
+  V0-4.4_forward:
+    description: "CYP2D6_pos_7453-7608 forward strand"
+    length: 157
+    sequence: "TGGTGTAGGTGCTGAATGCTGTCCCCGTCCTCCTGCATATCCCAGCGCTGGCTGGCAAGGTCCTACGCTTCCAAAAGGCTTTCCTGACCCAGCTGGATGAGCTGCTAACTGAGCACAGGATGACCTGGGACCCAGCCCAGCCCCCCCGAGATCTGAC"
+
+  V0-4.4_reverse:
+    description: "CYP2D6_pos_7453-7608 reverse complement"
+    length: 157
+    sequence: "GTCAGATCTCGGGGGGGCTGGGCTGGGTCCCAGGTCATCCTGTGCTCAGTTAGCAGCTCATCCAGCTGGGTCAGGAAAGCCTTTTGGAAGCGTAGGACCTTGCCAGCCAGCGCTGGGATATGCAGGAGGACGGGGACAGCATTCAGCACCTACACCA"
+
+# =============================================================================
+# DORADO DEMUX CONFIGURATION
+# =============================================================================
+# Demux runs in 3 passes (one per barcode length group)
+
+demux:
+  kit_base: "SQK-NBD114-24"
+  passes:
+    - name: "SMA_24bp"
+      barcodes: ["BC02", "BC09"]
+      indices: [2, 9]
+      config_file: "config/SMA_24bp.toml"
+      sequences_file: "config/SMA_24bp_sequences.fasta"
+
+    - name: "SMA_23bp"
+      barcodes: ["BC04"]
+      indices: [4]
+      config_file: "config/SMA_23bp.toml"
+      sequences_file: "config/SMA_23bp_sequences.fasta"
+
+    - name: "SMA_22bp"
+      barcodes: ["BC07"]
+      indices: [7]
+      config_file: "config/SMA_22bp.toml"
+      sequences_file: "config/SMA_22bp_sequences.fasta"
+
+# =============================================================================
+# FULL REFERENCE SEQUENCES (assembled)
+# =============================================================================
+# Format: PREFIX + ADAPTER + FLANK_F + BARCODE + FLANK_R + TARGET
+
+full_references:
+  BC02:
+    length: 229
+    sequence: "CCTGTACTTCGTTCAGTTACGTATTGCTAAGGTTAAACAGACGACTACAAACGGAATCGACAGCACCTAGGATTTGCATAGATGGGTTTGGGAAAGGACATTCCAGGAGATCCCACTGTAAGAAGGGCCTGGAGGAGGAGGGGACATCTCAGACATGGTCGTGGGAGAGGTGTGCCCGGGTCAGGGGGCACCAGGAGAGGCCAAGGACTCTGTACCTCCTATCCACGTC"
+
+  BC07:
+    length: 227
+    sequence: "CCTGTACTTCGTTCAGTTACGTATTGCTAAGGTTAAGGATTCATTCCCACGGTAACACCAGCACCTGACGTGGATAGGAGGTACAGAGTCCTTGGCCTCTCCTGGTGCCCCCTGACCCGGGCACACCTCTCCCACGACCATGTCTGAGATGTCCCCTCCTCCTCCAGGCCCTTCTTACAGTGGGATCTCCTGGAATGTCCTTTCCCAAACCCATCTATGCAAATCCT"
+
+  BC04:
+    length: 224
+    sequence: "CCTGTACTTCGTTCAGTTACGTATTGCTAAGGTTAATAGCAAACACGATAGAATCCGAACAGCACCTGTCAGATCTCGGGGGGGCTGGGCTGGGTCCCAGGTCATCCTGTGCTCAGTTAGCAGCTCATCCAGCTGGGTCAGGAAAGCCTTTTGGAAGCGTAGGACCTTGCCAGCCAGCGCTGGGATATGCAGGAGGACGGGGACAGCATTCAGCACCTACACCA"
+
+  BC09:
+    length: 225
+    sequence: "CCTGTACTTCGTTCAGTTACGTATTGCTAAGGTTAAAACCAAGACTCGCTGTGCCTAGTTCAGCACCTTGGTGTAGGTGCTGAATGCTGTCCCCGTCCTCCTGCATATCCCAGCGCTGGCTGGCAAGGTCCTACGCTTCCAAAAGGCTTTCCTGACCCAGCTGGATGAGCTGCTAACTGAGCACAGGATGACCTGGGACCCAGCCCAGCCCCCCCGAGATCTGAC"

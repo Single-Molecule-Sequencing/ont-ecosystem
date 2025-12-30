@@ -1,0 +1,71 @@
+# Size-based Classification Configuration
+# Experiment: 12282025_IF_DoubleBC_SMA_seq_no_trim
+
+# =============================================================================
+# CLASSIFICATION RULES
+# =============================================================================
+# 1. If size ranges do NOT overlap: classify by read length (fast)
+# 2. If size ranges DO overlap: 
+#    - Reads in overlap zone require alignment-based classification
+#    - Compute edit distance to ALL references in overlap
+#    - Assign to reference with LOWEST edit distance
+# 3. Midpoint rule: When multiple sequences expected in same barcode,
+#    use midpoint between sizes as classification boundary
+
+classification:
+  method: size_then_alignment
+  overlap_resolution: edit_distance  # compute ED to all refs, pick lowest
+
+# =============================================================================
+# BARCODE → TARGET MAPPING
+# =============================================================================
+barcode_targets:
+  2:
+    target: V0-4.2_forward
+    expected_length: 230
+    size_range: [200, 260]
+    
+  4:
+    target: V0-4.4_forward
+    expected_length: 225
+    size_range: [195, 255]
+    
+  7:
+    target: V0-4.2_reverse
+    expected_length: 230
+    size_range: [200, 260]
+    
+  9:
+    target: V0-4.4_reverse
+    expected_length: 225
+    size_range: [195, 255]
+
+# =============================================================================
+# OVERLAP DETECTION (computed automatically)
+# =============================================================================
+# BC02 [200-260] vs BC04 [195-255] → overlap [200-255] 
+# But these are DIFFERENT barcodes, so no conflict within same sample
+#
+# Within-barcode overlaps: NONE (each barcode has single target)
+# Cross-barcode overlaps: N/A (barcodes already separate samples)
+
+overlap_zones: []  # No within-barcode overlaps in this experiment
+
+# =============================================================================
+# EXAMPLE: If multiple targets per barcode (for future reference)
+# =============================================================================
+# barcode_targets:
+#   2:
+#     targets:
+#       - name: V0-4.2
+#         expected_length: 230
+#         size_range: [200, 260]
+#       - name: V0-4.3  
+#         expected_length: 245
+#         size_range: [215, 275]
+#     
+#     # Overlap: [215-260] → requires ED classification
+#     overlap_zones:
+#       - range: [215, 260]
+#         targets: [V0-4.2, V0-4.3]
+#         method: edit_distance
