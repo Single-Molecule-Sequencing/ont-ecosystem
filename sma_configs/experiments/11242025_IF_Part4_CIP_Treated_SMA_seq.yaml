@@ -165,3 +165,14 @@ output:
   base_dir: /data2/repos/ont-ecosystem/sma_configs/experiments/11242025_IF_Part4_CIP_Treated_SMA_seq
   generate_reference_fasta: true
   generate_sample_sheet_csv: true
+
+# Analysis results (generated 2025-12-30)
+analysis_results:
+  status: failed
+  total_reads: 0
+  total_bases_mb: 0
+  analysis_date: '2025-12-30'
+  notes: |
+    FAILED - No sequencing data generated.
+    Only 536KB total data (no sequencing_summary.txt).
+    CIP treatment killed helicase activity from using ethanol during purification.

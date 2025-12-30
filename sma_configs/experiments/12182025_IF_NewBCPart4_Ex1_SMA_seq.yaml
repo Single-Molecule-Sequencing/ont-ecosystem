@@ -93,3 +93,18 @@ output:
   base_dir: /data2/repos/ont-ecosystem/sma_configs/experiments/12182025_IF_NewBCPart4_Ex1_SMA_seq
   generate_reference_fasta: true
   generate_sample_sheet_csv: true
+
+# Analysis results (generated 2025-12-30)
+analysis_results:
+  status: anomalous
+  total_reads: 3228363
+  total_bases_mb: 1829.9
+  n50_bp: 116800
+  mean_qscore: 6.7
+  signal_positive_pct: 97.7
+  analysis_date: '2025-12-30'
+  notes: |
+    ANOMALOUS - Extremely high N50 (116.8K bp) and low quality (Q6.7).
+    Hi-T4 DNA Ligase with upstream barcode only.
+    Possible genomic DNA contamination or incomplete BsaI digestion.
+    All Dec 18 replicates show similar anomalous patterns.

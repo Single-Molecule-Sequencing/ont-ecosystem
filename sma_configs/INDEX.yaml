@@ -177,6 +177,83 @@ summary:
   targets_with_sequences: 18
   targets_pending_sequences: 9
 
+# =============================================================================
+# ANALYSIS RESULTS SUMMARY (2025-12-30)
+# =============================================================================
+analysis_summary:
+  analyzed_date: '2025-12-30'
+
+  by_status:
+    clean: 1           # 12282025_IF_DoubleBC_SMA_seq
+    daisy_chains: 2    # 12232025, 11242025_IF_Part4
+    severe_daisy_chains: 1  # 12082025
+    anomalous: 3       # 12182025 Ex1, Ex2, Ex3
+    failed: 1          # 11242025_CIP
+    not_analyzed: 4    # Pilot experiments
+
+  experiments:
+    - id: "12282025_IF_DoubleBC_SMA_seq"
+      status: clean
+      n50_bp: 149
+      mean_qscore: 11.9
+      total_reads: 1445165
+      verdict: "SUCCESS - Odd/even fix validated"
+
+    - id: "12232025_IF_DoubleBC_SMA_seq"
+      status: daisy_chains
+      n50_bp: 2613
+      mean_qscore: 14.1
+      total_reads: 12074175
+      verdict: "Bimodal distribution, daisy chains present"
+
+    - id: "11242025_IF_Part4_SMA_seq"
+      status: daisy_chains
+      n50_bp: 2639
+      mean_qscore: 15.6
+      total_reads: 20062441
+      verdict: "Largest dataset, daisy chains present"
+
+    - id: "12082025_IF_NewBCPart4_SMA_seq"
+      status: severe_daisy_chains
+      n50_bp: 5400
+      mean_qscore: 12.2
+      total_reads: 4688237
+      verdict: "Severe artifacts with new 3-step protocol"
+
+    - id: "12182025_IF_NewBCPart4_Ex1_SMA_seq"
+      status: anomalous
+      n50_bp: 116800
+      mean_qscore: 6.7
+      total_reads: 3228363
+      verdict: "Hi-T4 ligase - extreme long reads, low quality"
+
+    - id: "12182025_IF_NewBCPart4_Ex2_SMA_seq"
+      status: anomalous
+      n50_bp: 332500
+      mean_qscore: 6.3
+      total_reads: 1784271
+      verdict: "Immobilized T4 - worst N50, lowest quality"
+
+    - id: "12182025_IF_NewBCPart4_Ex3_SMA_seq"
+      status: anomalous
+      n50_bp: 140100
+      mean_qscore: 7.0
+      total_reads: 2200586
+      verdict: "Separate tubes - similar anomalous pattern"
+
+    - id: "11242025_IF_Part4_CIP_Treated_SMA_seq"
+      status: failed
+      n50_bp: null
+      mean_qscore: null
+      total_reads: 0
+      verdict: "No data - CIP killed helicase activity"
+
+  key_findings:
+    - "Odd/even plasmid separation eliminates daisy chaining (Dec 28 vs Dec 23)"
+    - "All Dec 18 cycling protocol variants failed with extreme artifacts"
+    - "Standard 5-step and new 3-step protocols both produce daisy chains"
+    - "Only successful clean library: V0-4.2 and V0-4.4 only (even-numbered)"
+
 # Protocol evolution and lessons learned
 protocols:
   standard_5step:
@@ -228,3 +305,63 @@ lessons_learned:
       Future double-barcoded SMA-seq experiments should include:
       - Odd-only: V0-4.1, V0-4.3, V0-39, V0-41, V0-43, V0-45, V0-47
       - Even-only: V0-4.2, V0-4.4, V0-40, V0-42, V0-44, V0-46
+
+# =============================================================================
+# CUSTOM BARCODE INVENTORY
+# =============================================================================
+custom_barcode_inventory:
+  available:
+    forward: [NB01, NB02, NB03, NB04, NB05]  # V0-4.1 to V0-4.4, V0-39
+    reverse: [NB06, NB07, NB08, NB09, NB10]  # Mostly for V0-4.2 and V0-4.4
+
+  coverage_status:
+    fully_covered: [V0-4.2, V0-4.4]  # Both forward and reverse barcodes
+    forward_only: [V0-4.1, V0-4.3, V0-39]  # Need reverse barcodes
+    standard_ont_only: [V0-39 to V0-47, V0-4.14 to V0-4.17]
+
+  pending:
+    - "Reverse barcodes for V0-4.1, V0-4.3, V0-39"
+    - "Custom barcodes for V0-39 through V0-47 series"
+
+# =============================================================================
+# REFERENCE FILES GENERATED
+# =============================================================================
+reference_files:
+  generator_script: "generate_all_references.py"
+  expected_products_spec: "targets/expected_products.yaml"
+  output_types:
+    - "reference.fa - Clean expected products (main reference)"
+    - "reference_targets.fa - Target sequences only (for post-demux alignment)"
+    - "reference_artifacts.fa - Daisy chain artifact sequences for QC"
+
+  output_locations:
+    - "experiments/<exp_id>/references/reference.fa"
+    - "experiments/<exp_id>/references/reference_targets.fa"
+    - "experiments/<exp_id>/references/reference_artifacts.fa"
+
+# =============================================================================
+# EXPECTED PRODUCTS AND PEAKS
+# =============================================================================
+expected_products:
+  spec_file: "targets/expected_products.yaml"
+
+  peak_categories:
+    clean_products:
+      length_range_bp: [100, 260]
+      description: "Single-target amplicons with correct barcode"
+      observed_in: "12282025_IF_DoubleBC_SMA_seq (N50=149bp)"
+
+    daisy_chains:
+      length_range_bp: [2300, 3000]
+      description: "Single daisy chain (TARGET + BACKBONE + TARGET)"
+      observed_in: "11242025, 12232025 experiments"
+
+    multi_daisy_chains:
+      length_range_bp: [4500, 8000]
+      description: "Multiple concatenated daisy chains"
+      observed_in: "12082025_IF_NewBCPart4_SMA_seq (N50=5400bp)"
+
+    anomalous:
+      length_range_bp: [100000, 500000]
+      description: "Extreme artifacts (gDNA contamination or undigested plasmid)"
+      observed_in: "12182025 replicates (N50=116-332K bp)"

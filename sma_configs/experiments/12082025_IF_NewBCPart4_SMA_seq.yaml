@@ -71,9 +71,22 @@ samples:
     barcode_type: single
 reference:
   targets_file: ../targets/sma_targets.yaml
+  barcodes_file: ../targets/sma_barcodes.yaml
   use_sequence: designed
   validate_against_sanger: true
   fasta: 12082025_IF_NewBCPart4_SMA_seq/reference.fa
+  full_products: 12082025_IF_NewBCPart4_SMA_seq/reference_full.fa
+  targets_only: 12082025_IF_NewBCPart4_SMA_seq/reference_targets.fa
+
+expected_products:
+  type: single_barcode
+  structure: "PREFIX(13bp) + ADAPTER(15bp) + FLANK_F(8bp) + BARCODE(23-24bp) + FLANK_R(8bp) + TARGET"
+  products:
+    NB01_V0-4.1_forward: {barcode: NB01, target: V0-4.1, length: 204, overhang: TTCG}
+    NB02_V0-4.2_forward: {barcode: NB02, target: V0-4.2, length: 233, overhang: AGGA}
+    NB03_V0-4.3_forward: {barcode: NB03, target: V0-4.3, length: 212, overhang: AGAG}
+    NB04_V0-4.4_forward: {barcode: NB04, target: V0-4.4, length: 191, overhang: TGGT}
+    NB05_V0-39_forward: {barcode: NB05, target: V0-39, length: 177, overhang: CTGA}
 analysis:
   min_read_length: 100
   max_read_length: 500
@@ -84,3 +97,17 @@ output:
   base_dir: /data2/repos/ont-ecosystem/sma_configs/experiments/12082025_IF_NewBCPart4_SMA_seq
   generate_reference_fasta: true
   generate_sample_sheet_csv: true
+
+# Analysis results (generated 2025-12-30)
+analysis_results:
+  status: severe_daisy_chains
+  total_reads: 4688237
+  total_bases_mb: 18807.3
+  n50_bp: 5400
+  mean_qscore: 12.2
+  signal_positive_pct: 94.9
+  analysis_date: '2025-12-30'
+  notes: |
+    Severe daisy chaining - highest N50 of standard experiments.
+    First test of new custom barcodes (NB01-NB05).
+    Lab notes: "Much more daisy chaining seen" and "barcodes with adapters attached to backbone".

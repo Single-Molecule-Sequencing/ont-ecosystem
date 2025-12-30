@@ -1,0 +1,22 @@
+{
+  "total_reads": 3228363,
+  "sampled_reads": 50013,
+  "is_sampled": true,
+  "total_bases": 1829924493,
+  "mean_length": 566.827365138307,
+  "median_length": 76.0,
+  "n50": 116835,
+  "mean_qscore": 6.658903252038196,
+  "median_qscore": 13.145878,
+  "pass_reads": 50013,
+  "fail_reads": 0,
+  "pass_rate": 100.0,
+  "end_reasons": {
+    "signal_positive": 3153683,
+    "unblock_mux_change": 67524,
+    "signal_negative": 3471,
+    "analysis_config_change": 3370,
+    "mux_change": 186,
+    "paused": 129
+  }
+}

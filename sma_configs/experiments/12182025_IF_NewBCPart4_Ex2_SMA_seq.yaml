@@ -93,3 +93,18 @@ output:
   base_dir: /data2/repos/ont-ecosystem/sma_configs/experiments/12182025_IF_NewBCPart4_Ex2_SMA_seq
   generate_reference_fasta: true
   generate_sample_sheet_csv: true
+
+# Analysis results (generated 2025-12-30)
+analysis_results:
+  status: anomalous
+  total_reads: 1784271
+  total_bases_mb: 2547.9
+  n50_bp: 332500
+  mean_qscore: 6.3
+  signal_positive_pct: 97.5
+  analysis_date: '2025-12-30'
+  notes: |
+    ANOMALOUS - Highest N50 of all experiments (332.5K bp) with lowest quality (Q6.3).
+    Immobilized T4 DNA Ligase with both-end barcoding.
+    Extreme long-read artifacts suggest major protocol issues.
+    All Dec 18 replicates show similar anomalous patterns.

@@ -88,3 +88,18 @@ output:
   base_dir: /data2/repos/ont-ecosystem/sma_configs/experiments/12182025_IF_NewBCPart4_Ex3_SMA_seq
   generate_reference_fasta: true
   generate_sample_sheet_csv: true
+
+# Analysis results (generated 2025-12-30)
+analysis_results:
+  status: anomalous
+  total_reads: 2200586
+  total_bases_mb: 3852.8
+  n50_bp: 140100
+  mean_qscore: 7.0
+  signal_positive_pct: 96.7
+  analysis_date: '2025-12-30'
+  notes: |
+    ANOMALOUS - High N50 (140.1K bp) with low quality (Q7.0).
+    Separate tubes then pooled approach.
+    Similar anomalous pattern to Ex1 and Ex2.
+    All Dec 18 replicates failed regardless of ligase/method variant.

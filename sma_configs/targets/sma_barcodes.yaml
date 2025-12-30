@@ -1,0 +1,255 @@
+# SMA-seq Custom Barcode Registry
+# Generated from oligo synthesis order
+# Last updated: 2025-12-30
+
+# =============================================================================
+# LIBRARY STRUCTURE
+# =============================================================================
+# All reads sequenced 5'→3' from Native Adapter:
+# PREFIX + ADAPTER + FLANK_F + BARCODE + FLANK_R + TARGET
+#
+# BsaI cuts create 4-nt 5' overhangs that determine which barcode ligates.
+# Each barcode is designed to match a specific overhang sequence.
+
+library_elements:
+  PREFIX: "CCTGTACTTCGTT"      # 13bp
+  ADAPTER: "CAGTTACGTATTGCT"   # 15bp
+  FLANK_F: "AAGGTTAA"           # 8bp
+  FLANK_R: "CAGCACCT"           # 8bp
+
+# =============================================================================
+# CUSTOM BARCODES (Dec 2025 experiments)
+# =============================================================================
+# Naming: [OVERHANG]_NB[XX] where overhang = BsaI cut site this barcode ligates to
+
+barcodes:
+  # -----------------------------------------------------------------------------
+  # Forward-oriented barcodes (ligate to 5' end of target, top strand)
+  # -----------------------------------------------------------------------------
+
+  NB01:
+    overhang: "TTCG"
+    sequence: "CACAAAGACACCGACAACTTTCTT"
+    length: 24
+    target: V0-4.1
+    orientation: forward
+    oligo_top: "/5Phos/aaggttaacacaaagacaccgacaactttcttcagcacct"
+    oligo_bottom: "/5Phos/cgaaaggtgctgaagaaagttgtcggtgtctttgtgttaaccttagcaat"
+
+  NB02:
+    overhang: "AGGA"
+    sequence: "ACAGACGACTACAAACGGAATCGA"
+    length: 24
+    target: V0-4.2
+    orientation: forward
+    oligo_top: "/5Phos/aaggttaaacagacgactacaaacggaatcgacagcacct"
+    oligo_bottom: "/5Phos/tcctaggtgctgtcgattccgtttgtagtcgtctgtttaaccttagcaat"
+    alias: BC02  # Same as Dec 28 barcode
+
+  NB03:
+    overhang: "AGAG"
+    sequence: "CCTGGTAACTGGGACACAAGACTC"
+    length: 24
+    target: V0-4.3
+    orientation: forward
+    oligo_top: "/5Phos/aaggttaacctggtaactgggacacaagactccagcacct"
+    oligo_bottom: "/5Phos/ctctaggtgctggagtcttgtgtcccagttaccaggttaaccttagcaat"
+
+  NB04:
+    overhang: "TGGT"
+    sequence: "TAGCAAACACGATAGAATCCGAA"
+    length: 23
+    target: V0-4.4
+    orientation: forward
+    oligo_top: "/5Phos/aaggttaatagcaaacacgatagaatccgaacagcacct"
+    oligo_bottom: "/5Phos/accaaggtgctgttcggattctatcgtgtttgctattaaccttagcaat"
+    alias: BC04  # Same as Dec 28 barcode
+
+  NB05:
+    overhang: "CTGA"
+    sequence: "GGTTACACAAACCCTGGACAAGC"
+    length: 23
+    target: V0-39
+    orientation: forward
+    oligo_top: "/5Phos/aaggttaaggttacacaaaccctggacaagcagcacct"
+    oligo_bottom: "/5Phos/tcagaggtgctgcttgtccagggtttgtgtaaccttaaccttagcaat"
+
+  # -----------------------------------------------------------------------------
+  # Reverse-oriented barcodes (ligate to 3' end of target, bottom strand)
+  # -----------------------------------------------------------------------------
+
+  NB06:
+    overhang: "TCCT"
+    sequence: "GACTACTTTCTGCCTTTGCGAGAA"
+    length: 24
+    target: V0-4.2
+    orientation: reverse
+    oligo_top: "/5Phos/aaggttaagactactttctgcctttgcgagaacagcacct"
+    oligo_bottom: "aggaaggtgctgttctcgcaaaggcagaaagtagtcttaaccttagcaat"
+    notes: "Ligates to V0-4.2 reverse complement strand"
+
+  NB07:
+    overhang: "CTCT"
+    sequence: "GGATTCATTCCCACGGTAACAC"
+    length: 22
+    target: V0-4.2
+    orientation: reverse
+    oligo_top: "/5Phos/aaggttaaggattcattcccacggtaacaccagcacct"
+    oligo_bottom: "agagaggtgctggtgttaccgtgggaatgaatccttaaccttagcaat"
+    alias: BC07  # Same as Dec 28 barcode
+    notes: "Alternative reverse barcode for V0-4.2"
+
+  NB08:
+    overhang: "ACCA"
+    sequence: "ACGTAACTTGGTTTGTTCCCTGAA"
+    length: 24
+    target: V0-4.4
+    orientation: reverse
+    oligo_top: "/5Phos/aaggttaaacgtaacttggtttgttccctgaacagcacct"
+    oligo_bottom: "tggtaggtgctgttcagggaacaaaccaagttacgtttaaccttagcaat"
+    notes: "Ligates to V0-4.4 reverse complement strand"
+
+  NB09:
+    overhang: "TCAG"
+    sequence: "AACCAAGACTCGCTGTGCCTAGTT"
+    length: 24
+    target: V0-4.4
+    orientation: reverse
+    oligo_top: "/5Phos/aaggttaaaaccaagactcgctgtgcctagttcagcacct"
+    oligo_bottom: "ctgaaggtgctgaactaggcacagcgagtcttggttttaaccttagcaat"
+    alias: BC09  # Same as Dec 28 barcode
+    notes: "Alternative reverse barcode for V0-4.4"
+
+  NB10:
+    overhang: "TTTG"
+    sequence: "GAGAGGACAAAGGTTTCAACGCTT"
+    length: 24
+    target: unknown
+    orientation: reverse
+    oligo_top: "/5Phos/aaggttaagagaggacaaaggtttcaacgcttcagcacct"
+    oligo_bottom: "caaaaggtgctgaagcgttgaaacctttgtcctctcttaaccttagcaat"
+
+# =============================================================================
+# BARCODE-TARGET MAPPING BY EXPERIMENT
+# =============================================================================
+
+experiment_mappings:
+  # Dec 8: New barcode 3-step protocol (5 targets, single-end barcoding)
+  12082025_IF_NewBCPart4_SMA_seq:
+    type: single_barcode
+    targets_used:
+      barcode01: {barcode: NB01, target: V0-4.1, orientation: forward}
+      barcode02: {barcode: NB02, target: V0-4.2, orientation: forward}
+      barcode03: {barcode: NB03, target: V0-4.3, orientation: forward}
+      barcode04: {barcode: NB04, target: V0-4.4, orientation: forward}
+      barcode05: {barcode: NB05, target: V0-39, orientation: forward}
+
+  # Dec 18 Ex1: Upstream barcode only (same as Dec 8)
+  12182025_IF_NewBCPart4_Ex1_SMA_seq:
+    type: single_barcode_upstream
+    targets_used:
+      barcode01: {barcode: NB01, target: V0-4.1, orientation: forward}
+      barcode02: {barcode: NB02, target: V0-4.2, orientation: forward}
+      barcode03: {barcode: NB03, target: V0-4.3, orientation: forward}
+      barcode04: {barcode: NB04, target: V0-4.4, orientation: forward}
+      barcode05: {barcode: NB05, target: V0-39, orientation: forward}
+
+  # Dec 18 Ex2/Ex3: Both ends (double barcode)
+  12182025_IF_NewBCPart4_Ex2_SMA_seq:
+    type: double_barcode
+    targets_used:
+      # Forward reads
+      barcode01: {barcode: NB01, target: V0-4.1, orientation: forward}
+      barcode02: {barcode: NB02, target: V0-4.2, orientation: forward}
+      barcode03: {barcode: NB03, target: V0-4.3, orientation: forward}
+      barcode04: {barcode: NB04, target: V0-4.4, orientation: forward}
+      barcode05: {barcode: NB05, target: V0-39, orientation: forward}
+      # Note: Reverse barcodes depend on which overhangs are present
+
+  # Dec 23: Double barcode (same as Dec 18 Ex2/Ex3)
+  12232025_IF_DoubleBC_SMA_seq:
+    type: double_barcode
+    targets_used:
+      barcode01: {barcode: NB01, target: V0-4.1, orientation: forward}
+      barcode02: {barcode: NB02, target: V0-4.2, orientation: forward}
+      barcode03: {barcode: NB03, target: V0-4.3, orientation: forward}
+      barcode04: {barcode: NB04, target: V0-4.4, orientation: forward}
+      barcode05: {barcode: NB05, target: V0-39, orientation: forward}
+
+  # Dec 28: Only V0-4.2 and V0-4.4 with double barcoding
+  12282025_IF_DoubleBC_SMA_seq:
+    type: double_barcode
+    targets_used:
+      BC02: {barcode: NB02, target: V0-4.2, orientation: forward}
+      BC07: {barcode: NB07, target: V0-4.2, orientation: reverse}
+      BC04: {barcode: NB04, target: V0-4.4, orientation: reverse}
+      BC09: {barcode: NB09, target: V0-4.4, orientation: forward}
+
+# =============================================================================
+# BsaI OVERHANG RELATIONSHIPS (for artifact detection)
+# =============================================================================
+# Adjacent Level 0 plasmids share complementary overhangs
+# This causes daisy chaining when present together
+
+overhang_pairs:
+  # These overhangs can ligate to each other causing artifacts
+  TTCG: {complement: CGAA, adjacent_to: V0-4.1}
+  AGGA: {complement: TCCT, adjacent_to: V0-4.2}
+  AGAG: {complement: CTCT, adjacent_to: V0-4.3}
+  TGGT: {complement: ACCA, adjacent_to: V0-4.4}
+  CTGA: {complement: TCAG, adjacent_to: V0-39}
+
+# Lesson learned: Use only odd OR even numbered Level 0 plasmids to prevent daisy chaining
+odd_even_separation:
+  odd_plasmids: [V0-4.1, V0-4.3, V0-39, V0-41, V0-43, V0-45, V0-47]
+  even_plasmids: [V0-4.2, V0-4.4, V0-40, V0-42, V0-44, V0-46]
+
+# =============================================================================
+# MISSING REVERSE BARCODES (to be designed/ordered)
+# =============================================================================
+# Based on Golden Gate scheme, the 3' overhang of each target should ligate
+# to a reverse barcode. Currently missing reverse barcodes for:
+#
+# V0-4.1: 3' overhang = AGGA → needs barcode with TCCT-compatible sequence
+#         (NB06 has TCCT overhang - could potentially be used)
+# V0-4.3: 3' overhang = TGGT → needs barcode with ACCA-compatible sequence
+#         (NB08 has ACCA overhang - could potentially be used)
+# V0-39:  3' overhang = TCAG → needs barcode with CTGA-compatible sequence
+#         (need to design new barcode or use existing if compatible)
+#
+# PROPOSED MAPPING (needs experimental verification):
+pending_reverse_barcodes:
+  V0-4.1_reverse:
+    required_overhang: "TCCT"  # Complement of 3' overhang
+    candidate_barcode: "NB06"
+    status: "needs_verification"
+    notes: "NB06 designed for V0-4.2 but TCCT overhang may match V0-4.1 3' end"
+
+  V0-4.3_reverse:
+    required_overhang: "ACCA"
+    candidate_barcode: "NB08"
+    status: "needs_verification"
+    notes: "NB08 designed for V0-4.4 but ACCA overhang may match V0-4.3 3' end"
+
+  V0-39_reverse:
+    required_overhang: "TCAG"
+    candidate_barcode: "NB09"
+    status: "needs_verification"
+    notes: "NB09 designed for V0-4.4 but TCAG overhang may match V0-39 3' end"
+
+# Alternative: Design new barcodes specifically for these targets
+new_barcode_designs_needed:
+  - target: V0-4.1
+    orientation: reverse
+    overhang_needed: "TCCT"
+    suggested_name: "NB11"
+
+  - target: V0-4.3
+    orientation: reverse
+    overhang_needed: "ACCA"
+    suggested_name: "NB12"
+
+  - target: V0-39
+    orientation: reverse
+    overhang_needed: "TCAG"
+    suggested_name: "NB13"

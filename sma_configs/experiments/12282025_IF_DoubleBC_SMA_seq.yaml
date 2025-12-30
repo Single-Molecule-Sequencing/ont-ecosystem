@@ -62,3 +62,19 @@ output:
   base_dir: /data2/repos/ont-ecosystem/sma_configs/experiments/12282025_IF_DoubleBC_SMA_seq
   generate_reference_fasta: true
   generate_sample_sheet_csv: true
+
+# Analysis results (generated 2025-12-30)
+analysis_results:
+  status: clean
+  total_reads: 1445165
+  total_bases_mb: 173.9
+  n50_bp: 149
+  mean_qscore: 11.9
+  median_qscore: 16.0
+  signal_positive_pct: 99.8
+  analysis_date: '2025-12-30'
+  notes: |
+    SUCCESS - Odd/even plasmid fix validated.
+    Using only V0-4.2 and V0-4.4 (even-numbered) eliminated daisy chaining.
+    N50 of 149bp matches expected amplicon size.
+    Unimodal length distribution confirms clean library.

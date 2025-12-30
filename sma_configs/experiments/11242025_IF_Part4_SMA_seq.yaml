@@ -164,3 +164,18 @@ output:
   base_dir: /data2/repos/ont-ecosystem/sma_configs/experiments/11242025_IF_Part4_SMA_seq
   generate_reference_fasta: true
   generate_sample_sheet_csv: true
+
+# Analysis results (generated 2025-12-30)
+analysis_results:
+  status: daisy_chains
+  total_reads: 20062441
+  total_bases_mb: 30370.5
+  n50_bp: 2639
+  mean_qscore: 15.6
+  median_qscore: 20.8
+  signal_positive_pct: 98.1
+  analysis_date: '2025-12-30'
+  notes: |
+    Largest dataset - 17 barcodes across multiple targets.
+    Daisy chaining present with bimodal length distribution.
+    Standard 5-step protocol produces similar artifacts as newer protocols.

@@ -1,0 +1,346 @@
+# SMA-seq Expected Sequenceable Products
+# Generated: 2025-12-30
+# Based on comprehensive analysis of all experiments
+#
+# This file documents all expected sequenceable sequences in SMA-seq libraries,
+# including clean products, daisy chain artifacts, and anomalous species.
+
+# =============================================================================
+# LIBRARY STRUCTURE
+# =============================================================================
+# Full product structure (5' to 3' as sequenced from Native Adapter):
+#
+#   [PREFIX][ADAPTER][FLANK_F][BARCODE][FLANK_R][TARGET]
+#     13bp    15bp     8bp    22-24bp   8bp    84-188bp
+#
+# Total expected clean product: 150-256 bp depending on target
+
+library_structure:
+  elements:
+    PREFIX:
+      sequence: "CCTGTACTTCGTT"
+      length: 13
+      description: "Native adapter prefix"
+    ADAPTER:
+      sequence: "CAGTTACGTATTGCT"
+      length: 15
+      description: "Adapter sequence"
+    FLANK_F:
+      sequence: "AAGGTTAA"
+      length: 8
+      description: "Forward flank (5' of barcode)"
+    BARCODE:
+      length_range: [22, 24]
+      description: "Custom barcode sequence"
+    FLANK_R:
+      sequence: "CAGCACCT"
+      length: 8
+      description: "Reverse flank (3' of barcode)"
+    TARGET:
+      length_range: [84, 188]
+      description: "CYP2D6 target amplicon"
+
+  total_clean_product:
+    min_length: 150
+    max_length: 260
+    formula: "PREFIX(13) + ADAPTER(15) + FLANK_F(8) + BARCODE(22-24) + FLANK_R(8) + TARGET(84-188)"
+
+# =============================================================================
+# CLEAN PRODUCTS (Expected peak: ~100-200 bp)
+# =============================================================================
+# These are the desired products when library prep is successful
+
+clean_products:
+  description: |
+    Clean products are single-target amplicons with correct barcode ligation.
+    Expected N50: 100-200 bp (matching target + barcode + flanks)
+    Observed in: 12282025_IF_DoubleBC_SMA_seq (N50=149bp)
+
+  V0-4.1:
+    barcode: NB01
+    overhang: "TTCG"
+    target_length: 168
+    total_length: 212
+    sequence: |
+      CCTGTACTTCGTTCAGTTACGTATTGCTAAGGTTAACACAAAGACACCGACAACTTTCTTCAGCACCT
+      ttcgagtacgacgaccctcGCTTCCTCAGGCTGCTGGACCTAGCTCAGGAGGGACTGAAGGAGGAGTCGGGCTTTCTGCGCGAGGTGCGGAGCGAGAGATCGAGGAGTCTCTGCAGGGCGAGCTCCCGAGAGGTGCCGGGGCTGGACTGGggcctcggaagagcagga
+    structure: "PREFIX + ADAPTER + FLANK_F + NB01 + FLANK_R + V0-4.1"
+
+  V0-4.2:
+    barcode: NB02
+    overhang: "AGGA"
+    target_length: 165
+    total_length: 209
+    sequence: |
+      CCTGTACTTCGTTCAGTTACGTATTGCTAAGGTTAAACAGACGACTACAAACGGAATCGACAGCACCT
+      AGGATTTGCATAGATGGGTTTGGGAAAGGACATTCCAGGAGATCCCACTGTAAGAAGGGCCTGGAGGAGGAGGGGACATCTCAGACATGGTCGTGGGAGAGGTGTGCCCGGGTCAGGGGGCACCAGGAGAGGCCAAGGACTCTGTACCTCCTATCCACGTCAGAG
+    structure: "PREFIX + ADAPTER + FLANK_F + NB02 + FLANK_R + V0-4.2"
+
+  V0-4.3:
+    barcode: NB03
+    overhang: "AGAG"
+    target_length: 188
+    total_length: 232
+    sequence: |
+      CCTGTACTTCGTTCAGTTACGTATTGCTAAGGTTAACCTGGTAACTGGGACACAAGACTCCAGCACCT
+      agagatttcgattttaggtttctcctcTGGGCAAGGAGAGAGGGTGGAGGCTGGCACTTGGGGAGGGACTTGGTGAGGTCAGTGGTAAGGACAGGCAGGCCCTGGGTCTACCTGGAGATGGCTGGGGCCTGAGACTTGTCCAGGTGAACGCAGAGCACAGGAGGGATTGAgaTcccgttctgtctggt
+    structure: "PREFIX + ADAPTER + FLANK_F + NB03 + FLANK_R + V0-4.3"
+
+  V0-4.4:
+    barcode: NB04
+    overhang: "TGGT"
+    target_length: 160
+    total_length: 203
+    sequence: |
+      CCTGTACTTCGTTCAGTTACGTATTGCTAAGGTTAATAGCAAACACGATAGAATCCGAACAGCACCT
+      tggtgtaggtgctgaatgcTGTCCCCGTCCTCCTGCATATCCCAGCGCTGGCTGGCAAGGTCCTACGCTTCCAAAAGGCTTTCCTGACCCAGCTGGATGAGCTGCTAACTGAGCACAGGATGACCTGGGACCCAGCCCAGCCcccccgagaTctgactga
+    structure: "PREFIX + ADAPTER + FLANK_F + NB04 + FLANK_R + V0-4.4"
+
+  V0-39:
+    barcode: NB05
+    overhang: "CTGA"
+    target_length: 106
+    total_length: 148
+    sequence: |
+      CCTGTACTTCGTTCAGTTACGTATTGCTAAGGTTAAGGTTACACAAACCCTGGACAAGCAGCACCT
+      GGAGCTGAGGCCTTCCTGGCAGAGATGGAGAAGGTGAGAGTGGCTGCCACGGTGGGGGGCAAGGGTGGTGGGTTGAGCGTCCCAGGAGGAATGAGGGGAGGCTGGGCAAA
+    structure: "PREFIX + ADAPTER + FLANK_F + NB05 + FLANK_R + V0-39"
+
+# =============================================================================
+# DAISY CHAIN ARTIFACTS (Peak: ~2,600 bp)
+# =============================================================================
+# These form when adjacent Level 0 plasmid backbones provide matching overhangs
+
+daisy_chain_artifacts:
+  description: |
+    Daisy chains form when BsaI-digested backbone from one plasmid ligates to
+    the target from an adjacent plasmid via complementary 4-nt overhangs.
+
+    Root cause: Adjacent Level 0 plasmids in the Golden Gate scheme share
+    complementary overhangs at their boundaries.
+
+    Expected N50: ~2,600 bp (observed in Nov 24, Dec 23 experiments)
+    Structure: TARGET_A + BACKBONE + TARGET_B + [additional chains]
+
+  observed_experiments:
+    - id: "11242025_IF_Part4_SMA_seq"
+      n50_bp: 2639
+      notes: "Standard 5-step protocol"
+    - id: "12232025_IF_DoubleBC_SMA_seq"
+      n50_bp: 2613
+      notes: "Double barcode cycling protocol"
+    - id: "12082025_IF_NewBCPart4_SMA_seq"
+      n50_bp: 5400
+      notes: "New 3-step protocol - severe daisy chaining"
+
+  mechanism:
+    step1: "BsaI cuts plasmid, releasing target with 4-nt overhangs"
+    step2: "Backbone fragment has complementary overhangs"
+    step3: "Adjacent plasmid's overhang matches backbone, enabling ligation"
+    step4: "Chain forms: [BC+TARGET_A+BACKBONE+TARGET_B+BC]..."
+
+  overhang_conflicts:
+    # V0-4.1 (TTCG) → adjacent to V0-4.2 (AGGA)
+    V0-4.1_to_V0-4.2:
+      5p_overhang: "TTCG"
+      3p_overhang: "AGGA"
+      backbone_creates: "CGAA...TCCT"
+      can_ligate_to: ["V0-4.2 forward", "NB06 reverse"]
+
+    # V0-4.2 (AGGA) → adjacent to V0-4.3 (AGAG)
+    V0-4.2_to_V0-4.3:
+      5p_overhang: "AGGA"
+      3p_overhang: "AGAG"
+      backbone_creates: "TCCT...CTCT"
+      can_ligate_to: ["V0-4.3 forward", "NB07 reverse"]
+
+    # V0-4.3 (AGAG) → adjacent to V0-4.4 (TGGT)
+    V0-4.3_to_V0-4.4:
+      5p_overhang: "AGAG"
+      3p_overhang: "TGGT"
+      backbone_creates: "CTCT...ACCA"
+      can_ligate_to: ["V0-4.4 forward", "NB08 reverse"]
+
+    # V0-4.4 (TGGT) → adjacent to V0-39 (CTGA)
+    V0-4.4_to_V0-39:
+      5p_overhang: "TGGT"
+      3p_overhang: "CTGA"
+      backbone_creates: "ACCA...TCAG"
+      can_ligate_to: ["V0-39 forward", "NB09 reverse"]
+
+  estimated_lengths:
+    single_daisy_chain:
+      components: "TARGET_A (~150bp) + BACKBONE (~2000bp) + TARGET_B (~150bp)"
+      total: "~2,300-2,600 bp"
+    double_daisy_chain:
+      components: "TARGET_A + BACKBONE + TARGET_B + BACKBONE + TARGET_C"
+      total: "~4,500-5,500 bp"
+
+# =============================================================================
+# SEVERE ARTIFACTS (Peak: ~5,400 bp - Dec 8 experiment)
+# =============================================================================
+
+severe_daisy_chains:
+  description: |
+    The new 3-step barcode protocol (Dec 8) produced more severe daisy chaining.
+    N50 increased to 5,400 bp indicating multi-chain concatenates.
+
+  observed_in: "12082025_IF_NewBCPart4_SMA_seq"
+  n50_bp: 5400
+
+  likely_cause: |
+    Simplified protocol (eliminating end repair and dA-tailing) may have:
+    1. Increased ligation efficiency for all compatible overhangs
+    2. Reduced specificity leading to more promiscuous ligation
+    3. Created multiple concatenation products
+
+  peak_assignments:
+    peak_1: {length_bp: 2600, product: "Single daisy chain"}
+    peak_2: {length_bp: 5400, product: "Double daisy chain"}
+    peak_3: {length_bp: 8000, product: "Triple+ daisy chain"}
+
+# =============================================================================
+# ANOMALOUS PRODUCTS (N50 > 100,000 bp - Dec 18 experiments)
+# =============================================================================
+
+anomalous_products:
+  description: |
+    All three Dec 18 replicates showed extreme N50 values (100-330K bp)
+    with very low quality scores (Q6-7). This is NOT typical daisy chaining
+    but indicates a more fundamental protocol failure.
+
+  observed_experiments:
+    - id: "12182025_IF_NewBCPart4_Ex1_SMA_seq"
+      protocol: "Hi-T4 DNA Ligase, upstream only"
+      n50_bp: 116800
+      mean_qscore: 6.7
+    - id: "12182025_IF_NewBCPart4_Ex2_SMA_seq"
+      protocol: "Immobilized T4 DNA Ligase, both ends"
+      n50_bp: 332500
+      mean_qscore: 6.3
+    - id: "12182025_IF_NewBCPart4_Ex3_SMA_seq"
+      protocol: "Separate tubes then pooled"
+      n50_bp: 140100
+      mean_qscore: 7.0
+
+  possible_causes:
+    genomic_contamination:
+      description: "High molecular weight genomic DNA carryover"
+      evidence: "Very long reads (>100kb), low quality, bimodal distribution"
+    incomplete_digestion:
+      description: "BsaI did not fully digest plasmids"
+      evidence: "Supercoiled/linear plasmid DNA (4-10kb circular)"
+    plasmid_concatemers:
+      description: "End-to-end plasmid ligation"
+      evidence: "Multiples of plasmid size"
+
+# =============================================================================
+# PEAK SUMMARY BY EXPERIMENT
+# =============================================================================
+
+peak_summary:
+  # Dec 28 - CLEAN (odd/even fix validated)
+  "12282025_IF_DoubleBC_SMA_seq":
+    status: "clean"
+    n50_bp: 149
+    peaks:
+      - {center_bp: 149, assignment: "Clean V0-4.2/V0-4.4 products", fraction: 0.95}
+    notes: "Only even-numbered plasmids used (V0-4.2, V0-4.4)"
+
+  # Dec 23 - Daisy chains
+  "12232025_IF_DoubleBC_SMA_seq":
+    status: "daisy_chains"
+    n50_bp: 2613
+    peaks:
+      - {center_bp: 150, assignment: "Clean products", fraction: 0.30}
+      - {center_bp: 2600, assignment: "Single daisy chain", fraction: 0.60}
+      - {center_bp: 5000, assignment: "Double daisy chain", fraction: 0.10}
+    notes: "All Level 0 plasmids present - daisy chains from adjacent backbones"
+
+  # Nov 24 - Daisy chains (standard protocol)
+  "11242025_IF_Part4_SMA_seq":
+    status: "daisy_chains"
+    n50_bp: 2639
+    peaks:
+      - {center_bp: 150, assignment: "Clean products", fraction: 0.30}
+      - {center_bp: 2600, assignment: "Single daisy chain", fraction: 0.60}
+      - {center_bp: 5000, assignment: "Double daisy chain", fraction: 0.10}
+    notes: "17 barcodes - largest dataset"
+
+  # Dec 8 - Severe daisy chains
+  "12082025_IF_NewBCPart4_SMA_seq":
+    status: "severe_daisy_chains"
+    n50_bp: 5400
+    peaks:
+      - {center_bp: 150, assignment: "Clean products", fraction: 0.15}
+      - {center_bp: 2800, assignment: "Single daisy chain", fraction: 0.35}
+      - {center_bp: 5400, assignment: "Double daisy chain", fraction: 0.35}
+      - {center_bp: 8000, assignment: "Triple+ daisy chain", fraction: 0.15}
+    notes: "New 3-step protocol increased artifact formation"
+
+  # Dec 18 Ex1/Ex2/Ex3 - Anomalous
+  "12182025_IF_NewBCPart4_replicates":
+    status: "anomalous"
+    experiments: ["Ex1", "Ex2", "Ex3"]
+    n50_range_bp: [116800, 332500]
+    peaks:
+      - {center_bp: 200, assignment: "Clean products (minor)", fraction: 0.05}
+      - {center_bp: 5000, assignment: "Plasmid-size fragments", fraction: 0.15}
+      - {center_bp: 100000, assignment: "High MW artifacts", fraction: 0.80}
+    notes: "Cycling protocol failure - possible gDNA contamination or incomplete digestion"
+
+# =============================================================================
+# FIX VALIDATION: ODD/EVEN SEPARATION
+# =============================================================================
+
+fix_validation:
+  description: |
+    The Dec 28 experiment validated the odd/even plasmid separation fix.
+    By using only V0-4.2 and V0-4.4 (both even-numbered), adjacent plasmid
+    backbones were not present, eliminating daisy chain formation.
+
+  comparison:
+    before_fix:
+      experiment: "12232025_IF_DoubleBC_SMA_seq"
+      plasmids_used: ["V0-4.1", "V0-4.2", "V0-4.3", "V0-4.4", "V0-39"]
+      n50_bp: 2613
+      distribution: "Bimodal (clean + daisy chains)"
+
+    after_fix:
+      experiment: "12282025_IF_DoubleBC_SMA_seq"
+      plasmids_used: ["V0-4.2", "V0-4.4"]
+      n50_bp: 149
+      distribution: "Unimodal (clean products only)"
+
+  recommendation: |
+    Future SMA-seq experiments should use only odd OR even numbered Level 0 plasmids:
+    - ODD-only: V0-4.1, V0-4.3, V0-39, V0-41, V0-43, V0-45, V0-47
+    - EVEN-only: V0-4.2, V0-4.4, V0-40, V0-42, V0-44, V0-46
+
+# =============================================================================
+# REFERENCE FILE GENERATION
+# =============================================================================
+
+reference_files:
+  description: |
+    Reference FASTA files should be generated for each experiment type
+    to enable alignment-based QC and product identification.
+
+  file_types:
+    reference.fa:
+      description: "Clean expected products only"
+      use_case: "Primary alignment target"
+
+    reference_full.fa:
+      description: "Full library structure including all elements"
+      use_case: "Detailed structure analysis"
+
+    reference_targets.fa:
+      description: "Target sequences only (no barcodes/flanks)"
+      use_case: "Post-demux alignment"
+
+    reference_artifacts.fa:
+      description: "Known artifact sequences (daisy chains, etc.)"
+      use_case: "QC to quantify artifacts"
+
+  generator_script: "generate_references.py"
