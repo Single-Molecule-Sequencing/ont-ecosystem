@@ -3,6 +3,28 @@ experiment:
   date: '2025-12-08'
   type: new_barcode_part4
   description: NewBC Part4 main experiment (294GB)
+  prepared_by: Isaac Farnum
+  prep_date: '2025-12-08'
+
+library_prep:
+  protocol: new_barcode_3step
+  steps:
+    - step: 1
+      action: "BsaI digestion"
+      details: "Plasmids V0-4.1, 4.2, 4.3, 4.4, and V0-39 cut with BsaI"
+      purification: beads
+    - step: 2
+      action: "New barcode ligation"
+      details: "100nM of each new barcode ligated (NB01-NB05)"
+      purification: beads
+    - step: 3
+      action: "Adapter ligation"
+      purification: beads
+  loading:
+    volume_ul: 1.1
+    amount_pmol: 50
+  barcode_scheme: new_custom
+  notes: "First test of new custom barcodes"
 paths:
   data_root: /data1/12082025_IF_NewBCPart4_SMA_seq
   run_id: 20251208_2139_MD-100098_FBD70608_2272e10f

@@ -3,6 +3,30 @@ experiment:
   date: '2025-12-23'
   type: double_barcode
   description: Double barcode SMA-seq experiment (358GB)
+  prepared_by: Isaac Farnum
+  prep_date: '2025-12-23'
+
+library_prep:
+  protocol: cleavage_ligation_cycling
+  method: one_tube
+  barcode_design: both_ends
+  cycling:
+    initial_cleavage: "37C for 10 min"
+    cycling_program: "37C 3min / 16C 3min x 10 cycles"
+    final_cleavage: "37C for 15 min"
+  steps:
+    - step: 1
+      action: "One-tube cleavage-ligation cycling"
+      details: "V0-4.1, 4.2, 4.3, 4.4, V0-39 cut with BsaI, ligated to modified barcodes (both ends), ligated to NA adapter"
+  loading:
+    volume_ul: 2.2
+    amount_fmol: 50
+  barcode_scheme: modified_double
+  known_issues:
+    - "Daisy chaining observed"
+    - "Barcodes with adapters attached to backbone"
+  root_cause: "Adjacent Level 0 plasmids present matching sites for other barcodes"
+  fix_recommendation: "Use only odd OR only even numbered Level 0 plasmids per experiment"
 paths:
   data_root: /data1/12232025_IF_DoubleBC_SMA_seq
   run_id: 20251223_1919_MD-100098_FBD71150_ccaaf379

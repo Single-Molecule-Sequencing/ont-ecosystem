@@ -156,7 +156,16 @@ targets:
     - V0-4.17
     - B2
 
-  pending_sequences: []
+  pending_sequences:
+    - V0-15  # CYP2D6:3909-4007 (99bp) - used in pilot experiments
+    - V0-16  # CYP2D6:4004-4115 (112bp)
+    - V0-17  # CYP2D6:4112-4201 (90bp)
+    - V0-18  # CYP2D6:4198-4312 (115bp)
+    - V0-19  # CYP2D6:4309-4423 (115bp)
+    - V0-20  # CYP2D6:4420-4507 (88bp)
+    - V0-21  # CYP2D6:4504-4609 (106bp)
+    - V0-22  # CYP2D6:4606-4705 (100bp)
+    - V0-23  # CYP2D6:4702-4802 (101bp)
 
 # Summary statistics
 summary:
@@ -164,5 +173,58 @@ summary:
   total_size_tb: 1.44
   ready_configs: 9
   needs_review: 3
-  targets_defined: 18
+  targets_defined: 27
   targets_with_sequences: 18
+  targets_pending_sequences: 9
+
+# Protocol evolution and lessons learned
+protocols:
+  standard_5step:
+    description: "Original SMA-seq protocol"
+    steps: ["BsaI digestion", "End repair", "dA tailing", "Barcode ligation", "Adapter ligation"]
+    used_in: ["11242025_IF_Part4_SMA_seq", "11242025_IF_Part4_CIP_Treated_SMA_seq"]
+
+  new_barcode_3step:
+    description: "Simplified protocol with new custom barcodes"
+    steps: ["BsaI digestion", "New barcode ligation (100nM)", "Adapter ligation"]
+    used_in: ["12082025_IF_NewBCPart4_SMA_seq"]
+
+  cleavage_ligation_cycling:
+    description: "One-tube cleavage-ligation cycling protocol"
+    cycling: "37C 10min -> (37C 3min / 16C 3min) x10 -> 37C 15min"
+    variants:
+      - one_tube_HiT4: "Hi-T4 DNA Ligase, upstream barcode only"
+      - one_tube_immobilized: "Immobilized T4 DNA Ligase, both ends"
+      - separate_tubes: "Each plasmid in separate tube, then pooled"
+    used_in: ["12182025 replicates", "12232025_IF_DoubleBC_SMA_seq"]
+
+# Lessons learned from new barcode experiments
+lessons_learned:
+  date_documented: "2025-12-23"
+  documented_by: "Isaac Farnum"
+
+  issue_daisy_chaining:
+    description: "Daisy chaining observed in new barcode experiments"
+    symptoms:
+      - "Much more daisy chaining seen"
+      - "Barcodes with adapters seen attached to backbone"
+    root_cause: |
+      The backbone left behind from adjacent Level 0 plasmids presents
+      a perfect match for other barcodes in the Golden Gate scheme.
+    affected_experiments:
+      - "12082025_IF_NewBCPart4_SMA_seq"
+      - "12182025_IF_NewBCPart4_Ex1_SMA_seq"
+      - "12182025_IF_NewBCPart4_Ex2_SMA_seq"
+      - "12182025_IF_NewBCPart4_Ex3_SMA_seq"
+      - "12232025_IF_DoubleBC_SMA_seq"
+
+  fix_odd_even_separation:
+    description: "Use only odd or even numbered Level 0 plasmids per experiment"
+    rationale: |
+      By separating odd and even numbered Level 0 plasmids,
+      adjacent plasmids in the Golden Gate scheme are not present together.
+      This prevents the backbone matching issue.
+    recommendation: |
+      Future double-barcoded SMA-seq experiments should include:
+      - Odd-only: V0-4.1, V0-4.3, V0-39, V0-41, V0-43, V0-45, V0-47
+      - Even-only: V0-4.2, V0-4.4, V0-40, V0-42, V0-44, V0-46

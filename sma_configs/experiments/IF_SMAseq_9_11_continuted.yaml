@@ -1,51 +1,159 @@
-# SMA-seq Experiment Configuration
-# Experiment: IF_SMAseq_9_11_continuted
-# Generated: 2025-12-30
-
 experiment:
-  id: "IF_SMAseq_9_11_continuted"
-  date: "2025-09-15"
-  type: "early_test"
-  description: "Continuation of September 11 SMA-seq experiment"
-  status: "early_development"
-  continuation_of: "IF_SMAseq_09112025"
+  id: IF_SMAseq_9_11_continuted
+  date: '2025-09-15'
+  type: early_test
+  description: Continuation of September 11 SMA-seq experiment
+  status: early_development
+  continuation_of: IF_SMAseq_09112025
 
-# Data paths
 paths:
-  data_root: "/data1/IF_SMAseq_9_11_continuted"
-  run_id: "20250915_0839_MD-102066_FBD70249_4ff11072"
-  pod5_dir: "/data1/IF_SMAseq_9_11_continuted/no_sample_id/20250915_0839_MD-102066_FBD70249_4ff11072/pod5_pass"
-  bam_dir: "/data1/IF_SMAseq_9_11_continuted/no_sample_id/20250915_0839_MD-102066_FBD70249_4ff11072/bam_pass"
+  data_root: /data1/IF_SMAseq_9_11_continuted
+  run_id: 20250915_0839_MD-102066_FBD70249_4ff11072
+  pod5_dir: /data1/IF_SMAseq_9_11_continuted/no_sample_id/20250915_0839_MD-102066_FBD70249_4ff11072/pod5_pass
+  bam_dir: /data1/IF_SMAseq_9_11_continuted/no_sample_id/20250915_0839_MD-102066_FBD70249_4ff11072/bam_pass
 
-# Sequencing metadata (same flow cell as 09112025)
 sequencing:
-  device: "MinION"
-  position_id: "MD-102066"
-  flow_cell_id: "FBD70249"
-  kit: "SQK-NBD114-24"
+  device: MinION
+  position_id: MD-102066
+  flow_cell_id: FBD70249
+  kit: SQK-NBD114-24
 
-# Sample barcode mapping - needs verification
+# Same samples as IF_SMAseq_09112025
 samples:
-  # Continuation - same samples as IF_SMAseq_09112025
-  unknown:
-    notes: "Sample sheet needs to be located and parsed"
+  barcode02:
+    alias: V015
+    target_id: V0-15
+    condition: standard
+    replicate: 1
+    barcode_type: single
 
-# Reference configuration
+  barcode03:
+    alias: V016
+    target_id: V0-16
+    condition: standard
+    replicate: 1
+    barcode_type: single
+
+  barcode04:
+    alias: V015_2
+    target_id: V0-15
+    condition: double_barcode
+    replicate: 2
+    barcode_type: double
+
+  barcode05:
+    alias: V016_2
+    target_id: V0-16
+    condition: double_barcode
+    replicate: 2
+    barcode_type: double
+
+  barcode06:
+    alias: V017
+    target_id: V0-17
+    condition: standard
+    replicate: 1
+    barcode_type: single
+
+  barcode07:
+    alias: V017_2
+    target_id: V0-17
+    condition: double_barcode
+    replicate: 2
+    barcode_type: double
+
+  barcode08:
+    alias: V018
+    target_id: V0-18
+    condition: standard
+    replicate: 1
+    barcode_type: single
+
+  barcode09:
+    alias: V018_2
+    target_id: V0-18
+    condition: double_barcode
+    replicate: 2
+    barcode_type: double
+
+  barcode10:
+    alias: V019
+    target_id: V0-19
+    condition: standard
+    replicate: 1
+    barcode_type: single
+
+  barcode11:
+    alias: V019_2
+    target_id: V0-19
+    condition: double_barcode
+    replicate: 2
+    barcode_type: double
+
+  barcode12:
+    alias: V020
+    target_id: V0-20
+    condition: standard
+    replicate: 1
+    barcode_type: single
+
+  barcode13:
+    alias: V020_2
+    target_id: V0-20
+    condition: double_barcode
+    replicate: 2
+    barcode_type: double
+
+  barcode14:
+    alias: V021
+    target_id: V0-21
+    condition: standard
+    replicate: 1
+    barcode_type: single
+
+  barcode15:
+    alias: V021_2
+    target_id: V0-21
+    condition: double_barcode
+    replicate: 2
+    barcode_type: double
+
+  barcode16:
+    alias: V022
+    target_id: V0-22
+    condition: standard
+    replicate: 1
+    barcode_type: single
+
+  barcode17:
+    alias: V022_2
+    target_id: V0-22
+    condition: double_barcode
+    replicate: 2
+    barcode_type: double
+
+  barcode18:
+    alias: V023
+    target_id: V0-23
+    condition: standard
+    replicate: 1
+    barcode_type: single
+
 reference:
-  targets_file: "../targets/sma_targets.yaml"
-  use_sequence: "designed"
+  targets_file: ../targets/sma_targets.yaml
+  use_sequence: designed
   validate_against_sanger: true
+  fasta: IF_SMAseq_9_11_continuted/reference.fa
+  status: sequences_pending
 
-# Analysis settings
 analysis:
-  min_read_length: 100
-  max_read_length: 500
+  min_read_length: 80
+  max_read_length: 200
   min_qscore: 10
-  status: "needs_review"
-  notes: "Continuation of early development experiment"
+  size_classification: true
+  alignment_validation: true
 
-# Output configuration
 output:
-  base_dir: "/data2/repos/ont-ecosystem/sma_configs/experiments/IF_SMAseq_9_11_continuted"
-  generate_reference_fasta: false
-  generate_sample_sheet_csv: false
+  base_dir: /data2/repos/ont-ecosystem/sma_configs/experiments/IF_SMAseq_9_11_continuted
+  generate_reference_fasta: true
+  generate_sample_sheet_csv: true

@@ -5,6 +5,35 @@ experiment:
   description: Part4 CIP-treated variant (same day as main Part4)
   paired_experiment: 11242025_IF_Part4_SMA_seq
   treatment: CIP
+  prepared_by: Isaac Farnum
+  prep_date: '2025-11-24'
+
+library_prep:
+  protocol: standard_5step_cip
+  steps:
+    - step: 1
+      action: "BsaI digestion"
+      details: "Plasmids V04.1-4.4, V0-39 through V0-47, V04.14-4.17 cut with BsaI"
+      purification: beads
+    - step: 2
+      action: "End repair"
+      purification: beads
+    - step: 3
+      action: "dA tailing"
+      purification: beads
+    - step: 4
+      action: "Barcode ligation"
+      details: "NB01-NB17"
+      purification: beads
+    - step: 5
+      action: "Adapter ligation"
+      details: "CIP-treated NA adapter"
+      purification: beads
+  loading:
+    volume_ul: 0.81
+    amount_pmol: 50
+  barcode_scheme: standard_ONT
+  notes: "CIP treatment killed helicase activity from using ethanol during purification"
 paths:
   data_root: /data1/11242025_IF_Part4_CIP_Treated_SMA_seq
   run_id: 20251124_2039_MD-101527_FBD68976_9f9f4bc1

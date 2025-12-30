@@ -5,6 +5,31 @@ experiment:
   description: NewBC Part4 Replicate 1 (81GB)
   replicate_group: 12182025_NewBCPart4
   replicate_number: 1
+  prepared_by: Isaac Farnum
+  prep_date: '2025-12-18'
+
+library_prep:
+  protocol: cleavage_ligation_cycling
+  method: one_tube
+  ligase: Hi-T4 DNA Ligase
+  barcode_design: upstream_end_only
+  cycling:
+    initial_cleavage: "37C for 10 min"
+    cycling_program: "37C 3min / 16C 3min x 10 cycles"
+    final_cleavage: "37C for 15 min"
+  steps:
+    - step: 1
+      action: "One-tube cleavage-ligation"
+      details: "V0-4.1, 4.2, 4.3, 4.4, V0-39 cut with BsaI, ligated to modified barcodes (upstream end), ligated to NA adapter"
+      enzyme: "BsaI + Hi-T4 DNA Ligase"
+    - step: 2
+      action: "Purification"
+      details: "2X volume beads"
+  loading:
+    volume_ul: 1.68
+    amount_fmol: 50
+  barcode_scheme: modified_upstream
+  notes: "Modified barcodes designed to upstream end of target sequence"
 paths:
   data_root: /data1/12182025_IF_NewBCPart4_Ex1_SMA_seq
   runs:
