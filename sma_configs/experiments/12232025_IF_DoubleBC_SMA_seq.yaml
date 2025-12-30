@@ -27,117 +27,199 @@ library_prep:
     - "Barcodes with adapters attached to backbone"
   root_cause: "Adjacent Level 0 plasmids present matching sites for other barcodes"
   fix_recommendation: "Use only odd OR only even numbered Level 0 plasmids per experiment"
+
 paths:
   data_root: /data1/12232025_IF_DoubleBC_SMA_seq
   run_id: 20251223_1919_MD-100098_FBD71150_ccaaf379
   pod5_dir: /data1/12232025_IF_DoubleBC_SMA_seq/no_sample_id/20251223_1919_MD-100098_FBD71150_ccaaf379/pod5_pass
   bam_dir: /data1/12232025_IF_DoubleBC_SMA_seq/no_sample_id/20251223_1919_MD-100098_FBD71150_ccaaf379/bam_pass
   fastq_dir: /data1/12232025_IF_DoubleBC_SMA_seq/no_sample_id/20251223_1919_MD-100098_FBD71150_ccaaf379/fastq_pass
+  sequencing_summary: /data1/12232025_IF_DoubleBC_SMA_seq/no_sample_id/20251223_1919_MD-100098_FBD71150_ccaaf379/sequencing_summary_FBD71150_ccaaf379_820de8f9.txt
   sample_sheet: /data1/12232025_IF_DoubleBC_SMA_seq/no_sample_id/20251223_1919_MD-100098_FBD71150_ccaaf379/sample_sheet_FBD71150_20251223_1852_ccaaf379.csv
+
 sequencing:
   device: PromethION
   position_id: MD-100098
   flow_cell_id: FBD71150
   flow_cell_product: FLO-MIN114
   kit: SQK-NBD114-24
+  protocol_run_id: ccaaf379-7ee9-43f9-bb56-048485c0681f
+
+# =============================================================================
+# SAMPLE BARCODE MAPPING
+# =============================================================================
+# Forward barcodes (NB01-NB05): Ligate to 5' end via BsaI overhang
+# Reverse barcodes (NB06-NB10): Ligate to 3' end via complementary overhang
+#
+# Note: This experiment used ALL adjacent plasmids together, causing daisy chains.
+# The fix (validated in Dec 28) is to use only odd OR even numbered plasmids.
+
 samples:
+  # Forward barcodes - ligate to 5' end of target
   barcode01:
     alias: V04_1
     target_id: V0-4.1
+    custom_barcode: NB01
+    overhang: TTCG
+    orientation: forward
     condition: standard
     replicate: 1
     barcode_type: single
+
   barcode02:
     alias: V04_2
     target_id: V0-4.2
+    custom_barcode: NB02
+    overhang: AGGA
+    orientation: forward
     condition: standard
     replicate: 1
     barcode_type: single
+
   barcode03:
     alias: V04_3
     target_id: V0-4.3
+    custom_barcode: NB03
+    overhang: AGAG
+    orientation: forward
     condition: standard
     replicate: 1
     barcode_type: single
+
   barcode04:
     alias: V04_4
     target_id: V0-4.4
+    custom_barcode: NB04
+    overhang: TGGT
+    orientation: forward
     condition: standard
     replicate: 1
     barcode_type: single
+
   barcode05:
     alias: V039
     target_id: V0-39
+    custom_barcode: NB05
+    overhang: CTGA
+    orientation: forward
     condition: standard
     replicate: 1
     barcode_type: single
+
+  # Reverse barcodes - ligate to 3' end of target (reverse complement strand)
   barcode06:
-    alias: V04_1_2
-    target_id: V0-4.1
-    condition: double_barcode
-    replicate: 2
-    barcode_type: double
-  barcode07:
-    alias: V04_2_2
+    alias: V04_2_rev
     target_id: V0-4.2
+    custom_barcode: NB06
+    overhang: TCCT
+    orientation: reverse
     condition: double_barcode
     replicate: 2
     barcode_type: double
+    notes: "Captures reverse complement of V0-4.2"
+
+  barcode07:
+    alias: V04_2_rev_alt
+    target_id: V0-4.2
+    custom_barcode: NB07
+    overhang: CTCT
+    orientation: reverse
+    condition: double_barcode
+    replicate: 3
+    barcode_type: double
+    notes: "Alternative reverse barcode for V0-4.2"
+
   barcode08:
-    alias: V04_3_2
-    target_id: V0-4.3
-    condition: double_barcode
-    replicate: 2
-    barcode_type: double
-  barcode09:
-    alias: V04_4_2
+    alias: V04_4_rev
     target_id: V0-4.4
+    custom_barcode: NB08
+    overhang: ACCA
+    orientation: reverse
     condition: double_barcode
     replicate: 2
     barcode_type: double
+    notes: "Captures reverse complement of V0-4.4"
+
+  barcode09:
+    alias: V04_4_rev_alt
+    target_id: V0-4.4
+    custom_barcode: NB09
+    overhang: TCAG
+    orientation: reverse
+    condition: double_barcode
+    replicate: 3
+    barcode_type: double
+    notes: "Alternative reverse barcode for V0-4.4"
+
   barcode10:
-    alias: V039_2
-    target_id: V0-39
+    alias: unknown_rev
+    target_id: unknown
+    custom_barcode: NB10
+    overhang: TTTG
+    orientation: reverse
     condition: double_barcode
-    replicate: 2
+    replicate: 1
     barcode_type: double
+    notes: "Target assignment unclear - overhang TTTG not in standard scheme"
+
 reference:
   targets_file: ../targets/sma_targets.yaml
   barcodes_file: ../targets/sma_barcodes.yaml
   use_sequence: designed
   validate_against_sanger: true
-  fasta: 12232025_IF_DoubleBC_SMA_seq/reference.fa
-  full_products: 12232025_IF_DoubleBC_SMA_seq/reference_full.fa
-  targets_only: 12232025_IF_DoubleBC_SMA_seq/reference_targets.fa
-  artifacts: 12232025_IF_DoubleBC_SMA_seq/reference_artifacts.fa
+  # Reference files in dedicated subdirectory
+  fasta: references/reference.fa
+  targets_only: references/reference_targets.fa
+  artifacts: references/reference_artifacts.fa
 
 expected_products:
   type: double_barcode
   structure: "PREFIX(13bp) + ADAPTER(15bp) + FLANK_F(8bp) + BARCODE(22-24bp) + FLANK_R(8bp) + TARGET"
   note: "Double barcoding captures both forward and reverse complement strands"
+
   forward_products:
-    NB01_V0-4.1_forward: {barcode: NB01, target: V0-4.1, overhang: TTCG}
-    NB02_V0-4.2_forward: {barcode: NB02, target: V0-4.2, overhang: AGGA}
-    NB03_V0-4.3_forward: {barcode: NB03, target: V0-4.3, overhang: AGAG}
-    NB04_V0-4.4_forward: {barcode: NB04, target: V0-4.4, overhang: TGGT}
-    NB05_V0-39_forward: {barcode: NB05, target: V0-39, overhang: CTGA}
+    NB01_V0-4.1_forward: {barcode: NB01, target: V0-4.1, overhang: TTCG, expected_size: 239}
+    NB02_V0-4.2_forward: {barcode: NB02, target: V0-4.2, overhang: AGGA, expected_size: 236}
+    NB03_V0-4.3_forward: {barcode: NB03, target: V0-4.3, overhang: AGAG, expected_size: 259}
+    NB04_V0-4.4_forward: {barcode: NB04, target: V0-4.4, overhang: TGGT, expected_size: 231}
+    NB05_V0-39_forward: {barcode: NB05, target: V0-39, overhang: CTGA, expected_size: 177}
+
   reverse_products:
-    NB06_V0-4.2_reverse: {barcode: NB06, target: V0-4.2, overhang: TCCT}
-    NB07_V0-4.2_reverse: {barcode: NB07, target: V0-4.2, overhang: CTCT}
-    NB08_V0-4.4_reverse: {barcode: NB08, target: V0-4.4, overhang: ACCA}
-    NB09_V0-4.4_reverse: {barcode: NB09, target: V0-4.4, overhang: TCAG}
+    NB06_V0-4.2_reverse: {barcode: NB06, target: V0-4.2, overhang: TCCT, expected_size: 236}
+    NB07_V0-4.2_reverse: {barcode: NB07, target: V0-4.2, overhang: CTCT, expected_size: 236}
+    NB08_V0-4.4_reverse: {barcode: NB08, target: V0-4.4, overhang: ACCA, expected_size: 231}
+    NB09_V0-4.4_reverse: {barcode: NB09, target: V0-4.4, overhang: TCAG, expected_size: 231}
+
+  # Daisy chain artifacts expected due to adjacent plasmids
+  daisy_chain_pairs:
+    - pair: [V0-4.1, V0-4.2]
+      mechanism: "TTCG/AGGA junction via backbone"
+      expected_size: ~2600
+    - pair: [V0-4.2, V0-4.3]
+      mechanism: "AGGA/AGAG junction via backbone"
+      expected_size: ~2600
+    - pair: [V0-4.3, V0-4.4]
+      mechanism: "AGAG/TGGT junction via backbone"
+      expected_size: ~2600
+    - pair: [V0-4.4, V0-39]
+      mechanism: "TGGT/CTGA junction via backbone"
+      expected_size: ~2600
+
 analysis:
   min_read_length: 100
   max_read_length: 500
   min_qscore: 10
   size_classification: true
   alignment_validation: true
+
 output:
   base_dir: /data2/repos/ont-ecosystem/sma_configs/experiments/12232025_IF_DoubleBC_SMA_seq
   generate_reference_fasta: true
   generate_sample_sheet_csv: true
 
-# Analysis results (generated 2025-12-30)
+# =============================================================================
+# ANALYSIS RESULTS (generated 2025-12-30)
+# =============================================================================
 analysis_results:
   status: daisy_chains
   total_reads: 12074175
@@ -151,3 +233,15 @@ analysis_results:
     Daisy chaining present due to adjacent Level 0 plasmids.
     Bimodal length distribution with peaks at ~150bp and ~2,600bp.
     Fix validated in 12282025 experiment using odd/even separation.
+
+  peak_interpretation:
+    peak_150bp: "Clean single-target amplicons"
+    peak_2600bp: "Single daisy chain (TARGET + BACKBONE + TARGET)"
+    peak_5000bp: "Double daisy chain (rare)"
+
+  coverage_by_target:
+    V0-4.1: "Forward only (NB01)"
+    V0-4.2: "Forward (NB02) + Reverse (NB06, NB07)"
+    V0-4.3: "Forward only (NB03)"
+    V0-4.4: "Forward (NB04) + Reverse (NB08, NB09)"
+    V0-39: "Forward only (NB05)"
