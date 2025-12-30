@@ -172,7 +172,7 @@ targets:
 # =============================================================================
 proof_of_principle:
   location: Great Lakes HPC
-  base_path: /nfs/turbo/umms-atheylab/gregfar/SMS/
+  base_path: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/
   index: experiments/proof_of_principle/INDEX.yaml
   status: configs_created
   note: "Verify paths on Great Lakes before use"
@@ -210,10 +210,19 @@ proof_of_principle:
       category: control
       device: PromethION
 
+    - id: 10092025_IF_methyl_minus_SMA_seq
+      category: methylation_study
+      date: '2025-10-09'
+      device: MinION
+
+    - id: SMS_RC_Eco53KI_PvuII
+      category: dual_restriction_enzyme
+      device: MinION
+
 # Summary statistics
 summary:
   total_experiments: 12
-  proof_of_principle_experiments: 7
+  proof_of_principle_experiments: 9
   total_size_tb: 1.44
   ready_configs: 9
   needs_review: 3

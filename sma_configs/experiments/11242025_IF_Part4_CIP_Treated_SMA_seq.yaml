@@ -36,6 +36,7 @@ library_prep:
   notes: "CIP treatment killed helicase activity from using ethanol during purification"
 paths:
   data_root: /data1/11242025_IF_Part4_CIP_Treated_SMA_seq
+  great_lakes_path: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/11242025_IF_Part4_CIP_Treated_SMA_seq
   run_id: 20251124_2039_MD-101527_FBD68976_9f9f4bc1
   pod5_dir: /data1/11242025_IF_Part4_CIP_Treated_SMA_seq/no_sample_id/20251124_2039_MD-101527_FBD68976_9f9f4bc1/pod5_pass
   bam_dir: /data1/11242025_IF_Part4_CIP_Treated_SMA_seq/no_sample_id/20251124_2039_MD-101527_FBD68976_9f9f4bc1/bam_pass

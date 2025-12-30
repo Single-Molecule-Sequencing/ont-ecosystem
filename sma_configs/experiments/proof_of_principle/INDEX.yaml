@@ -67,19 +67,38 @@ experiments:
     device: PromethION
     description: Regular/control cutting experiment
 
+  # Methylation Study
+  methyl_minus:
+    config: 10092025_IF_methyl_minus_SMA_seq.yaml
+    category: methylation_study
+    status: completed
+    date: '2025-10-09'
+    device: MinION
+    description: Methyl-minus SMA-seq experiment
+
+  # Dual Enzyme Experiments
+  SMS_RC_Eco53KI_PvuII:
+    config: SMS_RC_Eco53KI_PvuII.yaml
+    category: dual_restriction_enzyme
+    status: completed
+    device: MinION
+    description: Combined Eco53kI + PvuII dual enzyme cutting
+
 summary:
-  total_experiments: 7
+  total_experiments: 9
   categories:
     cas9_cutting: 1
     restriction_enzyme: 3
     enzyme_treatment: 1
     rapid_barcoding: 1
     control: 1
+    methylation_study: 1
+    dual_restriction_enzyme: 1
   devices:
-    MinION: 4
+    MinION: 6
     PromethION: 3
   location: Great Lakes HPC
-  base_path: /nfs/turbo/umms-atheylab/gregfar/SMS/
+  base_path: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/
 
 notes: |
   These proof-of-principle experiments were conducted before the main SMA-seq

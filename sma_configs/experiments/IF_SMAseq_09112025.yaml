@@ -7,6 +7,7 @@ experiment:
 
 paths:
   data_root: /data1/IF_SMAseq_09112025
+  great_lakes_path: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/IF_SMAseq_09112025
   run_id: 20250911_1847_MD-102066_FBD70249_1788022b
   pod5_dir: /data1/IF_SMAseq_09112025/no_sample_id/20250911_1847_MD-102066_FBD70249_1788022b/pod5_pass
   bam_dir: /data1/IF_SMAseq_09112025/no_sample_id/20250911_1847_MD-102066_FBD70249_1788022b/bam_pass

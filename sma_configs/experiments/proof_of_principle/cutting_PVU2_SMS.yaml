@@ -13,7 +13,7 @@ experiment:
 
 paths:
   # Great Lakes HPC paths
-  data_root: /nfs/turbo/umms-atheylab/gregfar/SMS/Single_Molecule_Seqeuncing_Cutting_Res_E/PVU2
+  data_root: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/Single_Molecule_Seqeuncing_Cutting_Res_E/PVU2
   # Update after confirming directory structure
   pod5_dir: null
   bam_dir: null

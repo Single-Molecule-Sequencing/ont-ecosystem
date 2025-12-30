@@ -12,7 +12,7 @@ experiment:
 
 paths:
   # Great Lakes HPC paths
-  data_root: /nfs/turbo/umms-atheylab/gregfar/SMS/eco53kI
+  data_root: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/Single_MOlecule_Species_Eco53KI
   run_id: b934d4c5_ef92a647
   # Update these paths after confirming directory structure on Great Lakes
   pod5_dir: null  # Discover on Great Lakes

@@ -1,0 +1,62 @@
+# SMS RC Eco53KI + PvuII Dual Enzyme Proof-of-Principle Experiment
+# Location: Great Lakes HPC
+# Combined restriction enzyme cutting experiment
+
+experiment:
+  id: SMS_RC_Eco53KI_PvuII
+  date: '2024-01-01'  # Update when confirmed
+  type: proof_of_principle
+  description: Single Molecule Sequencing with Eco53kI and PvuII dual restriction enzyme cutting
+  status: completed
+  category: dual_restriction_enzyme
+  enzymes:
+    - Eco53kI
+    - PvuII
+
+paths:
+  # Great Lakes HPC paths
+  data_root: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/SMS_RC_Eco53KI_PvuII
+  # Update after discovering run structure on Great Lakes
+  pod5_dir: null
+  bam_dir: null
+  fastq_dir: null
+
+sequencing:
+  device: MinION
+  flow_cell_product: FLO-MIN114
+  kit: SQK-LSK114  # Confirm kit used
+
+# Sample information
+samples:
+  dual_enzyme:
+    alias: Eco53KI_PvuII
+    target_id: dual_digest
+    condition: dual_enzyme_cut
+    replicate: 1
+    notes: "Combined Eco53kI + PvuII restriction enzyme digestion"
+
+enzyme_info:
+  Eco53kI:
+    recognition: "5'-GAG^CTC-3'"
+    cut_type: "sticky_ends"
+    notes: "SacI isoschizomer"
+  PvuII:
+    recognition: "5'-CAG^CTG-3'"
+    cut_type: "blunt_ends"
+
+analysis:
+  min_read_length: 100
+  max_read_length: 10000
+  min_qscore: 7
+  experiment_type: dual_restriction_enzyme
+
+notes: |
+  Proof-of-principle experiment for dual restriction enzyme digestion.
+  Tests combined Eco53kI and PvuII cutting for single molecule sequencing.
+
+  Enzyme details:
+  - Eco53kI: 5'-GAG^CTC-3' (SacI isoschizomer, sticky ends)
+  - PvuII: 5'-CAG^CTG-3' (blunt end cutter)
+
+  Data stored on Great Lakes HPC.
+  Config created from path discovery - verify sample details on HPC.

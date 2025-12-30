@@ -1,0 +1,46 @@
+# Methyl-Minus SMA-seq Proof-of-Principle Experiment
+# Location: Great Lakes HPC
+# Date: October 9, 2025
+
+experiment:
+  id: 10092025_IF_methyl_minus_SMA_seq
+  date: '2025-10-09'
+  type: proof_of_principle
+  description: Methyl-minus SMA-seq experiment - testing methylation-free conditions
+  status: completed
+  category: methylation_study
+  prepared_by: Isaac Farnum
+
+paths:
+  # Great Lakes HPC paths
+  data_root: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/10092025_IF_methyl_minus_SMA_seq
+  # Update after discovering run structure on Great Lakes
+  pod5_dir: null
+  bam_dir: null
+  fastq_dir: null
+
+sequencing:
+  device: MinION
+  flow_cell_product: FLO-MIN114
+  kit: SQK-LSK114  # Confirm kit used
+
+# Sample information - update when confirmed
+samples:
+  methyl_minus:
+    alias: methyl_minus
+    target_id: methyl_minus_target
+    condition: no_methylation
+    replicate: 1
+    notes: "Methyl-minus conditions for SMA-seq"
+
+analysis:
+  min_read_length: 100
+  max_read_length: 500
+  min_qscore: 7
+  experiment_type: methylation_study
+
+notes: |
+  Proof-of-principle experiment testing methylation-free conditions for SMA-seq.
+  Part of early development exploring methylation effects on sequencing.
+  Data stored on Great Lakes HPC.
+  Config created from path discovery - verify sample details on HPC.

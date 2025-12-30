@@ -7,6 +7,7 @@ experiment:
 
 paths:
   data_root: /data1/081920205_IF_Pilot_SMA_seq
+  great_lakes_path: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/081920205_IF_Pilot_SMA_seq
   runs:
     - run_id: 20250819_2057_MD-102066_FBD65978_f6ad7dd5
       date: '2025-08-19'
