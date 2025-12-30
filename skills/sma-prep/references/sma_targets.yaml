@@ -1,0 +1,167 @@
+# SMA-seq Target Reference Sequences
+# This file contains registered target sequences for SMA-seq experiments
+
+# =============================================================================
+# STANDARD SMA-seq TARGETS
+# =============================================================================
+
+targets:
+  # V04 series - SMA plasmid constructs
+  v04:
+    name: "V04"
+    description: "V04 SMA plasmid construct - standard reference"
+    sequence: >-
+      CTGTCCTGTACTTCGTTCAGTTACGTATTGCTAAGGTTAAACAGACGACTACAAACGGAATCGACAG
+      CACCTAGGATTTGCATAGATGGGTTTGGGAAAGGACATTCCAGGAGATCCCACTGTAAGAAGGGCCT
+      GGAGGAGGAGGGGACATCTCAGACATGGTCGTGGGAGAGGTGTGCCCGGGTCAGGGGGCACCAGGAG
+      AGGCCAAGGACTCTGTACCTC
+    length: 222
+    size_range:
+      min: 200
+      max: 250
+      tolerance_pct: 15
+    default_barcode: 2
+
+  v05:
+    name: "V05"
+    description: "V05 SMA plasmid construct"
+    sequence: null  # To be filled
+    length: 198
+    size_range:
+      min: 175
+      max: 225
+      tolerance_pct: 15
+    default_barcode: 4
+
+  v06:
+    name: "V06"
+    description: "V06 SMA plasmid construct"
+    sequence: null  # To be filled
+    length: 275
+    size_range:
+      min: 250
+      max: 310
+      tolerance_pct: 15
+    default_barcode: 7
+
+# =============================================================================
+# CYP2D6 PHARMACOGENOMICS TARGETS
+# =============================================================================
+
+  cyp2d6_exon1:
+    name: "CYP2D6_exon1"
+    description: "CYP2D6 exon 1 amplicon"
+    sequence: null  # To be filled from reference
+    length: 350
+    size_range:
+      min: 320
+      max: 380
+    default_barcode: null
+
+  cyp2d6_exon2:
+    name: "CYP2D6_exon2"
+    description: "CYP2D6 exon 2 amplicon"
+    sequence: null
+    length: 420
+    size_range:
+      min: 380
+      max: 460
+    default_barcode: null
+
+# =============================================================================
+# SIZE CLASSIFICATION RULES
+# =============================================================================
+
+size_classification:
+  # How to handle overlapping size ranges
+  overlap_resolution: alignment  # 'alignment', 'strict', or 'largest'
+
+  # Default tolerance for auto-generated ranges
+  default_tolerance_pct: 15
+
+  # Minimum read length to consider
+  min_read_length: 100
+
+  # Maximum read length to consider
+  max_read_length: 50000
+
+# =============================================================================
+# GOLDEN GATE OVERHANGS
+# =============================================================================
+
+golden_gate:
+  # BsaI recognition and cut sites
+  enzyme: BsaI-HF
+  recognition: "GGTCTC"
+  cut_offset: 1
+
+  # Standard SMA-seq overhangs
+  standard_overhangs:
+    insert_5prime: "AGGA"  # After CAGCACCT flank
+    insert_3prime: "CTGT"  # Before AAGGTTAA flank
+
+  # Forbidden overhangs (form unwanted products)
+  forbidden_overhangs:
+    - overhang: "ACGA"
+      reason: "Complements adapter sequence"
+    - overhang: "GTTA"
+      reason: "Complements barcode sequence"
+    - overhang: "TCGT"
+      reason: "Backbone→adapter ligation"
+    - overhang: "TAAC"
+      reason: "Backbone→barcode ligation"
+
+# =============================================================================
+# BARCODE FLANKING SEQUENCES
+# =============================================================================
+
+barcode_flanks:
+  # SMA-seq single-ended (nick design)
+  sma_single:
+    mask1_front: "AAGGTTAA"
+    mask1_rear: "CAGCACCT"
+    mask2_front: ""
+    mask2_rear: ""
+    type: single-ended
+    notes: "No 5' phosphate creates nick. Do NOT use --barcode-both-ends"
+
+  # SMA-seq double-ended
+  sma_double:
+    mask1_front: "AAGGTTAA"
+    mask1_rear: "CAGCACCT"
+    mask2_front: "TTAACCTT"  # RC of mask1_front
+    mask2_rear: "AGGTGCTG"   # RC of mask1_rear
+    type: double-ended
+    notes: "Both ends barcoded. Can use --barcode-both-ends"
+
+  # Standard ONT native barcoding
+  ont_native:
+    mask1_front: "AAGGTTAACACAAAGACACCGACAACTTTCTTCAGCACCT"
+    mask1_rear: ""
+    mask2_front: ""
+    mask2_rear: ""
+    type: standard
+    notes: "Use Dorado built-in kit detection"
+
+# =============================================================================
+# EXAMPLE EXPERIMENT CONFIGURATIONS
+# =============================================================================
+
+example_experiments:
+  sma_basic:
+    description: "Basic SMA-seq with 4 barcodes"
+    targets: [v04]
+    barcodes: [2, 4, 7, 9]
+    barcode_flank: sma_single
+
+  sma_full:
+    description: "Full SMA-seq panel"
+    targets: [v04, v05, v06]
+    barcodes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+    barcode_flank: sma_single
+
+  cyp2d6_panel:
+    description: "CYP2D6 pharmacogenomics panel"
+    targets: [cyp2d6_exon1, cyp2d6_exon2]
+    barcodes: [1, 2, 3, 4, 5, 6, 7, 8]
+    barcode_flank: sma_single

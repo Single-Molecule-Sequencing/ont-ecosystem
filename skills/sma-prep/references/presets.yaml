@@ -1,0 +1,136 @@
+# SMA-prep Barcode Presets and Lab Configurations
+# This file contains barcode configuration presets for SMA-seq experiments
+
+# =============================================================================
+# BUILT-IN PRESETS
+# =============================================================================
+presets:
+  sma-single-ended:
+    name: "SMA_single_ended"
+    description: "SMA-seq Golden Gate with nick design (single-ended detection)"
+    type: single-ended
+    kit: "SMA"
+    mask1_front: "AAGGTTAA"
+    mask1_rear: "CAGCACCT"
+    mask2_front: ""
+    mask2_rear: ""
+    scoring:
+      max_barcode_penalty: 11
+      barcode_end_proximity: 75
+      min_barcode_penalty_dist: 3
+      min_separation_only_dist: 6
+      flank_left_pad: 5
+      flank_right_pad: 10
+      front_barcode_window: 175
+      rear_barcode_window: 175
+    notes: "No 5' phosphate on bottom strand creates nick. Do NOT use --barcode-both-ends."
+
+  sma-double-ended:
+    name: "SMA_double_ended"
+    description: "SMA-seq Golden Gate with double-ended barcoding"
+    type: double-ended
+    kit: "SMA"
+    mask1_front: "AAGGTTAA"
+    mask1_rear: "CAGCACCT"
+    mask2_front: "TTAACCTT"  # RC of mask1_front
+    mask2_rear: "AGGTGCTG"   # RC of mask1_rear
+    scoring:
+      max_barcode_penalty: 11
+      barcode_end_proximity: 75
+      min_barcode_penalty_dist: 3
+    notes: "Both ends barcoded. Can use --barcode-both-ends for stricter filtering."
+
+  ont-native-v14:
+    name: "ONT_native_v14"
+    description: "Standard ONT Native Barcoding Kit V14"
+    type: standard
+    kit: "SQK-NBD114.96"
+    mask1_front: "AAGGTTAACACAAAGACACCGACAACTTTCTTCAGCACCT"
+    mask1_rear: ""
+    mask2_front: ""
+    mask2_rear: ""
+    scoring:
+      max_barcode_penalty: 11
+      barcode_end_proximity: 75
+      min_barcode_penalty_dist: 3
+    notes: "Use Dorado's built-in kit detection: --kit-name SQK-NBD114.96"
+
+# =============================================================================
+# LAB CONFIGURATIONS (Saved from previous experiments)
+# =============================================================================
+lab_configs:
+  IF_Part4_SMA:
+    name: "IF_Part4_SMA"
+    description: "Isaac Farnum Part4 SMA-seq (Dec 2024)"
+    created: "2024-12-08"
+    experiment_id: "exp-12082024_IF"
+    type: single-ended
+    kit: "SMA"
+    mask1_front: "AAGGTTAA"
+    mask1_rear: "CAGCACCT"
+    mask2_front: ""
+    mask2_rear: ""
+    barcodes: [2, 4, 7, 9]
+    barcode_mapping:
+      2: "V04.1"
+      4: "V04.2"
+      7: "V04.3"
+      9: "V04.4"
+    size_ranges:
+      V04.1: [200, 250]
+      V04.2: [200, 250]
+      V04.3: [200, 250]
+      V04.4: [200, 250]
+    scoring:
+      max_barcode_penalty: 11
+      barcode_end_proximity: 75
+      min_barcode_penalty_dist: 3
+    notes: "Single-ended nick design for SMA-seq Golden Gate library prep"
+
+  B2_barcode2:
+    name: "B2_barcode2"
+    description: "B2 barcode 2 SMA-seq analysis"
+    created: "2024-12-29"
+    type: single-ended
+    kit: "SMA"
+    mask1_front: "AAGGTTAA"
+    mask1_rear: "CAGCACCT"
+    mask2_front: ""
+    mask2_rear: ""
+    barcodes: [2]
+    target_sequence: "CTGTCCTGTACTTCGTTCAGTTACGTATTGCTAAGGTTAAACAGACGACTACAAACGGAATCGACAGCACCTAGGATTTGCATAGATGGGTTTGGGAAAGGACATTCCAGGAGATCCCACTGTAAGAAGGGCCTGGAGGAGGAGGGGACATCTCAGACATGGTCGTGGGAGAGGTGTGCCCGGGTCAGGGGGCACCAGGAGAGGCCAAGGACTCTGTACCTC"
+    target_length: 222
+    size_ranges:
+      barcode_2: [200, 250]
+
+# =============================================================================
+# HPC CLUSTER CONFIGURATIONS
+# =============================================================================
+clusters:
+  armis2:
+    partition: "sigbio-a40"
+    account: "bleu1"
+    gres: "gpu:a40:1"
+    cpus: 8
+    mem: "64G"
+    time: "24:00:00"
+    dorado: "/nfs/turbo/umms-bleu-secure/programs/dorado-1.1.1-linux-x64/bin/dorado"
+    models: "/nfs/turbo/umms-bleu-secure/programs/dorado_models"
+
+  greatlakes:
+    partition: "gpu_mig40"
+    account: "bleu99"
+    gres: "gpu:nvidia_a100_80gb_pcie_3g.40gb:1"
+    cpus: 8
+    mem: "64G"
+    time: "24:00:00"
+    dorado: "dorado"  # module load
+    models: ""
+
+# =============================================================================
+# REGISTRY SYNC
+# =============================================================================
+registry:
+  url: "https://raw.githubusercontent.com/Single-Molecule-Sequencing/ont-ecosystem/main/registry/sma_prep_configs.yaml"
+  local_cache: "~/.sma-prep/configs.yaml"
+  sync_on_startup: false

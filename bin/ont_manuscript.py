@@ -101,6 +101,22 @@ MANUSCRIPT_PIPELINES = {
         "auto_tables": ["tbl_experiment_summary"],
         "requires_data": False,
     },
+    "endreason-preprint": {
+        "description": "End-reason manuscript figures and tables for bioRxiv",
+        "steps": ["end_reasons"],
+        "auto_figures": [
+            "fig_adaptive_efficiency",
+            "fig_endreason_breakdown",
+            "fig_channel_analysis",
+            "fig_library_quality",
+        ],
+        "auto_tables": [
+            "tbl_endreason_summary",
+            "tbl_adaptive_metrics",
+        ],
+        "requires_data": True,
+        "multi_experiment": True,
+    },
 }
 
 
@@ -182,6 +198,38 @@ FIGURE_GENERATORS = {
         "multi_experiment": True,
         "caption": "N50 comparison across experiments",
     },
+    # End-reason manuscript figures (from skills/endreason-manuscript/generators/)
+    "fig_adaptive_efficiency": {
+        "generator": "../endreason-manuscript/generators/gen_adaptive_efficiency.py",
+        "description": "Adaptive vs non-adaptive sampling comparison",
+        "formats": ["pdf", "png"],
+        "requires": ["end_reasons"],
+        "multi_experiment": True,
+        "caption": "Adaptive sampling efficiency analysis",
+    },
+    "fig_endreason_breakdown": {
+        "generator": "../endreason-manuscript/generators/gen_endreason_breakdown.py",
+        "description": "Detailed per-end-reason breakdown",
+        "formats": ["pdf", "png"],
+        "requires": ["end_reasons"],
+        "multi_experiment": True,
+        "caption": "End-reason category distribution and analysis",
+    },
+    "fig_channel_analysis": {
+        "generator": "../endreason-manuscript/generators/gen_channel_analysis.py",
+        "description": "Channel-level end-reason heatmaps",
+        "formats": ["pdf", "png"],
+        "requires": ["end_reasons"],
+        "caption": "Per-channel end-reason distribution",
+    },
+    "fig_library_quality": {
+        "generator": "../endreason-manuscript/generators/gen_library_quality.py",
+        "description": "Library quality assessment",
+        "formats": ["pdf", "png"],
+        "requires": ["end_reasons"],
+        "multi_experiment": True,
+        "caption": "Library quality metrics and grading",
+    },
 }
 
 
@@ -225,6 +273,23 @@ TABLE_GENERATORS = {
         "formats": ["tex", "csv", "json", "html"],
         "requires": [],
         "caption": "Experiment overview",
+    },
+    # End-reason manuscript tables (from skills/endreason-manuscript/generators/)
+    "tbl_endreason_summary": {
+        "generator": "../endreason-manuscript/generators/gen_endreason_summary_table.py",
+        "description": "Per-end-reason statistics table",
+        "formats": ["tex", "csv", "json", "html"],
+        "requires": ["end_reasons"],
+        "multi_experiment": True,
+        "caption": "End-reason summary statistics",
+    },
+    "tbl_adaptive_metrics": {
+        "generator": "../endreason-manuscript/generators/gen_adaptive_metrics_table.py",
+        "description": "Adaptive sampling efficiency metrics",
+        "formats": ["tex", "csv", "json", "html"],
+        "requires": ["end_reasons"],
+        "multi_experiment": True,
+        "caption": "Adaptive sampling efficiency by experiment",
     },
 }
 

@@ -1,0 +1,112 @@
+description: Per-barcode size-to-sequence mapping for SMA-seq experiments
+experiment: 12232025_IF_DoubleBC_SMA_seq
+demux_kit: SQK-NBD114-24
+references:
+  V0-4.1:
+    sequence: ttcgagtacgacgaccctcGCTTCCTCAGGCTGCTGGACCTAGCTCAGGAGGGACTGAAGGAGGAGTCGGGCTTTCTGCGCGAGGTGCGGAGCGAGAGATCGAGGAGTCTCTGCAGGGCGAGCTCCCGAGAGGTGCCGGGGCTGGACTGGggcctcggaagagcagga
+    length: 168
+    genomic_region: CYP2D6 6944-7111
+    orientation: forward
+  V0-4.1_RC:
+    sequence: tcctgctcttccgaggccCCAGTCCAGCCCCGGCACCTCTCGGGAGCTCGCCCTGCAGAGACTCCTCGATCTCTCGCTCCGCACCTCGCGCAGAAAGCCCGACTCCTCCTTCAGTCCCTCCTGAGCTAGGTCCAGCAGCCTGAGGAAGCgaggggtcgtcgtactcgaa
+    length: 169
+    genomic_region: CYP2D6 6944-7111
+    orientation: reverse_complement
+  V0-4.2:
+    sequence: AGGATTTGCATAGATGGGTTTGGGAAAGGACATTCCAGGAGATCCCACTGTAAGAAGGGCCTGGAGGAGGAGGGGACATCTCAGACATGGTCGTGGGAGAGGTGTGCCCGGGTCAGGGGGCACCAGGAGAGGCCAAGGACTCTGTACCTCCTATCCACGTCAGAG
+    length: 165
+    genomic_region: CYP2D6 7108-7272
+    orientation: forward
+  V0-4.2_RC:
+    sequence: CTCTGACGTGGATAGGAGGTACAGAGTCCTTGGCCTCTCCTGGTGCCCCCTGACCCGGGCACACCTCTCCCACGACCATGTCTGAGATGTCCCCTCCTCCTCCAGGCCCTTCTTACAGTGGGATCTCCTGGAATGTCCTTTCCCAAACCCATCTATGCAAATCCT
+    length: 165
+    genomic_region: CYP2D6 7108-7272
+    orientation: reverse_complement
+  V0-4.3:
+    sequence: agagatttcgattttaggtttctcctcTGGGCAAGGAGAGAGGGTGGAGGCTGGCACTTGGGGAGGGACTTGGTGAGGTCAGTGGTAAGGACAGGCAGGCCCTGGGTCTACCTGGAGATGGCTGGGGCCTGAGACTTGTCCAGGTGAACGCAGAGCACAGGAGGGATTGAgaTcccgttctgtctggt
+    length: 188
+    genomic_region: CYP2D6 7269-7456
+    orientation: forward
+  V0-4.3_RC:
+    sequence: accagacagaacgggAtcTCAATCCCTCCTGTGCTCTGCGTTCACCTGGACAAGTCTCAGGCCCCAGCCATCTCCAGGTAGACCCAGGGCCTGCCTGTCCTTACCACTGACCTCACCAAGTCCCTCCCCAAGTGCCAGCCTCCACCCTCTCTCCTTGCCCAgaggagaaacctaaaatcgaaatctct
+    length: 188
+    genomic_region: CYP2D6 7269-7456
+    orientation: reverse_complement
+  V0-4.4:
+    sequence: tggtgtaggtgctgaatgcTGTCCCCGTCCTCCTGCATATCCCAGCGCTGGCTGGCAAGGTCCTACGCTTCCAAAAGGCTTTCCTGACCCAGCTGGATGAGCTGCTAACTGAGCACAGGATGACCTGGGACCCAGCCCAGCCcccccgagaTctgactga
+    length: 160
+    genomic_region: CYP2D6 7453-7612
+    orientation: forward
+  V0-4.4_RC:
+    sequence: tcagtcaGatctcgggggGGCTGGGCTGGGTCCCAGGTCATCCTGTGCTCAGTTAGCAGCTCATCCAGCTGGGTCAGGAAAGCCTTTTGGAAGCGTAGGACCTTGCCAGCCAGCGCTGGGATATGCAGGAGGACGGGGACAgcattcagcacctacacca
+    length: 160
+    genomic_region: CYP2D6 7453-7612
+    orientation: reverse_complement
+barcode_mapping:
+  V04_1:
+    reference: V0-4.1
+    ont_barcode: barcode01
+    expected_length: 168
+    size_range: !!python/tuple
+    - 140
+    - 200
+  V04_2:
+    reference: V0-4.2
+    ont_barcode: barcode02
+    expected_length: 165
+    size_range: &id001 !!python/tuple
+    - 135
+    - 195
+  V04_3:
+    reference: V0-4.3
+    ont_barcode: barcode03
+    expected_length: 188
+    size_range: &id002 !!python/tuple
+    - 158
+    - 218
+  V04_4:
+    reference: V0-4.4
+    ont_barcode: barcode04
+    expected_length: 160
+    size_range: &id003 !!python/tuple
+    - 130
+    - 190
+  V039:
+    reference: V0-39
+    ont_barcode: barcode05
+    expected_length: null
+    size_range: &id004 !!python/tuple
+    - 80
+    - 140
+  V04_1_2:
+    reference: V0-4.1_RC
+    ont_barcode: barcode06
+    expected_length: 169
+    size_range: !!python/tuple
+    - 139
+    - 199
+  V04_2_2:
+    reference: V0-4.2_RC
+    ont_barcode: barcode07
+    expected_length: 165
+    size_range: *id001
+  V04_3_2:
+    reference: V0-4.3_RC
+    ont_barcode: barcode08
+    expected_length: 188
+    size_range: *id002
+  V04_4_2:
+    reference: V0-4.4_RC
+    ont_barcode: barcode09
+    expected_length: 160
+    size_range: *id003
+  V039_2:
+    reference: V0-39_RC
+    ont_barcode: barcode10
+    expected_length: null
+    size_range: *id004
+notes:
+- Each barcode directory contains reads from ONE target only
+- Size range is target length ±30bp (not ±150bp!)
+- After demux, reference matching should verify against SINGLE expected reference
+- High edit distance indicates sequencing error or contamination, not wrong target

@@ -10,7 +10,7 @@ ONT Ecosystem (v3.0) is a consolidated monorepo for Oxford Nanopore sequencing e
 
 Skills are automatically installed to `~/.claude/commands/`. List available skills: `make skills-list`
 
-Key skills: `/comprehensive-analysis`, `/end-reason`, `/ont-experiments-v2`, `/ont-align`, `/ont-pipeline`, `/ont-monitor`, `/dorado-bench-v2`, `/experiment-db`, `/manuscript`, `/skill-maker`, `/ont-public-data`, `/registry-browser`, `/greatlakes-sync`
+Key skills: `/comprehensive-analysis`, `/end-reason`, `/ont-experiments-v2`, `/ont-align`, `/ont-pipeline`, `/ont-monitor`, `/dorado-bench-v2`, `/experiment-db`, `/manuscript`, `/skill-maker`, `/ont-public-data`, `/registry-browser`, `/greatlakes-sync`, `/ont-metadata`, `/registry-explorer`, `/registry-scrutinize`, `/sma-prep`, `/endreason-manuscript`
 
 ```bash
 # Quick analysis with sampling (30s)
@@ -92,7 +92,7 @@ end_reason.py /data/exp --json results.json
 
 Shared utilities with lazy imports. Usage: `from lib import load_json, ProgressBar, Config, parallel_map, mean_qscore`
 
-Key modules: `cli` (terminal UI), `io` (JSON/YAML), `cache`, `validation`, `errors`, `timing`, `config`, `parallel`, `qscore`
+Key modules: `cli` (terminal UI), `io` (JSON/YAML), `cache`, `validation`, `errors`, `timing`, `config`, `parallel`, `qscore`, `logging_config`, `discovery_report`, `quick_analysis`
 
 ### Figure/Table Generation
 

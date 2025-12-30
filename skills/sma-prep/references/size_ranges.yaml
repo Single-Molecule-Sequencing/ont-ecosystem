@@ -1,0 +1,161 @@
+# Size Range to Target Mapping Configuration
+# Used for automatic read classification based on expected fragment sizes
+
+# =============================================================================
+# SIZE CLASSIFICATION DEFAULTS
+# =============================================================================
+defaults:
+  # Default tolerance for auto-generated ranges (percentage)
+  tolerance_pct: 15
+
+  # Resolution strategy for overlapping ranges
+  # - 'alignment': Use edit distance to reference (most accurate)
+  # - 'strict': Reject reads in overlap zones
+  # - 'closest': Assign to closest expected length
+  overlap_resolution: alignment
+
+  # Quality thresholds
+  min_qscore: 7.0           # Minimum mean Q-score to classify
+  min_read_length: 50       # Reads shorter than this are discarded
+  max_read_length: 100000   # Reads longer than this are flagged
+
+# =============================================================================
+# TARGET SIZE DEFINITIONS
+# =============================================================================
+targets:
+  # V04 SMA plasmid construct
+  V04:
+    expected_length: 222
+    min_length: 200
+    max_length: 250
+    tolerance_pct: 15
+    description: "V04 SMA plasmid - primary target"
+
+  # V05 variant
+  V05:
+    expected_length: 198
+    min_length: 175
+    max_length: 225
+    tolerance_pct: 15
+    description: "V05 SMA variant"
+
+  # V06 variant (longer)
+  V06:
+    expected_length: 275
+    min_length: 250
+    max_length: 310
+    tolerance_pct: 15
+    description: "V06 SMA variant - longer insert"
+
+  # Concatemer detection
+  V04_dimer:
+    expected_length: 444
+    min_length: 420
+    max_length: 480
+    tolerance_pct: 8
+    description: "V04 concatemer (2x)"
+    is_artifact: true
+
+  V04_trimer:
+    expected_length: 666
+    min_length: 630
+    max_length: 720
+    tolerance_pct: 8
+    description: "V04 concatemer (3x)"
+    is_artifact: true
+
+# =============================================================================
+# BARCODE-SPECIFIC SIZE MAPPINGS
+# =============================================================================
+barcode_mappings:
+  # Map specific barcodes to expected targets
+  2:
+    target: V04
+    sample_id: "V04.1"
+    condition: "wildtype"
+
+  4:
+    target: V04
+    sample_id: "V04.2"
+    condition: "mutant"
+
+  7:
+    target: V05
+    sample_id: "V05.1"
+    condition: "wildtype"
+
+  9:
+    target: V06
+    sample_id: "V06.1"
+    condition: "control"
+
+# =============================================================================
+# SIZE-BASED CLASSIFICATION RULES
+# =============================================================================
+classification_rules:
+  # Rule priority (higher = checked first)
+  priority:
+    - exact_match      # Within expected range
+    - near_match       # Within tolerance
+    - artifact_check   # Concatemers, chimeras
+    - unclassified     # Fallback
+
+  # Exact match: read length within min-max range
+  exact_match:
+    require_alignment: false
+    confidence: high
+
+  # Near match: within tolerance but outside range
+  near_match:
+    require_alignment: true
+    confidence: medium
+    max_edit_distance_pct: 10
+
+  # Artifact detection
+  artifact_check:
+    detect_concatemers: true
+    detect_chimeras: true
+    min_fragment_length: 100
+
+# =============================================================================
+# QUALITY CONTROL THRESHOLDS
+# =============================================================================
+qc_thresholds:
+  # Read quality
+  min_mean_qscore: 7.0
+  min_median_qscore: 8.0
+
+  # Length distribution
+  expected_length_sigma: 2.0  # Flag if >2 std devs from expected
+
+  # Edit distance
+  max_edit_distance: 30       # Flag if ED > 30 from reference
+  warn_edit_distance: 15      # Warn if ED > 15
+
+  # Alignment
+  min_alignment_identity: 0.80
+  min_alignment_coverage: 0.90
+
+# =============================================================================
+# OUTPUT FORMAT
+# =============================================================================
+output:
+  # Classification output columns
+  columns:
+    - read_id
+    - barcode
+    - read_length
+    - target
+    - classification_confidence
+    - edit_distance
+    - mean_qscore
+    - notes
+
+  # Summary statistics
+  generate_summary: true
+  summary_by: [barcode, target]
+
+  # Flagged reads
+  flag_unclassified: true
+  flag_artifacts: true
+  flag_low_quality: true

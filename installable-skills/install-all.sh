@@ -29,6 +29,7 @@ SKILLS=(
     "ont-monitor"
     "ont-pipeline"
     "skill-maker"
+    "sma-prep"
 )
 
 # Install each skill

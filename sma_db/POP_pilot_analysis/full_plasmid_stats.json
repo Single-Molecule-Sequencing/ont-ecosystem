@@ -1,0 +1,56 @@
+{
+  "V0-15": {
+    "target_length": 99,
+    "full_plasmid_length": 2406,
+    "backbone_length": 2299,
+    "cyp2d6_position": "3909-4007"
+  },
+  "V0-16": {
+    "target_length": 112,
+    "full_plasmid_length": 2419,
+    "backbone_length": 2299,
+    "cyp2d6_position": "4004-4115"
+  },
+  "V0-17": {
+    "target_length": 90,
+    "full_plasmid_length": 2397,
+    "backbone_length": 2299,
+    "cyp2d6_position": "4112-4201"
+  },
+  "V0-18": {
+    "target_length": 115,
+    "full_plasmid_length": 2422,
+    "backbone_length": 2299,
+    "cyp2d6_position": "4198-4312"
+  },
+  "V0-19": {
+    "target_length": 115,
+    "full_plasmid_length": 2422,
+    "backbone_length": 2299,
+    "cyp2d6_position": "4309-4423"
+  },
+  "V0-20": {
+    "target_length": 88,
+    "full_plasmid_length": 2395,
+    "backbone_length": 2299,
+    "cyp2d6_position": "4420-4507"
+  },
+  "V0-21": {
+    "target_length": 106,
+    "full_plasmid_length": 2413,
+    "backbone_length": 2299,
+    "cyp2d6_position": "4504-4609"
+  },
+  "V0-22": {
+    "target_length": 100,
+    "full_plasmid_length": 2407,
+    "backbone_length": 2299,
+    "cyp2d6_position": "4606-4705"
+  },
+  "V0-23": {
+    "target_length": 101,
+    "full_plasmid_length": 2408,
+    "backbone_length": 2299,
+    "cyp2d6_position": "4702-4802"
+  }
+}
