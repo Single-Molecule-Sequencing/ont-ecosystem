@@ -1,0 +1,168 @@
+# SMA-seq Experiment Configuration Index
+# Generated: 2025-12-30
+# Total experiments: 12
+
+# Global settings
+global:
+  targets_file: "targets/sma_targets.yaml"
+  default_kit: "SQK-NBD114-24"
+  default_flow_cell: "FLO-MIN114"
+
+# Experiment registry
+experiments:
+  # ============================================
+  # Priority: Recent December 2025 (Double Barcode)
+  # ============================================
+
+  - id: "12282025_IF_DoubleBC_SMA_seq"
+    config: "experiments/12282025_IF_DoubleBC_SMA_seq.yaml"
+    date: "2025-12-28"
+    type: "double_barcode"
+    size_gb: 7.6
+    status: "ready"
+    priority: 1
+
+  - id: "12282025_IF_DoubleBC_SMA_seq_no_trim"
+    config: "experiments/12282025_IF_DoubleBC_SMA_seq_no_trim.yaml"
+    date: "2025-12-28"
+    type: "double_barcode_no_trim"
+    size_gb: 137
+    status: "ready"
+    priority: 1
+    paired_with: "12282025_IF_DoubleBC_SMA_seq"
+
+  - id: "12232025_IF_DoubleBC_SMA_seq"
+    config: "experiments/12232025_IF_DoubleBC_SMA_seq.yaml"
+    date: "2025-12-23"
+    type: "double_barcode"
+    size_gb: 358
+    status: "ready"
+    priority: 2
+
+  # ============================================
+  # Priority: December 18 Replicates
+  # ============================================
+
+  - id: "12182025_IF_NewBCPart4_Ex1_SMA_seq"
+    config: "experiments/12182025_IF_NewBCPart4_Ex1_SMA_seq.yaml"
+    date: "2025-12-18"
+    type: "new_barcode_part4"
+    size_gb: 81
+    status: "ready"
+    priority: 3
+    replicate_group: "12182025_NewBCPart4"
+    replicate: 1
+
+  - id: "12182025_IF_NewBCPart4_Ex2_SMA_seq"
+    config: "experiments/12182025_IF_NewBCPart4_Ex2_SMA_seq.yaml"
+    date: "2025-12-18"
+    type: "new_barcode_part4"
+    size_gb: 55
+    status: "ready"
+    priority: 3
+    replicate_group: "12182025_NewBCPart4"
+    replicate: 2
+
+  - id: "12182025_IF_NewBCPart4_Ex3_SMA_seq"
+    config: "experiments/12182025_IF_NewBCPart4_Ex3_SMA_seq.yaml"
+    date: "2025-12-18"
+    type: "new_barcode_part4"
+    size_gb: 74
+    status: "ready"
+    priority: 3
+    replicate_group: "12182025_NewBCPart4"
+    replicate: 3
+
+  # ============================================
+  # Priority: Early December / November
+  # ============================================
+
+  - id: "12082025_IF_NewBCPart4_SMA_seq"
+    config: "experiments/12082025_IF_NewBCPart4_SMA_seq.yaml"
+    date: "2025-12-08"
+    type: "new_barcode_part4"
+    size_gb: 294
+    status: "ready"
+    priority: 4
+
+  - id: "11242025_IF_Part4_SMA_seq"
+    config: "experiments/11242025_IF_Part4_SMA_seq.yaml"
+    date: "2025-11-24"
+    type: "part4"
+    size_gb: 431
+    status: "ready"
+    priority: 5
+    notes: "Largest dataset - 17 barcodes"
+
+  - id: "11242025_IF_Part4_CIP_Treated_SMA_seq"
+    config: "experiments/11242025_IF_Part4_CIP_Treated_SMA_seq.yaml"
+    date: "2025-11-24"
+    type: "part4_cip"
+    size_gb: 0.5
+    status: "ready"
+    priority: 5
+    paired_with: "11242025_IF_Part4_SMA_seq"
+    treatment: "CIP"
+
+  # ============================================
+  # Legacy: Pilot/Early Development
+  # ============================================
+
+  - id: "081920205_IF_Pilot_SMA_seq"
+    config: "experiments/081920205_IF_Pilot_SMA_seq.yaml"
+    date: "2025-08-19"
+    type: "pilot"
+    size_gb: 0.7
+    status: "needs_review"
+    priority: 10
+    notes: "Pilot - different barcode scheme (V015-V023)"
+
+  - id: "IF_SMAseq_09112025"
+    config: "experiments/IF_SMAseq_09112025.yaml"
+    date: "2025-09-11"
+    type: "early_test"
+    size_gb: 0.8
+    status: "needs_review"
+    priority: 10
+
+  - id: "IF_SMAseq_9_11_continuted"
+    config: "experiments/IF_SMAseq_9_11_continuted.yaml"
+    date: "2025-09-15"
+    type: "early_test"
+    size_gb: 0.3
+    status: "needs_review"
+    priority: 10
+    continuation_of: "IF_SMAseq_09112025"
+
+# Target sequence status
+targets:
+  complete:
+    - V0-4.1
+    - V0-4.2
+    - V0-4.3
+    - V0-4.4
+    - V0-39
+    - V0-40
+    - V0-41
+    - V0-42
+    - V0-43
+    - V0-44
+    - V0-45
+    - V0-46
+    - V0-47
+    - V0-4.14
+    - V0-4.15
+    - V0-4.16
+    - V0-4.17
+    - B2
+
+  pending_sequences: []
+
+# Summary statistics
+summary:
+  total_experiments: 12
+  total_size_tb: 1.44
+  ready_configs: 9
+  needs_review: 3
+  targets_defined: 18
+  targets_with_sequences: 18

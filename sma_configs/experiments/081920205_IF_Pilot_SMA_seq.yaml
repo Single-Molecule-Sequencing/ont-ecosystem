@@ -1,0 +1,98 @@
+# SMA-seq Experiment Configuration
+# Experiment: 081920205_IF_Pilot_SMA_seq
+# Generated: 2025-12-30
+
+experiment:
+  id: "081920205_IF_Pilot_SMA_seq"
+  date: "2025-08-19"
+  type: "pilot"
+  description: "Pilot SMA-seq experiment - initial testing"
+  status: "pilot"
+
+# Data paths (multiple runs)
+paths:
+  data_root: "/data1/081920205_IF_Pilot_SMA_seq"
+  runs:
+    - run_id: "20250819_2057_MD-102066_FBD65978_f6ad7dd5"
+      date: "2025-08-19"
+    - run_id: "20250821_1912_MD-102066_FBD65978_b06eb75c"
+      date: "2025-08-21"
+    - run_id: "20250822_2026_MD-102066_FBD65978_311e64b1"
+      date: "2025-08-22"
+
+# Sequencing metadata
+sequencing:
+  device: "MinION"
+  position_id: "MD-102066"
+  flow_cell_id: "FBD65978"
+  kit: "SQK-NBD114-24"
+
+# Sample barcode mapping
+# Pilot used different barcode naming: V015-V023, barcode10-24
+samples:
+  # Legacy barcode naming from pilot
+  barcode10:
+    alias: "V015"
+    target_id: null  # Needs mapping
+    condition: "pilot"
+    notes: "Legacy pilot barcode"
+
+  barcode11:
+    alias: "V016"
+    target_id: null
+    condition: "pilot"
+
+  barcode12:
+    alias: "V017"
+    target_id: null
+    condition: "pilot"
+
+  barcode13:
+    alias: "V018"
+    target_id: null
+    condition: "pilot"
+
+  barcode14:
+    alias: "V019"
+    target_id: null
+    condition: "pilot"
+
+  barcode15:
+    alias: "V020"
+    target_id: null
+    condition: "pilot"
+
+  barcode16:
+    alias: "V021"
+    target_id: null
+    condition: "pilot"
+
+  barcode17:
+    alias: "V022"
+    target_id: null
+    condition: "pilot"
+
+  barcode18:
+    alias: "V023"
+    target_id: null
+    condition: "pilot"
+
+# Reference configuration
+reference:
+  targets_file: "../targets/sma_targets.yaml"
+  use_sequence: "designed"
+  validate_against_sanger: true
+
+# Analysis settings
+analysis:
+  min_read_length: 100
+  max_read_length: 500
+  min_qscore: 10
+  status: "archived"
+  notes: "Pilot data - may have different barcode scheme"
+
+# Output configuration
+output:
+  base_dir: "/data2/repos/ont-ecosystem/sma_configs/experiments/081920205_IF_Pilot_SMA_seq"
+  generate_reference_fasta: false  # Need target mapping first
+  generate_sample_sheet_csv: true

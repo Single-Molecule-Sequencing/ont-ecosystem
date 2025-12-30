@@ -1,0 +1,19 @@
+# SMA-seq Targets for 12282025_IF_DoubleBC_SMA_seq
+# Double barcode experiment with V0-4.2 and V0-4.4 targets
+
+targets:
+  # V0-4.2 region (CYP2D6 positions 7108-7268)
+  # BC02 = forward, BC07 = reverse complement
+  V0-4.2:
+    forward_sequence: "AGGATTTGCATAGATGGGTTTGGGAAAGGACATTCCAGGAGATCCCACTGTAAGAAGGGCCTGGAGGAGGAGGGGACATCTCAGACATGGTCGTGGGAGAGGTGTGCCCGGGTCAGGGGGCACCAGGAGAGGCCAAGGACTCTGTACCTCCTATCCACGTC"
+    forward_barcode: BC02
+    reverse_barcode: BC07
+    size_range: [200, 260]
+
+  # V0-4.4 region (CYP2D6 positions 7453-7608)
+  # BC09 = forward, BC04 = reverse complement
+  V0-4.4:
+    forward_sequence: "TGGTGTAGGTGCTGAATGCTGTCCCCGTCCTCCTGCATATCCCAGCGCTGGCTGGCAAGGTCCTACGCTTCCAAAAGGCTTTCCTGACCCAGCTGGATGAGCTGCTAACTGAGCACAGGATGACCTGGGACCCAGCCCAGCCCCCCCGAGATCTGAC"
+    forward_barcode: BC09
+    reverse_barcode: BC04
+    size_range: [195, 255]

@@ -1,0 +1,94 @@
+experiment:
+  id: 12232025_IF_DoubleBC_SMA_seq
+  date: '2025-12-23'
+  type: double_barcode
+  description: Double barcode SMA-seq experiment (358GB)
+paths:
+  data_root: /data1/12232025_IF_DoubleBC_SMA_seq
+  run_id: 20251223_1919_MD-100098_FBD71150_ccaaf379
+  pod5_dir: /data1/12232025_IF_DoubleBC_SMA_seq/no_sample_id/20251223_1919_MD-100098_FBD71150_ccaaf379/pod5_pass
+  bam_dir: /data1/12232025_IF_DoubleBC_SMA_seq/no_sample_id/20251223_1919_MD-100098_FBD71150_ccaaf379/bam_pass
+  fastq_dir: /data1/12232025_IF_DoubleBC_SMA_seq/no_sample_id/20251223_1919_MD-100098_FBD71150_ccaaf379/fastq_pass
+  sample_sheet: /data1/12232025_IF_DoubleBC_SMA_seq/no_sample_id/20251223_1919_MD-100098_FBD71150_ccaaf379/sample_sheet_FBD71150_20251223_1852_ccaaf379.csv
+sequencing:
+  device: PromethION
+  position_id: MD-100098
+  flow_cell_id: FBD71150
+  flow_cell_product: FLO-MIN114
+  kit: SQK-NBD114-24
+samples:
+  barcode01:
+    alias: V04_1
+    target_id: V0-4.1
+    condition: standard
+    replicate: 1
+    barcode_type: single
+  barcode02:
+    alias: V04_2
+    target_id: V0-4.2
+    condition: standard
+    replicate: 1
+    barcode_type: single
+  barcode03:
+    alias: V04_3
+    target_id: V0-4.3
+    condition: standard
+    replicate: 1
+    barcode_type: single
+  barcode04:
+    alias: V04_4
+    target_id: V0-4.4
+    condition: standard
+    replicate: 1
+    barcode_type: single
+  barcode05:
+    alias: V039
+    target_id: V0-39
+    condition: standard
+    replicate: 1
+    barcode_type: single
+  barcode06:
+    alias: V04_1_2
+    target_id: V0-4.1
+    condition: double_barcode
+    replicate: 2
+    barcode_type: double
+  barcode07:
+    alias: V04_2_2
+    target_id: V0-4.2
+    condition: double_barcode
+    replicate: 2
+    barcode_type: double
+  barcode08:
+    alias: V04_3_2
+    target_id: V0-4.3
+    condition: double_barcode
+    replicate: 2
+    barcode_type: double
+  barcode09:
+    alias: V04_4_2
+    target_id: V0-4.4
+    condition: double_barcode
+    replicate: 2
+    barcode_type: double
+  barcode10:
+    alias: V039_2
+    target_id: V0-39
+    condition: double_barcode
+    replicate: 2
+    barcode_type: double
+reference:
+  targets_file: ../targets/sma_targets.yaml
+  use_sequence: designed
+  validate_against_sanger: true
+  fasta: 12232025_IF_DoubleBC_SMA_seq/reference.fa
+analysis:
+  min_read_length: 100
+  max_read_length: 500
+  min_qscore: 10
+  size_classification: true
+  alignment_validation: true
+output:
+  base_dir: /data2/repos/ont-ecosystem/sma_configs/experiments/12232025_IF_DoubleBC_SMA_seq
+  generate_reference_fasta: true
+  generate_sample_sheet_csv: true

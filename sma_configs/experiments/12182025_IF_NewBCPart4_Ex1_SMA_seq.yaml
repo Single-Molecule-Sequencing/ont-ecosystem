@@ -1,0 +1,70 @@
+experiment:
+  id: 12182025_IF_NewBCPart4_Ex1_SMA_seq
+  date: '2025-12-18'
+  type: new_barcode_part4
+  description: NewBC Part4 Replicate 1 (81GB)
+  replicate_group: 12182025_NewBCPart4
+  replicate_number: 1
+paths:
+  data_root: /data1/12182025_IF_NewBCPart4_Ex1_SMA_seq
+  runs:
+  - run_id: 20251218_2303_MD-100098_FBD69036_3bf7fd79
+    pod5_dir: /data1/12182025_IF_NewBCPart4_Ex1_SMA_seq/no_sample_id/20251218_2303_MD-100098_FBD69036_3bf7fd79/pod5_pass
+    bam_dir: /data1/12182025_IF_NewBCPart4_Ex1_SMA_seq/no_sample_id/20251218_2303_MD-100098_FBD69036_3bf7fd79/bam_pass
+    fastq_dir: /data1/12182025_IF_NewBCPart4_Ex1_SMA_seq/no_sample_id/20251218_2303_MD-100098_FBD69036_3bf7fd79/fastq_pass
+  - run_id: 20251218_2306_MD-100098_FBD69036_333a4c4a
+    pod5_dir: /data1/12182025_IF_NewBCPart4_Ex1_SMA_seq/no_sample_id/20251218_2306_MD-100098_FBD69036_333a4c4a/pod5_pass
+    bam_dir: /data1/12182025_IF_NewBCPart4_Ex1_SMA_seq/no_sample_id/20251218_2306_MD-100098_FBD69036_333a4c4a/bam_pass
+    fastq_dir: /data1/12182025_IF_NewBCPart4_Ex1_SMA_seq/no_sample_id/20251218_2306_MD-100098_FBD69036_333a4c4a/fastq_pass
+sequencing:
+  device: PromethION
+  position_id: MD-100098
+  flow_cell_id: FBD69036
+  flow_cell_product: FLO-MIN114
+  kit: SQK-NBD114-24
+samples:
+  barcode01:
+    alias: V04_1
+    target_id: V0-4.1
+    condition: standard
+    replicate: 1
+    barcode_type: single
+  barcode02:
+    alias: V04_2
+    target_id: V0-4.2
+    condition: standard
+    replicate: 1
+    barcode_type: single
+  barcode03:
+    alias: V04_3
+    target_id: V0-4.3
+    condition: standard
+    replicate: 1
+    barcode_type: single
+  barcode04:
+    alias: V04_4
+    target_id: V0-4.4
+    condition: standard
+    replicate: 1
+    barcode_type: single
+  barcode05:
+    alias: V039
+    target_id: V0-39
+    condition: standard
+    replicate: 1
+    barcode_type: single
+reference:
+  targets_file: ../targets/sma_targets.yaml
+  use_sequence: designed
+  validate_against_sanger: true
+  fasta: 12182025_IF_NewBCPart4_Ex1_SMA_seq/reference.fa
+analysis:
+  min_read_length: 100
+  max_read_length: 500
+  min_qscore: 10
+  size_classification: true
+  alignment_validation: true
+output:
+  base_dir: /data2/repos/ont-ecosystem/sma_configs/experiments/12182025_IF_NewBCPart4_Ex1_SMA_seq
+  generate_reference_fasta: true
+  generate_sample_sheet_csv: true

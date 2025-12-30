@@ -1,0 +1,176 @@
+# SMA-seq Target Sequences Registry
+# Generated from CYP2D6 plasmid library
+# Source: User-provided plasmid sequences with Sanger validation
+# Last updated: 2025-12-30
+
+# Note: Lowercase flanking regions = primer sequences
+#       Uppercase = CYP2D6 target sequence
+
+targets:
+  # ============================================
+  # V0-4.X Series (Exon 4 region, primary Dec 2025 targets)
+  # ============================================
+
+  V0-4.1:
+    cyp2d6_positions: "6944-7111"
+    expected_length: 168
+    designed_sequence: "ttcgagtacgacgaccctcGCTTCCTCAGGCTGCTGGACCTAGCTCAGGAGGGACTGAAGGAGGAGTCGGGCTTTCTGCGCGAGGTGCGGAGCGAGAGATCGAGGAGTCTCTGCAGGGCGAGCTCCCGAGAGGTGCCGGGGCTGGACTGGggcctcggaagagcagga"
+    sanger_sequence: "ttcgagtacgacgaccctcGCTTCCTCAGGCTGCTGGACCTAGCTCAGGAGGGACTGAAGGAGGAGTCGGGCTTTCTGCGCGAGGTGCGGAGCGAGAGATCGAGGAGTCTCTGCAGGGCGAGCTCCCGAGAGGTGCCGGGGCTGGACTGGggcctcggaagagcagga"
+    validated: true
+    notes: "Designed matches Sanger"
+
+  V0-4.2:
+    cyp2d6_positions: "7108-7272"
+    expected_length: 165
+    designed_sequence: "AGGATTTGCATAGATGGGTTTGGGAAAGGACATTCCAGGAGATCCCACTGTAAGAAGGGCCTGGAGGAGGAGGGGACATCTCAGACATGGTCGTGGGAGAGGTGTGCCCGGGTCAGGGGGCACCAGGAGAGGCCAAGGACTCTGTACCTCCTATCCACGTCAGAG"
+    sanger_sequence: "AGGATTTGCATAGATGGGTTTGGGAAAGGACATTCCAGGAGATCCCACTGTAAGAAGGGCCTGGAGGAGGAGGGGACATCTCAGACATGGTCGTGGGAGAGGTGTGCCCGGGTCAGGGGGCACCAGGAGAGGCCAAGGACTCTGTACCTCCTATCCACGTCAGAG"
+    validated: true
+    notes: "Designed matches Sanger"
+
+  V0-4.3:
+    cyp2d6_positions: "7269-7456"
+    expected_length: 188
+    designed_sequence: "agagatttcgattttaggtttctcctcTGGGCAAGGAGAGAGGGTGGAGGCTGGCACTTGGGGAGGGACTTGGTGAGGTCAGTGGTAAGGACAGGCAGGCCCTGGGTCTACCTGGAGATGGCTGGGGCCTGAGACTTGTCCAGGTGAACGCAGAGCACAGGAGGGATTGAgaTcccgttctgtctggt"
+    sanger_sequence: "agagatttcgattttaggtttctcctcTGGGCAAGGAGAGAGGGTGGAGGCTGGCACTTGGGGAGGGACTTGGTGAGGTCAGTGGTAAGGACAGGCAGGCCCTGGGTCTACCTGGAGATGGCTGGGGCCTGAGACTTGTCCAGGTGAACGCAGAGCACAGGAGGGATTGAgaTcccgttctgtctggt"
+    validated: true
+    notes: "Designed matches Sanger"
+
+  V0-4.4:
+    cyp2d6_positions: "7453-7612"
+    expected_length: 160
+    designed_sequence: "tggtgtaggtgctgaatgcTGTCCCCGTCCTCCTGCATATCCCAGCGCTGGCTGGCAAGGTCCTACGCTTCCAAAAGGCTTTCCTGACCCAGCTGGATGAGCTGCTAACTGAGCACAGGATGACCTGGGACCCAGCCCAGCCcccccgagaTctgactga"
+    sanger_sequence: "tggtgtaggtgctgaatgcTGTCCCCGTCCTCCTGCATATCCCAGCGCTGGCTGGCAAGGTCCTACGCTTCCAAAAGGCTTTCCTGACCCAGCTGGATGAGCTGCTAACTGAGCACAGGATGACCTGGGACCCAGCCCAGCCcccccgagaTctgactga"
+    validated: true
+    notes: "Designed matches Sanger"
+
+  V0-4.14:
+    cyp2d6_positions: "8466-8638"
+    expected_length: 173
+    designed_sequence: "tagtcctcaatgccaccacacTGACTGTCCCCACTTGGGTGGGGGGTCCAGAGTATAGGCAGGGCTGGCCTGTCCATCCAGAGCCCCCGTCTAGTGGGGAGACAAACCAGGACCTGCCAGAATGTTGGAGGACCCAACGCCTGCAGGGAGAGGGGgcagtgtgggtgcctctg"
+    sanger_sequence: "tagtcctcaatgccaccacacTGACTGTCCCCACTTGGGTGGGGGGTCCAGAGTATAGGCAGGGCTGGCCTGTCCATCCAGAGCCCCCGTCTAGTGGGGAGACAAACCAGGACCTGCCAGAATGTTGGAGGACCCAACGCCTGCAGGGAGAGGGGgcagtgtgggtgcctctg"
+    validated: true
+    notes: "Designed matches Sanger"
+
+  V0-4.15:
+    cyp2d6_positions: "8635-8808"
+    expected_length: 174
+    designed_sequence: "tctgagaggtgtgactgcGCCCTGCTGTGGGGTCGGAGAGGGTACTGTGGAGCTTCTCGGGCGCAGGACTAGTTGACAGAGTCCAGCTGTGTGCCAGGCAGTGTGTGTCCCCCGTGTGTTTGGTGGCAGGGGTCCCAGCATCCTAGAGTCCAGTCCccactctcaccctgcatc"
+    sanger_sequence: "tctgagaggtgtgactgcGCCCTGCTGTGGGGTCGGAGAGGGTACTGTGGAGCTTCTCGGGCGCAGGACTAGTTGACAGAGTCCAGCTGTGTGCCAGGCAGTGTGTGTCCCCCGTGTGTTTGGTGGCAGGGGTCCCAGCATCCTAGAGTCCAGTCCccactctcaccctgcatc"
+    validated: true
+    notes: "Designed matches Sanger"
+
+  V0-4.16:
+    cyp2d6_positions: "8805-8968"
+    expected_length: 164
+    designed_sequence: "catctcctgcccagggaacGACACTCATCACCAACCTGTCATCGGTGCTGAAGGATGAGGCCGTCTGGGAGAAGCCCTTCCGCTTCCACCCCGAACACTTCCTGGATGCCCAGGGCCACTTTGTGAAGCCGGAGGCCTTCCTGCctttctcagcaggtgcctgt"
+    sanger_sequence: "catctcctgcccagggaacGACACTCATCACCAACCTGTCATCGGTGCTGAAGGATGAGGCCGTCTGGGAGAAGCCCTTCCGCTTCCACCCCGAACACTTCCTGGATGCCCAGGGCCACTTTGTGAAGCCGGAGGCCTTCCTGCctttctcagcaggtgcctgt"
+    validated: true
+    notes: "Designed matches Sanger"
+
+  V0-4.17:
+    cyp2d6_positions: "8965-9140"
+    expected_length: 176
+    designed_sequence: "ctgtggggagcccggctcCCTGTCCCCTTCCGTGGAGTCTTGCAGGGGTATCACCCAGGAGCCAGGCTCACTGACGCCCCTCCCCTCCCCACAGGCCGCCGTGCATGCCTCGGGGAGCCCCTGGCCCGCATGGAGCTCTTCCTCTTCTTCACCTCcctgctgcagcacttcagctt"
+    sanger_sequence: "ctgtggggagcccggctcCCTGTCCCCTTCCGTGGAGTCTTGCAGGGGTATCACCCAGGAGCCAGGCTCACTGACGCCCCTCCCCTCCCCACAGGCCGCCGTGCATGCCTCGGGGAGCCCCTGGCCCGCATGGAGCTCTTCCTCTTCTTCACCTCcctgctgcagcacttcagctt"
+    validated: true
+    notes: "Designed matches Sanger"
+
+  # ============================================
+  # V0-39 to V0-47 Series (Exon 4-5 junction region)
+  # ============================================
+
+  V0-39:
+    cyp2d6_positions: "7609-7714"
+    expected_length: 106
+    sequence: "GGAGCTGAGGCCTTCCTGGCAGAGATGGAGAAGGTGAGAGTGGCTGCCACGGTGGGGGGCAAGGGTGGTGGGTTGAGCGTCCCAGGAGGAATGAGGGGAGGCTGGGCAAA"
+    validated: true
+    notes: "Sanger verified"
+
+  V0-40:
+    cyp2d6_positions: "7711-7808"
+    expected_length: 98
+    sequence: "CAAAAGGTTGGACCAGTGCATCACCCGGCGAGCCGCATCTGGGCTGACAGGTGCAGAATTGGAGGTCATTTGGGGGCTACCCCGTTCTGTCCCGAGTA"
+    validated: true
+    notes: "Sanger verified"
+
+  V0-41:
+    cyp2d6_positions: "7805-7892"
+    expected_length: 88
+    sequence: "AGTATGCTCTCGGCCCTGCTCAGGCCAAGGGGAACCCTGAGAGCAGCTTCAATGATGAGAACCTGCGCATAGTGGTGGCTGACCTGTT"
+    validated: true
+    notes: "Sanger verified"
+
+  V0-42:
+    cyp2d6_positions: "7889-7988"
+    expected_length: 100
+    sequence: "TGTTCTCTGCCGGGATGGTGACCACCTCGACCACGCTGGCCTGGGGCCTCCTGCTCATGATCCTACATCCGGATGTGCAGCGTGAGCCCATCTGGGAAAC"
+    validated: true
+    notes: "Sanger verified"
+
+  V0-43:
+    cyp2d6_positions: "7985-8094"
+    expected_length: 110
+    sequence: "AAACAGTGCAGGGGCCGAGGGAGGAAGGGTACAGGCGGGGGCCCATGAACTTTGCTGGGACACCCGGGGCTCCAAGCACAGGCTTGACCAGGATCCTGTAAGCCTGACCT"
+    validated: true
+    notes: "Sanger verified"
+
+  V0-44:
+    cyp2d6_positions: "8091-8181"
+    expected_length: 91
+    sequence: "ACCTCCTCCAACATAGGAGGCAAGAAGGAGTGTCAGGGCCGGACCCCCTGGGTGCTGACCCATTGTGGGGACGCATGTCTGTCCAGGCCGT"
+    validated: true
+    notes: "Sanger verified"
+
+  V0-45:
+    cyp2d6_positions: "8178-8284"
+    expected_length: 107
+    sequence: "CCGTGTCCAACAGGAGATCGACGACGTGATAGGGCAGGTGCGGCGACCAGAGATGGGTGACCAGGCTCACATGCCCTACACCACTGCCGTGATTCATGAGGTGCAGC"
+    validated: true
+    notes: "Sanger verified"
+
+  V0-46:
+    cyp2d6_positions: "8281-8364"
+    expected_length: 84
+    sequence: "CAGCGCTTTGGGGACATCGTCCCCCTGGGTGTGACCCATATGACATCCCGTGACATCGAAGTACAGGGCTTCCGCATCCCTAAG"
+    validated: true
+    notes: "Sanger verified"
+
+  V0-47:
+    cyp2d6_positions: "8361-8469"
+    expected_length: 109
+    sequence: "TAAGGTAGGCCTGGCGCCCTCCTCACCCCAGCTCAGCACCAGCACCTGGTGATAGCCCCAGCATGGCTACTGCCAGGTGGGCCCACTCTAGGAACCCTGGCCACCTAGT"
+    validated: true
+    notes: "Sanger verified"
+
+  # ============================================
+  # B2 Reference (existing, verified)
+  # ============================================
+
+  B2:
+    cyp2d6_positions: "7108-7272"  # Same as V0-4.2
+    expected_length: 237
+    designed_sequence: "ttttttttcctgtacttcgttcagttacgtattgctaaggttaaacagacgactacaaacggaatcgacagcacctAGGATTTGCATAGATGGGTTTGGGAAAGGACATTCCAGGAGATCCCACTGTAAGAAGGGCCTGGAGGAGGAGGGGACATCTCAGACATGGTCGTGGGAGAGGTGTGCCCGGGTCAGGGGGCACCAGGAGAGGCCAAGGACTCTGTACCTCCTATCCACGTC"
+    sanger_sequence: null
+    validated: true
+    notes: "From /data/references/experiments/doublebarcode_GG/B2.fa - includes flanking regions"
+
+# Size-based classification ranges
+size_ranges:
+  V0-4.1: { min: 143, max: 193, expected: 168, tolerance_pct: 15 }
+  V0-4.2: { min: 140, max: 190, expected: 165, tolerance_pct: 15 }
+  V0-4.3: { min: 160, max: 216, expected: 188, tolerance_pct: 15 }
+  V0-4.4: { min: 136, max: 184, expected: 160, tolerance_pct: 15 }
+  V0-39: { min: 90, max: 122, expected: 106, tolerance_pct: 15 }
+  V0-40: { min: 83, max: 113, expected: 98, tolerance_pct: 15 }
+  V0-41: { min: 75, max: 101, expected: 88, tolerance_pct: 15 }
+  V0-42: { min: 85, max: 115, expected: 100, tolerance_pct: 15 }
+  V0-43: { min: 94, max: 127, expected: 110, tolerance_pct: 15 }
+  V0-44: { min: 77, max: 105, expected: 91, tolerance_pct: 15 }
+  V0-45: { min: 91, max: 123, expected: 107, tolerance_pct: 15 }
+  V0-46: { min: 71, max: 97, expected: 84, tolerance_pct: 15 }
+  V0-47: { min: 93, max: 125, expected: 109, tolerance_pct: 15 }
+  V0-4.14: { min: 147, max: 199, expected: 173, tolerance_pct: 15 }
+  V0-4.15: { min: 148, max: 200, expected: 174, tolerance_pct: 15 }
+  V0-4.16: { min: 139, max: 189, expected: 164, tolerance_pct: 15 }
+  V0-4.17: { min: 150, max: 202, expected: 176, tolerance_pct: 15 }
+  B2: { min: 201, max: 273, expected: 237, tolerance_pct: 15 }

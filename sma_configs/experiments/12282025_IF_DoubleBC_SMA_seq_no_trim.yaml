@@ -1,0 +1,66 @@
+experiment:
+  id: 12282025_IF_DoubleBC_SMA_seq_no_trim
+  date: '2025-12-28'
+  type: double_barcode_no_trim
+  description: Double barcode SMA-seq experiment without adapter trimming
+paths:
+  data_root: /data1/12282025_IF_DoubleBC_SMA_seq_no_trim
+  runs:
+  - run_id: 20251228_2219_MD-100098_FBD69411_34fa833d
+    pod5_dir: /data1/12282025_IF_DoubleBC_SMA_seq_no_trim/no_sample_id/20251228_2219_MD-100098_FBD69411_34fa833d/pod5_pass
+    bam_dir: /data1/12282025_IF_DoubleBC_SMA_seq_no_trim/no_sample_id/20251228_2219_MD-100098_FBD69411_34fa833d/bam_pass
+    fastq_dir: /data1/12282025_IF_DoubleBC_SMA_seq_no_trim/no_sample_id/20251228_2219_MD-100098_FBD69411_34fa833d/fastq_pass
+    sample_sheet: /data1/12282025_IF_DoubleBC_SMA_seq_no_trim/no_sample_id/20251228_2219_MD-100098_FBD69411_34fa833d/sample_sheet_FBD69411_20251228_2101_34fa833d.csv
+  - run_id: 20251229_1055_MD-100098_FBD69411_5b5c57a9
+    pod5_dir: /data1/12282025_IF_DoubleBC_SMA_seq_no_trim/no_sample_id/20251229_1055_MD-100098_FBD69411_5b5c57a9/pod5_pass
+    bam_dir: /data1/12282025_IF_DoubleBC_SMA_seq_no_trim/no_sample_id/20251229_1055_MD-100098_FBD69411_5b5c57a9/bam_pass
+    fastq_dir: /data1/12282025_IF_DoubleBC_SMA_seq_no_trim/no_sample_id/20251229_1055_MD-100098_FBD69411_5b5c57a9/fastq_pass
+sequencing:
+  device: PromethION
+  position_id: MD-100098
+  flow_cell_id: FBD69411
+  flow_cell_product: FLO-MIN114
+  kit: SQK-NBD114-24
+  basecalling_mode: no_trim
+samples:
+  barcode02:
+    alias: V04_2
+    target_id: V0-4.2
+    condition: no_trim
+    replicate: 1
+    barcode_type: single
+  barcode04:
+    alias: V04_4
+    target_id: V0-4.4
+    condition: no_trim
+    replicate: 1
+    barcode_type: single
+  barcode07:
+    alias: V04_2_2
+    target_id: V0-4.2
+    condition: no_trim_double
+    replicate: 2
+    barcode_type: double
+  barcode09:
+    alias: V04_4_2
+    target_id: V0-4.4
+    condition: no_trim_double
+    replicate: 2
+    barcode_type: double
+reference:
+  targets_file: ../targets/sma_targets.yaml
+  use_sequence: designed
+  validate_against_sanger: true
+  include_adapter_sequences: true
+  fasta: 12282025_IF_DoubleBC_SMA_seq_no_trim/reference.fa
+analysis:
+  min_read_length: 100
+  max_read_length: 600
+  min_qscore: 10
+  size_classification: true
+  alignment_validation: true
+  paired_experiment: 12282025_IF_DoubleBC_SMA_seq
+output:
+  base_dir: /data2/repos/ont-ecosystem/sma_configs/experiments/12282025_IF_DoubleBC_SMA_seq_no_trim
+  generate_reference_fasta: true
+  generate_sample_sheet_csv: true

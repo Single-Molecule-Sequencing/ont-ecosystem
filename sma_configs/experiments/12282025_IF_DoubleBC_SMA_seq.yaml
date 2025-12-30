@@ -1,0 +1,64 @@
+experiment:
+  id: 12282025_IF_DoubleBC_SMA_seq
+  date: '2025-12-28'
+  type: double_barcode
+  description: Double barcode SMA-seq experiment
+paths:
+  data_root: /data1/12282025_IF_DoubleBC_SMA_seq
+  run_id: 20251228_2100_MD-100098_FBD69411_7c69187c
+  pod5_dir: /data1/12282025_IF_DoubleBC_SMA_seq/no_sample_id/20251228_2100_MD-100098_FBD69411_7c69187c/pod5_pass
+  bam_dir: /data1/12282025_IF_DoubleBC_SMA_seq/no_sample_id/20251228_2100_MD-100098_FBD69411_7c69187c/bam_pass
+  fastq_dir: /data1/12282025_IF_DoubleBC_SMA_seq/no_sample_id/20251228_2100_MD-100098_FBD69411_7c69187c/fastq_pass
+  sequencing_summary: /data1/12282025_IF_DoubleBC_SMA_seq/no_sample_id/20251228_2100_MD-100098_FBD69411_7c69187c/sequencing_summary_FBD69411_7c69187c_b360fe42.txt
+  sample_sheet: /data1/12282025_IF_DoubleBC_SMA_seq/no_sample_id/20251228_2100_MD-100098_FBD69411_7c69187c/sample_sheet_FBD69411_20251228_2022_7c69187c.csv
+sequencing:
+  device: PromethION
+  position_id: MD-100098
+  flow_cell_id: FBD69411
+  flow_cell_product: FLO-MIN114
+  kit: SQK-NBD114-24
+  protocol_run_id: 7c69187c-5fcf-45e9-b3c2-4492a81f9f55
+samples:
+  barcode02:
+    alias: V04_2
+    target_id: V0-4.2
+    condition: standard
+    replicate: 1
+    barcode_type: single
+    notes: Standard single barcode
+  barcode04:
+    alias: V04_4
+    target_id: V0-4.4
+    condition: standard
+    replicate: 1
+    barcode_type: single
+    notes: Standard single barcode
+  barcode07:
+    alias: V04_2_2
+    target_id: V0-4.2
+    condition: double_barcode
+    replicate: 2
+    barcode_type: double
+    notes: Double-barcoded V0-4.2 variant
+  barcode09:
+    alias: V04_4_2
+    target_id: V0-4.4
+    condition: double_barcode
+    replicate: 2
+    barcode_type: double
+    notes: Double-barcoded V0-4.4 variant
+reference:
+  targets_file: ../targets/sma_targets.yaml
+  use_sequence: designed
+  validate_against_sanger: true
+  fasta: 12282025_IF_DoubleBC_SMA_seq/reference.fa
+analysis:
+  min_read_length: 100
+  max_read_length: 500
+  min_qscore: 10
+  size_classification: true
+  alignment_validation: true
+output:
+  base_dir: /data2/repos/ont-ecosystem/sma_configs/experiments/12282025_IF_DoubleBC_SMA_seq
+  generate_reference_fasta: true
+  generate_sample_sheet_csv: true

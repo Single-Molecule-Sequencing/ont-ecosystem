@@ -1,0 +1,138 @@
+experiment:
+  id: 11242025_IF_Part4_CIP_Treated_SMA_seq
+  date: '2025-11-24'
+  type: part4_cip
+  description: Part4 CIP-treated variant (same day as main Part4)
+  paired_experiment: 11242025_IF_Part4_SMA_seq
+  treatment: CIP
+paths:
+  data_root: /data1/11242025_IF_Part4_CIP_Treated_SMA_seq
+  run_id: 20251124_2039_MD-101527_FBD68976_9f9f4bc1
+  pod5_dir: /data1/11242025_IF_Part4_CIP_Treated_SMA_seq/no_sample_id/20251124_2039_MD-101527_FBD68976_9f9f4bc1/pod5_pass
+  bam_dir: /data1/11242025_IF_Part4_CIP_Treated_SMA_seq/no_sample_id/20251124_2039_MD-101527_FBD68976_9f9f4bc1/bam_pass
+  fastq_dir: /data1/11242025_IF_Part4_CIP_Treated_SMA_seq/no_sample_id/20251124_2039_MD-101527_FBD68976_9f9f4bc1/fastq_pass
+sequencing:
+  device: PromethION
+  position_id: MD-101527
+  flow_cell_id: FBD68976
+  flow_cell_product: FLO-MIN114
+  kit: SQK-NBD114-24
+samples:
+  barcode01:
+    alias: V04_1
+    target_id: V0-4.1
+    condition: cip_treated
+    replicate: 1
+    barcode_type: single
+  barcode02:
+    alias: V04_2
+    target_id: V0-4.2
+    condition: cip_treated
+    replicate: 1
+    barcode_type: single
+  barcode03:
+    alias: V04_3
+    target_id: V0-4.3
+    condition: cip_treated
+    replicate: 1
+    barcode_type: single
+  barcode04:
+    alias: V04_4
+    target_id: V0-4.4
+    condition: cip_treated
+    replicate: 1
+    barcode_type: single
+  barcode05:
+    alias: V039
+    target_id: V0-39
+    condition: cip_treated
+    replicate: 1
+    barcode_type: single
+  barcode06:
+    alias: V040
+    target_id: V0-40
+    condition: cip_treated
+    replicate: 1
+    barcode_type: single
+  barcode07:
+    alias: V041
+    target_id: V0-41
+    condition: cip_treated
+    replicate: 1
+    barcode_type: single
+  barcode08:
+    alias: V042
+    target_id: V0-42
+    condition: cip_treated
+    replicate: 1
+    barcode_type: single
+  barcode09:
+    alias: V043
+    target_id: V0-43
+    condition: cip_treated
+    replicate: 1
+    barcode_type: single
+  barcode10:
+    alias: V044
+    target_id: V0-44
+    condition: cip_treated
+    replicate: 1
+    barcode_type: single
+  barcode11:
+    alias: V045
+    target_id: V0-45
+    condition: cip_treated
+    replicate: 1
+    barcode_type: single
+  barcode12:
+    alias: V046
+    target_id: V0-46
+    condition: cip_treated
+    replicate: 1
+    barcode_type: single
+  barcode13:
+    alias: V047
+    target_id: V0-47
+    condition: cip_treated
+    replicate: 1
+    barcode_type: single
+  barcode14:
+    alias: V04_14
+    target_id: V0-4.14
+    condition: cip_treated
+    replicate: 1
+    barcode_type: single
+  barcode15:
+    alias: V04_15
+    target_id: V0-4.15
+    condition: cip_treated
+    replicate: 1
+    barcode_type: single
+  barcode16:
+    alias: V04_16
+    target_id: V0-4.16
+    condition: cip_treated
+    replicate: 1
+    barcode_type: single
+  barcode17:
+    alias: V04_17
+    target_id: V0-4.17
+    condition: cip_treated
+    replicate: 1
+    barcode_type: single
+reference:
+  targets_file: ../targets/sma_targets.yaml
+  use_sequence: designed
+  validate_against_sanger: true
+  fasta: 11242025_IF_Part4_CIP_Treated_SMA_seq/reference.fa
+analysis:
+  min_read_length: 100
+  max_read_length: 500
+  min_qscore: 10
+  size_classification: true
+  alignment_validation: true
+  comparison_experiment: 11242025_IF_Part4_SMA_seq
+output:
+  base_dir: /data2/repos/ont-ecosystem/sma_configs/experiments/11242025_IF_Part4_CIP_Treated_SMA_seq
+  generate_reference_fasta: true
+  generate_sample_sheet_csv: true

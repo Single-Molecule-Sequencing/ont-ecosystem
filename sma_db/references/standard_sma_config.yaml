@@ -1,0 +1,88 @@
+# Standard SMA-seq Configuration
+# For experiments using standard ONT NBD114-24 kit demux
+# Generated: 2025-12-30
+
+experiment: "Standard SMA-seq"
+
+library_structure:
+  description: "5'- PREFIX + ADAPTER + FLANK_F + BARCODE + FLANK_R + TARGET -3'"
+  elements:
+    PREFIX:
+      sequence: "CCTGTACTTCGTT"
+      length: 13
+      description: "13bp prefix before adapter"
+    ADAPTER:
+      sequence: "CAGTTACGTATTGCT"
+      length: 15
+      description: "15bp Native Adapter end sequence"
+    FLANK_F:
+      sequence: "AAGGTTAA"
+      length: 8
+      description: "8bp front flank"
+    FLANK_R:
+      sequence: "CAGCACCT"
+      length: 8
+      description: "8bp rear flank"
+
+targets:
+  V0-4.1_forward:
+    description: "V0-4.1 forward strand (CYP2D6 6944-7111)"
+    length: 168
+    sequence: "ttcgagtacgacgaccctcGCTTCCTCAGGCTGCTGGACCTAGCTCAGGAGGGACTGAAGGAGGAGTCGGGCTTTCTGCGCGAGGTGCGGAGCGAGAGATCGAGGAGTCTCTGCAGGGCGAGCTCCCGAGAGGTGCCGGGGCTGGACTGGggcctcggaagagcagga"
+    size_range: [150, 190]
+
+  V0-4.1_reverse:
+    description: "V0-4.1 reverse complement"
+    length: 168
+    sequence: "tcctgctcttccgaggccCCAGTCCAGCCCCGGCACCTCTCGGGAGCTCGCCCTGCAGAGACTCCTCGATCTCTCGCTCCGCACCTCGCGCAGAAAGCCCGACTCCTCCTTCAGTCCCTCCTGAGCTAGGTCCAGCAGCCTGAGGAAGCgaggggtcgtcgtactcgaa"
+    size_range: [150, 190]
+
+  V0-4.2_forward:
+    description: "V0-4.2 forward strand (CYP2D6 7108-7272)"
+    length: 165
+    sequence: "AGGATTTGCATAGATGGGTTTGGGAAAGGACATTCCAGGAGATCCCACTGTAAGAAGGGCCTGGAGGAGGAGGGGACATCTCAGACATGGTCGTGGGAGAGGTGTGCCCGGGTCAGGGGGCACCAGGAGAGGCCAAGGACTCTGTACCTCCTATCCACGTCAGAG"
+    size_range: [145, 185]
+
+  V0-4.2_reverse:
+    description: "V0-4.2 reverse complement"
+    length: 165
+    sequence: "CTCTGACGTGGATAGGAGGTACAGAGTCCTTGGCCTCTCCTGGTGCCCCCTGACCCGGGCACACCTCTCCCACGACCATGTCTGAGATGTCCCCTCCTCCTCCAGGCCCTTCTTACAGTGGGATCTCCTGGAATGTCCTTTCCCAAACCCATCTATGCAAATCCT"
+    size_range: [145, 185]
+
+  V0-4.3_forward:
+    description: "V0-4.3 forward strand (CYP2D6 7269-7456)"
+    length: 188
+    sequence: "agagatttcgattttaggtttctcctcTGGGCAAGGAGAGAGGGTGGAGGCTGGCACTTGGGGAGGGACTTGGTGAGGTCAGTGGTAAGGACAGGCAGGCCCTGGGTCTACCTGGAGATGGCTGGGGCCTGAGACTTGTCCAGGTGAACGCAGAGCACAGGAGGGATTGAgaTcccgttctgtctggt"
+    size_range: [168, 210]
+
+  V0-4.3_reverse:
+    description: "V0-4.3 reverse complement"
+    length: 188
+    sequence: "accagacagaacgggAtcTCAATCCCTCCTGTGCTCTGCGTTCACCTGGACAAGTCTCAGGCCCCAGCCATCTCCAGGTAGACCCAGGGCCTGCCTGTCCTTACCACTGACCTCACCAAGTCCCTCCCCAAGTGCCAGCCTCCACCCTCTCTCCTTGCCCAgaggagaaacctaaaatcgaaatctct"
+    size_range: [168, 210]
+
+  V0-4.4_forward:
+    description: "V0-4.4 forward strand (CYP2D6 7453-7612)"
+    length: 160
+    sequence: "tggtgtaggtgctgaatgcTGTCCCCGTCCTCCTGCATATCCCAGCGCTGGCTGGCAAGGTCCTACGCTTCCAAAAGGCTTTCCTGACCCAGCTGGATGAGCTGCTAACTGAGCACAGGATGACCTGGGACCCAGCCCAGCCcccccgagaTctgactga"
+    size_range: [140, 180]
+
+  V0-4.4_reverse:
+    description: "V0-4.4 reverse complement"
+    length: 160
+    sequence: "tcagtcaGatctcgggggGGCTGGGCTGGGTCCCAGGTCATCCTGTGCTCAGTTAGCAGCTCATCCAGCTGGGTCAGGAAAGCCTTTTGGAAGCGTAGGACCTTGCCAGCCAGCGCTGGGATATGCAGGAGGACGGGGACAgcattcagcacctacacca"
+    size_range: [140, 180]
+
+# Barcode to target mapping for standard ONT kit
+barcode_mapping:
+  # Single barcode (forward only)
+  barcode01: { target: V0-4.1_forward, alias: V04_1 }
+  barcode02: { target: V0-4.2_forward, alias: V04_2 }
+  barcode03: { target: V0-4.3_forward, alias: V04_3 }
+  barcode04: { target: V0-4.4_forward, alias: V04_4 }
+
+  # Double barcode (reverse complement)
+  barcode06: { target: V0-4.1_reverse, alias: V04_1_2 }
+  barcode07: { target: V0-4.2_reverse, alias: V04_2_2 }
+  barcode08: { target: V0-4.3_reverse, alias: V04_3_2 }
+  barcode09: { target: V0-4.4_reverse, alias: V04_4_2 }

@@ -1,0 +1,50 @@
+# SMA-seq Experiment Configuration
+# Experiment: IF_SMAseq_09112025
+# Generated: 2025-12-30
+
+experiment:
+  id: "IF_SMAseq_09112025"
+  date: "2025-09-11"
+  type: "early_test"
+  description: "Early SMA-seq experiment (September)"
+  status: "early_development"
+
+# Data paths
+paths:
+  data_root: "/data1/IF_SMAseq_09112025"
+  run_id: "20250911_1847_MD-102066_FBD70249_1788022b"
+  pod5_dir: "/data1/IF_SMAseq_09112025/no_sample_id/20250911_1847_MD-102066_FBD70249_1788022b/pod5_pass"
+  bam_dir: "/data1/IF_SMAseq_09112025/no_sample_id/20250911_1847_MD-102066_FBD70249_1788022b/bam_pass"
+
+# Sequencing metadata
+sequencing:
+  device: "MinION"
+  position_id: "MD-102066"
+  flow_cell_id: "FBD70249"
+  kit: "SQK-NBD114-24"
+
+# Sample barcode mapping - needs verification
+samples:
+  # Early experiment - barcode mapping may differ
+  unknown:
+    notes: "Sample sheet needs to be located and parsed"
+
+# Reference configuration
+reference:
+  targets_file: "../targets/sma_targets.yaml"
+  use_sequence: "designed"
+  validate_against_sanger: true
+
+# Analysis settings
+analysis:
+  min_read_length: 100
+  max_read_length: 500
+  min_qscore: 10
+  status: "needs_review"
+  notes: "Early development experiment - verify sample mapping"
+
+# Output configuration
+output:
+  base_dir: "/data2/repos/ont-ecosystem/sma_configs/experiments/IF_SMAseq_09112025"
+  generate_reference_fasta: false
+  generate_sample_sheet_csv: false
