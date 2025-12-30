@@ -1,12 +1,13 @@
 # Methyl-Minus SMA-seq Proof-of-Principle Experiment
 # Location: Great Lakes HPC
 # Date: October 9, 2025
+# Updated with actual run data from Great Lakes
 
 experiment:
   id: 10092025_IF_methyl_minus_SMA_seq
   date: '2025-10-09'
   type: proof_of_principle
-  description: Methyl-minus SMA-seq experiment - testing methylation-free conditions
+  description: Methyl-minus SMA-seq experiment - testing methylation-free conditions with V0-15 to V0-23 targets
   status: completed
   category: methylation_study
   prepared_by: Isaac Farnum
@@ -14,33 +15,107 @@ experiment:
 paths:
   # Great Lakes HPC paths
   data_root: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/10092025_IF_methyl_minus_SMA_seq
-  # Update after discovering run structure on Great Lakes
-  pod5_dir: null
-  bam_dir: null
-  fastq_dir: null
+  run_id: 20251009_1847_MD-101527_FBD68986_cf3ed5a3
+  pod5_dir: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/10092025_IF_methyl_minus_SMA_seq/no_sample_id/20251009_1847_MD-101527_FBD68986_cf3ed5a3/pod5_pass
+  bam_dir: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/10092025_IF_methyl_minus_SMA_seq/no_sample_id/20251009_1847_MD-101527_FBD68986_cf3ed5a3/bam_pass
+  fastq_dir: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/10092025_IF_methyl_minus_SMA_seq/no_sample_id/20251009_1847_MD-101527_FBD68986_cf3ed5a3/fastq_pass
+  sequencing_summary: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/10092025_IF_methyl_minus_SMA_seq/no_sample_id/20251009_1847_MD-101527_FBD68986_cf3ed5a3/sequencing_summary_FBD68986_cf3ed5a3_df26d34c.txt
 
 sequencing:
-  device: MinION
+  device: PromethION
+  position_id: MD-101527
+  flow_cell_id: FBD68986
   flow_cell_product: FLO-MIN114
-  kit: SQK-LSK114  # Confirm kit used
+  kit: SQK-NBD114-24
+  protocol_run_id: cf3ed5a3-6ec4-4902-a6d6-f12a014bf062
+  started: '2025-10-09T18:47:42'
+  stopped: '2025-10-12T12:58:02'
 
-# Sample information - update when confirmed
+# Sample information from sample sheet - V0-15 to V0-23 series
 samples:
-  methyl_minus:
-    alias: methyl_minus
-    target_id: methyl_minus_target
-    condition: no_methylation
+  barcode16:
+    alias: V015
+    target_id: V0-15
+    condition: methyl_minus
     replicate: 1
-    notes: "Methyl-minus conditions for SMA-seq"
+    barcode_type: single
+
+  barcode17:
+    alias: V016
+    target_id: V0-16
+    condition: methyl_minus
+    replicate: 1
+    barcode_type: single
+
+  barcode18:
+    alias: V017
+    target_id: V0-17
+    condition: methyl_minus
+    replicate: 1
+    barcode_type: single
+
+  barcode19:
+    alias: V018
+    target_id: V0-18
+    condition: methyl_minus
+    replicate: 1
+    barcode_type: single
+
+  barcode20:
+    alias: V019
+    target_id: V0-19
+    condition: methyl_minus
+    replicate: 1
+    barcode_type: single
+
+  barcode21:
+    alias: V020
+    target_id: V0-20
+    condition: methyl_minus
+    replicate: 1
+    barcode_type: single
+
+  barcode22:
+    alias: V021
+    target_id: V0-21
+    condition: methyl_minus
+    replicate: 1
+    barcode_type: single
+
+  barcode23:
+    alias: V022
+    target_id: V0-22
+    condition: methyl_minus
+    replicate: 1
+    barcode_type: single
+
+  barcode24:
+    alias: V023
+    target_id: V0-23
+    condition: methyl_minus
+    replicate: 1
+    barcode_type: single
+
+run_stats:
+  pod5_files: 743
+  bam_files: 676
+  fastq_files: 676
+
+reference:
+  targets_file: ../../targets/sma_targets.yaml
+  barcodes_file: ../../targets/sma_barcodes.yaml
+  use_sequence: designed
+  status: sequences_pending
+  notes: "V0-15 to V0-23 - same targets as pilot experiments"
 
 analysis:
-  min_read_length: 100
-  max_read_length: 500
-  min_qscore: 7
+  min_read_length: 80
+  max_read_length: 200
+  min_qscore: 10
   experiment_type: methylation_study
 
 notes: |
-  Proof-of-principle experiment testing methylation-free conditions for SMA-seq.
-  Part of early development exploring methylation effects on sequencing.
+  Methyl-minus SMA-seq experiment testing methylation-free conditions.
+  Uses V0-15 to V0-23 targets (barcodes 16-24) - same target series as pilot experiments.
+  Run duration: Oct 9-12, 2025 (~3 days)
   Data stored on Great Lakes HPC.
-  Config created from path discovery - verify sample details on HPC.

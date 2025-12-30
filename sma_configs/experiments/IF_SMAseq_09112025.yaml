@@ -9,8 +9,13 @@ paths:
   data_root: /data1/IF_SMAseq_09112025
   great_lakes_path: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/IF_SMAseq_09112025
   run_id: 20250911_1847_MD-102066_FBD70249_1788022b
+  protocol_run_id: 1788022b-9979-4386-85e1-a584186957f8
   pod5_dir: /data1/IF_SMAseq_09112025/no_sample_id/20250911_1847_MD-102066_FBD70249_1788022b/pod5_pass
   bam_dir: /data1/IF_SMAseq_09112025/no_sample_id/20250911_1847_MD-102066_FBD70249_1788022b/bam_pass
+  sequencing_summary_gl: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/IF_SMAseq_09112025/no_sample_id/20250911_1847_MD-102066_FBD70249_1788022b/sequencing_summary_FBD70249_1788022b_ed850e72.txt
+  run_stats:
+    pod5_files: 1612
+    bam_files: 1541
 
 sequencing:
   device: MinION

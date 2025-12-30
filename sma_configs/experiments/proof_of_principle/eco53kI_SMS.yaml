@@ -4,19 +4,19 @@
 
 experiment:
   id: eco53kI_SMS
-  date: '2024-01-01'  # Approximate - update when confirmed
+  date: '2024-11-17'  # Based on file timestamps
   type: proof_of_principle
   description: Eco53kI restriction enzyme cutting single molecule sequencing experiment
   status: completed
   category: restriction_enzyme
 
 paths:
-  # Great Lakes HPC paths
-  data_root: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/Single_MOlecule_Species_Eco53KI
+  # Great Lakes HPC paths - raw pod5 only (no MinKNOW structure)
+  data_root: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/eco53kI
   run_id: b934d4c5_ef92a647
-  # Update these paths after confirming directory structure on Great Lakes
-  pod5_dir: null  # Discover on Great Lakes
-  bam_dir: null   # Discover on Great Lakes
+  pod5_dir: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/eco53kI/pod5
+  bam_dir: null  # Raw pod5 only - needs basecalling
+  pod5_files: 22  # AWD171_b934d4c5_ef92a647_*.pod5
 
 sequencing:
   device: MinION

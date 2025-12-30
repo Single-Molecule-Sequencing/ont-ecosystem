@@ -11,10 +11,15 @@ paths:
   runs:
     - run_id: 20250819_2057_MD-102066_FBD65978_f6ad7dd5
       date: '2025-08-19'
+      protocol_run_id: f6ad7dd5-548b-46fd-91b6-8951796c827c
+      sequencing_summary: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/081920205_IF_Pilot_SMA_seq/no_sample_id/20250819_2057_MD-102066_FBD65978_f6ad7dd5/sequencing_summary_FBD65978_f6ad7dd5_ba7e46e3.txt
+      pod5_files: 528
     - run_id: 20250821_1912_MD-102066_FBD65978_b06eb75c
       date: '2025-08-21'
+      sequencing_summary: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/081920205_IF_Pilot_SMA_seq/no_sample_id/20250821_1912_MD-102066_FBD65978_b06eb75c/sequencing_summary_FBD65978_b06eb75c_0ee42a98.txt
     - run_id: 20250822_2026_MD-102066_FBD65978_311e64b1
       date: '2025-08-22'
+      sequencing_summary: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/081920205_IF_Pilot_SMA_seq/no_sample_id/20250822_2026_MD-102066_FBD65978_311e64b1/sequencing_summary_FBD65978_311e64b1_196eb352.txt
 
 sequencing:
   device: MinION

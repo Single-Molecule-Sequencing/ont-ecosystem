@@ -1,10 +1,11 @@
 # SMS RC Eco53KI + PvuII Dual Enzyme Proof-of-Principle Experiment
 # Location: Great Lakes HPC
-# Combined restriction enzyme cutting experiment
+# Combined restriction enzyme cutting experiment with two plasmid samples
+# Updated with actual run data from Great Lakes
 
 experiment:
   id: SMS_RC_Eco53KI_PvuII
-  date: '2024-01-01'  # Update when confirmed
+  date: '2025-06-27'
   type: proof_of_principle
   description: Single Molecule Sequencing with Eco53kI and PvuII dual restriction enzyme cutting
   status: completed
@@ -16,24 +17,58 @@ experiment:
 paths:
   # Great Lakes HPC paths
   data_root: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/SMS_RC_Eco53KI_PvuII
-  # Update after discovering run structure on Great Lakes
-  pod5_dir: null
-  bam_dir: null
-  fastq_dir: null
+
+# Two parallel runs with different plasmid samples
+runs:
+  pCYP_2987:
+    run_id: 20250627_1402_MD-100098_FBB32999_ac91bc0c
+    instrument: MD-100098
+    flow_cell_id: FBB32999
+    sample_id: pCYP_2987
+    protocol_run_id: ac91bc0c-b7a4-4776-bf38-6393a8473917
+    started: '2025-06-27T14:03:08'
+    stopped: '2025-06-28T20:36:46'
+    pod5_dir: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/SMS_RC_Eco53KI_PvuII/pCYP_2987/20250627_1402_MD-100098_FBB32999_ac91bc0c/pod5
+    bam_dir: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/SMS_RC_Eco53KI_PvuII/pCYP_2987/20250627_1402_MD-100098_FBB32999_ac91bc0c/bam_pass
+    fastq_dir: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/SMS_RC_Eco53KI_PvuII/pCYP_2987/20250627_1402_MD-100098_FBB32999_ac91bc0c/fastq_pass
+    sequencing_summary: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/SMS_RC_Eco53KI_PvuII/pCYP_2987/20250627_1402_MD-100098_FBB32999_ac91bc0c/sequencing_summary_FBB32999_ac91bc0c_6f56d9bb.txt
+    stats:
+      pod5_files: 31
+      bam_files: 184
+
+  pCYP_3040:
+    run_id: 20250627_1402_MD-101527_FBB33029_94217cf5
+    instrument: MD-101527
+    flow_cell_id: FBB33029
+    sample_id: pCYP_3040
+    protocol_run_id: 94217cf5-f1a4-4d5d-aec9-452be5e1888d
+    started: '2025-06-27T14:03:08'
+    stopped: '2025-06-28T20:36:10'
+    pod5_dir: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/SMS_RC_Eco53KI_PvuII/pCYP_3040/20250627_1402_MD-101527_FBB33029_94217cf5/pod5
+    bam_dir: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/SMS_RC_Eco53KI_PvuII/pCYP_3040/20250627_1402_MD-101527_FBB33029_94217cf5/bam_pass
+    fastq_dir: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/SMS_RC_Eco53KI_PvuII/pCYP_3040/20250627_1402_MD-101527_FBB33029_94217cf5/fastq_pass
+    sequencing_summary: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/SMS_RC_Eco53KI_PvuII/pCYP_3040/20250627_1402_MD-101527_FBB33029_94217cf5/sequencing_summary_FBB33029_94217cf5_7d5c588b.txt
+    stats:
+      pod5_files: 31
+      bam_files: 184
 
 sequencing:
-  device: MinION
+  device: PromethION
   flow_cell_product: FLO-MIN114
-  kit: SQK-LSK114  # Confirm kit used
+  kit: SQK-LSK114
 
-# Sample information
 samples:
-  dual_enzyme:
-    alias: Eco53KI_PvuII
-    target_id: dual_digest
+  pCYP_2987:
+    alias: pCYP_2987
+    target_id: pCYP_2987
     condition: dual_enzyme_cut
-    replicate: 1
-    notes: "Combined Eco53kI + PvuII restriction enzyme digestion"
+    notes: "pCYP plasmid 2987 with Eco53kI + PvuII digestion"
+
+  pCYP_3040:
+    alias: pCYP_3040
+    target_id: pCYP_3040
+    condition: dual_enzyme_cut
+    notes: "pCYP plasmid 3040 with Eco53kI + PvuII digestion"
 
 enzyme_info:
   Eco53kI:
@@ -51,12 +86,9 @@ analysis:
   experiment_type: dual_restriction_enzyme
 
 notes: |
-  Proof-of-principle experiment for dual restriction enzyme digestion.
-  Tests combined Eco53kI and PvuII cutting for single molecule sequencing.
-
-  Enzyme details:
-  - Eco53kI: 5'-GAG^CTC-3' (SacI isoschizomer, sticky ends)
-  - PvuII: 5'-CAG^CTG-3' (blunt end cutter)
-
+  Dual restriction enzyme digestion experiment with pCYP plasmids.
+  Two samples run in parallel on different PromethION positions:
+  - pCYP_2987 on MD-100098 (FBB32999)
+  - pCYP_3040 on MD-101527 (FBB33029)
+  Run duration: June 27-28, 2025 (~30 hours)
   Data stored on Great Lakes HPC.
-  Config created from path discovery - verify sample details on HPC.

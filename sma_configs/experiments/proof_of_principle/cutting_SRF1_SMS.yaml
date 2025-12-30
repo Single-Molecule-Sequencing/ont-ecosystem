@@ -1,38 +1,46 @@
-# SRF1 Cutting Single Molecule Sequencing Proof-of-Principle Experiment
+# SRF1 (30_40) Cutting Single Molecule Sequencing Proof-of-Principle Experiment
 # Location: Great Lakes HPC
-# This config was created from remote metadata discovery
+# Updated with actual run data from Great Lakes
 
 experiment:
   id: cutting_SRF1_SMS
-  date: '2024-01-01'  # Approximate - update when confirmed
+  date: '2025-05-19'
   type: proof_of_principle
-  description: SRF1 restriction enzyme cutting single molecule sequencing
+  description: SRF1 restriction enzyme cutting (30_40 sample) single molecule sequencing
   status: completed
   category: restriction_enzyme
   parent_experiment: Single_Molecule_Seqeuncing_Cutting_Res_E
 
 paths:
   # Great Lakes HPC paths
-  data_root: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/Single_Molecule_Seqeuncing_Cutting_Res_E/SRF1
-  # Update after confirming directory structure
-  pod5_dir: null
-  bam_dir: null
+  data_root: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/Single_Molecule_Seqeuncing_Cutting_Res_E/30_40_SRF1
+  run_id: 20250519_1038_MD-100098_AZF147_4edd9d13
+  pod5_dir: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/Single_Molecule_Seqeuncing_Cutting_Res_E/30_40_SRF1/20250519_1038_MD-100098_AZF147_4edd9d13/pod5
+  bam_dir: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/Single_Molecule_Seqeuncing_Cutting_Res_E/30_40_SRF1/20250519_1038_MD-100098_AZF147_4edd9d13/bam_pass
+  fastq_dir: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/Single_Molecule_Seqeuncing_Cutting_Res_E/30_40_SRF1/20250519_1038_MD-100098_AZF147_4edd9d13/fastq_pass
+  sequencing_summary: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/Single_Molecule_Seqeuncing_Cutting_Res_E/30_40_SRF1/20250519_1038_MD-100098_AZF147_4edd9d13/sequencing_summary_AZF147_4edd9d13_9bc6b834.txt
 
 sequencing:
   device: PromethION
   position_id: MD-100098
   flow_cell_id: AZF147
-  flow_cell_product: FLO-MIN114
+  flow_cell_product: FLO-FLG114  # Flongle
   kit: SQK-LSK114
+  protocol_run_id: 4edd9d13-2bbf-4c31-bb40-d1c45f1ec993
+  started: '2025-05-19T10:39:33'
+  stopped: '2025-05-20T10:39:51'
 
-# Sample information
+run_stats:
+  pod5_files: 25
+  bam_files: 145
+
 samples:
   srf1_cut:
-    alias: SRF1
+    alias: 30_40_SRF1
     target_id: SRF1_digest
     condition: srf1_cut
     replicate: 1
-    notes: "SRF1 restriction enzyme digestion"
+    notes: "SRF1 restriction enzyme digestion - 30_40 sample"
 
 analysis:
   min_read_length: 100
@@ -42,6 +50,7 @@ analysis:
 
 notes: |
   Part of Single Molecule Sequencing Cutting Research Experiment series.
-  SRF1 restriction enzyme variant.
+  SRF1 restriction enzyme variant with 30_40 sample.
+  Uses Flongle flow cell (FLO-FLG114) for quick testing.
+  Run duration: May 19-20, 2025 (24 hours)
   Data stored on Great Lakes HPC.
-  Config created from remote metadata discovery - verify paths on HPC.
