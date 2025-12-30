@@ -141,10 +141,12 @@ samples:
 
 reference:
   targets_file: ../targets/sma_targets.yaml
+  barcodes_file: ../targets/sma_barcodes.yaml
   use_sequence: designed
   validate_against_sanger: true
-  fasta: IF_SMAseq_9_11_continuted/reference.fa
+  fasta: references/reference.fa
   status: sequences_pending
+  notes: "V0-15 to V0-23 sequences pending - continuation of IF_SMAseq_09112025"
 
 analysis:
   min_read_length: 80

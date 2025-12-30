@@ -22,37 +22,59 @@ sequencing:
   flow_cell_product: FLO-MIN114
   kit: SQK-NBD114-24
   basecalling_mode: no_trim
+# =============================================================================
+# SAMPLE BARCODE MAPPING
+# =============================================================================
+# Same as 12282025_IF_DoubleBC_SMA_seq but without adapter trimming.
+# Useful for analyzing full read structure including adapters.
+
 samples:
   barcode02:
     alias: V04_2
     target_id: V0-4.2
+    custom_barcode: NB02
+    overhang: AGGA
+    orientation: forward
     condition: no_trim
     replicate: 1
     barcode_type: single
+
   barcode04:
     alias: V04_4
     target_id: V0-4.4
+    custom_barcode: NB04
+    overhang: TGGT
+    orientation: forward
     condition: no_trim
     replicate: 1
     barcode_type: single
+
   barcode07:
-    alias: V04_2_2
+    alias: V04_2_rev
     target_id: V0-4.2
+    custom_barcode: NB07
+    overhang: CTCT
+    orientation: reverse
     condition: no_trim_double
     replicate: 2
     barcode_type: double
+
   barcode09:
-    alias: V04_4_2
+    alias: V04_4_rev
     target_id: V0-4.4
+    custom_barcode: NB09
+    overhang: TCAG
+    orientation: reverse
     condition: no_trim_double
     replicate: 2
     barcode_type: double
 reference:
   targets_file: ../targets/sma_targets.yaml
+  barcodes_file: ../targets/sma_barcodes.yaml
   use_sequence: designed
   validate_against_sanger: true
   include_adapter_sequences: true
-  fasta: 12282025_IF_DoubleBC_SMA_seq_no_trim/reference.fa
+  fasta: references/reference.fa
 analysis:
   min_read_length: 100
   max_read_length: 600

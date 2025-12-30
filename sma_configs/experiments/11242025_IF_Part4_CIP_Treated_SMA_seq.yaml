@@ -151,9 +151,10 @@ samples:
     barcode_type: single
 reference:
   targets_file: ../targets/sma_targets.yaml
+  barcodes_file: ../targets/sma_barcodes.yaml
   use_sequence: designed
   validate_against_sanger: true
-  fasta: 11242025_IF_Part4_CIP_Treated_SMA_seq/reference.fa
+  fasta: references/reference.fa
 analysis:
   min_read_length: 100
   max_read_length: 500

@@ -38,34 +38,59 @@ sequencing:
   flow_cell_id: FBD70608
   flow_cell_product: FLO-MIN114
   kit: SQK-NBD114-24
+# =============================================================================
+# SAMPLE BARCODE MAPPING
+# =============================================================================
+# This experiment uses custom barcodes NB01-NB05 (forward orientation only).
+# All adjacent plasmids present - causes severe daisy chaining.
+
 samples:
   barcode01:
     alias: V04_1
     target_id: V0-4.1
+    custom_barcode: NB01
+    overhang: TTCG
+    orientation: forward
     condition: standard
     replicate: 1
     barcode_type: single
+
   barcode02:
     alias: V04_2
     target_id: V0-4.2
+    custom_barcode: NB02
+    overhang: AGGA
+    orientation: forward
     condition: standard
     replicate: 1
     barcode_type: single
+
   barcode03:
     alias: V04_3
     target_id: V0-4.3
+    custom_barcode: NB03
+    overhang: AGAG
+    orientation: forward
     condition: standard
     replicate: 1
     barcode_type: single
+
   barcode04:
     alias: V04_4
     target_id: V0-4.4
+    custom_barcode: NB04
+    overhang: TGGT
+    orientation: forward
     condition: standard
     replicate: 1
     barcode_type: single
+
   barcode05:
     alias: V039
     target_id: V0-39
+    custom_barcode: NB05
+    overhang: CTGA
+    orientation: forward
     condition: standard
     replicate: 1
     barcode_type: single
@@ -74,9 +99,9 @@ reference:
   barcodes_file: ../targets/sma_barcodes.yaml
   use_sequence: designed
   validate_against_sanger: true
-  fasta: 12082025_IF_NewBCPart4_SMA_seq/reference.fa
-  full_products: 12082025_IF_NewBCPart4_SMA_seq/reference_full.fa
-  targets_only: 12082025_IF_NewBCPart4_SMA_seq/reference_targets.fa
+  fasta: references/reference.fa
+  full_products: references/reference_full.fa
+  targets_only: references/reference_targets.fa
 
 expected_products:
   type: single_barcode
@@ -87,6 +112,21 @@ expected_products:
     NB03_V0-4.3_forward: {barcode: NB03, target: V0-4.3, length: 212, overhang: AGAG}
     NB04_V0-4.4_forward: {barcode: NB04, target: V0-4.4, length: 191, overhang: TGGT}
     NB05_V0-39_forward: {barcode: NB05, target: V0-39, length: 177, overhang: CTGA}
+  # Daisy chain artifacts expected due to adjacent plasmids
+  daisy_chain_pairs:
+    - pair: [V0-4.1, V0-4.2]
+      mechanism: "TTCG/AGGA junction via backbone"
+      expected_size: ~2600
+    - pair: [V0-4.2, V0-4.3]
+      mechanism: "AGGA/AGAG junction via backbone"
+      expected_size: ~2600
+    - pair: [V0-4.3, V0-4.4]
+      mechanism: "AGAG/TGGT junction via backbone"
+      expected_size: ~2600
+    - pair: [V0-4.4, V0-39]
+      mechanism: "TGGT/CTGA junction via backbone"
+      expected_size: ~2600
+
 analysis:
   min_read_length: 100
   max_read_length: 500

@@ -47,42 +47,68 @@ sequencing:
   flow_cell_id: FBD69036
   flow_cell_product: FLO-MIN114
   kit: SQK-NBD114-24
+# =============================================================================
+# SAMPLE BARCODE MAPPING
+# =============================================================================
+# Hi-T4 DNA Ligase with upstream barcode only.
+# ANOMALOUS RESULTS - likely gDNA contamination or incomplete digestion.
+
 samples:
   barcode01:
     alias: V04_1
     target_id: V0-4.1
+    custom_barcode: NB01
+    overhang: TTCG
+    orientation: forward
     condition: standard
     replicate: 1
     barcode_type: single
+
   barcode02:
     alias: V04_2
     target_id: V0-4.2
+    custom_barcode: NB02
+    overhang: AGGA
+    orientation: forward
     condition: standard
     replicate: 1
     barcode_type: single
+
   barcode03:
     alias: V04_3
     target_id: V0-4.3
+    custom_barcode: NB03
+    overhang: AGAG
+    orientation: forward
     condition: standard
     replicate: 1
     barcode_type: single
+
   barcode04:
     alias: V04_4
     target_id: V0-4.4
+    custom_barcode: NB04
+    overhang: TGGT
+    orientation: forward
     condition: standard
     replicate: 1
     barcode_type: single
+
   barcode05:
     alias: V039
     target_id: V0-39
+    custom_barcode: NB05
+    overhang: CTGA
+    orientation: forward
     condition: standard
     replicate: 1
     barcode_type: single
 reference:
   targets_file: ../targets/sma_targets.yaml
+  barcodes_file: ../targets/sma_barcodes.yaml
   use_sequence: designed
   validate_against_sanger: true
-  fasta: 12182025_IF_NewBCPart4_Ex1_SMA_seq/reference.fa
+  fasta: references/reference.fa
 analysis:
   min_read_length: 100
   max_read_length: 500
