@@ -1,0 +1,40 @@
+# SMA-seq Targets Template
+# Copy this file and modify for your experiment
+#
+# Each target requires:
+#   - forward_sequence: The target sequence in forward orientation (5'→3')
+#   - forward_barcode: Barcode for forward strand (BC02 or BC09)
+#   - reverse_barcode: Barcode for reverse complement strand (BC07 or BC04)
+#   - size_range: Expected read length range [min, max]
+#
+# Available barcodes:
+#   BC02 (24bp): ACAGACGACTACAAACGGAATCGA
+#   BC04 (23bp): TAGCAAACACGATAGAATCCGAA
+#   BC07 (22bp): GGATTCATTCCCACGGTAACAC
+#   BC09 (24bp): AACCAAGACTCGCTGTGCCTAGTT
+#
+# Standard pairings:
+#   V0-4.2 target: BC02 (forward) + BC07 (reverse)
+#   V0-4.4 target: BC09 (forward) + BC04 (reverse)
+
+targets:
+  # Example: CYP2D6 V0-4.2 region (pos 7108-7268)
+  V0-4.2:
+    forward_sequence: "AGGATTTGCATAGATGGGTTTGGGAAAGGACATTCCAGGAGATCCCACTGTAAGAAGGGCCTGGAGGAGGAGGGGACATCTCAGACATGGTCGTGGGAGAGGTGTGCCCGGGTCAGGGGGCACCAGGAGAGGCCAAGGACTCTGTACCTCCTATCCACGTC"
+    forward_barcode: BC02
+    reverse_barcode: BC07
+    size_range: [200, 260]
+
+  # Example: CYP2D6 V0-4.4 region (pos 7453-7608)
+  V0-4.4:
+    forward_sequence: "TGGTGTAGGTGCTGAATGCTGTCCCCGTCCTCCTGCATATCCCAGCGCTGGCTGGCAAGGTCCTACGCTTCCAAAAGGCTTTCCTGACCCAGCTGGATGAGCTGCTAACTGAGCACAGGATGACCTGGGACCCAGCCCAGCCCCCCCGAGATCTGAC"
+    forward_barcode: BC09
+    reverse_barcode: BC04
+    size_range: [195, 255]
+
+  # Add your targets below:
+  # MyTarget:
+  #   forward_sequence: "ACGT..."
+  #   forward_barcode: BC02
+  #   reverse_barcode: BC07
+  #   size_range: [200, 260]
