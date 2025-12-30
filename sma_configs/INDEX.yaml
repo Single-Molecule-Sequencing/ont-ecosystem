@@ -167,9 +167,53 @@ targets:
     - V0-22  # CYP2D6:4606-4705 (100bp)
     - V0-23  # CYP2D6:4702-4802 (101bp)
 
+# =============================================================================
+# PROOF-OF-PRINCIPLE EXPERIMENTS (Great Lakes HPC)
+# =============================================================================
+proof_of_principle:
+  location: Great Lakes HPC
+  base_path: /nfs/turbo/umms-atheylab/gregfar/SMS/
+  index: experiments/proof_of_principle/INDEX.yaml
+  status: configs_created
+  note: "Verify paths on Great Lakes before use"
+
+  experiments:
+    - id: cas9_exon2_SMS
+      category: cas9_cutting
+      reads: ~59000
+      device: MinION
+
+    - id: eco53kI_SMS
+      category: restriction_enzyme
+      reads: ~213000
+      device: MinION
+
+    - id: pCYP_proteinaseK_SMS
+      category: enzyme_treatment
+      sub_experiments: 4
+      device: MinION
+
+    - id: rapid_barcode_plasmid_24_SMS
+      category: rapid_barcoding
+      sub_experiments: 3
+      device: MinION
+
+    - id: cutting_SRF1_SMS
+      category: restriction_enzyme
+      device: PromethION
+
+    - id: cutting_PVU2_SMS
+      category: restriction_enzyme
+      device: PromethION
+
+    - id: cutting_Regular_SMS
+      category: control
+      device: PromethION
+
 # Summary statistics
 summary:
   total_experiments: 12
+  proof_of_principle_experiments: 7
   total_size_tb: 1.44
   ready_configs: 9
   needs_review: 3

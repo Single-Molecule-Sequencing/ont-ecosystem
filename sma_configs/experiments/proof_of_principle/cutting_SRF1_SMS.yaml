@@ -1,0 +1,47 @@
+# SRF1 Cutting Single Molecule Sequencing Proof-of-Principle Experiment
+# Location: Great Lakes HPC
+# This config was created from remote metadata discovery
+
+experiment:
+  id: cutting_SRF1_SMS
+  date: '2024-01-01'  # Approximate - update when confirmed
+  type: proof_of_principle
+  description: SRF1 restriction enzyme cutting single molecule sequencing
+  status: completed
+  category: restriction_enzyme
+  parent_experiment: Single_Molecule_Seqeuncing_Cutting_Res_E
+
+paths:
+  # Great Lakes HPC paths
+  data_root: /nfs/turbo/umms-atheylab/gregfar/SMS/Single_Molecule_Seqeuncing_Cutting_Res_E/SRF1
+  # Update after confirming directory structure
+  pod5_dir: null
+  bam_dir: null
+
+sequencing:
+  device: PromethION
+  position_id: MD-100098
+  flow_cell_id: AZF147
+  flow_cell_product: FLO-MIN114
+  kit: SQK-LSK114
+
+# Sample information
+samples:
+  srf1_cut:
+    alias: SRF1
+    target_id: SRF1_digest
+    condition: srf1_cut
+    replicate: 1
+    notes: "SRF1 restriction enzyme digestion"
+
+analysis:
+  min_read_length: 100
+  max_read_length: 10000
+  min_qscore: 7
+  experiment_type: restriction_enzyme
+
+notes: |
+  Part of Single Molecule Sequencing Cutting Research Experiment series.
+  SRF1 restriction enzyme variant.
+  Data stored on Great Lakes HPC.
+  Config created from remote metadata discovery - verify paths on HPC.

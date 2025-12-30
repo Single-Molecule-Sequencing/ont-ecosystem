@@ -1,0 +1,68 @@
+# Rapid Barcode Plasmid 24 Single Molecule Sequencing Proof-of-Principle Experiment
+# Location: Great Lakes HPC
+# This config was created from remote metadata discovery
+
+experiment:
+  id: rapid_barcode_plasmid_24_SMS
+  date: '2024-01-01'  # Approximate - update when confirmed
+  type: proof_of_principle
+  description: Rapid barcoding of 24 plasmids single molecule sequencing
+  status: completed
+  category: rapid_barcoding
+  sub_experiments:
+    - rapid_barcode_plasmid_24_run1
+    - rapid_barcode_plasmid_24_run2
+    - rapid_barcode_plasmid_24_run3
+
+paths:
+  # Great Lakes HPC paths
+  data_root: /nfs/turbo/umms-atheylab/gregfar/SMS/rapid_barcode_plasmid_24
+  # Sub-experiment runs
+  sub_experiments:
+    run1:
+      path: /nfs/turbo/umms-atheylab/gregfar/SMS/rapid_barcode_plasmid_24/run1
+    run2:
+      path: /nfs/turbo/umms-atheylab/gregfar/SMS/rapid_barcode_plasmid_24/run2
+    run3:
+      path: /nfs/turbo/umms-atheylab/gregfar/SMS/rapid_barcode_plasmid_24/run3
+
+sequencing:
+  device: MinION
+  flow_cell_product: FLO-MIN114
+  kit: SQK-RBK114-24  # Rapid Barcoding Kit 24
+
+# Sample information - 24 barcoded plasmids
+samples:
+  # Update with actual barcode assignments when confirmed
+  barcode01:
+    alias: plasmid_01
+    target_id: plasmid_01
+    condition: rapid_barcode
+  barcode02:
+    alias: plasmid_02
+    target_id: plasmid_02
+    condition: rapid_barcode
+  barcode03:
+    alias: plasmid_03
+    target_id: plasmid_03
+    condition: rapid_barcode
+  barcode04:
+    alias: plasmid_04
+    target_id: plasmid_04
+    condition: rapid_barcode
+  # ... additional barcodes 05-24 to be filled when sample sheet confirmed
+
+analysis:
+  min_read_length: 100
+  max_read_length: 15000
+  min_qscore: 7
+  experiment_type: rapid_barcoding
+  demultiplex: true
+
+notes: |
+  Proof-of-principle experiment for rapid barcoding of 24 plasmids.
+  Uses SQK-RBK114-24 rapid barcoding kit.
+  3 sequential runs for optimization.
+  Data stored on Great Lakes HPC.
+  Config created from remote metadata discovery - verify paths on HPC.
+  Sample sheet needed to complete barcode assignments.

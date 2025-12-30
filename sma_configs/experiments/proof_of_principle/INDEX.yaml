@@ -1,0 +1,94 @@
+# Proof-of-Principle SMA-seq Experiments Index
+# Location: Great Lakes HPC /nfs/turbo/umms-atheylab/gregfar/SMS/
+# Created: 2025-12-30
+# Note: These configs were created from remote metadata discovery
+#       Verify and update paths when accessing Great Lakes directly
+
+experiments:
+  # Cas9 Cutting Experiments
+  cas9_exon2:
+    config: cas9_exon2_SMS.yaml
+    category: cas9_cutting
+    status: completed
+    reads: ~59000
+    flow_cell: AWD929
+    device: MinION
+    description: Cas9 exon2 targeting experiment
+
+  # Restriction Enzyme Experiments
+  eco53kI:
+    config: eco53kI_SMS.yaml
+    category: restriction_enzyme
+    status: completed
+    reads: ~213000
+    flow_cell: AWD171
+    device: MinION
+    description: Eco53kI restriction enzyme cutting
+
+  # ProteinaseK Treatment Experiments
+  pCYP_proteinaseK:
+    config: pCYP_proteinaseK_SMS.yaml
+    category: enzyme_treatment
+    status: completed
+    sub_experiments: 4
+    flow_cell: AWD929
+    device: MinION
+    description: pCYP plasmid ProteinaseK treatment series
+
+  # Rapid Barcoding Experiments
+  rapid_barcode_plasmid_24:
+    config: rapid_barcode_plasmid_24_SMS.yaml
+    category: rapid_barcoding
+    status: completed
+    sub_experiments: 3
+    device: MinION
+    description: Rapid barcoding 24 plasmids
+
+  # Cutting Research Experiments
+  cutting_SRF1:
+    config: cutting_SRF1_SMS.yaml
+    category: restriction_enzyme
+    status: completed
+    flow_cell: AZF147
+    device: PromethION
+    description: SRF1 cutting experiment
+
+  cutting_PVU2:
+    config: cutting_PVU2_SMS.yaml
+    category: restriction_enzyme
+    status: completed
+    device: PromethION
+    description: PvuII cutting experiment
+
+  cutting_Regular:
+    config: cutting_Regular_SMS.yaml
+    category: control
+    status: completed
+    device: PromethION
+    description: Regular/control cutting experiment
+
+summary:
+  total_experiments: 7
+  categories:
+    cas9_cutting: 1
+    restriction_enzyme: 3
+    enzyme_treatment: 1
+    rapid_barcoding: 1
+    control: 1
+  devices:
+    MinION: 4
+    PromethION: 3
+  location: Great Lakes HPC
+  base_path: /nfs/turbo/umms-atheylab/gregfar/SMS/
+
+notes: |
+  These proof-of-principle experiments were conducted before the main SMA-seq
+  manuscript experiments. They explore various cutting and preparation methods:
+
+  1. Cas9 targeting (cas9_exon2)
+  2. Restriction enzymes (Eco53kI, SRF1, PvuII)
+  3. Enzyme treatments (ProteinaseK)
+  4. Barcoding strategies (rapid barcoding 24)
+
+  Data stored on Great Lakes HPC. Access requires UMich credentials.
+  Configs created from remote metadata discovery - verify on HPC before use.

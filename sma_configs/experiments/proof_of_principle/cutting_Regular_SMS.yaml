@@ -1,0 +1,45 @@
+# Regular Cutting Single Molecule Sequencing Proof-of-Principle Experiment
+# Location: Great Lakes HPC
+# This config was created from remote metadata discovery
+
+experiment:
+  id: cutting_Regular_SMS
+  date: '2024-01-01'  # Approximate - update when confirmed
+  type: proof_of_principle
+  description: Regular (control) cutting single molecule sequencing
+  status: completed
+  category: restriction_enzyme
+  parent_experiment: Single_Molecule_Seqeuncing_Cutting_Res_E
+
+paths:
+  # Great Lakes HPC paths
+  data_root: /nfs/turbo/umms-atheylab/gregfar/SMS/Single_Molecule_Seqeuncing_Cutting_Res_E/Regular
+  # Update after confirming directory structure
+  pod5_dir: null
+  bam_dir: null
+
+sequencing:
+  device: PromethION
+  flow_cell_product: FLO-MIN114
+  kit: SQK-LSK114
+
+# Sample information
+samples:
+  regular:
+    alias: Regular
+    target_id: control
+    condition: regular
+    replicate: 1
+    notes: "Control/regular cutting experiment (no specific enzyme)"
+
+analysis:
+  min_read_length: 100
+  max_read_length: 10000
+  min_qscore: 7
+  experiment_type: control
+
+notes: |
+  Part of Single Molecule Sequencing Cutting Research Experiment series.
+  Regular/control variant - baseline comparison.
+  Data stored on Great Lakes HPC.
+  Config created from remote metadata discovery - verify paths on HPC.

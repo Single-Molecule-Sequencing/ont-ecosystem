@@ -1,0 +1,47 @@
+# Eco53kI Restriction Enzyme Single Molecule Sequencing Proof-of-Principle Experiment
+# Location: Great Lakes HPC
+# This config was created from remote metadata discovery
+
+experiment:
+  id: eco53kI_SMS
+  date: '2024-01-01'  # Approximate - update when confirmed
+  type: proof_of_principle
+  description: Eco53kI restriction enzyme cutting single molecule sequencing experiment
+  status: completed
+  category: restriction_enzyme
+
+paths:
+  # Great Lakes HPC paths
+  data_root: /nfs/turbo/umms-atheylab/gregfar/SMS/eco53kI
+  run_id: b934d4c5_ef92a647
+  # Update these paths after confirming directory structure on Great Lakes
+  pod5_dir: null  # Discover on Great Lakes
+  bam_dir: null   # Discover on Great Lakes
+
+sequencing:
+  device: MinION
+  flow_cell_id: AWD171
+  flow_cell_product: FLO-MIN114
+  kit: SQK-LSK114  # Ligation kit - confirm
+
+# Sample information - update based on actual experiment design
+samples:
+  unclassified:
+    alias: eco53kI
+    target_id: eco53kI_digest
+    condition: enzyme_cut
+    replicate: 1
+    notes: "Eco53kI restriction enzyme digestion - no barcode demultiplexing"
+
+analysis:
+  total_reads: 213000  # Approximate from discovery
+  min_read_length: 100
+  max_read_length: 10000
+  min_qscore: 7
+  experiment_type: restriction_enzyme
+
+notes: |
+  Proof-of-principle experiment for Eco53kI restriction enzyme digestion.
+  Eco53kI recognizes: 5'-GAG^CTC-3' (cuts between G and C)
+  Data stored on Great Lakes HPC.
+  Config created from remote metadata discovery - verify paths on HPC.

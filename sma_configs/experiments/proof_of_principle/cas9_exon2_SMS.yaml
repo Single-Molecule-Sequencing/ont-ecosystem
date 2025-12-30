@@ -1,0 +1,47 @@
+# Cas9 Exon2 Single Molecule Sequencing Proof-of-Principle Experiment
+# Location: Great Lakes HPC
+# This config was created from remote metadata discovery
+
+experiment:
+  id: cas9_exon2_SMS
+  date: '2024-01-01'  # Approximate - update when confirmed
+  type: proof_of_principle
+  description: Cas9 exon2 targeting single molecule sequencing experiment
+  status: completed
+  category: cas9_cutting
+
+paths:
+  # Great Lakes HPC paths
+  data_root: /nfs/turbo/umms-atheylab/sequencing_data/data_from_linux_desktop_lab/cas9_exon2
+  run_id: d8631efb_61ea8f09
+  # Update these paths after confirming directory structure on Great Lakes
+  pod5_dir: null  # Discover on Great Lakes
+  bam_dir: null   # Discover on Great Lakes
+
+sequencing:
+  device: MinION
+  instrument: MN47455
+  flow_cell_id: AWD929
+  flow_cell_product: FLO-MIN114
+  kit: SQK-LSK114  # Ligation kit - confirm
+
+# Sample information - update based on actual experiment design
+samples:
+  unclassified:
+    alias: cas9_exon2
+    target_id: exon2
+    condition: cas9_cut
+    replicate: 1
+    notes: "Cas9 targeting exon2 - no barcode demultiplexing"
+
+analysis:
+  total_reads: 59000  # Approximate from discovery
+  min_read_length: 100
+  max_read_length: 10000
+  min_qscore: 7
+  experiment_type: cas9_cutting
+
+notes: |
+  Proof-of-principle experiment for Cas9-based single molecule sequencing.
+  Data stored on Great Lakes HPC.
+  Config created from remote metadata discovery - verify paths on HPC.
