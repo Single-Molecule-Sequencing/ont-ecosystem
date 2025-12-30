@@ -148,12 +148,18 @@ samples:
 reference:
   targets_file: ../targets/sma_targets.yaml
   barcodes_file: ../targets/sma_barcodes.yaml
+  size_sequence_mapping: ../targets/size_sequence_mapping.yaml
   use_sequence: designed
   validate_against_sanger: true
   fasta: IF_SMAseq_09112025/reference.fa
   status: sequences_available
   source: "CYP2D6*1 NG_008376.4 PharmVar reference"
   notes: "V0-15 to V0-23 sequences extracted from PharmVar - different barcode scheme from Dec 2025 experiments"
+
+classification:
+  method: "size_then_edit_distance"
+  size_tolerance_pct: 15
+  notes: "Heavy size overlap - edit distance required for most reads"
 
 analysis:
   min_read_length: 80

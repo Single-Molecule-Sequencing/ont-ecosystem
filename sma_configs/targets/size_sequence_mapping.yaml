@@ -1,0 +1,176 @@
+# SMA-seq Size-to-Sequence Classification Mapping
+# Generated: 2025-12-30
+#
+# Classification Algorithm:
+# 1. Filter by read length (min_read_length to max_read_length)
+# 2. For each barcode, check if read length falls within ANY target's size range
+# 3. If only one target matches size range -> assign to that target
+# 4. If multiple targets match (overlap) -> compute Levenshtein edit distance to all
+#    candidate sequences, assign to lowest edit distance target
+# 5. If no targets match size range -> classify as "unassigned"
+#
+# Note: V0-15 to V0-23 have heavily overlapping size ranges (all 88-115bp expected)
+#       Edit distance comparison is required for most reads in this series
+
+classification:
+  algorithm: "size_then_edit_distance"
+  size_tolerance_pct: 15
+  min_read_length: 80
+  max_read_length: 200
+  ambiguity_resolution: "levenshtein_edit_distance"
+  edit_distance_tie_breaker: "shortest_sequence"
+
+# Target sequence definitions with size ranges
+targets:
+  V0-15:
+    expected_length: 99
+    size_range: {min: 84, max: 114}
+    sequence: "GTCTAAAGAAAAAAAAAATAAAGCAACATATCCTGAACAAAGGATCCTCCATAACGTTCCCACCAGATTTCTAATCAGAAACATGGAGGCCAGAAAGCA"
+    cyp2d6_position: "3909-4007"
+
+  V0-16:
+    expected_length: 112
+    size_range: {min: 95, max: 129}
+    sequence: "AGCAGTGGAGGAGGACGACCCTCAGGCAGCCCGGGAGGATGTTGTCACAGGCTGGGGCAAGGGCCTTCCGGCTACCAACTGGGAGCTCTGGGAACAGCCCTGTTGCAAACAA"
+    cyp2d6_position: "4004-4115"
+
+  V0-17:
+    expected_length: 90
+    size_range: {min: 77, max: 104}
+    sequence: "ACAAGAAGCCATAGCCCGGCCAGAGCCCAGGAATGTGGGCTGGGCTGGGAGCAGCCTCTGGACAGGAGTGGTCCCATCCAGGAAACCTCC"
+    cyp2d6_position: "4112-4201"
+
+  V0-18:
+    expected_length: 115
+    size_range: {min: 98, max: 132}
+    sequence: "CTCCGGCATGGCTGGGAAGTGGGGTACTTGGTGCCGGGTCTGTATGTGTGTGTGACTGGTGTGTGTGAGAGAGAATGTGTGCCCTAAGTGTCAGTGTGAGTCTGTGTATGTGTGA"
+    cyp2d6_position: "4198-4312"
+
+  V0-19:
+    expected_length: 115
+    size_range: {min: 98, max: 132}
+    sequence: "GTGAATATTGTCTTTGTGTGGGTGATTTTCTGCGTGTGTAATCGTGTCCCTGCAAGTGTGAACAAGTGGACAAGTGTCTGGGAGTGGACAAGAGATCTGTGCACCATCAGGTGTG"
+    cyp2d6_position: "4309-4423"
+
+  V0-20:
+    expected_length: 88
+    size_range: {min: 75, max: 101}
+    sequence: "TGTGTGCATAGCGTCTGTGCATGTCAAGAGTGCAAGGTGAAGTGAAGGGACCAGGCCCATGATGCCACTCATCATCAGGAGCTCTAAG"
+    cyp2d6_position: "4420-4507"
+
+  V0-21:
+    expected_length: 106
+    size_range: {min: 90, max: 122}
+    sequence: "TAAGGCCCCAGGTAAGTGCCAGTGACAGATAAGGGTGCTGAAGGTCACTCTGGAGTGGGCAGGTGGGGGTAGGGAAAGGGCAAGGCCATGTTCTGGAGGAGGGGTT"
+    cyp2d6_position: "4504-4609"
+
+  V0-22:
+    expected_length: 100
+    size_range: {min: 85, max: 115}
+    sequence: "GGTTGTGACTACATTAGGGTGTATGAGCCTAGCTGGGAGGTGGATGGCCGGGTCCACTGAAACCCTGGTTATCCCAGAAGGCTTTGCAGGCTTCAGGAGC"
+    cyp2d6_position: "4606-4705"
+
+  V0-23:
+    expected_length: 101
+    size_range: {min: 86, max: 116}
+    sequence: "GAGCTTGGAGTGGGGAGAGGGGGTGACTTCTCCGACCAGGCCCCTCCACCGGCCTACCCTGGGTAAGGGCCTGGAGCAGGAAGCAGGGGCAAGAACCTCTG"
+    cyp2d6_position: "4702-4802"
+
+# Size range overlap analysis
+# Due to similar target lengths (88-115bp range), all targets overlap significantly
+# Edit distance is required for classification in most cases
+overlap_analysis:
+  unique_size_bins:
+    - range: "75-76"
+      targets: ["V0-20"]
+      method: "size_only"
+
+  overlap_bins:
+    - range: "77-132"
+      targets: ["V0-15", "V0-16", "V0-17", "V0-18", "V0-19", "V0-20", "V0-21", "V0-22", "V0-23"]
+      method: "edit_distance"
+      notes: "Heavy overlap - edit distance required for all reads in this range"
+
+  critical_pairs:
+    - pair: ["V0-18", "V0-19"]
+      reason: "Identical size ranges (98-132) and same expected length (115bp)"
+      resolution: "Edit distance only - sequences differ significantly"
+
+# Experiment-specific barcode mappings
+experiments:
+  # August 2025 Pilot - V0-15 to V0-22 (8 targets, non-consecutive barcodes)
+  081920205_IF_Pilot_SMA_seq:
+    description: "Pilot SMA-seq with V0-15 to V0-22"
+    barcode_mapping:
+      barcode10: {target: "V0-15", alias: "V015"}
+      barcode12: {target: "V0-16", alias: "V016"}
+      barcode15: {target: "V0-17", alias: "V017"}
+      barcode17: {target: "V0-18", alias: "V018"}
+      barcode19: {target: "V0-19", alias: "V019"}
+      barcode20: {target: "V0-20", alias: "V020"}
+      barcode22: {target: "V0-21", alias: "V021"}
+      barcode24: {target: "V0-22", alias: "V022"}
+    notes: "Non-consecutive barcodes, no V0-23"
+
+  # September 2025 - V0-15 to V0-23 with single and double barcoding
+  IF_SMAseq_09112025:
+    description: "Early SMA-seq with single and double barcoded V0-15 to V0-23"
+    barcode_mapping:
+      # Single barcoded
+      barcode02: {target: "V0-15", alias: "V015", barcode_type: "single"}
+      barcode03: {target: "V0-16", alias: "V016", barcode_type: "single"}
+      barcode06: {target: "V0-17", alias: "V017", barcode_type: "single"}
+      barcode08: {target: "V0-18", alias: "V018", barcode_type: "single"}
+      barcode10: {target: "V0-19", alias: "V019", barcode_type: "single"}
+      barcode12: {target: "V0-20", alias: "V020", barcode_type: "single"}
+      barcode14: {target: "V0-21", alias: "V021", barcode_type: "single"}
+      barcode16: {target: "V0-22", alias: "V022", barcode_type: "single"}
+      barcode18: {target: "V0-23", alias: "V023", barcode_type: "single"}
+      # Double barcoded (same targets, different barcode)
+      barcode04: {target: "V0-15", alias: "V015_2", barcode_type: "double"}
+      barcode05: {target: "V0-16", alias: "V016_2", barcode_type: "double"}
+      barcode07: {target: "V0-17", alias: "V017_2", barcode_type: "double"}
+      barcode09: {target: "V0-18", alias: "V018_2", barcode_type: "double"}
+      barcode11: {target: "V0-19", alias: "V019_2", barcode_type: "double"}
+      barcode13: {target: "V0-20", alias: "V020_2", barcode_type: "double"}
+      barcode15: {target: "V0-21", alias: "V021_2", barcode_type: "double"}
+      barcode17: {target: "V0-22", alias: "V022_2", barcode_type: "double"}
+    notes: "Single and double barcoded variants for comparison"
+
+  # September 2025 continuation
+  IF_SMAseq_9_11_continuted:
+    description: "Continuation of IF_SMAseq_09112025"
+    barcode_mapping:
+      barcode02: {target: "V0-15", alias: "V015", barcode_type: "single"}
+      barcode03: {target: "V0-16", alias: "V016", barcode_type: "single"}
+      barcode06: {target: "V0-17", alias: "V017", barcode_type: "single"}
+      barcode08: {target: "V0-18", alias: "V018", barcode_type: "single"}
+      barcode10: {target: "V0-19", alias: "V019", barcode_type: "single"}
+      barcode12: {target: "V0-20", alias: "V020", barcode_type: "single"}
+      barcode14: {target: "V0-21", alias: "V021", barcode_type: "single"}
+      barcode16: {target: "V0-22", alias: "V022", barcode_type: "single"}
+      barcode18: {target: "V0-23", alias: "V023", barcode_type: "single"}
+      barcode04: {target: "V0-15", alias: "V015_2", barcode_type: "double"}
+      barcode05: {target: "V0-16", alias: "V016_2", barcode_type: "double"}
+      barcode07: {target: "V0-17", alias: "V017_2", barcode_type: "double"}
+      barcode09: {target: "V0-18", alias: "V018_2", barcode_type: "double"}
+      barcode11: {target: "V0-19", alias: "V019_2", barcode_type: "double"}
+      barcode13: {target: "V0-20", alias: "V020_2", barcode_type: "double"}
+      barcode15: {target: "V0-21", alias: "V021_2", barcode_type: "double"}
+      barcode17: {target: "V0-22", alias: "V022_2", barcode_type: "double"}
+    notes: "Same as IF_SMAseq_09112025"
+
+  # October 2025 Methyl-minus - V0-15 to V0-23 (consecutive barcodes 16-24)
+  10092025_IF_methyl_minus_SMA_seq:
+    description: "Methyl-minus SMA-seq with V0-15 to V0-23"
+    barcode_mapping:
+      barcode16: {target: "V0-15", alias: "V015"}
+      barcode17: {target: "V0-16", alias: "V016"}
+      barcode18: {target: "V0-17", alias: "V017"}
+      barcode19: {target: "V0-18", alias: "V018"}
+      barcode20: {target: "V0-19", alias: "V019"}
+      barcode21: {target: "V0-20", alias: "V020"}
+      barcode22: {target: "V0-21", alias: "V021"}
+      barcode23: {target: "V0-22", alias: "V022"}
+      barcode24: {target: "V0-23", alias: "V023"}
+    notes: "Consecutive barcodes 16-24, all 9 targets"
