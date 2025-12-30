@@ -143,6 +143,73 @@ targets:
     notes: "Sanger verified"
 
   # ============================================
+  # V0-15 to V0-23 Series (CYP2D6 upstream region, pilot experiments)
+  # ============================================
+
+  V0-15:
+    cyp2d6_positions: "3909-4007"
+    expected_length: 99
+    sequence: null  # Sequence pending
+    validated: false
+    notes: "Parts 66 - used in pilot experiments"
+
+  V0-16:
+    cyp2d6_positions: "4004-4115"
+    expected_length: 112
+    sequence: null
+    validated: false
+    notes: "Parts 67 - used in pilot experiments"
+
+  V0-17:
+    cyp2d6_positions: "4112-4201"
+    expected_length: 90
+    sequence: null
+    validated: false
+    notes: "Parts 68 - used in pilot experiments"
+
+  V0-18:
+    cyp2d6_positions: "4198-4312"
+    expected_length: 115
+    sequence: null
+    validated: false
+    notes: "Parts 69 - used in pilot experiments"
+
+  V0-19:
+    cyp2d6_positions: "4309-4423"
+    expected_length: 115
+    sequence: null
+    validated: false
+    notes: "Parts 70 - used in pilot experiments"
+
+  V0-20:
+    cyp2d6_positions: "4420-4507"
+    expected_length: 88
+    sequence: null
+    validated: false
+    notes: "Parts 71 - used in pilot experiments"
+
+  V0-21:
+    cyp2d6_positions: "4504-4609"
+    expected_length: 106
+    sequence: null
+    validated: false
+    notes: "Parts 72 - used in pilot experiments"
+
+  V0-22:
+    cyp2d6_positions: "4606-4705"
+    expected_length: 100
+    sequence: null
+    validated: false
+    notes: "Parts 73 - used in pilot experiments"
+
+  V0-23:
+    cyp2d6_positions: "4702-4802"
+    expected_length: 101
+    sequence: null
+    validated: false
+    notes: "Parts 74 - used in pilot experiments"
+
+  # ============================================
   # B2 Reference (existing, verified)
   # ============================================
 

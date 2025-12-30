@@ -20,3 +20,9 @@ barcodes:
     target: V0-4.4_forward
     alias: V04_4
     size_range: [140, 180]
+  barcode05:
+    target: V0-39
+    alias: V039
+    orientation: forward
+    size_range: [90, 122]
+

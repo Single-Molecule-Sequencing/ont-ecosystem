@@ -1,38 +1,181 @@
 # SMA-seq Configuration for 11242025_IF_Part4_SMA_seq
+# Large-scale single barcode experiment with 17 targets
+# Uses standard ONT NBD114-24 barcodes
+# Generated: 2025-12-30
+
 experiment: "11242025_IF_Part4_SMA_seq"
 demux_type: "standard_ont"
 kit: "SQK-NBD114-24"
+experiment_type: "single_barcode"
 
+library_structure:
+  description: "5'- PREFIX + ADAPTER + FLANK_F + BARCODE + FLANK_R + TARGET -3'"
+  elements:
+    PREFIX: { sequence: "CCTGTACTTCGTT", length: 13 }
+    ADAPTER: { sequence: "CAGTTACGTATTGCT", length: 15 }
+    FLANK_F: { sequence: "AAGGTTAA", length: 8 }
+    FLANK_R: { sequence: "CAGCACCT", length: 8 }
+
+# Barcode to target mapping
 barcodes:
+  # V0-4.X Series (Exon 4)
   barcode01:
-    target: V0-4.1_forward
+    target: V0-4.1
     alias: V04_1
-    size_range: [150, 190]
+    orientation: forward
+    size_range: [143, 193]
   barcode02:
-    target: V0-4.2_forward
+    target: V0-4.2
     alias: V04_2
-    size_range: [145, 185]
+    orientation: forward
+    size_range: [140, 190]
   barcode03:
-    target: V0-4.3_forward
+    target: V0-4.3
     alias: V04_3
-    size_range: [168, 210]
+    orientation: forward
+    size_range: [160, 216]
   barcode04:
-    target: V0-4.4_forward
+    target: V0-4.4
     alias: V04_4
-    size_range: [140, 180]
+    orientation: forward
+    size_range: [136, 184]
+
+  # V0-39 to V0-47 Series (Exon 4-5 junction)
+  barcode05:
+    target: V0-39
+    alias: V039
+    orientation: forward
+    size_range: [90, 122]
   barcode06:
-    target: V0-4.1_reverse
-    alias: V04_1_2
-    size_range: [150, 190]
+    target: V0-40
+    alias: V040
+    orientation: forward
+    size_range: [83, 113]
   barcode07:
-    target: V0-4.2_reverse
-    alias: V04_2_2
-    size_range: [145, 185]
+    target: V0-41
+    alias: V041
+    orientation: forward
+    size_range: [75, 101]
   barcode08:
-    target: V0-4.3_reverse
-    alias: V04_3_2
-    size_range: [168, 210]
+    target: V0-42
+    alias: V042
+    orientation: forward
+    size_range: [85, 115]
   barcode09:
-    target: V0-4.4_reverse
-    alias: V04_4_2
-    size_range: [140, 180]
+    target: V0-43
+    alias: V043
+    orientation: forward
+    size_range: [94, 127]
+  barcode10:
+    target: V0-44
+    alias: V044
+    orientation: forward
+    size_range: [77, 105]
+  barcode11:
+    target: V0-45
+    alias: V045
+    orientation: forward
+    size_range: [91, 123]
+  barcode12:
+    target: V0-46
+    alias: V046
+    orientation: forward
+    size_range: [71, 97]
+  barcode13:
+    target: V0-47
+    alias: V047
+    orientation: forward
+    size_range: [93, 125]
+
+  # V0-4.14 to V0-4.17 Series (Exon 5)
+  barcode14:
+    target: V0-4.14
+    alias: V04_14
+    orientation: forward
+    size_range: [147, 199]
+  barcode15:
+    target: V0-4.15
+    alias: V04_15
+    orientation: forward
+    size_range: [148, 200]
+  barcode16:
+    target: V0-4.16
+    alias: V04_16
+    orientation: forward
+    size_range: [139, 189]
+  barcode17:
+    target: V0-4.17
+    alias: V04_17
+    orientation: forward
+    size_range: [150, 202]
+
+# Target sequences (forward only for single barcode experiment)
+targets:
+  V0-4.1:
+    cyp2d6_positions: "6944-7111"
+    length: 168
+    sequence: "ttcgagtacgacgaccctcGCTTCCTCAGGCTGCTGGACCTAGCTCAGGAGGGACTGAAGGAGGAGTCGGGCTTTCTGCGCGAGGTGCGGAGCGAGAGATCGAGGAGTCTCTGCAGGGCGAGCTCCCGAGAGGTGCCGGGGCTGGACTGGggcctcggaagagcagga"
+  V0-4.2:
+    cyp2d6_positions: "7108-7272"
+    length: 165
+    sequence: "AGGATTTGCATAGATGGGTTTGGGAAAGGACATTCCAGGAGATCCCACTGTAAGAAGGGCCTGGAGGAGGAGGGGACATCTCAGACATGGTCGTGGGAGAGGTGTGCCCGGGTCAGGGGGCACCAGGAGAGGCCAAGGACTCTGTACCTCCTATCCACGTCAGAG"
+  V0-4.3:
+    cyp2d6_positions: "7269-7456"
+    length: 188
+    sequence: "agagatttcgattttaggtttctcctcTGGGCAAGGAGAGAGGGTGGAGGCTGGCACTTGGGGAGGGACTTGGTGAGGTCAGTGGTAAGGACAGGCAGGCCCTGGGTCTACCTGGAGATGGCTGGGGCCTGAGACTTGTCCAGGTGAACGCAGAGCACAGGAGGGATTGAgaTcccgttctgtctggt"
+  V0-4.4:
+    cyp2d6_positions: "7453-7612"
+    length: 160
+    sequence: "tggtgtaggtgctgaatgcTGTCCCCGTCCTCCTGCATATCCCAGCGCTGGCTGGCAAGGTCCTACGCTTCCAAAAGGCTTTCCTGACCCAGCTGGATGAGCTGCTAACTGAGCACAGGATGACCTGGGACCCAGCCCAGCCcccccgagaTctgactga"
+  V0-39:
+    cyp2d6_positions: "7609-7714"
+    length: 106
+    sequence: "GGAGCTGAGGCCTTCCTGGCAGAGATGGAGAAGGTGAGAGTGGCTGCCACGGTGGGGGGCAAGGGTGGTGGGTTGAGCGTCCCAGGAGGAATGAGGGGAGGCTGGGCAAA"
+  V0-40:
+    cyp2d6_positions: "7711-7808"
+    length: 98
+    sequence: "CAAAAGGTTGGACCAGTGCATCACCCGGCGAGCCGCATCTGGGCTGACAGGTGCAGAATTGGAGGTCATTTGGGGGCTACCCCGTTCTGTCCCGAGTA"
+  V0-41:
+    cyp2d6_positions: "7805-7892"
+    length: 88
+    sequence: "AGTATGCTCTCGGCCCTGCTCAGGCCAAGGGGAACCCTGAGAGCAGCTTCAATGATGAGAACCTGCGCATAGTGGTGGCTGACCTGTT"
+  V0-42:
+    cyp2d6_positions: "7889-7988"
+    length: 100
+    sequence: "TGTTCTCTGCCGGGATGGTGACCACCTCGACCACGCTGGCCTGGGGCCTCCTGCTCATGATCCTACATCCGGATGTGCAGCGTGAGCCCATCTGGGAAAC"
+  V0-43:
+    cyp2d6_positions: "7985-8094"
+    length: 110
+    sequence: "AAACAGTGCAGGGGCCGAGGGAGGAAGGGTACAGGCGGGGGCCCATGAACTTTGCTGGGACACCCGGGGCTCCAAGCACAGGCTTGACCAGGATCCTGTAAGCCTGACCT"
+  V0-44:
+    cyp2d6_positions: "8091-8181"
+    length: 91
+    sequence: "ACCTCCTCCAACATAGGAGGCAAGAAGGAGTGTCAGGGCCGGACCCCCTGGGTGCTGACCCATTGTGGGGACGCATGTCTGTCCAGGCCGT"
+  V0-45:
+    cyp2d6_positions: "8178-8284"
+    length: 107
+    sequence: "CCGTGTCCAACAGGAGATCGACGACGTGATAGGGCAGGTGCGGCGACCAGAGATGGGTGACCAGGCTCACATGCCCTACACCACTGCCGTGATTCATGAGGTGCAGC"
+  V0-46:
+    cyp2d6_positions: "8281-8364"
+    length: 84
+    sequence: "CAGCGCTTTGGGGACATCGTCCCCCTGGGTGTGACCCATATGACATCCCGTGACATCGAAGTACAGGGCTTCCGCATCCCTAAG"
+  V0-47:
+    cyp2d6_positions: "8361-8469"
+    length: 109
+    sequence: "TAAGGTAGGCCTGGCGCCCTCCTCACCCCAGCTCAGCACCAGCACCTGGTGATAGCCCCAGCATGGCTACTGCCAGGTGGGCCCACTCTAGGAACCCTGGCCACCTAGT"
+  V0-4.14:
+    cyp2d6_positions: "8466-8638"
+    length: 173
+    sequence: "tagtcctcaatgccaccacacTGACTGTCCCCACTTGGGTGGGGGGTCCAGAGTATAGGCAGGGCTGGCCTGTCCATCCAGAGCCCCCGTCTAGTGGGGAGACAAACCAGGACCTGCCAGAATGTTGGAGGACCCAACGCCTGCAGGGAGAGGGGgcagtgtgggtgcctctg"
+  V0-4.15:
+    cyp2d6_positions: "8635-8808"
+    length: 174
+    sequence: "tctgagaggtgtgactgcGCCCTGCTGTGGGGTCGGAGAGGGTACTGTGGAGCTTCTCGGGCGCAGGACTAGTTGACAGAGTCCAGCTGTGTGCCAGGCAGTGTGTGTCCCCCGTGTGTTTGGTGGCAGGGGTCCCAGCATCCTAGAGTCCAGTCCccactctcaccctgcatc"
+  V0-4.16:
+    cyp2d6_positions: "8805-8968"
+    length: 164
+    sequence: "catctcctgcccagggaacGACACTCATCACCAACCTGTCATCGGTGCTGAAGGATGAGGCCGTCTGGGAGAAGCCCTTCCGCTTCCACCCCGAACACTTCCTGGATGCCCAGGGCCACTTTGTGAAGCCGGAGGCCTTCCTGCctttctcagcaggtgcctgt"
+  V0-4.17:
+    cyp2d6_positions: "8965-9140"
+    length: 176
+    sequence: "ctgtggggagcccggctcCCTGTCCCCTTCCGTGGAGTCTTGCAGGGGTATCACCCAGGAGCCAGGCTCACTGACGCCCCTCCCCTCCCCACAGGCCGCCGTGCATGCCTCGGGGAGCCCCTGGCCCGCATGGAGCTCTTCCTCTTCTTCACCTCcctgctgcagcacttcagctt"
